@@ -139,11 +139,11 @@ class Shipment(models.Model):
     mode = models.CharField(max_length=255, blank=True, null=True)
 
     number_of_packages = models.IntegerField(blank=True, null=True)
-    gross_weight_kgs = models.IntegerField(blank=True, null=True)
-    volume_cbms = models.IntegerField(blank=True, null=True)
+    gross_weight_kgs = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
+    volume_cbms = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
     container_count = models.IntegerField(blank=True, null=True)
-    dimensional_weight = models.IntegerField(blank=True, null=True)
-    chargeable_weight = models.IntegerField(blank=True, null=True)
+    dimensional_weight = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
+    chargeable_weight = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
 
     docs_received_actual = models.DateTimeField(blank=True, null=True)
     docs_approved_actual = models.DateTimeField(blank=True, null=True)
