@@ -132,6 +132,7 @@ REST_FRAMEWORK = {
     ),
     'TEST_REQUEST_DEFAULT_FORMAT': 'vnd.api+json',
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'COERCE_DECIMAL_TO_STRING': False,
 }
 
 if PROFILES_URL:
