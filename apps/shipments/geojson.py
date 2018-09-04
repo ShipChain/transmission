@@ -1,4 +1,5 @@
 import logging
+from operator import attrgetter
 from datetime import datetime
 
 from rest_framework.exceptions import APIException
@@ -23,7 +24,7 @@ def build_line_string_feature(shipment, tracking_data):
                 tracking_points.append(dtp)
         except InvalidTrackingPointError as err:
             LOG.warning(f'Error parsing tracking data for shipment {shipment.id}: {err}')
-
+    tracking_points.sort(key=attrgetter('timestamp'))
     return [DeviceTrackingPoint.get_linestring_feature(tracking_points)]
 
 
@@ -43,6 +44,7 @@ def build_point_features(shipment, tracking_data):
                 point_features.append(dtp.as_point_feature())
         except InvalidTrackingPointError as err:
             LOG.warning(f'Error parsing tracking data for shipment {shipment.id}: {err}')
+    point_features.sort(key=attrgetter('timestamp'))
     return point_features
 
 
