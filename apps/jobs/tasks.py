@@ -63,7 +63,9 @@ def _sign_transaction(rpc_client, async_job, unsigned_tx):
 
     # Create EthAction so this Job's Listeners can also listen to Events posted for the TransactionHash
     with transaction.atomic():
-        eth_action = EthAction(async_job=async_job, transaction_hash=hash_tx)
+        eth_action, _ = EthAction.objects.update_or_create(transaction_hash=hash_tx, defaults={
+            'async_job': async_job
+        })
         for job_listener in async_job.joblistener_set.all():
             eth_action.ethlistener_set.create(listener=job_listener.listener)
 
