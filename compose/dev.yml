@@ -1,0 +1,101 @@
+version: '2.1'
+services:
+
+  redis_db:
+    image: redis
+    expose:
+      - '6379'
+    volumes:
+      - /data/shipchain/transmission/redis:/data
+    command: >
+      --requirepass redis_pass
+
+  psql:
+    image: sameersbn/postgresql:9.6-2
+    ports:
+    - "5432:5432"
+    environment:
+      DB_NAME: transmission
+      DB_PASS: transmission
+      DB_USER: transmission
+    volumes:
+      - /data/shipchain/transmission/postgresql:/var/lib/postgresql
+
+  django_shell: # This is a one-shot command runner service, for manage.py or bash, it dies immediately
+    extends:
+      service: transmission-django-dev
+      file: build.yml
+    volumes:
+      - ../:/app
+    links:
+      - psql
+      - redis_db
+    environment:
+      - ENV
+      - SECRET_KEY
+      - SERVICE=django_shell
+      - REDIS_URL
+      - ENGINE_RPC_URL=http://engine-rpc:2000
+      - INTERNAL_URL=http://transmission-runserver:8000
+      - PROFILES_URL #http://profiles-runserver:8000
+    command: "bash"
+    entrypoint: []
+
+  runserver:
+    extends:
+      service: transmission-django-dev
+      file: build.yml
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    ports:
+      - "8000:8000"
+    networks:
+      default:
+        aliases:
+          - transmission-runserver
+      portal:
+        aliases:
+          - transmission-runserver
+    links:
+      - psql
+      - redis_db
+    volumes:
+      - ../:/app
+    environment:
+      - ENV
+      - SECRET_KEY
+      - SERVICE=runserver
+      - REDIS_URL
+      - ENGINE_RPC_URL=http://engine-rpc:2000
+      - INTERNAL_URL=http://transmission-runserver:8000
+      - PROFILES_URL #http://profiles-runserver:8000
+
+  celery:
+    extends:
+      service: transmission-django-dev
+      file: build.yml
+    command: ["celery", "-A", "apps", "worker"]
+    networks:
+      default:
+        aliases:
+          - transmission-celery
+      portal:
+        aliases:
+          - transmission-celery
+    links:
+      - psql
+      - redis_db
+    volumes:
+      - ../:/app
+    environment:
+      - ENV
+      - SECRET_KEY
+      - SERVICE=celery
+      - REDIS_URL
+      - ENGINE_RPC_URL=http://engine-rpc:2000
+      - INTERNAL_URL=http://transmission-runserver:8000
+      - PROFILES_URL #http://profiles-runserver:8000
+    entrypoint: []
+
+networks:
+  portal:
+    external: true

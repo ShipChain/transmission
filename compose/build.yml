@@ -1,0 +1,11 @@
+version: "2.1"
+services:
+  transmission-django-dev:
+    build:
+      context: ./django
+    image: transmission-django-dev
+  transmission-django:
+    build:
+      context: ../
+    image: transmission-django
+

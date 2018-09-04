@@ -1,0 +1,519 @@
+{
+	"info": {
+		"_postman_id": "a9009015-2439-49d6-9d48-46823180aaeb",
+		"name": "Transmission",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Shipments",
+			"description": null,
+			"item": [
+				{
+					"name": "Create Shipment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "JWT {{token}}"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{transmission_url}}/api/v1/shipments/",
+							"host": [
+								"{{transmission_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shipments",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Shipments",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "JWT {{token}}"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{transmission_url}}/api/v1/shipments/",
+							"host": [
+								"{{transmission_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shipments",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Shipment",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "JWT {{token}}"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/",
+							"host": [
+								"{{transmission_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shipments",
+								"{{shipment_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Shipment",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "JWT {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "carrier_scac",
+									"value": "wat",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "forwarder_scac",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "nvocc_scac",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "shipper_reference",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "forwarder_reference",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "forwarders_shipper_id",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "carrier_instructions",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "pro_number",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "master_bill",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "house_bill",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "subhouse_bill",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "freight_payment_terms",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "vessel_name",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "voyage_number",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "mode",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "number_of_packages",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "gross_weight_kgs",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "volume_cbms",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "container_count",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "dimensional_weight",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "chargeable_weight",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "docs_received_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "docs_approved_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "pickup_appointment_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "pickup_estimated",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "pickup_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "loading_estimated",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "loading_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "departure_estimated",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "departure_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "delivery_appointment_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "arrival_port_estimated",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "arrival_port_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "delivery_estimated",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "delivery_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "last_attempted_delivery_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "cancel_requested_date_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "cancel_confirmed_date_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "customs_filed_date_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "customs_hold_date_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "customs_release_date_actual",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "containerization_type",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "arrival_unlocode",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "final_port_unlocode",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "import_unlocode",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "lading_unlocode",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "origin_unlocode",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "us_routed_export",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "import_customs_mode",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "us_customs_export_port",
+									"value": "",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "customer_fields",
+									"value": "{}",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/",
+							"host": [
+								"{{transmission_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shipments",
+								"{{shipment_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Shipment",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "JWT {{token}}"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/",
+							"host": [
+								"{{transmission_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shipments",
+								"{{shipment_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "a2160307-fe58-4f1b-a9a3-60fa35705e24",
+				"type": "text/javascript",
+				"exec": [
+					"var token_time = pm.environment.get(\"token_time\");",
+					"var now_time = new Date().getTime();",
+					"",
+					"var token_age = now_time - token_time;",
+					"",
+					"if(token_age > 60000){",
+					"",
+					"    var url = pm.environment.get(\"profiles_url\");",
+					"    var clientId = pm.environment.get(\"oidc_client_id\");",
+					"    var usr = pm.environment.get(\"jwt_username\");",
+					"    var pwd = pm.environment.get(\"jwt_password\");",
+					"    ",
+					"    pm.sendRequest(",
+					"    {",
+					"        url: url+\"/openid/token/\",",
+					"        method: 'POST',",
+					"        header: {",
+					"            'Content-Type': 'multipart/form-data',",
+					"              },",
+					"        body: {",
+					"            mode: 'formdata',",
+					"            formdata: [",
+					"                {key: \"client_id\", value: clientId, disabled: false, description: {content:\"\", type:\"text/plain\"}},",
+					"                {key: \"username\", value: usr, disabled: false, description: {content:\"\", type:\"text/plain\"}},",
+					"                {key: \"password\", value: pwd, disabled: false, description: {content:\"\", type:\"text/plain\"}},",
+					"                {key: \"grant_type\", value: 'password', disabled: false, description: {content:\"\", type:\"text/plain\"}},",
+					"                {key: \"scope\", value: 'openid email', disabled: false, description: {content:\"\", type:\"text/plain\"}},",
+					"            ]",
+					"        }",
+					"    }",
+					"    , function (err, response) {",
+					"        var data = response.json();",
+					"        pm.environment.set(\"token\", data.id_token);",
+					"        pm.environment.set(\"token_time\", now_time);",
+					"    });",
+					"}",
+					"",
+					"else {",
+					"    console.log(\"Existing token reused. [\"+(token_age/1000)+\"]\")",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "20351884-f8e6-421c-98d6-2bdd29347164",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

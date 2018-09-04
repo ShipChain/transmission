@@ -1,0 +1,52 @@
+{
+  "id": "85e447c1-db32-4dd2-b98f-d88059481835",
+  "name": "Profile [User2]",
+  "values": [
+    {
+      "key": "profiles_url",
+      "value": "http://localhost:9000",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "jwt_username",
+      "value": "user2",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "jwt_password",
+      "value": "testpassword",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "token_time",
+      "value": "1",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "oidc_client_id",
+      "value": "892633",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "transmission_url",
+      "value": "http://localhost:8000",
+      "description": "",
+      "type": "text",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2018-07-16T18:23:08.156Z",
+  "_postman_exported_using": "Postman/6.1.3"
+}

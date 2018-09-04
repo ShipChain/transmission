@@ -1,0 +1,10 @@
+#!/bin/bash
+BIN="$( cd "$( dirname "${BASH_SOURCE[0]}"  )" && pwd  )"
+PROJECT_DIR="$( cd $BIN/.. && pwd  )"
+
+[[ -f ../.envrc ]] && source ../.envrc
+[[ -f ../.env ]] && source ../.env
+[[ -z "$COMPOSE_PROJECT" ]] && COMPOSE_PROJECT=$(basename $PROJECT_DIR)
+[[ -z "$ROLE" ]] && ROLE=dev
+
+docker-compose -p $COMPOSE_PROJECT -f compose/$ROLE.yml $*

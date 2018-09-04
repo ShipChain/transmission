@@ -1,0 +1,5 @@
+#!/bin/bash
+bin/dc kill $*
+bin/dc rm -f $*
+bin/dc up -d $*
+bin/dc logs -f $*

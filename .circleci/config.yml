@@ -1,0 +1,216 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      - image: docker/compose:1.19.0
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - run:
+          name: Build application Docker image
+          command: |
+            docker-compose -f compose/circleci.yml up -d
+
+      - run:
+          name: PEP8 Lint check
+          command: |
+            docker-compose -f compose/circleci.yml exec -T runserver prospector -o pylint
+
+      - run:
+          name: Run unit tests
+          command: |
+            docker-compose -f compose/circleci.yml exec -T runserver coverage run manage.py test --noinput tests --settings conf.test_settings
+
+      - run:
+          name: Unit test coverage report
+          command: |
+            docker-compose -f compose/circleci.yml exec -T runserver coverage xml -o test-results/coverage/results.xml
+
+      - run:
+          name: Copy artifacts from Docker
+          command: |
+            docker cp $(docker-compose -f compose/circleci.yml ps -q runserver):/app/test-results test-results
+
+      - store_test_results:
+          path: test-results
+
+      - run:
+          name: Save docker image
+          command: |
+            mkdir -p docker-cache
+            docker save -o docker-cache/built-image.tar transmission-django
+
+      - save_cache:
+          key: docker-cache-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - docker-cache
+
+  push-to-ecr:
+    docker:
+      - image: docker:stable-git
+
+    steps:
+      - restore_cache:
+          keys:
+            - docker-cache-{{ .Branch }}-{{ .Revision }}
+
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - run:
+          name: Set dynamic ENV variables
+          command: |
+            echo 'export SHORT_GIT_HASH=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
+
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache py-pip
+            pip install awscli
+
+      - run:
+          name: Load docker image
+          command: |
+            docker load < /root/repo/docker-cache/built-image.tar
+
+      - run:
+          name: Push image to ECR
+          command: |
+            source $BASH_ENV
+            docker tag transmission-django $ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH
+            docker tag transmission-django $ECR_ENDPOINT/transmission-django:latest
+            $(aws ecr get-login --no-include-email)
+            docker push $ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH
+            docker push $ECR_ENDPOINT/transmission-django:latest
+
+  deploy-to-dev:
+    docker:
+      - image: docker:stable-git
+
+    steps:
+      - run:
+          name: Set dynamic ENV variables
+          command: |
+            echo 'export SHORT_GIT_HASH=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
+
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache py-pip
+            pip install awscli
+
+      - run:
+          name: Deploy new Task Revision to ECS
+          command: |
+            source $BASH_ENV
+            aws lambda invoke --function-name DeployImageToECS --payload "{
+                \"app\": \"transmission\",
+                \"env\": \"DEV\",
+                \"image\": \"$ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH\"
+              }" outputfile.txt && cat outputfile.txt
+
+  deploy-to-stage:
+    docker:
+      - image: docker:stable-git
+
+    steps:
+      - run:
+          name: Set dynamic ENV variables
+          command: |
+            echo 'export SHORT_GIT_HASH=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
+
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache py-pip
+            pip install awscli
+
+      - run:
+          name: Deploy new Task Revision to ECS
+          command: |
+            source $BASH_ENV
+            aws lambda invoke --function-name DeployImageToECS --payload "{
+                \"app\": \"transmission\",
+                \"env\": \"STAGE\",
+                \"image\": \"$ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH\"
+              }" outputfile.txt && cat outputfile.txt
+
+  deploy-to-prod:
+    docker:
+      - image: docker:stable-git
+
+    steps:
+      - run:
+          name: Set dynamic ENV variables
+          command: |
+            echo 'export SHORT_GIT_HASH=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
+
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache py-pip
+            pip install awscli
+
+      - run:
+          name: Deploy new Task Revision to ECS
+          command: |
+            source $BASH_ENV
+            aws lambda invoke --function-name DeployImageToECS --payload "{
+                \"app\": \"transmission\",
+                \"env\": \"PROD\",
+                \"image\": \"$ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH\"
+              }" outputfile.txt && cat outputfile.txt
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - push-to-ecr:
+          filters:
+            branches:
+              only: master
+          requires:
+            - build
+      - deploy-to-dev:
+          filters:
+            branches:
+              only: master
+          requires:
+            - push-to-ecr
+      - hold-deploy-stage:
+          filters:
+            branches:
+              only: master
+          type: approval
+          requires:
+            - push-to-ecr
+      - deploy-to-stage:
+          filters:
+            branches:
+              only: master
+          requires:
+            - hold-deploy-stage
+      - hold-deploy-prod:
+          filters:
+            branches:
+              only: master
+          type: approval
+          requires:
+            - deploy-to-stage
+      - deploy-to-prod:
+          filters:
+            branches:
+              only: master
+          requires:
+            - hold-deploy-prod

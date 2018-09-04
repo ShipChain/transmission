@@ -1,0 +1,393 @@
+openapi: 3.0.0
+servers:
+- url: https://transmission.shipchain.io/
+  description: ShipChain Transmission API
+info:
+  version: 0.8.0-beta
+  title: ShipChain Transmission API
+  description: |
+    **THIS DOCUMENTATION IS UNDER CONSTRUCTION**
+
+    The ShipChain Transmission API is a microservice that handles interaction with the ShipChain smart contracts via the Engine project.
+
+    # Errors
+    The API uses standard HTTP status codes and the [JSON API](http://jsonapi.org/examples/#error-objects) specification to indicate the success or failure of the API call. The body of the response will be JSON in the following format:
+
+    ```
+    {
+      "errors": [
+        {
+          "status": "422",
+          "source": { "pointer": "/data/attributes/volume" },
+          "detail": "Volume does not, in fact, go to 11."
+        }
+      ]
+    }
+    ```
+
+  x-logo:
+    url: '/static/schema/shipchain-logo.png'
+
+strings:
+- &response_200 "Success"
+- &response_202 "Accepted"
+- &response_204 "Success"
+- &response_401 "Unauthorized"
+- &response_404 "Resource not found"
+- &response_500 "Internal server error"
+- &response_503 "Service temporarily unavailable"
+
+paths:
+  /api/v1/shipments:
+    get:
+      summary: List shipments
+      description: >
+        Retrieve an array of `Shipment` objects associated with the account ordered by the `Shipment.created_at` date.
+      parameters:
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/ordering'
+      tags:
+      - Shipments
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/shipment/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+components:
+  parameters:
+    page:
+      name: page
+      in: query
+      description: Page number used for pagination
+      required: false
+      schema:
+        type: integer
+        format: int32
+
+    ordering:
+      name: search
+      in: query
+      description: ordering of the objects
+      required: false
+      schema:
+        type: string
+        enum: [created_at, modified_at, -created_at, -modified_at]
+
+    wallet:
+      path:
+        required: true
+        name: wallet_id
+        in: path
+        description: ID of the Wallet
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
+
+    device:
+      path:
+        required: true
+        name: device_id
+        in: path
+        description: ID of the Device
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
+
+    storageCredentials:
+      path:
+        name: storage_credentials_id
+        in: path
+        description: ID of the Storage Credentials
+        required: true
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
+
+  schemas:
+    dataTypes:
+      # General resource parameters
+      uuid: &uuid
+        type: string
+        format: uuid
+        description: Unique UUID for this resource
+        example: '1243d23b-e2fc-475a-8290-0e4f53479553'
+
+      resourceId:
+        properties:
+          id:
+            <<: *uuid
+            title: id
+
+      createdAt:
+        properties:
+          created_at:
+            title: created_at
+            description: Date/time of resource creation
+            type: string
+            format: date-time
+            example: '2018-06-18T14:54:56.652732Z'
+
+      modifiedAt:
+        properties:
+          modified_at:
+            title: modified_at
+            description: Date/time of last resource modification
+            type: string
+            format: date-time
+            example: '2018-06-18T14:54:56.652732Z'
+
+      # General Ethereum parameters
+      ethereum:
+        address:
+          properties:
+            address:
+              title: address
+              description: Ethereum address
+              type: string
+              example: '0x369974bFb76b656C0c45a84D00b1877340b45fA2'
+
+        publicKey:
+          properties:
+            public_key:
+              title: public_key
+              description: Public key of the wallet
+              type: string
+              example: '8afaded2fc0f7b4566c303fccb9d3b445aa88a1d213d972f38c1c2fe173f7adc8e67596ddab0dd342ec9cd4f907884b5b7ae7b873437fb8a1cb2e58ece473f81'
+
+        privateKey:
+          properties:
+            private_key:
+              title: private_key
+              description: Private key of the wallet
+              type: string
+              example: '2146c3dfeab8621830f5aa4d22cb3ee8ba13c9f9513988ec3fb154c0a43a596a'
+
+    # Models
+    jsonApi:
+      resource:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/resourceId'
+        - $ref: '#/components/requestBodies/jsonApi/createResource'
+        - type: object
+          description: Primary data related to the resource.
+
+      dataArray:
+        properties:
+          data:
+            type: array
+            items:
+              $ref: '#/components/schemas/jsonApi/resource'
+
+      linksAndMeta:
+        properties:
+          links:
+            $ref: '#/components/schemas/links'
+          meta:
+            $ref: '#/components/schemas/meta'
+
+      data:
+        properties:
+          data:
+            $ref: '#/components/schemas/jsonApi/resource'
+
+      error:
+        properties:
+          errors:
+            type: array
+            items:
+              type: object
+              properties:
+                status:
+                  description: The HTTP status code applicable to this problem, expressed as a string value.
+                  type: string
+                detail:
+                  description: A human-readable explanation specific to this occurrence of the problem.
+                  type: string
+
+      errorPointer:
+        properties:
+          errors:
+            type: array
+            description: An array of error objects
+            items:
+              type: object
+              description: Error objects provide additional information about problems encountered while performing an operation.
+              properties:
+                source:  # Not present on all errors
+                  description: An object containing references to the source of the error, optionally including any of the following members.
+                  type: object
+                  properties:
+                    pointer:
+                      description: A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].
+                      type: string
+
+      errorParameter:
+        properties:
+          errors:
+            type: array
+            items:
+              type: object
+              properties:
+                source:  # Not present on all errors
+                  description: An object containing references to the source of the error, optionally including any of the following members.
+                  type: object
+                  properties:
+                    parameter:
+                      description: A string indicating which URI query parameter caused the error.
+                      type: string
+
+    shipment:
+      resource:
+        properties:
+          type:
+            example: Shipment
+
+      attributes:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/createdAt'
+        - $ref: '#/components/schemas/dataTypes/modifiedAt'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/shipment/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/shipment/attributes'
+
+      getResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/data'
+        - properties:
+            data:
+              $ref: '#/components/schemas/shipment/getResource'
+
+      listResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/dataArray'
+        - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+        - properties:
+            data:
+              items:
+                $ref: '#/components/schemas/shipment/getResource'
+
+    errors:
+      401:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/error'
+        - $ref: '#/components/schemas/jsonApi/errorPointer'
+        - properties:
+            errors:
+              items:
+                properties:
+                  detail:
+                    example: *response_401
+                  source:
+                    properties:
+                      pointer:
+                        example: "/data"
+                  status:
+                    example: "401"
+      500:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/error'
+        - properties:
+            errors:
+              items:
+                properties:
+                  detail:
+                    example: *response_500
+                  status:
+                    example: "500"
+
+    links:
+      type: object
+      description: Links related to the primary data.
+      properties:
+        first:
+          title: first
+          description: Link to first page of the list
+          type: string
+          example: '/api/v1/{object-type}/?page=1'
+        last:
+          title: last
+          description: Link to last page of the list
+          type: string
+          example: '/api/v1/{object-type}/?page=4'
+        next:
+          title: next
+          description: Link to next page of the list
+          type: string
+          example: '/api/v1/{object-type}/?page=3'
+        previous:
+          title: previous
+          description: Link to previous page of the list
+          type: string
+          example: '/api/v1/{object-type}/?page=2'
+
+    meta:
+      type: object
+      description: Non-standard meta-information.
+      properties:
+        pagination:
+          type: object
+          properties:
+            count:
+              title: count
+              description: Total number of resources associated with user
+              type: integer
+              format: int32
+              example: '1'
+            page:
+              title: page
+              description: Current page
+              type: integer
+              format: int32
+              example: '1'
+            pages:
+              title: pages
+              description: Number of pages of resources
+              type: integer
+              format: int32
+              example: '1'
+
+  requestBodies:
+    jsonApi:
+      createResource:
+        type: object
+        description: Primary data related to the resource.
+        properties:
+          type:
+            type: string
+            title: type
+            description: Type of resource
+          attributes:
+            type: object
+            title: attributes
+            description: Properties of the resource
+
+      createData:
+        properties:
+          data:
+            type: object
+            $ref: '#/components/requestBodies/jsonApi/createResource'
+
+  securitySchemes:
+    JWT:
+      description: >
+        All authenticated service calls must contain a valid JWT id_token obtained from the Profiles OIDC provider and
+        passed via the Authentication header.
+      type: http
+      scheme: bearer
+      bearerFormat: JWT {id_token}
+security:
+- JWT: []
+tags:
+- name: Shipments
+  description: >
+    Shipments are the core entity in the ShipChain Transmission service. This is a collection of endpoints related to managing shipments.

@@ -1,0 +1,32 @@
+output-format: text
+
+strictness: high
+
+uses:
+    - django
+
+pylint:
+  disable:
+    - unused-argument
+    - redefined-builtin
+    - no-self-use
+    - function-redefined
+    - abstract-method
+    - wildcard-import
+    - unused-wildcard-import
+    - too-many-ancestors
+  options:
+    good-names:
+      - pk
+    max-line-length: 120
+
+pep8:
+  full: true
+  options:
+    max-line-length: 120
+
+pyflakes:
+  disable:
+    - F811
+    - F401
+    - F403

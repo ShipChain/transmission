@@ -1,0 +1,51 @@
+{
+  "id": "9440180d-f528-4ac7-8a5c-6181528d4e6f",
+  "name": "Profile [User1]",
+  "values": [
+    {
+      "key": "profiles_url",
+      "value": "http://localhost:9000",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "jwt_username",
+      "value": "user1",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "jwt_password",
+      "value": "testpassword",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "token_time",
+      "value": 1531765278759,
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "oidc_client_id",
+      "value": "892633",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "token",
+      "value": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImQ1OWJjMGRlYzIzMzlmZDliN2VhMmZjZDNhMjgwNTMxIn0.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjkwMDAvb3BlbmlkIiwic3ViIjoiMzY4NmM2MTYtZmFkZi00MjYxLWEyYzItNmFhYTUwNGExYWUzIiwiYXVkIjoiODkyNjMzIiwiZXhwIjoxNTMxNzY1ODc4LCJpYXQiOjE1MzE3NjUyNzgsImF1dGhfdGltZSI6MTUyODk5MTMxNiwibm9uY2UiOiJzZWxmLmNvZGUubm9uY2UiLCJhdF9oYXNoIjoiNllCVHNuUk4yZFRwS3ZVZXBWMGpnUSIsInVzZXJuYW1lIjoidXNlcjEiLCJlbWFpbCI6InVzZXIxQHNoaXBjaGFpbi5pbyJ9.gTQR55PQiBpu5-lMA94mZl-gBD2DK4hJhQ-9O0H-jV7vxKrlC3pLVYGk3N0AOo8jf640yxHuoSQw1rooTnpxisPr0yrxoKh2Xd1T6K3qEFPUrbB3l8B1Dy_HofV80nG7C4ej5FUfYGHFkHHlbZpilU5VOIShc-K5Peynzz5Ming",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "transmission_url",
+      "value": "http://localhost:8000",
+      "enabled": true,
+      "type": "text"
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2018-07-16T18:22:40.681Z",
+  "_postman_exported_using": "Postman/6.1.3"
+}
