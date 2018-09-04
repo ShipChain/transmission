@@ -16,7 +16,7 @@ def async_job_fire(self, async_job_id):
     print(f'AsyncJob {async_job_id} firing!')
     async_job = AsyncJob.objects.get(id=async_job_id)
 
-    if async_job.state == JobState.PENDING:
+    if async_job.state not in (JobState.RUNNING, JobState.COMPLETE):
         try:
             with cache.lock(async_job.parameters['signing_wallet_id']):  # Only one concurrent tx per wallet
                 # Find which RPC module/class to import
