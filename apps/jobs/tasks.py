@@ -9,7 +9,7 @@ from apps.rpc_client import RPCError
 
 
 @shared_task(bind=True, autoretry_for=(Exception,),
-             retry_backoff=3, retry_backoff_max=60, max_retries=0)  # TODO: enable retries
+             retry_backoff=3, retry_backoff_max=60, max_retries=10)
 def async_job_fire(self, async_job_id):
     from .models import AsyncJob, JobState
 
