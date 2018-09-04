@@ -3,9 +3,9 @@ import logging
 
 import requests
 from django.conf import settings
-from influxdb_metrics.loader import log_metric, TimingMetric
 from rest_framework import status
 from rest_framework.exceptions import APIException
+from influxdb_metrics.loader import log_metric, TimingMetric
 
 from apps.utils import DecimalEncoder
 
@@ -41,7 +41,8 @@ class RPCClient(object):
 
         try:
             with TimingMetric('engine_rpc.call', tags={'method': method}) as timer:
-                response_json = requests.post(self.url, data=json.dumps(self.payload, cls=DecimalEncoder), headers=self.headers).json()
+                response_json = requests.post(self.url, data=json.dumps(self.payload, cls=DecimalEncoder),
+                                              headers=self.headers).json()
                 LOG.info('rpc_client(%s) duration: %.3f', method, timer.elapsed)
 
             if 'error' in response_json:

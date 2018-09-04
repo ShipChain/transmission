@@ -99,7 +99,7 @@ def build_auth_headers_from_request(request):
 
 
 class DecimalEncoder(json.JSONEncoder):
-    def default(self, o):
+    def default(self, o):  # pylint: disable=method-hidden
         if isinstance(o, decimal.Decimal):
             return float(o)
         return super(DecimalEncoder, self).default(o)
