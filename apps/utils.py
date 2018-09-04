@@ -1,3 +1,5 @@
+import json
+import decimal
 from collections import namedtuple
 from rest_framework import exceptions
 from rest_framework_jwt.settings import api_settings
@@ -94,3 +96,10 @@ def build_auth_headers_from_request(request):
 
     token = request.auth.decode('utf-8')
     return {'Authorization': f"JWT {token}"}
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return float(o)
+        return super(DecimalEncoder, self).default(o)
