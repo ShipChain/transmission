@@ -89,10 +89,9 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         shipment = self.perform_update(serializer)
-        async_job = shipment.asyncjob_set.all()[:1]  # TODO: be sure to filter to the latest one, handle race cond.
-
+        async_job = shipment.asyncjob_set.latest('created_at')
         response = ShipmentTxSerializer(shipment)
         if async_job:
-            response.instance.async_job_id = async_job[0].id
+            response.instance.async_job_id = async_job.id
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
