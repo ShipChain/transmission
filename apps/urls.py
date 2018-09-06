@@ -27,6 +27,7 @@ API_PREFIX = r'^api/(?P<version>(v1|v2))'
 
 router = routers.SimpleRouter()
 router.register(f'{API_PREFIX[1:]}/shipments', shipments.ShipmentViewSet)
+router.register(f'{API_PREFIX[1:]}/locations', shipments.LocationViewSet)
 router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, base_name='job')
 router.register(f'{API_PREFIX[1:]}/events', eth.EventViewSet, base_name='event')
 router.register(f'{API_PREFIX[1:]}/transactions', eth.TransactionViewSet, base_name='transaction')

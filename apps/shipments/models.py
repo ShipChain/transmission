@@ -19,6 +19,7 @@ LOG = logging.getLogger('transmission')
 
 class Location(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
+    owner_id = models.CharField(null=False, max_length=36)
 
     name = models.CharField(max_length=255)
     address_1 = models.CharField(max_length=255, blank=True, null=True)

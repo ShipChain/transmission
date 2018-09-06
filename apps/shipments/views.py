@@ -4,11 +4,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .geojson import build_line_string_feature, build_point_features, build_feature_collection
-from .models import Shipment
+from .models import Shipment, Location
 from .permissions import IsOwner
 from .rpc import ShipmentRPCClient
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, \
-    ShipmentUpdateSerializer, ShipmentTxSerializer
+    ShipmentUpdateSerializer, ShipmentTxSerializer, LocationSerializer
 
 
 class ShipmentViewSet(viewsets.ModelViewSet):
@@ -95,3 +95,39 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             response.instance.async_job_id = async_job.id
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
+
+
+class LocationViewSet(viewsets.ModelViewSet):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+    # TODO: Clarify/Solidify the permissions for Locations w/ respect to owner_id
+    permission_classes = (permissions.IsAuthenticated, IsOwner) if settings.PROFILES_URL else (permissions.AllowAny,)
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if settings.PROFILES_URL:
+            queryset = queryset.filter(owner_id=self.request.user.id)
+        return queryset
+
+    def perform_create(self, serializer):
+        if settings.PROFILES_URL:
+            created = serializer.save(owner_id=self.request.user.id)
+        else:
+            created = serializer.save()
+        return created
+
+    def perform_update(self, serializer):
+        return serializer.save()
+
+    def create(self, request, *args, **kwargs):
+        """
+        Create a Location object
+        """
+        # Create Location
+        serializer = LocationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        location = self.perform_create(serializer)
+
+        return Response(LocationSerializer(location).data,
+                        status=status.HTTP_201_CREATED,)
