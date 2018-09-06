@@ -43,6 +43,15 @@ class LocationSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         read_only_fields = ('owner_id',) if settings.PROFILES_URL else ()
 
 
+class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
+    """
+    Serializer for a location, used nested in a Shipment
+    """
+    class Meta:
+        model = Location
+        exclude = ('owner_id',) if settings.PROFILES_URL else ()
+
+
 class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     """
     Serializer for a location, used nested in a Shipment
@@ -86,7 +95,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             if location_field in validated_data:
                 data = validated_data.pop(location_field)
 
-                location_args[location_field], _ = Location.objects.get_or_create(**data)
+                location_args[location_field], _ = Location.objects.get_or_create(**data,
+                                                                                  owner_id=validated_data['owner_id'])
 
         return Shipment.objects.create(**validated_data, **location_args)
 
@@ -124,8 +134,8 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     Serializer for a shipment vault object
     """
 
-    ship_from_location = LocationSerializer(required=False)
-    ship_to_location = LocationSerializer(required=False)
+    ship_from_location = LocationVaultSerializer(required=False)
+    ship_to_location = LocationVaultSerializer(required=False)
 
     class Meta:
         model = Shipment
