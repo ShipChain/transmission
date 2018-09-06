@@ -6,15 +6,17 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 
-from apps.shipments.models import Shipment, LoadShipment, FundingType, EscrowStatus, ShipmentStatus
+from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus
 from apps.shipments.rpc import ShipmentRPCClient
-from apps.utils import AuthenticatedUser
-from tests.utils import replace_variables_in_string
+from apps.utils import AuthenticatedUser, random_id
+from tests.utils import replace_variables_in_string, create_form_content
 
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
 STORAGE_CRED_ID = '77b72202-5bcd-49f4-9860-bc4ec4fee07b'
+LOCATION_NAME = "Test Location Name"
+LOCATION_NUMBER = "555-555-5555"
 
 
 class ShipmentAPITests(APITestCase):
@@ -368,3 +370,130 @@ class ShipmentAPITests(APITestCase):
     #     self.assertEqual(response_data['data']['attributes']['carrier_scac'], parameters['_carrier_scac'])
     #     self.assertEqual(response_data['data']['attributes']['vault_id'], parameters['_vault_id'])
     #     self.assertEqual(response_data['data']['meta']['transaction_id'], parameters['_async_hash'])
+
+
+class LocationAPITests(APITestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user_1 = AuthenticatedUser({
+            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7b',
+            'username': 'user1@shipchain.io',
+            'email': 'user1@shipchain.io',
+        })
+
+    def set_user(self, user, token=None):
+        self.client.force_authenticate(user=user, token=token)
+
+    def create_location(self):
+        self.locations = []
+        self.locations.append(Location.objects.create(name=LOCATION_NAME,
+                                                      owner_id='5e8f1d76-162d-4f21-9b71-2ca97306ef7b'))
+
+    def test_list_empty(self):
+        """
+        Test listing requires authentication
+        """
+
+        # Unauthenticated request should fail with 403
+        url = reverse('location-list', kwargs={'version': 'v1'})
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Authenticated request should succeed
+        self.set_user(self.user_1)
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response_data = response.json()
+
+        # No devices created should return empty array
+        self.assertEqual(len(response_data['data']), 0)
+
+    def test_create_location(self):
+        url = reverse('location-list', kwargs={'version': 'v1'})
+        valid_data, content_type = create_form_content({'name': LOCATION_NAME})
+
+        # Unauthenticated request should fail with 403
+        response = self.client.post(url, '{}', content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_user(self.user_1)
+
+        # Authenticated request without name parameter should fail
+        response = self.client.post(url, '{}', content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Authenticated request with name parameter should succeed
+        response = self.client.post(url, valid_data, content_type=content_type)
+        print(response.content)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response_data = response.json()
+        self.assertEqual(response_data['data']['attributes']['name'], LOCATION_NAME)
+
+    def test_update_existing_location(self):
+        self.create_location()
+        url = reverse('location-detail', kwargs={'version': 'v1', 'pk': self.locations[0].id})
+        valid_data, content_type = create_form_content({'phone_number': LOCATION_NUMBER})
+
+        # Unauthenticated request should fail with 403
+        response = self.client.patch(url, valid_data, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_user(self.user_1)
+
+        # Authenticated request with name parameter should succeed
+        response = self.client.patch(url, valid_data, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(response_data['data']['attributes']['phone_number'], LOCATION_NUMBER)
+
+    def test_update_nonexistent_location(self):
+        self.create_location()
+        url = reverse('location-detail', kwargs={'version': 'v1', 'pk': random_id()})
+        valid_data, content_type = create_form_content({'phone_number': LOCATION_NUMBER})
+
+        # Unauthenticated request should fail with 403
+        response = self.client.patch(url, valid_data, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_user(self.user_1)
+
+        # Authenticated request should fail
+        response = self.client.patch(url, valid_data, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_existing_location(self):
+        self.create_location()
+        url = reverse('location-detail', kwargs={'version': 'v1', 'pk': self.locations[0].id})
+
+        # Unauthenticated request should fail with 403
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_user(self.user_1)
+
+        # Authenticated request should succeed
+        response = self.client.delete(url)
+        print(response.content)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Ensure location does not exist
+        self.assertEqual(Location.objects.count(), 0)
+
+    def test_delete_nonexistent_location(self):
+        self.create_location()
+        url = reverse('location-detail', kwargs={'version': 'v1', 'pk': random_id()})
+
+        # Unauthenticated request should fail with 403
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_user(self.user_1)
+
+        # Authenticated request should fail
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

@@ -62,6 +62,129 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
+  /api/v1/locations/:
+    get:
+      summary: List Locations
+      description: >
+        Retrieve an array of `Location` objects associated with the account ordered by the `Location.created_at` date.
+      parameters:
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/ordering'
+      tags:
+      - Location
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/location/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+    post:
+      summary: Create a Location
+      description: >
+        Retrieve an array of `Location` objects associated with the account ordered by the `Location.created_at` date.
+      tags:
+      - Location
+      responses:
+        '201':
+          description: *response_201
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/location/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/location/createRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/requestBodies/location/createAttributes'
+
+  /api/v1/locations/{locations_id}/:
+    get:
+      summary: Get Location
+      description: >
+        Get the current information of the `Location`.
+      parameters:
+      - $ref: '#/components/parameters/location/path'
+      tags:
+      - Location
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/location/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+    delete:
+      summary: Delete a Location
+      description: >
+        Delete the `Location` from Transmission.
+      parameters:
+      - $ref: '#/components/parameters/location/path'
+      tags:
+      - Location
+      responses:
+        '200':
+          description: *response_204
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/location/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+    patch:
+      summary: Update a Location
+      description: >
+        Update a `Location` with the provided parameters.
+      tags:
+      - Location
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/location/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/location/createRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/requestBodies/location/createAttributes'
+
 components:
   parameters:
     page:

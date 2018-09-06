@@ -10,6 +10,10 @@
 			"description": null,
 			"item": [
 				{
+			"name": "Shipments",
+			"description": null,
+			"item": [
+				{
 					"name": "Create Shipment",
 					"request": {
 						"method": "POST",
@@ -19,7 +23,29 @@
 								"value": "JWT {{token}}"
 							}
 						],
-						"body": {},
+						"body": {
+                          "mode": "formdata",
+                          "formdata": [
+                            {
+                              "key": "storage_credentials_id",
+                              "value": "storage_credentials_id",
+                              "type": "text",
+                              "disabled": false
+                            },
+                            {
+                              "key": "shipper_wallet_id",
+                              "value": "shipper_wallet_id",
+                              "type": "text",
+                              "disabled": false
+                            },
+                            {
+                              "key": "carrier_wallet_id",
+                              "value": "carrier_wallet_id",
+                              "type": "text",
+                              "disabled": false
+                            }
+                          ]
+                        },
 						"url": {
 							"raw": "{{transmission_url}}/api/v1/shipments/",
 							"host": [
@@ -446,6 +472,149 @@
 								"v1",
 								"shipments",
 								"{{shipment_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "JWT {{token}}"
+							}
+						],
+						"body": {
+                          "mode": "formdata",
+                          "formdata": [
+                            {
+                              "key": "name",
+                              "value": "Name",
+                              "type": "text",
+                              "disabled": false
+                            }
+                          ]
+                        },
+						"url": {
+							"raw": "{{transmission_url}}/api/v1/locations/",
+							"host": [
+								"{{transmission_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"locations",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Locations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "JWT {{token}}"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{transmission_url}}/api/v1/locations/",
+							"host": [
+								"{{transmission_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"locations",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Location",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "JWT {{token}}"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{transmission_url}}/api/v1/shipments/{{location_id}}/",
+							"host": [
+								"{{transmission_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"locations",
+								"{{location_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Location",
+					"request": {
+						"method": "Patch",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "JWT {{token}}"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{transmission_url}}/api/v1/shipments/{{location_id}}/",
+							"host": [
+								"{{transmission_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"locations",
+								"{{location_id}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+                {
+					"name": "Delete Location",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "JWT {{token}}"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{transmission_url}}/api/v1/locations/{{location_id}}/",
+							"host": [
+								"{{transmission_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"locations",
+								"{{location_id}}",
 								""
 							]
 						}
