@@ -87,6 +87,10 @@ paths:
           application/vnd.api+json:
             schema:
               $ref: '#/components/requestBodies/shipment/createRequest'
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/shipment/createAttributes'
           multipart/form-data:
             schema:
               allOf:
@@ -157,6 +161,10 @@ paths:
           application/vnd.api+json:
             schema:
               $ref: '#/components/requestBodies/shipment/createRequest'
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/shipment/createAttributes'
           multipart/form-data:
             schema:
               allOf:
@@ -257,6 +265,10 @@ paths:
           application/vnd.api+json:
             schema:
               $ref: '#/components/requestBodies/location/createRequest'
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/location/createAttributes'
           multipart/form-data:
             schema:
               $ref: '#/components/requestBodies/location/createAttributes'
@@ -328,6 +340,9 @@ paths:
           application/vnd.api+json:
             schema:
               $ref: '#/components/requestBodies/location/createRequest'
+          application/json:
+            schema:
+              $ref: '#/components/requestBodies/location/createAttributes'
           multipart/form-data:
             schema:
               $ref: '#/components/requestBodies/location/createAttributes'
