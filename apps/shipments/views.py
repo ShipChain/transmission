@@ -1,7 +1,10 @@
+import logging
+
 from django.conf import settings
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from influxdb_metrics.loader import log_metric
 
 from .geojson import build_line_string_feature, build_point_features, build_feature_collection
 from .models import Shipment, Location
@@ -9,6 +12,9 @@ from .permissions import IsOwner
 from .rpc import ShipmentRPCClient
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, \
     ShipmentUpdateSerializer, ShipmentTxSerializer, LocationSerializer
+
+
+LOG = logging.getLogger('transmission')
 
 
 class ShipmentViewSet(viewsets.ModelViewSet):
@@ -36,6 +42,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         """
         Create a Shipment object and make Async Request to Engine
         """
+        LOG.debug(f'Creating a shipment object.')
+        log_metric('transmission.info', tags={'method': 'shipments.create'})
         # Create Shipment
         serializer = ShipmentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -45,6 +53,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         response = ShipmentTxSerializer(shipment)
         if async_job:
+            LOG.debug(f'AsyncJob created with id {async_job[0].id}.')
             response.instance.async_job_id = async_job[0].id
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
@@ -54,6 +63,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         """
         Retrieve tracking data for this Shipment after checking permissions with Profiles
         """
+        LOG.debug(f'Retrieve tracking data for a shipment {pk}.')
+        log_metric('transmission.info', tags={'method': 'shipments.tracking'})
         shipment = Shipment.objects.get(pk=pk)
 
         # TODO: re-implement device/shipment authorization for tracking data
@@ -65,14 +76,17 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         if 'as_line' in request.query_params:
             all_features = build_line_string_feature(shipment, tracking_data)
+            LOG.debug(f'Returning features as_line with features {all_features}.')
 
         elif 'as_point' in request.query_params:
             all_features = build_point_features(shipment, tracking_data)
+            LOG.debug(f'Returning features as_point with features {all_features}.')
 
         else:
             all_features = []
             all_features += build_line_string_feature(shipment, tracking_data)
             all_features += build_point_features(shipment, tracking_data)
+            LOG.debug(f'Returning features {all_features}.')
 
         feature_collection = build_feature_collection(all_features)
 
@@ -84,6 +98,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        LOG.debug(f'Updating shipment {pk} with new details.')
+        log_metric('transmission.info', tags={'method': 'shipments.tracking'})
 
         serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -91,6 +107,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = self.perform_update(serializer)
         async_job = shipment.asyncjob_set.latest('created_at')
         response = ShipmentTxSerializer(shipment)
+        LOG.debug(f'Async_job created with id {async_job.id}.')
         if async_job:
             response.instance.async_job_id = async_job.id
 
@@ -126,6 +143,8 @@ class LocationViewSet(viewsets.ModelViewSet):
         # Create Location
         serializer = LocationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        LOG.debug(f'Creating a location object.')
+        log_metric('transmission.info', tags={'method': 'location.create'})
 
         location = self.perform_create(serializer)
 

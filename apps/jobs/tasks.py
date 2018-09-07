@@ -50,6 +50,7 @@ class AsyncTask:
                 raise WalletInUseException(f'Wallet {wallet_id} is currently already in use.')
 
     def _get_transaction(self):
+        LOG.debug(f'Getting transaction for job {self.async_job.id}, {self.async_job.parameters["rpc_method"]}')
         log_metric('transmission.info', tags={'method': '_get_transaction'})
         if self.async_job.parameters['rpc_method'] == 'create_shipment_transaction':
             contract_version, unsigned_tx = getattr(self.rpc_client, self.async_job.parameters['rpc_method'])(
@@ -63,6 +64,7 @@ class AsyncTask:
         return unsigned_tx
 
     def _sign_transaction(self, unsigned_tx):
+        LOG.debug(f'Signing transaction for job {self.async_job.id}')
         log_metric('transmission.info', tags={'method': '_sign_transaction'})
         from apps.eth.models import EthAction, Transaction
 
@@ -76,6 +78,7 @@ class AsyncTask:
                 'async_job': self.async_job
             })
             if created:
+                LOG.debug(f'Created new EthAction {eth_action.id}')
                 for job_listener in self.async_job.joblistener_set.all():
                     eth_action.ethlistener_set.create(listener=job_listener.listener)
 
@@ -90,9 +93,10 @@ class AsyncTask:
         return signed_tx, eth_action
 
     def _send_transaction(self, signed_tx, eth_action):
-        log_metric('transmission.info', tags={'method': '_send_transaction'})
         from .models import JobState
         from apps.eth.models import TransactionReceipt
+        LOG.debug(f'Sending transaction for job {self.async_job.id}, hash {eth_action.transaction_hash}')
+        log_metric('transmission.info', tags={'method': '_send_transaction'})
 
         receipt = getattr(self.rpc_client, 'send_transaction')(signed_tx, self.async_job.get_callback_url())
         with transaction.atomic():
@@ -107,6 +111,7 @@ class AsyncTask:
              retry_backoff=3, retry_backoff_max=60, max_retries=10)
 def async_job_fire(self, async_job_id):
     LOG.debug(f'AsyncJob {async_job_id} firing!')
+    log_metric('transmission.info', tags={'method': 'async_job_fire'})
 
     task = AsyncTask(async_job_id)
     try:

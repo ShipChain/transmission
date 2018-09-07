@@ -2,6 +2,7 @@ from rest_framework import viewsets, mixins, parsers, permissions, status, rende
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_json_api import parsers as jsapi_parsers
+from influxdb_metrics.loader import log_metric
 
 from .models import AsyncJob
 from .serializers import AsyncJobSerializer, MessageSerializer

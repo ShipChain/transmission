@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import mixins, viewsets, parsers, status, renderers, permissions
 from rest_framework.response import Response
 from rest_framework_json_api import renderers as jsapi_renderers
+from influxdb_metrics.loader import log_metric
 
 from apps.eth.models import EthAction, Event
 from apps.eth.serializers import EventSerializer, EthActionSerializer
@@ -27,14 +28,18 @@ class EventViewSet(mixins.CreateModelMixin,
     permission_classes = (permissions.AllowAny,)
 
     def create(self, request, *args, **kwargs):
+        log_metric('transmission.info', tags={'method': 'events.create'})
+        LOG.debug('Events create')
 
         is_many = isinstance(request.data, list)
 
         if not is_many:
+            LOG.debug('Event is_many is false')
             serializer = EventSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
             try:
+                LOG.debug(f'Finding contract receipt for t-hash: {serializer.validated_data["transactionHash"]}')
                 action = EthAction.objects.get(transaction_hash=serializer.data['transaction_hash'])
             except ObjectDoesNotExist:
                 action = None
@@ -45,11 +50,13 @@ class EventViewSet(mixins.CreateModelMixin,
             Event.objects.create(**serializer.data, eth_action=action)
 
         else:
+            LOG.debug('Events is_many is true')
             serializer = EventSerializer(data=request.data, many=True)
             serializer.is_valid(raise_exception=True)
 
             for event in serializer.data:
                 try:
+                    LOG.debug(f'Finding contract receipt for t-hash: {serializer.validated_data["transactionHash"]}')
                     action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
                 except ObjectDoesNotExist:
                     action = None
@@ -72,6 +79,8 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
     permission_classes = (permissions.IsAuthenticated, IsOwner) if settings.PROFILES_URL else (permissions.AllowAny,)
 
     def get_queryset(self):
+        log_metric('transmission.info', tags={'method': 'transaction.get_queryset'})
+        LOG.debug('Getting tx details for a transaction hash.')
         queryset = self.queryset
         if settings.PROFILES_URL:
             queryset = queryset.filter(ethlistener__shipments__owner_id=self.request.user.id)

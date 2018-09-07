@@ -20,6 +20,8 @@ class RPCError(APIException):
     def __init__(self, detail, status_code=None, code=None):
         super(RPCError, self).__init__(detail, code)
         self.detail = detail
+        LOG.error(f'RPC error with detail {detail}.')
+        log_metric('transmission.error', tags={'method': 'RPCError'})
 
         if status_code:
             self.status_code = status_code
@@ -32,6 +34,8 @@ class RPCClient(object):
         self.payload = {"jsonrpc": "2.0", "id": 0, "params": {}}
 
     def call(self, method, args=None):
+        LOG.debug(f'Calling RPCClient with method {method}.')
+        log_metric('transmission.info', tags={'method': 'RPCClient.call'})
 
         if args and not isinstance(args, object):
             raise RPCError("Invalid parameter type for Engine RPC call")
@@ -65,6 +69,8 @@ class RPCClient(object):
         return response_json
 
     def sign_transaction(self, wallet_id, transaction):
+        LOG.debug(f'Signing transaction {transaction} with wallet_id {wallet_id}.')
+        log_metric('transmission.info', tags={'method': 'RPCClient.sign_transaction'})
 
         result = self.call('transaction.sign', {
             "signerWallet": wallet_id,
@@ -73,10 +79,13 @@ class RPCClient(object):
 
         if 'success' in result and result['success']:
             if 'transaction' in result:
+                LOG.debug(f'Successful signing of transaction.')
                 return result['transaction'], result['hash']
         raise RPCError("Invalid response from Engine")
 
     def send_transaction(self, signed_transaction, callback_url):
+        LOG.debug(f'Sending transaction {signed_transaction} with callback_url {callback_url}.')
+        log_metric('transmission.info', tags={'method': 'RPCClient.send_transaction'})
 
         result = self.call('transaction.send', {
             "callbackUrl": callback_url,
@@ -85,5 +94,6 @@ class RPCClient(object):
 
         if 'success' in result and result['success']:
             if 'receipt' in result:
+                LOG.debug(f'Successful sending of transaction.')
                 return result['receipt']
         raise RPCError("Invalid response from Engine")
