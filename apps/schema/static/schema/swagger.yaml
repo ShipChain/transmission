@@ -53,7 +53,6 @@ paths:
         Retrieve an array of `Shipment` objects associated with the current user ordered by the `Shipment.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
-      - $ref: '#/components/parameters/ordering'
       tags:
       - Shipments
       responses:
@@ -82,7 +81,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/shipment/getResponse'
+                $ref: '#/components/schemas/shipment/createResponse'
         '401':
           description: *response_401
           content:
@@ -147,7 +146,7 @@ paths:
     patch:
       summary: Update a shipment
       description: >
-        Create a `Shipment` object associated with the account ordered by the `Shipment.created_at` date.
+        Update a `Shipment` object with the provided parameters.
       tags:
       - Shipments
       responses:
@@ -181,10 +180,9 @@ paths:
     get:
       summary: List jobs
       description: >
-        Retrieve an array of `AsyncJob` objects initiated by the user ordered by the `Job.created_at` date.
+        Retrieve an array of `AsyncJob` actions initiated by the user ordered by the `AsyncJob.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
-      - $ref: '#/components/parameters/ordering'
       tags:
       - AsyncJobs
       responses:
@@ -224,6 +222,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
+  /api/v1/transactions/{transaction_hash}/:
+    get:
+      summary: Get transaction
+      description: >
+        Get more details about an `EthAction` (association between an Eth `Transaction` and `TransactionReceipt`) and its state.
+      parameters:
+      - $ref: '#/components/parameters/transaction/path'
+      tags:
+      - Transactions
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ethAction/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
   /api/v1/locations/:
     get:
       summary: List locations
@@ -231,7 +252,6 @@ paths:
         Retrieve an array of `Location` objects associated with the current user ordered by the `Location.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
-      - $ref: '#/components/parameters/ordering'
       tags:
       - Locations
       responses:
@@ -324,7 +344,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
     patch:
-      summary: Update a Location
+      summary: Update a location
       description: >
         Update a `Location` with the provided parameters.
       tags:
@@ -401,6 +421,15 @@ components:
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
+    transaction:
+      path:
+        required: true
+        name: transaction_hash
+        in: path
+        description: Hash of a signed Ethereum transaction
+        schema:
+          $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
+
   schemas:
     dataTypes:
       # General resource parameters
@@ -457,9 +486,22 @@ components:
 
       # General Ethereum parameters
       ethereum:
+        transactionHash:
+          properties:
+            transaction_hash: &transactionHash
+              title: transaction_hash
+              description: Hash of a signed Ethereum transaction
+              type: string
+              example: '0x869335bea9131d496acb844b1ce25db22093f81f74d64c8e3e96930cbe4f129c'
+
+        resourceId:
+          properties:
+            id:
+              <<: *transactionHash
+              title: id
         address:
           properties:
-            address:
+            address: &address
               title: address
               description: Ethereum address
               type: string
@@ -489,6 +531,175 @@ components:
               type: string
               example: '2146c3dfeab8621830f5aa4d22cb3ee8ba13c9f9513988ec3fb154c0a43a596a'
 
+        transactionReceipt:
+          transactionHash:
+            properties:
+              transaction_hash:
+                <<: *transactionHash
+
+          transactionIndex:
+            properties:
+              transaction_index:
+                title: transaction_index
+                description: Integer of the transactions index position in the block.
+                type: integer
+                example: 9
+
+          blockHash:
+            properties:
+              block_hash:
+                title: block_hash
+                description: Hash of the block that this transaction was included in
+                type: string
+                example: '0xca0dda8d80ccc3b17470b8b8ab9594c75f5ac27c98222f4913bed84d56419b0d'
+
+          blockNumber:
+            properties:
+              block_number:
+                title: block_number
+                description: Block number that the transaction was included in
+                type: integer
+                example: 6271965
+
+          contractAddress:
+            properties:
+              contract_address:
+                title: contract_address
+                description: The contract address created, if the transaction was a contract creation, otherwise `null`
+                type: string
+                example: '0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe'
+
+          cumulativeGasUsed:
+            properties:
+              cumulative_gas_used:
+                title: cumulative_gas_used
+                description: The total amount of gas used when this transaction was executed in the block
+                type: integer
+                example: 7130108
+
+          gasUsed:
+            properties:
+              gas_used:
+                title: gas_used
+                description: The amount of gas used by this specific transaction alone
+                type: integer
+                example: 240114
+
+          logs:
+            properties:
+              logs:
+                title: logs
+                description: Array of log objects, which this transaction generated
+                type: string
+                example: >
+                  [{\"address\": \"0x6DF432De968758Ffd24acb764c439ac8166342b3\", \"blockHash\":
+                  \"0xca0dda8d80ccc3b17470b8b8ab9594c75f5ac27c98222f4913bed84d56419b0d\", \"blockNumber\": 6271965,
+                  \"data\": \"0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000
+                  3cb6c364d772e1135700953e69a0ae7a5104f2820000000000000000000000003cb6c364d772e1135700953e69a0ae7a5104f2
+                  820000000000000000000000000000000000000000000000000000000000000000\", \"logIndex\": 77,
+                  \"removed\": false, \"topics\": [\"0x485397dbe4d658daac8124e3080f66a255b9207fa36d7e757ba4d52fe6c21f54\"],
+                  \"transactionHash\": \"0xf53ffac288474d65dc7ad79ea484ab742cc452ccc119053a8274b29f4bdfc888\",
+                  \"transactionIndex\": 9, \"id\": \"log_43b39da9\"}]
+
+          logsBloom:
+            properties:
+              logsBloom:
+                title: logsBloom
+                description: Hash of the log entries
+                type: string
+                example: >
+                  0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+                  000000000000000000000000000000000000000000000000000000000000000000000020000000200000000000000000000000
+                  002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+                  000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+                  000000000000000000400000000000000020000000000000000000000000000000000000000000000000000000000000000000
+                  0000
+
+          status:
+            properties:
+              status:
+                title: status
+                description: true if the transaction was successful, false if the EVM reverted the transaction
+                type: boolean
+                example: true
+
+          fromAddress:
+            properties:
+              from_address:
+                <<: *address
+                title: from_address
+                description: The account that the transaction is sent from
+
+          toAddress:
+            properties:
+              to_address:
+                <<: *address
+                title: to_address
+                description: The account that the transaction is sent to
+
+        transaction:
+          hash:
+            properties:
+              hash:
+                <<: *transactionHash
+                title: hash
+          nonce:
+            properties:
+              nonce:
+                title: nonce
+                description: Nonce of the transaction
+                type: string
+                example: '0x01'
+          chainId:
+            properties:
+              chain_id:
+                title: chain_id
+                description: The ID of the Ethereum network for this transaction
+                type: integer
+                example: 1
+          toAddress:
+            properties:
+              to_address:
+                <<: *address
+                title: to_address
+                description: The account that the transaction is sent to
+
+          value:
+            properties:
+              value:
+                title: value
+                description: The value (in wei, hex encoded) included in this transaction
+                type: string
+                example: '0x0'
+
+          gasLimit:
+            properties:
+              gas_limit:
+                title: gas_limit
+                description: The maximum amount of gas that this transaction is allowed to consume
+                type: string
+                example: '0x7a120'
+
+          gasPrice:
+            properties:
+              gas_price:
+                title: gas_price
+                description: The amount of wei the transaction is willing to pay per gas-unit (hex encoded)
+                type: string
+                example: '0x4a817c800'
+
+          data:
+            properties:
+              data:
+                title: data
+                description: Arbitrary binary data included in the transaction
+                type: string
+                example: >
+                  0x2147b6890000000000000000000000003cb6c364d772e1135700953e69a0ae7a5104f2820000000000000000000000003cb6
+                  c364d772e1135700953e69a0ae7a5104f282000000000000000000000000000000000000000000000000000000000000001800
+                  000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+                  000000000000000000000001
+
       # General Shipment Parameters
       shipment:
         storageCredentialsId:
@@ -514,6 +725,7 @@ components:
               items:
                 type: string
                 description: Transaction Hashes associated with the shipment
+                example: '0xf53ffac288474d65dc7ad79ea484ab742cc452ccc119053a8274b29f4bdfc888'
 
         shipperWalletId:
           properties:
@@ -949,7 +1161,7 @@ components:
                   type: string
                   description: Name of model
                   title: type
-                  example: 'location'
+                  example: 'Location'
                 id:
                   <<: *uuid
                   title: id
@@ -965,11 +1177,11 @@ components:
                   type: string
                   description: Name of model
                   title: type
-                  example: 'load_data'
+                  example: 'LoadShipment'
                 id:
                   <<: *uuid
                   title: id
-                  description: LoadData UUID associated with the shipment
+                  description: LoadShipment UUID associated with the shipment
 
       # General Job Parameters
       job:
@@ -1593,7 +1805,7 @@ components:
       resource:
           properties:
             type:
-              example: message
+              example: Message
       logs:
         type: object
         properties:
@@ -1647,7 +1859,7 @@ components:
       resource:
           properties:
             type:
-              example: job
+              example: AsyncJob
 
       attributes:
         allOf:
@@ -1707,12 +1919,11 @@ components:
 
       getResource:
         allOf:
+        - $ref: '#/components/schemas/dataTypes/resourceId'
         - $ref: '#/components/schemas/job/resource'
         - properties:
             attributes:
               $ref: '#/components/schemas/job/attributes'
-            relationships:
-              $ref: '#/components/schemas/job/relationships'
 
       getResponse:
         allOf:
@@ -1720,8 +1931,6 @@ components:
         - properties:
             data:
               $ref: '#/components/schemas/job/getResource'
-            included:
-              $ref: '#/components/schemas/message/getResource'
 
       listResponse:
         allOf:
@@ -1730,10 +1939,12 @@ components:
         - properties:
             data:
               items:
-                $ref: '#/components/schemas/shipment/getResource'
+                $ref: '#/components/schemas/job/getResource'
             included:
               items:
                 $ref: '#/components/schemas/message/getResource'
+            relationships:
+              $ref: '#/components/schemas/job/relationships'
 
     shipment:
       resource:
@@ -1809,26 +2020,27 @@ components:
 
       getResource:
         allOf:
+        - $ref: '#/components/schemas/dataTypes/resourceId'
         - $ref: '#/components/schemas/shipment/resource'
         - properties:
             attributes:
               $ref: '#/components/schemas/shipment/attributes'
-            meta:
-              $ref: '#/components/schemas/shipment/meta'
 
       getResponse:
         allOf:
         - $ref: '#/components/schemas/jsonApi/data'
         - properties:
             data:
-              $ref: '#/components/schemas/shipment/getResource'
+              allOf:
+              - $ref: '#/components/schemas/shipment/getResource'
+              - $ref: '#/components/schemas/shipment/relationships'
             included:
               $ref: '#/components/schemas/shipment/included'
 
       loadData:
         type: object
         title: load_data
-        description: load_data associated with the shipment
+        description: Smart contract data associated with the shipment
         properties:
           load_data:
             $ref: '#/components/schemas/dataTypes/shipment/loadData'
@@ -1858,12 +2070,13 @@ components:
             $ref: '#/components/schemas/dataTypes/shipment/locationData'
 
       relationships:
-        type: array
-        items:
-        - $ref: '#/components/schemas/shipment/loadData'
-        - $ref: '#/components/schemas/shipment/shipToLocation'
-        - $ref: '#/components/schemas/shipment/shipFromLocation'
-        - $ref: '#/components/schemas/shipment/finalDestinationLocation'
+        properties:
+          relationships:
+            allOf:
+            - $ref: '#/components/schemas/shipment/loadData'
+            - $ref: '#/components/schemas/shipment/shipToLocation'
+            - $ref: '#/components/schemas/shipment/shipFromLocation'
+            - $ref: '#/components/schemas/shipment/finalDestinationLocation'
 
       createAttributes:
         allOf:
@@ -1939,18 +2152,17 @@ components:
 
       createResponse:
         allOf:
-        - $ref: '#/components/schemas/jsonApi/data'
+        - $ref: '#/components/schemas/shipment/getResponse'
         - properties:
             data:
-              $ref: '#/components/schemas/shipment/createResource'
-            included:
-              $ref: '#/components/schemas/shipment/included'
+              properties:
+                meta:
+                  $ref: '#/components/schemas/shipment/meta'
 
       included:
         type: array
         items:
         - $ref: '#/components/schemas/loadShipment/getResource'
-        - $ref: '#/components/schemas/location/getResource'
         - $ref: '#/components/schemas/location/getResource'
         - $ref: '#/components/schemas/location/getResource'
 
@@ -1987,6 +2199,7 @@ components:
 
       getResource:
         allOf:
+        - $ref: '#/components/schemas/dataTypes/resourceId'
         - $ref: '#/components/schemas/location/resource'
         - properties:
             attributes:
@@ -2007,6 +2220,111 @@ components:
             data:
               items:
                 $ref: '#/components/schemas/location/getResource'
+
+    transaction:
+      resource:
+        properties:
+          type:
+            example: Transaction
+
+      attributes:
+        allOf:
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/hash'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/nonce'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/chainId'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/toAddress'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/value'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/gasLimit'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/gasPrice'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/data'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+        - $ref: '#/components/schemas/transaction/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/transaction/attributes'
+
+    transactionReceipt:
+      resource:
+        properties:
+          type:
+            example: TransactionReceipt
+
+      attributes:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/transactionHash'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/transactionIndex'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/blockHash'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/blockNumber'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/contractAddress'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/cumulativeGasUsed'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/fromAddress'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/toAddress'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/gasUsed'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/logs'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/logsBloom'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/status'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+        - $ref: '#/components/schemas/transactionReceipt/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/transactionReceipt/attributes'
+
+    ethAction:
+      resource:
+          properties:
+            type:
+              example: EthAction
+
+      attributes:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
+        - $ref: '#/components/schemas/dataTypes/createdAt'
+        - $ref: '#/components/schemas/dataTypes/updatedAt'
+
+      relationships:
+        type: array
+        items:
+        - allOf:
+          - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+          - $ref: '#/components/schemas/transaction/resource'
+        - allOf:
+          - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+          - $ref: '#/components/schemas/transactionReceipt/resource'
+        - allOf:
+          - $ref: '#/components/schemas/dataTypes/resourceId'
+          - $ref: '#/components/schemas/job/resource'
+
+      included:
+        type: array
+        items:
+        - $ref: '#/components/schemas/job/getResource'
+        - $ref: '#/components/schemas/transaction/getResource'
+        - $ref: '#/components/schemas/transactionReceipt/getResource'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+        - $ref: '#/components/schemas/ethAction/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/ethAction/attributes'
+            relationships:
+              $ref: '#/components/schemas/ethAction/relationships'
+
+      getResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/data'
+        - properties:
+            data:
+              $ref: '#/components/schemas/ethAction/getResource'
+            included:
+              $ref: '#/components/schemas/ethAction/included'
 
     errors:
       401:
@@ -2060,7 +2378,7 @@ components:
           title: previous
           description: Link to previous page of the list
           type: string
-          example: '/api/v1/{object-type}/?page=2'
+          example: '/api/v1/{object-type}/?page=1'
 
     meta:
       type: object
@@ -2074,19 +2392,19 @@ components:
               description: Total number of resources associated with user
               type: integer
               format: int32
-              example: '1'
+              example: '37'
             page:
               title: page
               description: Current page
               type: integer
               format: int32
-              example: '1'
+              example: '2'
             pages:
               title: pages
               description: Number of pages of resources
               type: integer
               format: int32
-              example: '1'
+              example: '3'
 
   requestBodies:
     jsonApi:
@@ -2218,8 +2536,8 @@ components:
   securitySchemes:
     JWT:
       description: >
-        All authenticated service calls must contain a valid JWT id_token obtained from the ShipChain Profiles OIDC provider and
-        passed via the Authentication header.
+        All authenticated service calls must contain a valid JWT id_token obtained from the [ShipChain Profiles](https://profiles.shipchain.io)
+        OIDC provider and passed via the Authentication header.
       type: http
       scheme: bearer
       bearerFormat: JWT {id_token}
@@ -2237,7 +2555,7 @@ tags:
     Locations are entities that contain fields pertaining to a physical location, to be referenced in a Shipment.
 - name: AsyncJobs
   description: >
-    AsyncJobs model an asynchronous interaction with ShipChain Engine. They contain references to the state of an associated Ethereum Transaction.
+    AsyncJobs model an asynchronous interaction with ShipChain Engine. They also contain references to the state of an associated Ethereum Transaction.
 - name: Transactions
   description: >
     Transaction entities contain read-only data about Ethereum Transactions and Transaction Receipts.
