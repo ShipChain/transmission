@@ -8,13 +8,13 @@ def set_default_owner_id(apps, schema_editor):
     locations = Location.objects.all()
 
     for location in locations.iterator():
-        for shipment in location.shipments_shipments_from:
+        for shipment in location.shipments_from.all():
             owner_id = shipment.owner_id
 
-        for shipment in location.shipments_shipments_to:
+        for shipment in location.shipments_to.all():
             owner_id = shipment.owner_id
 
-        for shipment in location.shipments_shipments_dest:
+        for shipment in location.shipments_dest.all():
             owner_id = shipment.owner_id
 
         location.owner_id = owner_id

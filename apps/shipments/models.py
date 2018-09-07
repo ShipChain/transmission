@@ -123,11 +123,11 @@ class Shipment(models.Model):
     forwarders_shipper_id = models.CharField(max_length=255, blank=True, null=True)
 
     ship_from_location = models.ForeignKey(Location, on_delete=models.PROTECT,
-                                           related_name='%(class)s_shipments_from', null=True)
+                                           related_name='shipments_from', null=True)
     ship_to_location = models.ForeignKey(Location, on_delete=models.PROTECT,
-                                         related_name='%(class)s_shipments_to', null=True)
+                                         related_name='shipments_to', null=True)
     final_destination_location = models.ForeignKey(Location, on_delete=models.PROTECT,
-                                                   related_name='%(class)s_shipments_dest', null=True)
+                                                   related_name='shipments_dest', null=True)
 
     carrier_instructions = models.CharField(max_length=255, blank=True, null=True)
     pro_number = models.CharField(max_length=255, blank=True, null=True)
