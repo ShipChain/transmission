@@ -14,7 +14,7 @@
 portal and maintaining state for asynchronous transactions on the Ethereum network.
 
 ShipChain Transmission is deployed for public consumption at [transmission.shipchain.io](https://transmission.shipchain.io) and detailed 
-API documentation (OpenAPI 3.0) is available at the landing page **(API DOCS NOT CURRENTLY AVAILABLE)**.
+API documentation (OpenAPI 3.0) is available at the landing page.
 
 ## Getting Started
 
@@ -169,7 +169,7 @@ tests, and finally a coverage report.
 
 ## Usage
 
-See the public OpenAPI 3.0 documentation **(API DOCS NOT CURRENTLY AVAILABLE)** for a full enumeration of API endpoints with example requests/responses. 
+See the public OpenAPI 3.0 documentation at [transmission.shipchain.io](https://transmission.shipchain.io) for a full enumeration of API endpoints with example requests/responses. 
 
 ### Starting Transmission
 Once the dependencies are resolved, starting Transmission should be as easy as:

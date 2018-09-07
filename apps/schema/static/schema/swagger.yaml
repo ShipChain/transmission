@@ -6,9 +6,16 @@ info:
   version: 0.8.0-beta
   title: ShipChain Transmission API
   description: |
-    **THIS DOCUMENTATION IS UNDER CONSTRUCTION**
+    The ShipChain Transmission API is a microservice developed to provide a traditional REST abstraction for interactions with
+    the Ethereum smart contract platform. Transmission facilitates the reliable submission and retrying of asynchronous
+    transactions sent to the ShipChain Ethereum smart contracts. Transmission is also responsible for the implementation
+    of the Shipment-related business logic required for the ShipChain Portal and AXLE Gateway projects.
 
-    The ShipChain Transmission API is a microservice that handles interaction with the ShipChain smart contracts via the Engine project.
+    # Data Format
+    All response payloads will be formatted using the [JSON API](http://jsonapi.org) specification.
+
+    Requests can be made to Transmission using `application/json`, `application/vnd.api+json`, and `multipart/form-data`,
+    formatted as documented below.
 
     # Errors
     The API uses standard HTTP status codes and the [JSON API](http://jsonapi.org/examples/#error-objects) specification to indicate the success or failure of the API call. The body of the response will be JSON in the following format:
@@ -30,6 +37,7 @@ info:
 
 strings:
 - &response_200 "Success"
+- &response_201 "Created"
 - &response_202 "Accepted"
 - &response_204 "Success"
 - &response_401 "Unauthorized"
@@ -38,14 +46,13 @@ strings:
 - &response_503 "Service temporarily unavailable"
 
 paths:
-  /api/v1/shipments:
+  /api/v1/shipments/:
     get:
       summary: List shipments
       description: >
-        Retrieve an array of `Shipment` objects associated with the account ordered by the `Shipment.created_at` date.
+        Retrieve an array of `Shipment` objects associated with the current user ordered by the `Shipment.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
-      - $ref: '#/components/parameters/ordering'
       tags:
       - Shipments
       responses:
@@ -62,16 +69,191 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
-  /api/v1/locations/:
-    get:
-      summary: List Locations
+    post:
+      summary: Create shipment
       description: >
-        Retrieve an array of `Location` objects associated with the account ordered by the `Location.created_at` date.
+        Create a new `Shipment` owned by the current user.
+      tags:
+      - Shipments
+      responses:
+        '202':
+          description: *response_202
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/shipment/createResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/shipment/createRequest'
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/shipment/createAttributes'
+          multipart/form-data:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/shipment/createAttributes'
+
+  /api/v1/shipments/{shipment_id}/:
+    get:
+      summary: Get shipment details
+      description: >
+        Get additional info about a `Shipment`.
+      parameters:
+      - $ref: '#/components/parameters/shipment/path'
+      tags:
+      - Shipments
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/shipment/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+    delete:
+      summary: Delete a shipment
+      description: >
+        Delete the `Shipment` object from Transmission.
+      parameters:
+      - $ref: '#/components/parameters/shipment/path'
+      tags:
+      - Shipments
+      responses:
+        '204':
+          description: *response_204
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+    patch:
+      summary: Update a shipment
+      description: >
+        Update a `Shipment` object with the provided parameters.
+      tags:
+      - Shipments
+      responses:
+        '202':
+          description: *response_202
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/shipment/createResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/shipment/createRequest'
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/shipment/createAttributes'
+          multipart/form-data:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/shipment/createAttributes'
+
+  /api/v1/jobs/:
+    get:
+      summary: List jobs
+      description: >
+        Retrieve an array of `AsyncJob` actions initiated by the user ordered by the `AsyncJob.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
-      - $ref: '#/components/parameters/ordering'
       tags:
-      - Location
+      - AsyncJobs
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/job/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+  /api/v1/jobs/{job_id}/:
+    get:
+      summary: Get job
+      description: >
+        Get more details about an `AsyncJob` and its associated `Transactions`.
+      parameters:
+      - $ref: '#/components/parameters/job/path'
+      tags:
+      - AsyncJobs
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/job/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+  /api/v1/transactions/{transaction_hash}/:
+    get:
+      summary: Get transaction
+      description: >
+        Get more details about an `EthAction` (association between an Eth `Transaction` and `TransactionReceipt`) and its state.
+      parameters:
+      - $ref: '#/components/parameters/transaction/path'
+      tags:
+      - Transactions
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ethAction/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+  /api/v1/locations/:
+    get:
+      summary: List locations
+      description: >
+        Retrieve an array of `Location` objects associated with the current user ordered by the `Location.created_at` date.
+      parameters:
+      - $ref: '#/components/parameters/page'
+      tags:
+      - Locations
       responses:
         '200':
           description: *response_200
@@ -87,11 +269,11 @@ paths:
                 $ref: '#/components/schemas/errors/401'
 
     post:
-      summary: Create a Location
+      summary: Create a location
       description: >
-        Retrieve an array of `Location` objects associated with the account ordered by the `Location.created_at` date.
+        Create a new `Location` owned by the current user.
       tags:
-      - Location
+      - Locations
       responses:
         '201':
           description: *response_201
@@ -110,19 +292,23 @@ paths:
           application/vnd.api+json:
             schema:
               $ref: '#/components/requestBodies/location/createRequest'
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/location/createAttributes'
           multipart/form-data:
             schema:
               $ref: '#/components/requestBodies/location/createAttributes'
 
   /api/v1/locations/{locations_id}/:
     get:
-      summary: Get Location
+      summary: Get location
       description: >
-        Get the current information of the `Location`.
+        Get additional info about a `Location`.
       parameters:
       - $ref: '#/components/parameters/location/path'
       tags:
-      - Location
+      - Locations
       responses:
         '200':
           description: *response_200
@@ -137,13 +323,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
     delete:
-      summary: Delete a Location
+      summary: Delete a location
       description: >
         Delete the `Location` from Transmission.
       parameters:
       - $ref: '#/components/parameters/location/path'
       tags:
-      - Location
+      - Locations
       responses:
         '200':
           description: *response_204
@@ -158,11 +344,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
     patch:
-      summary: Update a Location
+      summary: Update a location
       description: >
         Update a `Location` with the provided parameters.
       tags:
-      - Location
+      - Locations
       responses:
         '200':
           description: *response_200
@@ -181,6 +367,9 @@ paths:
           application/vnd.api+json:
             schema:
               $ref: '#/components/requestBodies/location/createRequest'
+          application/json:
+            schema:
+              $ref: '#/components/requestBodies/location/createAttributes'
           multipart/form-data:
             schema:
               $ref: '#/components/requestBodies/location/createAttributes'
@@ -199,38 +388,47 @@ components:
     ordering:
       name: search
       in: query
-      description: ordering of the objects
+      description: Ordering of the objects
       required: false
       schema:
         type: string
         enum: [created_at, modified_at, -created_at, -modified_at]
 
-    wallet:
+    shipment:
       path:
         required: true
-        name: wallet_id
+        name: shipment_id
         in: path
-        description: ID of the Wallet
+        description: ID of the Shipment
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
-    device:
+    location:
       path:
         required: true
-        name: device_id
+        name: location_id
         in: path
-        description: ID of the Device
+        description: ID of the Location
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
-    storageCredentials:
+    job:
       path:
-        name: storage_credentials_id
-        in: path
-        description: ID of the Storage Credentials
         required: true
+        name: asyncjob_id
+        in: path
+        description: ID of the AsyncJob
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
+
+    transaction:
+      path:
+        required: true
+        name: transaction_hash
+        in: path
+        description: Hash of a signed Ethereum transaction
+        schema:
+          $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
 
   schemas:
     dataTypes:
@@ -240,6 +438,27 @@ components:
         format: uuid
         description: Unique UUID for this resource
         example: '1243d23b-e2fc-475a-8290-0e4f53479553'
+
+      ownerId:
+        properties:
+          owner_id:
+            <<: *uuid
+            title: owner_id
+            description: Owner's UUID
+
+      shipmentId:
+        properties:
+          shipment_id:
+            <<: *uuid
+            title: shipment_id
+            description: Shipment's UUID
+
+      asyncJobId:
+        properties:
+          async_job_id:
+            <<: *uuid
+            title: async_job_id
+            description: Async Job's UUID
 
       resourceId:
         properties:
@@ -256,10 +475,10 @@ components:
             format: date-time
             example: '2018-06-18T14:54:56.652732Z'
 
-      modifiedAt:
+      updatedAt:
         properties:
-          modified_at:
-            title: modified_at
+          updated_at:
+            title: updated_at
             description: Date/time of last resource modification
             type: string
             format: date-time
@@ -267,11 +486,32 @@ components:
 
       # General Ethereum parameters
       ethereum:
+        transactionHash:
+          properties:
+            transaction_hash: &transactionHash
+              title: transaction_hash
+              description: Hash of a signed Ethereum transaction
+              type: string
+              example: '0x869335bea9131d496acb844b1ce25db22093f81f74d64c8e3e96930cbe4f129c'
+
+        resourceId:
+          properties:
+            id:
+              <<: *transactionHash
+              title: id
         address:
           properties:
-            address:
+            address: &address
               title: address
               description: Ethereum address
+              type: string
+              example: '0x369974bFb76b656C0c45a84D00b1877340b45fA2'
+
+        moderator:
+          properties:
+            moderator:
+              title: moderator
+              description: Moderator's ethereum address
               type: string
               example: '0x369974bFb76b656C0c45a84D00b1877340b45fA2'
 
@@ -290,6 +530,1155 @@ components:
               description: Private key of the wallet
               type: string
               example: '2146c3dfeab8621830f5aa4d22cb3ee8ba13c9f9513988ec3fb154c0a43a596a'
+
+        transactionReceipt:
+          transactionHash:
+            properties:
+              transaction_hash:
+                <<: *transactionHash
+
+          transactionIndex:
+            properties:
+              transaction_index:
+                title: transaction_index
+                description: Integer of the transactions index position in the block.
+                type: integer
+                example: 9
+
+          blockHash:
+            properties:
+              block_hash:
+                title: block_hash
+                description: Hash of the block that this transaction was included in
+                type: string
+                example: '0xca0dda8d80ccc3b17470b8b8ab9594c75f5ac27c98222f4913bed84d56419b0d'
+
+          blockNumber:
+            properties:
+              block_number:
+                title: block_number
+                description: Block number that the transaction was included in
+                type: integer
+                example: 6271965
+
+          contractAddress:
+            properties:
+              contract_address:
+                title: contract_address
+                description: The contract address created, if the transaction was a contract creation, otherwise `null`
+                type: string
+                example: '0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe'
+
+          cumulativeGasUsed:
+            properties:
+              cumulative_gas_used:
+                title: cumulative_gas_used
+                description: The total amount of gas used when this transaction was executed in the block
+                type: integer
+                example: 7130108
+
+          gasUsed:
+            properties:
+              gas_used:
+                title: gas_used
+                description: The amount of gas used by this specific transaction alone
+                type: integer
+                example: 240114
+
+          logs:
+            properties:
+              logs:
+                title: logs
+                description: Array of log objects, which this transaction generated
+                type: string
+                example: >
+                  [{\"address\": \"0x6DF432De968758Ffd24acb764c439ac8166342b3\", \"blockHash\":
+                  \"0xca0dda8d80ccc3b17470b8b8ab9594c75f5ac27c98222f4913bed84d56419b0d\", \"blockNumber\": 6271965,
+                  \"data\": \"0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000
+                  3cb6c364d772e1135700953e69a0ae7a5104f2820000000000000000000000003cb6c364d772e1135700953e69a0ae7a5104f2
+                  820000000000000000000000000000000000000000000000000000000000000000\", \"logIndex\": 77,
+                  \"removed\": false, \"topics\": [\"0x485397dbe4d658daac8124e3080f66a255b9207fa36d7e757ba4d52fe6c21f54\"],
+                  \"transactionHash\": \"0xf53ffac288474d65dc7ad79ea484ab742cc452ccc119053a8274b29f4bdfc888\",
+                  \"transactionIndex\": 9, \"id\": \"log_43b39da9\"}]
+
+          logsBloom:
+            properties:
+              logsBloom:
+                title: logsBloom
+                description: Hash of the log entries
+                type: string
+                example: >
+                  0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+                  000000000000000000000000000000000000000000000000000000000000000000000020000000200000000000000000000000
+                  002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+                  000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+                  000000000000000000400000000000000020000000000000000000000000000000000000000000000000000000000000000000
+                  0000
+
+          status:
+            properties:
+              status:
+                title: status
+                description: true if the transaction was successful, false if the EVM reverted the transaction
+                type: boolean
+                example: true
+
+          fromAddress:
+            properties:
+              from_address:
+                <<: *address
+                title: from_address
+                description: The account that the transaction is sent from
+
+          toAddress:
+            properties:
+              to_address:
+                <<: *address
+                title: to_address
+                description: The account that the transaction is sent to
+
+        transaction:
+          hash:
+            properties:
+              hash:
+                <<: *transactionHash
+                title: hash
+          nonce:
+            properties:
+              nonce:
+                title: nonce
+                description: Nonce of the transaction
+                type: string
+                example: '0x01'
+          chainId:
+            properties:
+              chain_id:
+                title: chain_id
+                description: The ID of the Ethereum network for this transaction
+                type: integer
+                example: 1
+          toAddress:
+            properties:
+              to_address:
+                <<: *address
+                title: to_address
+                description: The account that the transaction is sent to
+
+          value:
+            properties:
+              value:
+                title: value
+                description: The value (in wei, hex encoded) included in this transaction
+                type: string
+                example: '0x0'
+
+          gasLimit:
+            properties:
+              gas_limit:
+                title: gas_limit
+                description: The maximum amount of gas that this transaction is allowed to consume
+                type: string
+                example: '0x7a120'
+
+          gasPrice:
+            properties:
+              gas_price:
+                title: gas_price
+                description: The amount of wei the transaction is willing to pay per gas-unit (hex encoded)
+                type: string
+                example: '0x4a817c800'
+
+          data:
+            properties:
+              data:
+                title: data
+                description: Arbitrary binary data included in the transaction
+                type: string
+                example: >
+                  0x2147b6890000000000000000000000003cb6c364d772e1135700953e69a0ae7a5104f2820000000000000000000000003cb6
+                  c364d772e1135700953e69a0ae7a5104f282000000000000000000000000000000000000000000000000000000000000001800
+                  000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+                  000000000000000000000001
+
+      # General Shipment Parameters
+      shipment:
+        storageCredentialsId:
+          properties:
+            storage_credentials_id:
+              <<: *uuid
+              title: storage_credentials_id
+              description: Storage credential UUID associated with the shipment
+
+        vaultId:
+          properties:
+            vault_id:
+              <<: *uuid
+              title: vault_id
+              description: Vault UUID associated with the shipment
+
+        transactions:
+          properties:
+            transactions:
+              type: array
+              title: transactions
+              description: Aray of transaction hashes
+              items:
+                type: string
+                description: Transaction Hashes associated with the shipment
+                example: '0xf53ffac288474d65dc7ad79ea484ab742cc452ccc119053a8274b29f4bdfc888'
+
+        shipperWalletId:
+          properties:
+            shipper_wallet_id:
+              <<: *uuid
+              title: vault_id
+              description: Vault UUID associated with the shipment
+
+        carrierWalletId:
+          properties:
+            carrier_wallet_id:
+              <<: *uuid
+              title: carrier_wallet_id
+              description: Carrier Wallet UUID associated with the shipment
+
+        carrierScac:
+          properties:
+            carrier_scac:
+              title: carrier_scac
+              description: SCAC code of the carrier
+              type: string
+              example: 'SCAC'
+
+        forwarderScac:
+          properties:
+            forwarder_scac:
+              title: forwarder_scac
+              description: SCAC code of the frieght forwarder
+              type: string
+              example: 'SCAC'
+
+        nvoccScac:
+          properties:
+            nvocc_scac:
+              title: nvocc_scac
+              description: SCAC code of the Non-Vessel Operating Common Carrier (NVOCC)
+              type: string
+              example: 'SCAC'
+
+        shipperReference:
+          properties:
+            shipper_reference:
+              title: shipper_reference
+              description: Reference number of this shipment assigned by the Shipper
+              type: string
+              example: 'Shipper Reference'
+
+        forwarderReference:
+          properties:
+            forwarder_reference:
+              title: forwarder_reference
+              description: Reference number of this shipment assigned by the Forwarder
+              type: string
+              example: 'Forwarder Reference'
+
+        forwardersShipperId:
+          properties:
+            forwarders_shipper_id:
+              title: forwarders_shipper_id
+              description: ID of the Shipper assigned by the Forwarder
+              type: string
+              example: 'Forwarder ID'
+
+        carrierInstructions:
+          properties:
+            carrier_instructions:
+              title: carrier_instructions
+              description: Shipper's instructions to the carrier
+              type: string
+              example: 'Make sure package is carefully packed'
+
+        proNumber:
+          properties:
+            pro_number:
+              title: pro_number
+              description: Progressive Number for shipment tracking
+              type: string
+              example: 'A113'
+
+        masterBill:
+          properties:
+            master_bill:
+              title: master_bill
+              description: The Master Bill of Lading Number
+              type: string
+              example: 'MBLN12345'
+
+        houseBill:
+          properties:
+            house_bill:
+              title: house_bill
+              description: The House Bill of Lading Number
+              type: string
+              example: 'HBLN12345'
+
+        subhouseBill:
+          properties:
+            subhouse_bill:
+              title: subhouse_bill
+              description: The Sub-House Bill of Lading Number
+              type: string
+              example: 'SHBLN12345'
+
+        freightPaymentTerms:
+          properties:
+            freight_payment_terms:
+              title: freight_payment_terms
+              description: The payment terms for the Shipment
+              type: string
+              example: 'Paid'
+
+        vesselName:
+          properties:
+            vessel_name:
+              title: vessel_name
+              description: The name of the vessel
+              type: string
+              example: 'Shippy'
+
+        voyageNumber:
+          properties:
+            voyage_number:
+              title: voyage_number
+              description: The voyage number
+              type: string
+              example: 'A113'
+
+        mode:
+          properties:
+            mode:
+              title: mode
+              description: The mode of transportation for the shipment
+              type: string
+              example: 'AIR'
+
+        numberOfPackages:
+          properties:
+            number_of_packages:
+              title: number_of_packages
+              description: Total number of packages in shipment
+              type: integer
+              format: int32
+              example: 123
+
+        grossWeightKgs:
+          properties:
+            gross_weight_kgs:
+              title: gross_weight_kgs
+              description: Gross weight of the shipment in Kilograms
+              type: number
+              example: 12345.67
+
+        volumeCbms:
+          properties:
+            volume_cbms:
+              title: volume_cbms
+              description: The shipment's volume in cubic meters
+              type: number
+              example: 12345.67
+
+        containerCount:
+          properties:
+            container_count:
+              title: container_count
+              description: The amount of containers in the shipment
+              type: integer
+              format: int32
+              example: 12345
+
+        dimensionalWeight:
+          properties:
+            dimensional_weight:
+              title: dimensional_weight
+              description: Dimensional weight of the shipment as determined by the carrier's formula
+              type: number
+              example: 12345.67
+
+        chargeableWeight:
+          properties:
+            chargeable_weight:
+              title: chargeable_weight
+              description: Weight of the shipment used for billing
+              type: number
+              example: 12345.67
+
+        docsReceivedActual:
+          properties:
+            docs_received_actual:
+              title: docs_received_actual
+              description: Timestamp of when the transporter received the shipment
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        docsApprovedActual:
+          properties:
+            docs_approved_actual:
+              title: docs_approved_actual
+              description: Timestamp of when the transporter confirmed the shipment's details were complete and valid
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        pickupAppointmentActual:
+          properties:
+            pickup_appointment_actual:
+              title: pickup_appointment_actual
+              description: Timestamp of the transporter's appointment to pick up the shipment
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        pickupEstimated:
+          properties:
+            pickup_estimated:
+              title: pickup_estimated
+              description: Timestamp of the transporter's estimate of when they will pick up the shipment
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        pickupActual:
+          properties:
+            pickup_actual:
+              title: pickup_actual
+              description: Timestamp of when the transporter picked up the shipment
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        loadingEstimated:
+          properties:
+            loading_estimated:
+              title: loading_estimated
+              description: Timestamp of when the shipment is estimated to be loaded on the first mode of transportation
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        loadingActual:
+          properties:
+            loading_actual:
+              title: loading_actual
+              description: Timestamp of when the shipment is loaded on the first mode of transportation
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        departureEstimated:
+          properties:
+            departure_estimated:
+              title: departure_estimated
+              description: Timestamp of the shipment's estimated departure
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        departureActual:
+          properties:
+            departure_actual:
+              title: departure_actual
+              description: Timestamp of the shipment's departure
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        deliveryAppointmentActual:
+          properties:
+            delivery_appointment_actual:
+              title: delivery_appointment_actual
+              description: Timestamp of the shipment's delivery appointment
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        arrivalPortEstimated:
+          properties:
+            arrival_port_estimated:
+              title: arrival_port_estimated
+              description: Timestamp of the shipment's estimated arrival at the final port
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        arrivalPortActual:
+          properties:
+            arrival_port_actual:
+              title: arrival_port_actual
+              description: Timestamp of the shipment's arrival at the final port
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        deliveryEstimated:
+          properties:
+            delivery_estimated:
+              title: delivery_estimated
+              description: Estimated timestamp of the shipment's final delivery
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        deliveryActual:
+          properties:
+            delivery_actual:
+              title: delivery_actual
+              description: Estimated timestamp of the shipment's final delivery
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        lastAttemptedDeliveryActual:
+          properties:
+            last_attempted_delivery_actual:
+              title: last_attempted_delivery_actual
+              description: Timestamp of the most recent delivery attempt
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        cancelRequestedDateActual:
+          properties:
+            cancel_requested_date_actual:
+              title: cancel_requested_date_actual
+              description: Timestamp of when the shipper requested the transporter to cancel the shipment
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        cancelConfirmedDateActual:
+          properties:
+            cancel_confirmed_date_actual:
+              title: cancel_confirmed_date_actual
+              description: Timestamp of when the transporter confirmed the shipment cancellation
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        customsFiledDateActual:
+          properties:
+            customs_filed_date_actual:
+              title: customs_filed_date_actual
+              description: Timestamp of the shipment's import custom's entry was presented for approval and release
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        customsHoldDateActual:
+          properties:
+            customs_hold_date_actual:
+              title: customs_hold_date_actual
+              description: Timestamp of the shipment's import custom's entry was held for approval and release
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        customsReleaseDateActual:
+          properties:
+            customs_release_date_actual:
+              title: customs_release_date_actual
+              description: Timestamp of when customs, and all other agencies, release the shipment
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        containerizationType:
+          properties:
+            containerization_type:
+              title: containerization_type
+              description: How the shipment is containerized
+              type: string
+              example: 'BULK'
+
+        arrivalUnlocode:
+          properties:
+            arrival_unlocode:
+              title: arrival_unlocode
+              description: UN/LOCODE for the port the shipment will arrive at, for international shipment
+              type: string
+              example: 'USCHI'
+
+        finalPortUnlocode:
+          properties:
+            final_port_unlocode:
+              title: final_port_unlocode
+              description: UN/LOCODE for the port the shipment will terminate, for international shipment
+              type: string
+              example: 'USCHI'
+
+        importUnlocode:
+          properties:
+            import_unlocode:
+              title: import_unlocode
+              description: UN/LOCODE for the port the shipment will be declared to import customs, for international shipment
+              type: string
+              example: 'USCHI'
+
+        ladingUnlocode:
+          properties:
+            lading_unlocode:
+              title: lading_unlocode
+              description: UN/LOCODE for the lading port, for international shipment
+              type: string
+              example: 'USCHI'
+
+        originUnlocode:
+          properties:
+            origin_unlocode:
+              title: origin_unlocode
+              description: UN/LOCODE for the original location of the shipment, for international shipment
+              type: string
+              example: 'USCHI'
+
+        usRoutedExport:
+          properties:
+            us_routed_export:
+              title: us_routed_export
+              description: UN/LOCODE for the original location of the shipment, for international shipment
+              type: boolean
+              example: true
+
+        importCustomsMode:
+          properties:
+            import_customs_mode:
+              title: import_customs_mode
+              description: Mode of Transportation code used by the customs authority for the country where the shipment's import declaration will be filed
+              type: string
+              example: '29601'
+
+        usCustomsExportPort:
+          properties:
+            us_customs_export_port:
+              title: us_customs_export_port
+              description: Export port code used by United States customs
+              type: string
+              example: '29601'
+
+        customerFields:
+          properties:
+            us_customs_export_port:
+              title: us_customs_export_port
+              description: Export port code used by United States customs
+              type: string
+              example: '29601'
+
+        locationData:
+          properties:
+            data:
+              title: data
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: Name of model
+                  title: type
+                  example: 'Location'
+                id:
+                  <<: *uuid
+                  title: id
+                  description: Location UUID associated with the shipment
+
+        loadData:
+          properties:
+            data:
+              title: data
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: Name of model
+                  title: type
+                  example: 'LoadShipment'
+                id:
+                  <<: *uuid
+                  title: id
+                  description: LoadShipment UUID associated with the shipment
+
+      # General Job Parameters
+      job:
+        state:
+          properties:
+            state:
+              title: state
+              description: State of the job
+              type: string
+              enum: [PENDING, RUNNING, FAILED, COMPLETE]
+              example: 'PENDING'
+
+        rpcMethod:
+          properties:
+            rpc_method:
+              title: rpc_method
+              description: Status of the escrow
+              type: string
+              example: 'create_shipment_transaction'
+
+        r:
+          properties:
+            r:
+              title: r
+              description: Receiver ethereum address
+              type: string
+              example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+        s:
+          properties:
+            s:
+              title: s
+              description: Sender ethereum address
+              type: string
+              example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+        v:
+          properties:
+            v:
+              title: v
+              description: Version of the contract
+              type: string
+              example: '0x0a96'
+
+        to:
+          properties:
+            to:
+              title: to
+              description: Reiever of the contract
+              type: string
+              example: '0x369974bFb76b656C0c45a84D00b1877340b45fA2'
+
+        data:
+          properties:
+            data:
+              title: data
+              description: Data within the contract
+              type: string
+              example: '0xbcbf78a000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000042307865326532346163363865626161383265326264376535343538303263353231326465333963613638613966353633633030316339616430643364343937333662000000000000000000000000000000000000000000000000000000000000'
+
+        nonce:
+          properties:
+            nonce:
+              title: nonce
+              description: Nonce of the contract
+              type: string
+              example: '0x11'
+
+        value:
+          properties:
+            value:
+              title: value
+              description: value of the contract
+              type: string
+              example: '0x11'
+
+        gasLimit:
+          properties:
+            gasLimit:
+              title: gasLimit
+              description: Gas limit of the contract
+              type: string
+              example: '0x07a120'
+
+        gasPrice:
+          properties:
+            gasPrice:
+              title: gasPrice
+              description: Gas Price of the contract
+              type: string
+              example: '0x04a817c800'
+
+        vaultHash:
+          properties:
+            gasPrice:
+              title: vault_hash
+              description: Hash of the vault
+              type: string
+              example: '0xe2e24ac68ebaa82e2bd7e545802c5212de39ca68a9f563c001c9ad0d3d49736b'
+
+        signingWalletId:
+          properties:
+            signing_wallet_id:
+              <<: *uuid
+              title: signing_wallet_id
+              description: Signed UUID associated with the job
+
+        rpcClass:
+          properties:
+            rpcClass:
+              title: rpc_class
+              description: Class of the RPC
+              type: string
+              example: 'apps.shipments.rpc.ShipmentRPCClient'
+
+      # General Load Shipment Parameters
+      loadShipment:
+        shipmentStatus:
+          properties:
+            shipment_status:
+              title: shipment_status
+              description: Status of the shipment
+              type: string
+              enum: [PENDING, RUNNING, FAILED, COMPLETE]
+              example: 'PENDING'
+
+        escrowStatus:
+          properties:
+            escrow_status:
+              title: escrow_status
+              description: Status of the escrow
+              type: string
+              enum: [CONTRACT_INITIATED, CONTRACT_SETUP, CONTRACT_COMMITTED, CONTRACT_COMPLETED, CONTRACT_ACCEPTED, CONTRACT_CANCELED]
+              example: 'CONTRACT_INITIATED'
+
+        fundingType:
+          properties:
+            funding_type:
+              title: funding_type
+              description: Type of funding for the shipmet
+              type: string
+              enum: [ship, cash, eth]
+              example: 'ship'
+
+        shipmentId:
+          properties:
+            shipment_id:
+              title: shipment_id
+              description: Id for the shipment on the engine
+              type: number
+              format: int32
+              example: 0
+
+        shipmentAmount:
+          properties:
+            shipment_amount:
+              title: shipment_amount
+              description: Amount for the shipment
+              type: number
+              format: int32
+              example: 1
+
+        paidAmount:
+          properties:
+            paid_amount:
+              title: paid_amount
+              description: Cost of the shipment transaction
+              type: number
+              format: int32
+              example: 1
+
+        paidTokens:
+          properties:
+            paid_tokens:
+              title: paid_tokens
+              description: Amount of tokens paid with
+              type: number
+              format: double
+              example: '0.000000000000000000'
+
+        contractFunded:
+          properties:
+            contract_funded:
+              title: contract_funded
+              description: Whether or not the contract has been funded
+              type: boolean
+              example: true
+
+        shipmentCreated:
+          properties:
+            shipment_created:
+              title: shipment_created
+              description: Whether or not the shipment has been created
+              type: boolean
+              example: true
+
+        validUntil:
+          properties:
+            valid_until:
+              title: valid_until
+              description: How long the hash is valid
+              type: number
+              format: int32
+              example: 24
+
+        startBlock:
+          properties:
+            start_block:
+              title: start_block
+              description: What block the hash starts at
+              type: number
+              format: int32
+              example: 1
+
+        endBlock:
+          properties:
+            end_block:
+              title: end_block
+              description: What block the hash eds at
+              type: number
+              format: int32
+              example: 5
+
+        escrowFunded:
+          properties:
+            escrow_funded:
+              title: escrow_funded
+              description: Whether or not the escrow has been funded
+              type: boolean
+              example: true
+
+        shipmentCommittedByCarrier:
+          properties:
+            shipment_committed_by_carrier:
+              title: shipment_committed_by_carrier
+              description: Whether or not the shipment has been committed by carrier
+              type: boolean
+              example: true
+
+        commitmentConfirmedDate:
+          properties:
+            commitment_confirmed_date:
+              title: commitment_confirmed_date
+              description: Whether or not the shipment has been completed by carrier
+              type: string
+              format: date-time
+              example: '2018-06-18T14:54:56.652732Z'
+
+        shipmentCompletedByCarrier:
+          properties:
+            shipment_completed_by_carrier:
+              title: shipment_completed_by_carrier
+              description: Whether or not the shipment has been completed by carrier
+              type: boolean
+              example: false
+
+        shipmentAcceptedByShipper:
+          properties:
+            shipment_accepted_by_shipper:
+              title: shipment_accepted_by_shipper
+              description: Whether or not the shipment has been accepted by carrier
+              type: boolean
+              example: true
+
+        shipmentCanceledByShipper:
+          properties:
+            shipment_canceled_by_shipper:
+              title: shipment_canceled_by_shipper
+              description: Whether or not the shipment has been canceled by shipper
+              type: boolean
+              example: false
+
+        escrowPaid:
+          properties:
+            escrow_paid:
+              title: escrow_paid
+              description: Whether or not the escrow has been paid
+              type: boolean
+              example: false
+
+      # General Message parameters
+      message:
+        to:
+          properties:
+            to:
+              title: to
+              description: Receiver ethereum address
+              type: string
+              example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+        from:
+          properties:
+            from:
+              title: from
+              description: Sender ethereum address
+              type: string
+              example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+        status:
+          properties:
+            status:
+              title: status
+              description: Whether the transaction is still active
+              type: boolean
+              example: true
+
+        gasUsed:
+          properties:
+            gasUsed:
+              title: gasUsed
+              description: Amount of gas used for this transaction
+              type: number
+              format: int32
+              example: 55688
+
+        blockHash:
+          properties:
+            blockHash:
+              title: blockHash
+              description: Block hash associated
+              type: string
+              example: '0x989518435f288d967eb6f8ce87b048958b1794a2477f8e88bb5ad1036584b6c5'
+
+        logsBloom:
+          properties:
+            logsBloom:
+              title: logsBloom
+              description: Hash of the log entries
+              type: string
+              example: '0x989518435f288d967eb6f8ce87b048958b1794a2477f8e88bb5ad1036584b6c5'
+
+        blockNumber:
+          properties:
+            blockNumber:
+              title: blockNumber
+              description: Block number of the trasaction
+              type: number
+              format: int32
+              example: 32
+
+        contractAddress:
+          properties:
+            contractAddress:
+              title: contractAddress
+              description: Contract address created
+              type: string
+              example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+        address:
+          properties:
+            address:
+              title: address
+              description: Address of the receiver
+              type: string
+              example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+
+        transactionHash:
+          properties:
+            transactionHash:
+              title: transactionHash
+              description: Hash of the transaction
+              type: string
+              example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+        transactionIndex:
+          properties:
+            transactionIndex:
+              title: transactionIndex
+              description: Transaction's index position within the block
+              type: number
+              format: int32
+              example: 1
+
+        cumulativeGasUsed:
+          properties:
+            cumulativeGasUsed:
+              title: cumulativeGasUsed
+              description: Cumulative amount of gas used when this transaction was executed
+              type: number
+              format: int32
+              example: 55688
+
+        removed:
+          properties:
+            removed:
+              title: removed
+              description: Whether the transaction has been removed
+              type: boolean
+              example: true
+
+        logIndex:
+          properties:
+            logIndex:
+              title: logIndex
+              description: Index of the log
+              type: number
+              format: int32
+              example: 0
+
+        id:
+          properties:
+            id:
+              title: id
+              description: id of the transaction
+              type: string
+              example: 'log_80ef40ab'
+
+        type:
+          properties:
+            type:
+              title: type
+              description: Type of the object
+              type: string
+              example: 'Message'
+
+      # General Location Parameters
+      location:
+        ownerId:
+          properties:
+            owner_id:
+              title: owner_id
+              description: ID of the location ower
+              type: string
+              example: '0ee14e26-ab29-4b6d-b04f-cca79e2948a3'
+
+        name:
+          properties:
+            name:
+              title: name
+              description: Name of the location
+              type: string
+              example: 'Location Name'
+
+        address_1:
+          properties:
+            address_1:
+              title: address_1
+              description: Street and address of the location
+              type: string
+              example: '123 Fake St.'
+
+        address_2:
+          properties:
+            address_2:
+              title: address_2
+              description: Secondary information of the location
+              type: string
+              example: 'Apartment 404'
+
+        city:
+          properties:
+            city:
+              title: city
+              description: City of the location
+              type: string
+              example: 'Greenville'
+
+        state:
+          properties:
+            state:
+              title: state
+              description: State of the location
+              type: string
+              example: 'South Carolina'
+
+        country:
+          properties:
+            country:
+              title: country
+              description: Country of the location
+              type: string
+              example: 'United States of America'
+
+        postalCode:
+          properties:
+            postal_code:
+              title: postal_code
+              description: Postal Code of the location
+              type: string
+              example: '29601'
+
+        phoneNumber:
+          properties:
+            phone_number:
+              title: phone_number
+              description: Phone Number of the location
+              type: string
+              example: '555-555-5555'
+
+        faxNumber:
+          properties:
+            fax_number:
+              title: fax_number
+              description: Fax Number of the location
+              type: string
+              example: '555-555-5555'
 
     # Models
     jsonApi:
@@ -365,6 +1754,198 @@ components:
                       description: A string indicating which URI query parameter caused the error.
                       type: string
 
+    loadShipment:
+      resource:
+          properties:
+            type:
+              example: LoadShipment
+
+      attributes:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/loadShipment/shipmentStatus'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/escrowStatus'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/fundingType'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/shipmentId'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/shipmentAmount'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/paidAmount'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/paidTokens'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
+        - $ref: '#/components/schemas/dataTypes/ethereum/moderator'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/contractFunded'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/shipmentCreated'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/validUntil'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/startBlock'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/endBlock'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/escrowFunded'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/shipmentCommittedByCarrier'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/commitmentConfirmedDate'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/shipmentCompletedByCarrier'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/shipmentAcceptedByShipper'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/shipmentCanceledByShipper'
+        - $ref: '#/components/schemas/dataTypes/loadShipment/escrowPaid'
+        - $ref: '#/components/schemas/dataTypes/createdAt'
+        - $ref: '#/components/schemas/dataTypes/updatedAt'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/loadShipment/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/loadShipment/attributes'
+
+      getResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/data'
+        - properties:
+            data:
+              $ref: '#/components/schemas/loadShipment/getResource'
+
+    message:
+      resource:
+          properties:
+            type:
+              example: Message
+      logs:
+        type: object
+        properties:
+          logs:
+            type: array
+            items:
+            - anyOf:
+              - type: string
+              - type: number
+
+      attributes:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/message/type'
+        - $ref: '#/components/schemas/message/body'
+        - $ref: '#/components/schemas/dataTypes/createdAt'
+
+      body:
+        type: object
+        properties:
+          body:
+            type: object
+            allOf:
+            - $ref: '#/components/schemas/dataTypes/message/to'
+            - $ref: '#/components/schemas/dataTypes/message/from'
+            - $ref: '#/components/schemas/message/logs'
+            - $ref: '#/components/schemas/dataTypes/message/status'
+            - $ref: '#/components/schemas/dataTypes/message/gasUsed'
+            - $ref: '#/components/schemas/dataTypes/message/blockHash'
+            - $ref: '#/components/schemas/dataTypes/message/logsBloom'
+            - $ref: '#/components/schemas/dataTypes/message/blockNumber'
+            - $ref: '#/components/schemas/dataTypes/message/contractAddress'
+            - $ref: '#/components/schemas/dataTypes/message/transactionHash'
+            - $ref: '#/components/schemas/dataTypes/message/transactionIndex'
+            - $ref: '#/components/schemas/dataTypes/message/cumulativeGasUsed'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/message/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/message/attributes'
+
+      getResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/data'
+        - properties:
+            data:
+              $ref: '#/components/schemas/message/getResource'
+
+    job:
+      resource:
+          properties:
+            type:
+              example: AsyncJob
+
+      attributes:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/job/state'
+        - $ref: '#/components/schemas/job/parameters'
+        - $ref: '#/components/schemas/dataTypes/createdAt'
+        - $ref: '#/components/schemas/dataTypes/updatedAt'
+
+      message:
+        type: object
+        properties:
+          - $ref: '#/components/schemas/dataTypes/job/state'
+          - $ref: '#/components/schemas/job/parameters'
+
+      relationships:
+        message_set:
+          type: object
+          properties:
+          - $ref: '#/components/schemas/message/resource'
+
+      parameters:
+        type: object
+        properties:
+          parameters:
+            type: object
+            allOf:
+            - $ref: '#/components/schemas/dataTypes/job/rpcClass'
+            - $ref: '#/components/schemas/job/signed_tx'
+            - $ref: '#/components/schemas/dataTypes/job/rpcMethod'
+            - $ref: '#/components/schemas/job/rpcParameters'
+            - $ref: '#/components/schemas/dataTypes/job/signingWalletId'
+
+      signed_tx:
+        type: object
+        properties:
+          signed_tx:
+            allOf:
+            - $ref: '#/components/schemas/dataTypes/job/r'
+            - $ref: '#/components/schemas/dataTypes/job/s'
+            - $ref: '#/components/schemas/dataTypes/job/v'
+            - $ref: '#/components/schemas/dataTypes/job/to'
+            - $ref: '#/components/schemas/dataTypes/job/data'
+            - $ref: '#/components/schemas/dataTypes/job/nonce'
+            - $ref: '#/components/schemas/dataTypes/job/value'
+            - $ref: '#/components/schemas/dataTypes/job/gasLimit'
+            - $ref: '#/components/schemas/dataTypes/job/gasPrice'
+
+      rpcParameters:
+        type: object
+        properties:
+          rpcParameters:
+            type: array
+            items:
+            - anyOf:
+              - type: string
+              - type: number
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/resourceId'
+        - $ref: '#/components/schemas/job/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/job/attributes'
+
+      getResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/data'
+        - properties:
+            data:
+              $ref: '#/components/schemas/job/getResource'
+
+      listResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/dataArray'
+        - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+        - properties:
+            data:
+              items:
+                $ref: '#/components/schemas/job/getResource'
+            included:
+              items:
+                $ref: '#/components/schemas/message/getResource'
+            relationships:
+              $ref: '#/components/schemas/job/relationships'
+
     shipment:
       resource:
         properties:
@@ -373,11 +1954,73 @@ components:
 
       attributes:
         allOf:
+        - $ref: '#/components/schemas/dataTypes/shipment/transactions'
+        - $ref: '#/components/schemas/dataTypes/ownerId'
+        - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
+        - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
         - $ref: '#/components/schemas/dataTypes/createdAt'
-        - $ref: '#/components/schemas/dataTypes/modifiedAt'
+        - $ref: '#/components/schemas/dataTypes/updatedAt'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwarderScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwarderReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersShipperId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierInstructions'
+        - $ref: '#/components/schemas/dataTypes/shipment/proNumber'
+        - $ref: '#/components/schemas/dataTypes/shipment/masterBill'
+        - $ref: '#/components/schemas/dataTypes/shipment/houseBill'
+        - $ref: '#/components/schemas/dataTypes/shipment/subhouseBill'
+        - $ref: '#/components/schemas/dataTypes/shipment/freightPaymentTerms'
+        - $ref: '#/components/schemas/dataTypes/shipment/vesselName'
+        - $ref: '#/components/schemas/dataTypes/shipment/voyageNumber'
+        - $ref: '#/components/schemas/dataTypes/shipment/mode'
+        - $ref: '#/components/schemas/dataTypes/shipment/numberOfPackages'
+        - $ref: '#/components/schemas/dataTypes/shipment/grossWeightKgs'
+        - $ref: '#/components/schemas/dataTypes/shipment/volumeCbms'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerCount'
+        - $ref: '#/components/schemas/dataTypes/shipment/dimensionalWeight'
+        - $ref: '#/components/schemas/dataTypes/shipment/chargeableWeight'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupAppointmentActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppointmentActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/lastAttemptedDeliveryActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerizationType'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/finalPortUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/importUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/ladingUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/originUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/usRoutedExport'
+        - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
+        - $ref: '#/components/schemas/dataTypes/shipment/usCustomsExportPort'
+        - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
+
+      meta:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/asyncJobId'
 
       getResource:
         allOf:
+        - $ref: '#/components/schemas/dataTypes/resourceId'
         - $ref: '#/components/schemas/shipment/resource'
         - properties:
             attributes:
@@ -388,7 +2031,140 @@ components:
         - $ref: '#/components/schemas/jsonApi/data'
         - properties:
             data:
-              $ref: '#/components/schemas/shipment/getResource'
+              allOf:
+              - $ref: '#/components/schemas/shipment/getResource'
+              - $ref: '#/components/schemas/shipment/relationships'
+            included:
+              $ref: '#/components/schemas/shipment/included'
+
+      loadData:
+        type: object
+        title: load_data
+        description: Smart contract data associated with the shipment
+        properties:
+          load_data:
+            $ref: '#/components/schemas/dataTypes/shipment/loadData'
+
+      shipToLocation:
+        type: object
+        title: ship_to_location
+        description: ship_to_location associated with the shipment
+        properties:
+          ship_to_location:
+            $ref: '#/components/schemas/dataTypes/shipment/locationData'
+
+      shipFromLocation:
+        type: object
+        title: ship_from_location
+        description: ship_from_location associated with the shipment
+        properties:
+          ship_from_location:
+            $ref: '#/components/schemas/dataTypes/shipment/locationData'
+
+      finalDestinationLocation:
+        type: object
+        title: final_destination_location
+        description: final_destination_location associated with the shipment
+        properties:
+          final_destination_location:
+            $ref: '#/components/schemas/dataTypes/shipment/locationData'
+
+      relationships:
+        properties:
+          relationships:
+            allOf:
+            - $ref: '#/components/schemas/shipment/loadData'
+            - $ref: '#/components/schemas/shipment/shipToLocation'
+            - $ref: '#/components/schemas/shipment/shipFromLocation'
+            - $ref: '#/components/schemas/shipment/finalDestinationLocation'
+
+      createAttributes:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ownerId'
+        - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
+        - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
+        - $ref: '#/components/schemas/dataTypes/createdAt'
+        - $ref: '#/components/schemas/dataTypes/updatedAt'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwarderScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwarderReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersShipperId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierInstructions'
+        - $ref: '#/components/schemas/dataTypes/shipment/proNumber'
+        - $ref: '#/components/schemas/dataTypes/shipment/masterBill'
+        - $ref: '#/components/schemas/dataTypes/shipment/houseBill'
+        - $ref: '#/components/schemas/dataTypes/shipment/subhouseBill'
+        - $ref: '#/components/schemas/dataTypes/shipment/freightPaymentTerms'
+        - $ref: '#/components/schemas/dataTypes/shipment/vesselName'
+        - $ref: '#/components/schemas/dataTypes/shipment/voyageNumber'
+        - $ref: '#/components/schemas/dataTypes/shipment/mode'
+        - $ref: '#/components/schemas/dataTypes/shipment/numberOfPackages'
+        - $ref: '#/components/schemas/dataTypes/shipment/grossWeightKgs'
+        - $ref: '#/components/schemas/dataTypes/shipment/volumeCbms'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerCount'
+        - $ref: '#/components/schemas/dataTypes/shipment/dimensionalWeight'
+        - $ref: '#/components/schemas/dataTypes/shipment/chargeableWeight'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupAppointmentActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppointmentActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/lastAttemptedDeliveryActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerizationType'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/finalPortUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/importUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/ladingUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/originUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/usRoutedExport'
+        - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
+        - $ref: '#/components/schemas/dataTypes/shipment/usCustomsExportPort'
+        - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
+
+      createResource:
+        allOf:
+        - $ref: '#/components/schemas/shipment/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/shipment/createAttributes'
+            relationships:
+              $ref: '#/components/schemas/shipment/relationships'
+            meta:
+              $ref: '#/components/schemas/shipment/meta'
+
+      createResponse:
+        allOf:
+        - $ref: '#/components/schemas/shipment/getResponse'
+        - properties:
+            data:
+              properties:
+                meta:
+                  $ref: '#/components/schemas/shipment/meta'
+
+      included:
+        type: array
+        items:
+        - $ref: '#/components/schemas/loadShipment/getResource'
+        - $ref: '#/components/schemas/location/getResource'
+        - $ref: '#/components/schemas/location/getResource'
 
       listResponse:
         allOf:
@@ -398,6 +2174,157 @@ components:
             data:
               items:
                 $ref: '#/components/schemas/shipment/getResource'
+            included:
+              $ref: '#/components/schemas/shipment/included'
+
+    location:
+      resource:
+        properties:
+          type:
+            example: Location
+
+      attributes:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/location/name'
+        - $ref: '#/components/schemas/dataTypes/location/address_1'
+        - $ref: '#/components/schemas/dataTypes/location/address_2'
+        - $ref: '#/components/schemas/dataTypes/location/city'
+        - $ref: '#/components/schemas/dataTypes/location/state'
+        - $ref: '#/components/schemas/dataTypes/location/country'
+        - $ref: '#/components/schemas/dataTypes/location/postalCode'
+        - $ref: '#/components/schemas/dataTypes/location/phoneNumber'
+        - $ref: '#/components/schemas/dataTypes/location/faxNumber'
+        - $ref: '#/components/schemas/dataTypes/createdAt'
+        - $ref: '#/components/schemas/dataTypes/updatedAt'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/resourceId'
+        - $ref: '#/components/schemas/location/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/location/attributes'
+
+      getResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/data'
+        - properties:
+            data:
+              $ref: '#/components/schemas/location/getResource'
+
+      listResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/dataArray'
+        - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+        - properties:
+            data:
+              items:
+                $ref: '#/components/schemas/location/getResource'
+
+    transaction:
+      resource:
+        properties:
+          type:
+            example: Transaction
+
+      attributes:
+        allOf:
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/hash'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/nonce'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/chainId'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/toAddress'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/value'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/gasLimit'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/gasPrice'
+         - $ref: '#/components/schemas/dataTypes/ethereum/transaction/data'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+        - $ref: '#/components/schemas/transaction/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/transaction/attributes'
+
+    transactionReceipt:
+      resource:
+        properties:
+          type:
+            example: TransactionReceipt
+
+      attributes:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/transactionHash'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/transactionIndex'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/blockHash'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/blockNumber'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/contractAddress'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/cumulativeGasUsed'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/fromAddress'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/toAddress'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/gasUsed'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/logs'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/logsBloom'
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionReceipt/status'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+        - $ref: '#/components/schemas/transactionReceipt/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/transactionReceipt/attributes'
+
+    ethAction:
+      resource:
+          properties:
+            type:
+              example: EthAction
+
+      attributes:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
+        - $ref: '#/components/schemas/dataTypes/createdAt'
+        - $ref: '#/components/schemas/dataTypes/updatedAt'
+
+      relationships:
+        type: array
+        items:
+        - allOf:
+          - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+          - $ref: '#/components/schemas/transaction/resource'
+        - allOf:
+          - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+          - $ref: '#/components/schemas/transactionReceipt/resource'
+        - allOf:
+          - $ref: '#/components/schemas/dataTypes/resourceId'
+          - $ref: '#/components/schemas/job/resource'
+
+      included:
+        type: array
+        items:
+        - $ref: '#/components/schemas/job/getResource'
+        - $ref: '#/components/schemas/transaction/getResource'
+        - $ref: '#/components/schemas/transactionReceipt/getResource'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+        - $ref: '#/components/schemas/ethAction/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/ethAction/attributes'
+            relationships:
+              $ref: '#/components/schemas/ethAction/relationships'
+
+      getResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/data'
+        - properties:
+            data:
+              $ref: '#/components/schemas/ethAction/getResource'
+            included:
+              $ref: '#/components/schemas/ethAction/included'
 
     errors:
       401:
@@ -451,7 +2378,7 @@ components:
           title: previous
           description: Link to previous page of the list
           type: string
-          example: '/api/v1/{object-type}/?page=2'
+          example: '/api/v1/{object-type}/?page=1'
 
     meta:
       type: object
@@ -465,19 +2392,19 @@ components:
               description: Total number of resources associated with user
               type: integer
               format: int32
-              example: '1'
+              example: '37'
             page:
               title: page
               description: Current page
               type: integer
               format: int32
-              example: '1'
+              example: '2'
             pages:
               title: pages
               description: Number of pages of resources
               type: integer
               format: int32
-              example: '1'
+              example: '3'
 
   requestBodies:
     jsonApi:
@@ -500,11 +2427,117 @@ components:
             type: object
             $ref: '#/components/requestBodies/jsonApi/createResource'
 
+    shipment:
+      createResource:
+        allOf:
+        - $ref: '#/components/schemas/shipment/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/requestBodies/shipment/createAttributes'
+
+      createAttributes:
+        required:
+        - shipper_wallet_id
+        - carrier_wallet_id
+        - storage_credentials_id
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
+        - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwarderScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwarderReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersShipperId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierInstructions'
+        - $ref: '#/components/schemas/dataTypes/shipment/proNumber'
+        - $ref: '#/components/schemas/dataTypes/shipment/masterBill'
+        - $ref: '#/components/schemas/dataTypes/shipment/houseBill'
+        - $ref: '#/components/schemas/dataTypes/shipment/subhouseBill'
+        - $ref: '#/components/schemas/dataTypes/shipment/freightPaymentTerms'
+        - $ref: '#/components/schemas/dataTypes/shipment/vesselName'
+        - $ref: '#/components/schemas/dataTypes/shipment/voyageNumber'
+        - $ref: '#/components/schemas/dataTypes/shipment/mode'
+        - $ref: '#/components/schemas/dataTypes/shipment/numberOfPackages'
+        - $ref: '#/components/schemas/dataTypes/shipment/grossWeightKgs'
+        - $ref: '#/components/schemas/dataTypes/shipment/volumeCbms'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerCount'
+        - $ref: '#/components/schemas/dataTypes/shipment/dimensionalWeight'
+        - $ref: '#/components/schemas/dataTypes/shipment/chargeableWeight'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupAppointmentActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppointmentActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryEstimated'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/lastAttemptedDeliveryActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateActual'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerizationType'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/finalPortUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/importUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/ladingUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/originUnlocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/usRoutedExport'
+        - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
+        - $ref: '#/components/schemas/dataTypes/shipment/usCustomsExportPort'
+        - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
+
+      createRequest:
+        allOf:
+        - $ref: '#/components/requestBodies/jsonApi/createData'
+        - properties:
+            data:
+              $ref: '#/components/requestBodies/shipment/createResource'
+
+    location:
+      createResource:
+        allOf:
+        - $ref: '#/components/schemas/location/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/requestBodies/location/createAttributes'
+
+      createAttributes:
+        required:
+        - name
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/location/name'
+        - $ref: '#/components/schemas/dataTypes/location/address_1'
+        - $ref: '#/components/schemas/dataTypes/location/address_2'
+        - $ref: '#/components/schemas/dataTypes/location/city'
+        - $ref: '#/components/schemas/dataTypes/location/state'
+        - $ref: '#/components/schemas/dataTypes/location/country'
+        - $ref: '#/components/schemas/dataTypes/location/postalCode'
+        - $ref: '#/components/schemas/dataTypes/location/phoneNumber'
+        - $ref: '#/components/schemas/dataTypes/location/faxNumber'
+
+      createRequest:
+        allOf:
+        - $ref: '#/components/requestBodies/jsonApi/createData'
+        - properties:
+            data:
+              $ref: '#/components/requestBodies/location/createResource'
+
   securitySchemes:
     JWT:
       description: >
-        All authenticated service calls must contain a valid JWT id_token obtained from the Profiles OIDC provider and
-        passed via the Authentication header.
+        All authenticated service calls must contain a valid JWT id_token obtained from the [ShipChain Profiles](https://profiles.shipchain.io)
+        OIDC provider and passed via the Authentication header.
       type: http
       scheme: bearer
       bearerFormat: JWT {id_token}
@@ -514,3 +2547,15 @@ tags:
 - name: Shipments
   description: >
     Shipments are the core entity in the ShipChain Transmission service. This is a collection of endpoints related to managing shipments.
+- name: Locations
+  description: >
+    Locations are entities that contain fields pertaining to a physical location, to be referenced in a Shipment.
+- name: Locations
+  description: >
+    Locations are entities that contain fields pertaining to a physical location, to be referenced in a Shipment.
+- name: AsyncJobs
+  description: >
+    AsyncJobs model an asynchronous interaction with ShipChain Engine. They also contain references to the state of an associated Ethereum Transaction.
+- name: Transactions
+  description: >
+    Transaction entities contain read-only data about Ethereum Transactions and Transaction Receipts.
