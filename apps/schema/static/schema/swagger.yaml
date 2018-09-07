@@ -361,6 +361,15 @@ components:
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
+    location:
+      path:
+        required: true
+        name: location_id
+        in: path
+        description: ID of the location
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
+
     job:
       path:
         required: true
@@ -2154,6 +2163,35 @@ components:
         - properties:
             data:
               $ref: '#/components/requestBodies/shipment/createResource'
+
+    location:
+      createResource:
+        allOf:
+        - $ref: '#/components/schemas/location/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/requestBodies/location/createAttributes'
+
+      createAttributes:
+        required:
+        - name
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/location/name'
+        - $ref: '#/components/schemas/dataTypes/location/address_1'
+        - $ref: '#/components/schemas/dataTypes/location/address_2'
+        - $ref: '#/components/schemas/dataTypes/location/city'
+        - $ref: '#/components/schemas/dataTypes/location/state'
+        - $ref: '#/components/schemas/dataTypes/location/country'
+        - $ref: '#/components/schemas/dataTypes/location/postalCode'
+        - $ref: '#/components/schemas/dataTypes/location/phoneNumber'
+        - $ref: '#/components/schemas/dataTypes/location/faxNumber'
+
+      createRequest:
+        allOf:
+        - $ref: '#/components/requestBodies/jsonApi/createData'
+        - properties:
+            data:
+              $ref: '#/components/requestBodies/location/createResource'
 
   securitySchemes:
     JWT:
