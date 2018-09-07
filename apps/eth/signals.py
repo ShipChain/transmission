@@ -18,7 +18,7 @@ def event_post_save(sender, instance, **kwargs):
 
     # Update has been received, send signal to listener class
     if instance.eth_action:
-        LOG.debug(f'Update has been received, and signal sent to listener {listener}.')
+        LOG.debug(f'Update has been received, and signal sent.')
         for listener in instance.eth_action.ethlistener_set.all():
             event_update.send(sender=listener.listener_type.model_class(),
                               event=instance, listener=listener.listener)

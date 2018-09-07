@@ -73,10 +73,8 @@ class InvalidTrackingPointError(APIException):
     """
     Extend DRF APIException so these are automatically transformed via the exception handler
     """
-    LOG.debug(f'Invalid Tracking Point Error {APIException}.')
+    LOG.error(f'Invalid Tracking Point Error {APIException}.')
     log_metric('transmission.error', tags={'method': 'invalid_tracking_point_error'})
-
-    pass
 
 
 class DeviceTrackingPoint(object):
@@ -96,13 +94,13 @@ class DeviceTrackingPoint(object):
             self.source = point['source'] if 'source' in point else None
 
         except IndexError:
-            LOG.debug(f'Device tracking index Error {IndexError}.')
+            LOG.error(f'Device tracking index Error {IndexError}.')
             log_metric('transmission.error', tags={'method': 'device_tracking_index_error'})
 
             raise InvalidTrackingPointError(f"Invalid Coordinates format from device")
 
         except KeyError as key_error:
-            LOG.debug(f'Device tracking key Error {key_error}.')
+            LOG.error(f'Device tracking key Error {key_error}.')
             log_metric('transmission.error', tags={'method': 'device_tracking_key_error'})
 
             raise InvalidTrackingPointError(f"Missing field {key_error} in tracking data from device")
@@ -114,7 +112,7 @@ class DeviceTrackingPoint(object):
         try:
             return Point((self.lon, self.lat))
         except Exception:
-            LOG.debug(f'Device tracking as_point exception {Exception}.')
+            LOG.error(f'Device tracking as_point exception {Exception}.')
             log_metric('transmission.error', tags={'method': 'as_point_exception'})
 
             raise InvalidTrackingPointError("Unable to build GeoJSON Point from tracking data")
@@ -131,7 +129,7 @@ class DeviceTrackingPoint(object):
                 "source": self.source,
             })
         except Exception:
-            LOG.debug(f'Device tracking as_point_feature exception {Exception}.')
+            LOG.error(f'Device tracking as_point_feature exception {Exception}.')
             log_metric('transmission.error', tags={'method': 'as_point_feature_exception'})
 
             raise InvalidTrackingPointError("Unable to build GeoJSON Point Feature from tracking data")
@@ -153,7 +151,7 @@ class DeviceTrackingPoint(object):
             return Feature(geometry=linestring, properties={"linestringTimestamps": linestring_timestamps})
 
         except Exception:
-            LOG.debug(f'Device tracking get_linestring_feature exception {Exception}.')
+            LOG.error(f'Device tracking get_linestring_feature exception {Exception}.')
             log_metric('transmission.error', tags={'method': 'get_linestring_feature'})
 
             raise InvalidTrackingPointError("Unable to build GeoJSON LineString Feature from tracking data")
@@ -185,7 +183,7 @@ class DeviceTrackingPoint(object):
             return datetime(year, month, day, hour, minute, second)
 
         except Exception as exception:
-            LOG.debug(f'Device tracking __build_timestamp exception {Exception}.')
+            LOG.error(f'Device tracking __build_timestamp exception {Exception}.')
             log_metric('transmission.error', tags={'method': '__build_timestamp_exception'})
 
             raise InvalidTrackingPointError(f"Error building timestamp from device tracking data: '{exception}'")

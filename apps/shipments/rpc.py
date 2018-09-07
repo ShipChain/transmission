@@ -29,7 +29,7 @@ class ShipmentRPCClient(RPCClient):
 
     def add_shipment_data(self, storage_credentials_id, wallet_id, vault_id, shipment_data):
         LOG.debug(f'Adding shipment data with storage_credentials_id {storage_credentials_id},'
-                  f'shipper_wallet_id {shipper_wallet_id}, and carrier_wallet_id {carrier_wallet_id}.')
+                  f'wallet_id {wallet_id}, and vault_id {vault_id}.')
         log_metric('transmission.info', tags={'method': 'has_object_permission'})
 
         result = self.call('load.add_shipment_data', {
