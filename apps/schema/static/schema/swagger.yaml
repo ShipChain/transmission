@@ -6,9 +6,16 @@ info:
   version: 0.8.0-beta
   title: ShipChain Transmission API
   description: |
-    **THIS DOCUMENTATION IS UNDER CONSTRUCTION**
+    The ShipChain Transmission API is a microservice developed to provide a traditional REST abstraction for interactions with
+    the Ethereum smart contract platform. Transmission facilitates the reliable submission and retrying of asynchronous
+    transactions sent to the ShipChain Ethereum smart contracts. Transmission is also responsible for the implementation
+    of the Shipment-related business logic required for the ShipChain Portal and AXLE Gateway projects.
 
-    The ShipChain Transmission API is a microservice that handles interaction with the ShipChain smart contracts via the Engine project.
+    # Data Format
+    All response payloads will be formatted using the [JSON API](http://jsonapi.org) specification.
+
+    Requests can be made to Transmission using `application/json`, `application/vnd.api+json`, and `multipart/form-data`,
+    formatted as documented below.
 
     # Errors
     The API uses standard HTTP status codes and the [JSON API](http://jsonapi.org/examples/#error-objects) specification to indicate the success or failure of the API call. The body of the response will be JSON in the following format:
@@ -43,7 +50,7 @@ paths:
     get:
       summary: List shipments
       description: >
-        Retrieve an array of `Shipment` objects associated with the account ordered by the `Shipment.created_at` date.
+        Retrieve an array of `Shipment` objects associated with the current user ordered by the `Shipment.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/ordering'
@@ -66,12 +73,12 @@ paths:
     post:
       summary: Create shipment
       description: >
-        Create a `Shipment` object associated with the account.
+        Create a new `Shipment` owned by the current user.
       tags:
       - Shipments
       responses:
-        '201':
-          description: *response_201
+        '202':
+          description: *response_202
           content:
             application/vnd.api+json:
               schema:
@@ -98,9 +105,9 @@ paths:
 
   /api/v1/shipments/{shipment_id}/:
     get:
-      summary: Get Shipment
+      summary: Get shipment details
       description: >
-        Get the details of a  `Shipment` object associated with the account by the id.
+        Get additional info about a `Shipment`.
       parameters:
       - $ref: '#/components/parameters/shipment/path'
       tags:
@@ -120,9 +127,9 @@ paths:
                 $ref: '#/components/schemas/errors/401'
 
     delete:
-      summary: Delete Shipment
+      summary: Delete a shipment
       description: >
-        Delete the  `Shipment` object from Transmission and Engine.
+        Delete the `Shipment` object from Transmission.
       parameters:
       - $ref: '#/components/parameters/shipment/path'
       tags:
@@ -144,8 +151,8 @@ paths:
       tags:
       - Shipments
       responses:
-        '201':
-          description: *response_201
+        '202':
+          description: *response_202
           content:
             application/vnd.api+json:
               schema:
@@ -172,14 +179,14 @@ paths:
 
   /api/v1/jobs/:
     get:
-      summary: List Jobs
+      summary: List jobs
       description: >
-        Retrieve an array of `Job` objects associated with the account ordered by the `Job.created_at` date.
+        Retrieve an array of `AsyncJob` objects initiated by the user ordered by the `Job.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/ordering'
       tags:
-      - Jobs
+      - AsyncJobs
       responses:
         '200':
           description: *response_200
@@ -198,11 +205,11 @@ paths:
     get:
       summary: Get job
       description: >
-        Get the details of a  `job` object associated with the account by the id.
+        Get more details about an `AsyncJob` and its associated `Transactions`.
       parameters:
       - $ref: '#/components/parameters/job/path'
       tags:
-      - Jobs
+      - AsyncJobs
       responses:
         '200':
           description: *response_200
@@ -219,14 +226,14 @@ paths:
 
   /api/v1/locations/:
     get:
-      summary: List Locations
+      summary: List locations
       description: >
-        Retrieve an array of `Location` objects associated with the account ordered by the `Location.created_at` date.
+        Retrieve an array of `Location` objects associated with the current user ordered by the `Location.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/ordering'
       tags:
-      - Location
+      - Locations
       responses:
         '200':
           description: *response_200
@@ -242,11 +249,11 @@ paths:
                 $ref: '#/components/schemas/errors/401'
 
     post:
-      summary: Create a Location
+      summary: Create a location
       description: >
-        Retrieve an array of `Location` objects associated with the account ordered by the `Location.created_at` date.
+        Create a new `Location` owned by the current user.
       tags:
-      - Location
+      - Locations
       responses:
         '201':
           description: *response_201
@@ -275,13 +282,13 @@ paths:
 
   /api/v1/locations/{locations_id}/:
     get:
-      summary: Get Location
+      summary: Get location
       description: >
-        Get the current information of the `Location`.
+        Get additional info about a `Location`.
       parameters:
       - $ref: '#/components/parameters/location/path'
       tags:
-      - Location
+      - Locations
       responses:
         '200':
           description: *response_200
@@ -296,13 +303,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
     delete:
-      summary: Delete a Location
+      summary: Delete a location
       description: >
         Delete the `Location` from Transmission.
       parameters:
       - $ref: '#/components/parameters/location/path'
       tags:
-      - Location
+      - Locations
       responses:
         '200':
           description: *response_204
@@ -321,7 +328,7 @@ paths:
       description: >
         Update a `Location` with the provided parameters.
       tags:
-      - Location
+      - Locations
       responses:
         '200':
           description: *response_200
@@ -361,7 +368,7 @@ components:
     ordering:
       name: search
       in: query
-      description: ordering of the objects
+      description: Ordering of the objects
       required: false
       schema:
         type: string
@@ -372,7 +379,7 @@ components:
         required: true
         name: shipment_id
         in: path
-        description: ID of the shipment
+        description: ID of the Shipment
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
@@ -381,16 +388,16 @@ components:
         required: true
         name: location_id
         in: path
-        description: ID of the location
+        description: ID of the Location
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
     job:
       path:
         required: true
-        name: job_id
+        name: asyncjob_id
         in: path
-        description: ID of the job
+        description: ID of the AsyncJob
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
@@ -2211,7 +2218,7 @@ components:
   securitySchemes:
     JWT:
       description: >
-        All authenticated service calls must contain a valid JWT id_token obtained from the Profiles OIDC provider and
+        All authenticated service calls must contain a valid JWT id_token obtained from the ShipChain Profiles OIDC provider and
         passed via the Authentication header.
       type: http
       scheme: bearer
@@ -2222,3 +2229,15 @@ tags:
 - name: Shipments
   description: >
     Shipments are the core entity in the ShipChain Transmission service. This is a collection of endpoints related to managing shipments.
+- name: Locations
+  description: >
+    Locations are entities that contain fields pertaining to a physical location, to be referenced in a Shipment.
+- name: Locations
+  description: >
+    Locations are entities that contain fields pertaining to a physical location, to be referenced in a Shipment.
+- name: AsyncJobs
+  description: >
+    AsyncJobs model an asynchronous interaction with ShipChain Engine. They contain references to the state of an associated Ethereum Transaction.
+- name: Transactions
+  description: >
+    Transaction entities contain read-only data about Ethereum Transactions and Transaction Receipts.
