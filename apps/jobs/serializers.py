@@ -14,7 +14,7 @@ class AsyncJobSerializer(EnumFieldSerializerMixin, serializers.ModelSerializer):
 
     class Meta:
         model = AsyncJob
-        exclude = ('listeners',)
+        exclude = ('listeners', 'wallet_lock_token')
 
     included_serializers = {
         'message_set': MessageSerializer
