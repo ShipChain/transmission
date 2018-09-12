@@ -1,11 +1,11 @@
 from django.dispatch import receiver
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 
 from apps.eth.signals import event_update
 from apps.eth.models import TransactionReceipt
 from apps.jobs.models import JobState, MessageType, AsyncJob
 from apps.jobs.signals import job_update
-from .models import Shipment, LoadShipment
+from .models import Shipment, LoadShipment, Location
 from .rpc import ShipmentRPCClient
 from .serializers import ShipmentVaultSerializer
 
@@ -86,3 +86,10 @@ def loadshipment_post_save(sender, **kwargs):
             signing_wallet_id=instance.shipment.shipper_wallet_id,
             listener=instance.shipment
         )
+
+
+@receiver(pre_save, sender=Location, dispatch_uid='location_pre_save')
+def location_pre_save(sender, **kwargs):
+    instance = kwargs["instance"]
+    # Get point info
+    instance.get_lat_long_from_address()

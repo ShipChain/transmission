@@ -28,6 +28,7 @@ django-gm2m==0.6.1
 -e git://github.com/lwbco/django-influxdb-tagged-metrics.git@add895558ed6ab59c621b19beae026f8933d4848#egg=django_influxdb_metrics
 django-redis==4.9.0
 djangorestframework==3.8.2
+djangorestframework-gis==0.13
 djangorestframework-jsonapi==2.4.0
 djangorestframework-jwt==1.11.0
 docutils==0.14
@@ -40,8 +41,10 @@ eth-tester==0.1.0b11
 eth-utils==0.8.1
 flake8==3.5.0
 flake8-polyfill==1.0.2
+geocoder==1.38.1
 geojson==2.4.0
 gunicorn==19.7.1
+httpretty==0.9.5
 idna==2.6
 inflection==0.3.1
 influxdb==5.0.0

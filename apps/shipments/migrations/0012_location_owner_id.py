@@ -3,24 +3,6 @@
 from django.db import migrations, models
 
 
-def set_default_owner_id(apps, schema_editor):
-    from apps.shipments.models import Location
-    locations = Location.objects.all()
-
-    for location in locations.iterator():
-        for shipment in location.shipments_from.all():
-            owner_id = shipment.owner_id
-
-        for shipment in location.shipments_to.all():
-            owner_id = shipment.owner_id
-
-        for shipment in location.shipments_dest.all():
-            owner_id = shipment.owner_id
-
-        location.owner_id = owner_id
-        location.save()
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -31,14 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='location',
             name='owner_id',
-            field=models.CharField(null=True, max_length=36),
+            field=models.CharField(null=False, max_length=36),
             preserve_default=False,
         ),
-        migrations.RunPython(set_default_owner_id),
-        migrations.AlterField(
-            model_name='location',
-            name='owner_id',
-            field=models.CharField(null=False, max_length=36),
-        ),
-
     ]

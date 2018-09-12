@@ -1,17 +1,20 @@
 import logging
 
+import geocoder
 from django.conf import settings
-from django.db import models
-from django.core.validators import RegexValidator
-from django.contrib.postgres.fields import JSONField
 from django.contrib.contenttypes.fields import GenericRelation
-
+from django.contrib.gis.db.models import GeometryField
+from django.contrib.gis.geos import Point
+from django.contrib.postgres.fields import JSONField
+from django.core.validators import RegexValidator
+from django.db import models
 from enumfields import Enum
 from enumfields import EnumField
+from influxdb_metrics.loader import log_metric
 
-from apps.utils import random_id
-from apps.jobs.models import JobListener, AsyncJob
 from apps.eth.models import EthListener
+from apps.jobs.models import JobListener, AsyncJob
+from apps.utils import random_id
 from .rpc import ShipmentRPCClient
 
 LOG = logging.getLogger('transmission')
@@ -33,9 +36,40 @@ class Location(models.Model):
                                  message="Invalid phone number.")
     phone_number = models.CharField(validators=[phone_regex], max_length=255, blank=True, null=True)
     fax_number = models.CharField(validators=[phone_regex], max_length=255, blank=True, null=True)
+    geometry = GeometryField(null=True)
 
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_lat_long_from_address(self):
+        LOG.debug(f'Creating lat/long point for location {self}')
+        log_metric('transmission.info', tags={'method': 'locations.get_lat_long'})
+        parsing_address = f''
+
+        if self.address_1:
+            parsing_address += self.address_1 + ', '
+        if self.address_2:
+            parsing_address += self.address_2 + ', '
+        if self.city:
+            parsing_address += self.city + ', '
+        if self.state:
+            parsing_address += self.state + ', '
+        if self.country:
+            parsing_address += self.country + ', '
+        if self.postal_code:
+            parsing_address += self.postal_code + ', '
+
+        if not parsing_address:
+            lat_lang = []
+
+        google = geocoder.google(parsing_address)
+        if google.error:
+            LOG.debug(f'Failed to get google geocode do to {google.error} for address {parsing_address}')
+        else:
+            lat_lang = google.latlng
+        pnt = Point(lat_lang)
+        if pnt:
+            self.geometry = pnt
 
 
 class FundingType(Enum):
@@ -180,11 +214,14 @@ class Shipment(models.Model):
     customer_fields = JSONField(blank=True, null=True)
 
     def get_device_request_url(self):
+        LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
         return f"{settings.PROFILES_URL}/api/v1/device/?on_shipment={self.vault_id}"
 
     def update_vault_hash(self, vault_hash):
+        LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.load_data and self.load_data.shipment_id:
+            LOG.debug(f'Updating for shipment_id {self.load_data.shipment_id}')
             async_job = AsyncJob.rpc_job_for_listener(
                 rpc_class=ShipmentRPCClient,
                 rpc_method=ShipmentRPCClient.update_vault_hash_transaction,

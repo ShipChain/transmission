@@ -11,6 +11,8 @@ WORKDIR /build
 ADD ./requirements.txt /build/
 ADD ./pip.cache/ /build/
 
+RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin
+
 RUN pip install -r /build/requirements.txt --find-links /build/
 
 RUN mkdir /app
