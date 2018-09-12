@@ -10,7 +10,7 @@ class ShipmentRPCClient(RPCClient):
     def create_vault(self, storage_credentials_id, shipper_wallet_id, carrier_wallet_id):
         LOG.debug(f'Creating vault with storage_credentials_id {storage_credentials_id},'
                   f'shipper_wallet_id {shipper_wallet_id}, and carrier_wallet_id {carrier_wallet_id}.')
-        log_metric('transmission.info', tags={'method': 'has_object_permission'})
+        log_metric('transmission.info', tags={'method': 'shipment.rpcclient.create_vault'})
 
         result = self.call('load.create_vault', {
             "storageCredentials": storage_credentials_id,
@@ -30,7 +30,7 @@ class ShipmentRPCClient(RPCClient):
     def add_shipment_data(self, storage_credentials_id, wallet_id, vault_id, shipment_data):
         LOG.debug(f'Adding shipment data with storage_credentials_id {storage_credentials_id},'
                   f'wallet_id {wallet_id}, and vault_id {vault_id}.')
-        log_metric('transmission.info', tags={'method': 'has_object_permission'})
+        log_metric('transmission.info', tags={'method': 'shipment.rpcclient.add_shipment_data'})
 
         result = self.call('load.add_shipment_data', {
             "storageCredentials": storage_credentials_id,
@@ -50,7 +50,7 @@ class ShipmentRPCClient(RPCClient):
                                     valid_until, funding_type, shipment_amount):
         LOG.debug(f'Creating shipment transaction with funding_type {funding_type}, shipment_amount {shipment_amount},'
                   f'shipper_wallet_id {shipper_wallet_id}, and carrier_wallet_id {carrier_wallet_id}.')
-        log_metric('transmission.info', tags={'method': 'has_object_permission'})
+        log_metric('transmission.info', tags={'method': 'shipment.rpcclient.create_shipment_transaction'})
 
         result = self.call('load.create_shipment_transaction', {
             "shipperWallet": shipper_wallet_id,
@@ -71,7 +71,7 @@ class ShipmentRPCClient(RPCClient):
     def get_tracking_data(self, storage_credentials_id, wallet_id, vault_id):
         LOG.debug(f'Retrieving of tracking data with storage_credentials_id {storage_credentials_id},'
                   f'wallet_id {wallet_id}, and vault_id {vault_id}.')
-        log_metric('transmission.info', tags={'method': 'has_object_permission'})
+        log_metric('transmission.info', tags={'method': 'shipment.rpcclient.get_tracking_data'})
 
         result = self.call('load.get_tracking_data', {
             "storageCredentials": storage_credentials_id,
@@ -90,7 +90,7 @@ class ShipmentRPCClient(RPCClient):
     def update_vault_hash_transaction(self, wallet_id, current_shipment_id, url, vault_hash):
         LOG.debug(f'Updating vault hash transaction with current_shipment_id {current_shipment_id},'
                   f'vault_hash {vault_hash}, and wallet_id {wallet_id}.')
-        log_metric('transmission.info', tags={'method': 'has_object_permission'})
+        log_metric('transmission.info', tags={'method': 'shipment.rpcclient.update_vault_hash_transaction'})
 
         result = self.call('load.update_vault_hash_transaction', {
             "shipperWallet": wallet_id,

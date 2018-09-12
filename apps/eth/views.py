@@ -28,7 +28,7 @@ class EventViewSet(mixins.CreateModelMixin,
     permission_classes = (permissions.AllowAny,)
 
     def create(self, request, *args, **kwargs):
-        log_metric('transmission.info', tags={'method': 'events.create'})
+        log_metric('transmission.info', tags={'method': 'eth.events.create'})
         LOG.debug('Events create')
 
         is_many = isinstance(request.data, list)
@@ -39,7 +39,7 @@ class EventViewSet(mixins.CreateModelMixin,
             serializer.is_valid(raise_exception=True)
 
             try:
-                LOG.debug(f'Finding contract receipt for t-hash: {serializer.validated_data["transactionHash"]}')
+                LOG.debug(f'Finding contract receipt for tx hash: {serializer.data["transactionHash"]}')
                 action = EthAction.objects.get(transaction_hash=serializer.data['transaction_hash'])
             except ObjectDoesNotExist:
                 action = None
@@ -56,7 +56,7 @@ class EventViewSet(mixins.CreateModelMixin,
 
             for event in serializer.data:
                 try:
-                    LOG.debug(f'Finding contract receipt for t-hash: {serializer.validated_data["transactionHash"]}')
+                    LOG.debug(f'Finding contract receipt for tx hash: {serializer.event["transactionHash"]}')
                     action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
                 except ObjectDoesNotExist:
                     action = None

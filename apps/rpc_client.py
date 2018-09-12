@@ -21,7 +21,6 @@ class RPCError(APIException):
         super(RPCError, self).__init__(detail, code)
         self.detail = detail
         LOG.error(f'RPC error with detail {detail}.')
-        log_metric('transmission.error', tags={'method': 'RPCError'})
 
         if status_code:
             self.status_code = status_code
@@ -81,6 +80,8 @@ class RPCClient(object):
             if 'transaction' in result:
                 LOG.debug(f'Successful signing of transaction.')
                 return result['transaction'], result['hash']
+
+        log_metric('engine_rpc.error', tags={'method': 'RPCClient.sign_transaction'})
         raise RPCError("Invalid response from Engine")
 
     def send_transaction(self, signed_transaction, callback_url):
@@ -96,4 +97,6 @@ class RPCClient(object):
             if 'receipt' in result:
                 LOG.debug(f'Successful sending of transaction.')
                 return result['receipt']
+
+        log_metric('engine_rpc.error', tags={'method': 'RPCClient.sign_transaction'})
         raise RPCError("Invalid response from Engine")

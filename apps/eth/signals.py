@@ -13,12 +13,12 @@ LOG = logging.getLogger('transmission')
 
 @receiver(post_save, sender=Event, dispatch_uid='event_post_save')
 def event_post_save(sender, instance, **kwargs):
-    LOG.debug(f'Event post save with sender {sender}.')
-    log_metric('transmission.info', tags={'method': 'event_post_save'})
+    LOG.debug(f'Event post save with id {instance.id}.')
+    log_metric('transmission.info', tags={'method': 'eth.event_post_save'})
 
     # Update has been received, send signal to listener class
     if instance.eth_action:
-        LOG.debug(f'Update has been received, and signal sent.')
+        LOG.debug(f'Sending signals to all listeners for EthAction {instance.eth_action.id}.')
         for listener in instance.eth_action.ethlistener_set.all():
             event_update.send(sender=listener.listener_type.model_class(),
                               event=instance, listener=listener.listener)

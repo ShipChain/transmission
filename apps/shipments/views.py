@@ -76,17 +76,14 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         if 'as_line' in request.query_params:
             all_features = build_line_string_feature(shipment, tracking_data)
-            LOG.debug(f'Returning features as_line with features {all_features}.')
 
         elif 'as_point' in request.query_params:
             all_features = build_point_features(shipment, tracking_data)
-            LOG.debug(f'Returning features as_point with features {all_features}.')
 
         else:
             all_features = []
             all_features += build_line_string_feature(shipment, tracking_data)
             all_features += build_point_features(shipment, tracking_data)
-            LOG.debug(f'Returning features {all_features}.')
 
         feature_collection = build_feature_collection(all_features)
 
@@ -99,7 +96,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         LOG.debug(f'Updating shipment {instance} with new details.')
-        log_metric('transmission.info', tags={'method': 'shipments.tracking'})
+        log_metric('transmission.info', tags={'method': 'shipments.update'})
 
         serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -107,7 +104,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = self.perform_update(serializer)
         async_job = shipment.asyncjob_set.latest('created_at')
         response = ShipmentTxSerializer(shipment)
-        LOG.debug(f'Async_job created with id {async_job.id}.')
+        LOG.debug(f'Asyncjob created with id {async_job.id}.')
         if async_job:
             response.instance.async_job_id = async_job.id
 
