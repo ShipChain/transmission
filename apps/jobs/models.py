@@ -27,6 +27,7 @@ class AsyncJob(models.Model):
     parameters = JSONField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    wallet_lock_token = models.CharField(blank=True, null=True, max_length=32)
 
     class Meta:
         ordering = ('created_at',)
