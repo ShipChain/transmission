@@ -1,7 +1,9 @@
 import logging
 
-from apps.rpc_client import RPCClient, RPCError
+from django.core.cache import cache
 from influxdb_metrics.loader import log_metric
+
+from apps.rpc_client import RPCClient, RPCError
 
 LOG = logging.getLogger('transmission')
 
@@ -30,26 +32,50 @@ class ShipmentRPCClient(RPCClient):
         raise RPCError("Invalid response from Engine")
 
     def add_shipment_data(self, storage_credentials_id, wallet_id, vault_id, shipment_data):
-        LOG.debug(f'Adding shipment data with storage_credentials_id {storage_credentials_id},'
-                  f'wallet_id {wallet_id}, and vault_id {vault_id}.')
-        log_metric('transmission.info', tags={'method': 'shipment_rpcclient.add_shipment_data',
-                                              'package': 'shipment.rpc'})
+        with cache.lock(vault_id):
+            LOG.debug(f'Adding shipment data with storage_credentials_id {storage_credentials_id},'
+                      f'wallet_id {wallet_id}, and vault_id {vault_id}.')
+            log_metric('transmission.info', tags={'method': 'shipment_rpcclient.add_shipment_data',
+                                                  'package': 'shipment.rpc'})
 
-        result = self.call('load.add_shipment_data', {
-            "storageCredentials": storage_credentials_id,
-            "vaultWallet": wallet_id,
-            "vault": vault_id,
-            "shipment": shipment_data
-        })
+            result = self.call('load.add_shipment_data', {
+                "storageCredentials": storage_credentials_id,
+                "vaultWallet": wallet_id,
+                "vault": vault_id,
+                "shipment": shipment_data
+            })
 
-        if 'success' in result and result['success']:
-            LOG.debug('Successful addition of shipment data.')
-            return result['vault_signed']
+            if 'success' in result and result['success']:
+                LOG.debug('Successful addition of shipment data.')
+                return result['vault_signed']
 
-        log_metric('transmission.error', tags={'method': 'shipment_rpcclient.add_shipment_data',
-                                               'package': 'shipment.rpc', 'code': 'RPCError'})
-        LOG.error('Invalid addition of shipment data.')
-        raise RPCError("Invalid response from Engine")
+            log_metric('transmission.error', tags={'method': 'shipment_rpcclient.add_shipment_data',
+                                                   'package': 'shipment.rpc', 'code': 'RPCError'})
+            LOG.error('Invalid addition of shipment data.')
+            raise RPCError("Invalid response from Engine")
+
+    def add_tracking_data(self, storage_credentials_id, wallet_id, vault_id, tracking_data):
+        with cache.lock(vault_id):
+            LOG.debug(f'Adding tracking data with storage_credentials_id {storage_credentials_id},'
+                      f'wallet_id {wallet_id}, and vault_id {vault_id}.')
+            log_metric('transmission.info', tags={'method': 'shipment_rpcclient.add_tracking_data',
+                                                  'package': 'shipment.rpc'})
+
+            result = self.call('load.add_tracking_data', {
+                "storageCredentials": storage_credentials_id,
+                "vaultWallet": wallet_id,
+                "vault": vault_id,
+                "payload": tracking_data
+            })
+
+            if 'success' in result and result['success']:
+                LOG.debug('Successful addition of tracking data.')
+                return result['vault_signed']
+
+            log_metric('transmission.error', tags={'method': 'shipment_rpcclient.add_tracking_data',
+                                                   'package': 'shipment.rpc', 'code': 'RPCError'})
+            LOG.error('Invalid addition of tracking data.')
+            raise RPCError("Invalid response from Engine")
 
     def create_shipment_transaction(self, shipper_wallet_id, carrier_wallet_id,  # pylint: disable=too-many-arguments
                                     valid_until, funding_type, shipment_amount):
