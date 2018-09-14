@@ -1,6 +1,7 @@
 import logging
 
 import geocoder
+from geocoder.keys import mapbox_access_token
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import GeometryField
@@ -10,9 +11,12 @@ from django.core.validators import RegexValidator
 from django.db import models
 from enumfields import Enum
 from enumfields import EnumField
+from rest_framework.exceptions import APIException
+from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 
 from apps.eth.models import EthListener
+from apps.exceptions import ServiceUnavailable
 from apps.jobs.models import JobListener, AsyncJob
 from apps.utils import random_id
 from .rpc import ShipmentRPCClient
@@ -42,9 +46,9 @@ class Location(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def get_lat_long_from_address(self):
-        LOG.debug(f'Creating lat/long point for location {self}')
+        LOG.debug(f'Creating lat/long point for location {self.id}')
         log_metric('transmission.info', tags={'method': 'locations.get_lat_long'})
-        parsing_address = f''
+        parsing_address = ''
 
         if self.address_1:
             parsing_address += self.address_1 + ', '
@@ -59,17 +63,39 @@ class Location(models.Model):
         if self.postal_code:
             parsing_address += self.postal_code + ', '
 
-        if not parsing_address:
-            lat_lang = []
+        if parsing_address:
+            if mapbox_access_token:
+                self.geocoder(parsing_address, 'mapbox')
+            else:
+                self.geocoder(parsing_address, 'google')
 
-        google = geocoder.google(parsing_address)
-        if google.error:
-            LOG.debug(f'Failed to get google geocode do to {google.error} for address {parsing_address}')
+    def geocoder(self, parsing_address, method):
+        print(method)
+        print(mapbox_access_token)
+        if method == 'mapbox':
+            geocoder_response = geocoder.mapbox(parsing_address)
+        elif method == 'google':
+            geocoder_response = geocoder.google(parsing_address)
+
+        print(geocoder_response)
+
+        if not geocoder_response.ok:
+            if 'OVER_QUERY_LIMIT' in geocoder_response.error:
+                log_metric('transmission.errors', tags={'method': f'locations.geocoder', 'code': 'service unavailable',
+                                                        'detail': f'error calling {method} geocoder'})
+                LOG.debug(f'{method} geocode for address {parsing_address} failed as query limit was reached')
+                raise ServiceUnavailable(detail=f'Over Query Limit for {method}',
+                                         code=HTTP_503_SERVICE_UNAVAILABLE)
+
+            elif 'No results found' or 'ZERO_RESULTS' in geocoder_response.error:
+                log_metric('transmission.errors', tags={'method': f'locations.geocoder', 'code': 'internal server error'
+                                                        , 'detail': f'No results returned from {method} geocoder'})
+                LOG.debug(f'{method} geocode for address {parsing_address} failed with zero results returned')
+                raise APIException(detail='Invalid Location Address',
+                                   code=HTTP_500_INTERNAL_SERVER_ERROR)
+
         else:
-            lat_lang = google.latlng
-        pnt = Point(lat_lang)
-        if pnt:
-            self.geometry = pnt
+            self.geometry = Point(geocoder_response.latlng)
 
 
 class FundingType(Enum):

@@ -2,11 +2,15 @@ import copy
 from unittest import mock
 
 import requests
+from geocoder.keys import mapbox_access_token
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 import httpretty
 import json
+import os
+import re
+from unittest.mock import patch
 
 from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus
 from apps.shipments.rpc import ShipmentRPCClient
@@ -22,6 +26,9 @@ LOCATION_NAME = "Test Location Name"
 LOCATION_CITY = 'City'
 LOCATION_STATE = 'State'
 LOCATION_NUMBER = "555-555-5555"
+
+mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
+google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
 
 
 class ShipmentAPITests(APITestCase):
@@ -382,6 +389,8 @@ class LocationAPITests(APITestCase):
     def setUp(self):
         self.client = APIClient()
 
+        os.environ['MAPBOX_ACCESS_TOKEN'] = 'pk.test'
+
         self.user_1 = AuthenticatedUser({
             'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7b',
             'username': 'user1@shipchain.io',
@@ -423,12 +432,15 @@ class LocationAPITests(APITestCase):
         url = reverse('location-list', kwargs={'version': 'v1'})
         valid_data, content_type = create_form_content({'name': LOCATION_NAME, 'city': LOCATION_CITY,
                                                         'state': LOCATION_STATE})
-        body_obj = {'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
-        body_string = json.dumps(body_obj)
-        http_url = f'https://maps.googleapis.com/maps/api/geocode/json?address={LOCATION_CITY}+{LOCATION_STATE}&key=mock'
+
+        google_obj = {'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
+        mapbox_obj = {'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [23, 12]}}]}
+
+        httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
+        httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
 
         # Unauthenticated request should fail with 403
-        response = self.client.post(url, body_string, content_type=content_type)
+        response = self.client.post(url, valid_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         self.set_user(self.user_1)
@@ -437,9 +449,16 @@ class LocationAPITests(APITestCase):
         response = self.client.post(url, '{}', content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        httpretty.register_uri(httpretty.GET, http_url, body=body_string)
+        # Authenticated request with name parameter using mapbox should succeed
+        response = self.client.post(url, valid_data, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response_data = response.json()
+        self.assertEqual(response_data['data']['attributes']['name'], LOCATION_NAME)
+        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [12.0, 23.0])
 
-        # Authenticated request with name parameter should succeed
+        mapbox_access_token = None
+
+        # Authenticated request with name parameter using google should succeed
         response = self.client.post(url, valid_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         response_data = response.json()
@@ -452,19 +471,30 @@ class LocationAPITests(APITestCase):
         url = reverse('location-detail', kwargs={'version': 'v1', 'pk': self.locations[0].id})
         valid_data, content_type = create_form_content({'phone_number': LOCATION_NUMBER, 'city': LOCATION_CITY,
                                                         'state': LOCATION_STATE})
-        body_obj = {
+        google_obj = {
             'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
-        body_string = json.dumps(body_obj)
-        http_url = f'https://maps.googleapis.com/maps/api/geocode/json?address={LOCATION_CITY}+{LOCATION_STATE}&key=mock'
+        mapbox_obj = {
+            'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [23, 12]}}]}
+
+        httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
+        httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
 
         # Unauthenticated request should fail with 403
         response = self.client.patch(url, valid_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         self.set_user(self.user_1)
-        httpretty.register_uri(httpretty.GET, http_url, body=body_string)
 
-        # Authenticated request with name parameter should succeed
+        # Authenticated request with name parameter using mapbox should succeed
+        response = self.client.patch(url, valid_data, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(response_data['data']['attributes']['phone_number'], LOCATION_NUMBER)
+        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [12.0, 23.0])
+
+        mapbox_access_token = None
+
+        # Authenticated request with name parameter using google should succeed
         response = self.client.patch(url, valid_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
