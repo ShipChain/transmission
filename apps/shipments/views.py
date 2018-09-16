@@ -8,10 +8,10 @@ from influxdb_metrics.loader import log_metric
 
 from .geojson import build_line_string_feature, build_point_features, build_feature_collection
 from .models import Shipment, Location
-from .permissions import IsOwner
+from .permissions import IsOwner, IsUserOrDevice
 from .rpc import ShipmentRPCClient
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, \
-    ShipmentUpdateSerializer, ShipmentTxSerializer, LocationSerializer
+    ShipmentUpdateSerializer, ShipmentTxSerializer, LocationSerializer, TrackingDataSerializer
 
 
 LOG = logging.getLogger('transmission')
@@ -58,8 +58,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
 
-    @action(detail=True, methods=['get'])
-    def tracking(self, request, version, pk=None):
+    def get_tracking_data(self, request, version, pk):
         """
         Retrieve tracking data for this Shipment after checking permissions with Profiles
         """
@@ -68,6 +67,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = Shipment.objects.get(pk=pk)
 
         # TODO: re-implement device/shipment authorization for tracking data
+        # GET Profiles /api/v1/devices/{id}
 
         rpc_client = ShipmentRPCClient()
         tracking_data = rpc_client.get_tracking_data(shipment.storage_credentials_id,
@@ -88,6 +88,28 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         feature_collection = build_feature_collection(all_features)
 
         return Response(data=feature_collection, status=status.HTTP_200_OK)
+
+    def add_tracking_data(self, request, version, pk):
+        shipment = Shipment.objects.get(pk=pk)
+
+        # Ensure payload is a valid JWS
+        serializer = TrackingDataSerializer(data=request.data, context={'shipment': shipment})
+        serializer.is_valid(raise_exception=True)
+
+        # Add tracking data to shipment via Engine RPC
+        from .tasks import tracking_data_update
+        tracking_data_update.delay(shipment.id, serializer.validated_data['payload'])
+
+        return Response(status=status.HTTP_202_ACCEPTED)
+
+    @action(detail=True, methods=['get', 'post'], permission_classes=(IsUserOrDevice,))
+    def tracking(self, request, version, pk):
+        if request.method == 'GET':
+            return self.get_tracking_data(request, version, pk)
+        elif request.method == 'POST':
+            return self.add_tracking_data(request, version, pk)
+        else:
+            raise NotImplementedError()
 
     def update(self, request, *args, **kwargs):
         """

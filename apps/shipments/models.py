@@ -93,6 +93,34 @@ class Location(models.Model):
             self.geometry = Point(geocoder_response.latlng)
 
 
+class Device(models.Model):
+    id = models.CharField(primary_key=True, null=False, max_length=36)
+    certificate_id = models.CharField(unique=True, null=True, blank=False, max_length=255)
+
+    @staticmethod
+    def create_with_permission(jwt, device_id):
+        import requests
+        from rest_framework import status
+        from rest_framework.exceptions import APIException
+
+        certificate_id = None
+        if settings.PROFILES_URL:
+            # Make a request to Profiles /api/v1/devices/{device_id} with the user's JWT
+            response = requests.get(f'{settings.PROFILES_URL}/api/v1/devices/{device_id}/',
+                                    headers={'Authorization': 'JWT {}'.format(jwt)})
+            if response.status_code != status.HTTP_200_OK:
+                raise APIException(detail="User does not have access to this device in ShipChain Profiles",
+                                   code=status.HTTP_403_FORBIDDEN)
+            import boto3
+            iot = boto3.client('iot')
+            response = iot.list_thing_principals(device_id)
+            for arn in response['principals']:
+                # arn == arn:aws:iot:us-east-1:489745816517:cert/{certificate_id}
+                certificate_id = arn.rsplit('/', 1)[1]
+                break
+        return Device.objects.get_or_create(device_id=device_id, certificate_id=certificate_id)
+
+
 class FundingType(Enum):
     SHIP = 0
     CASH = 1
@@ -151,10 +179,11 @@ class LoadShipment(models.Model):
 class Shipment(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     owner_id = models.CharField(null=False, max_length=36)
-    load_data = models.OneToOneField(LoadShipment, on_delete=models.CASCADE, null=True)
+    load_data = models.OneToOneField(LoadShipment, on_delete=models.PROTECT, null=True)
 
     storage_credentials_id = models.CharField(null=False, max_length=36)
     vault_id = models.CharField(null=True, max_length=36)
+    device = models.ForeignKey(Device, on_delete=models.PROTECT, null=True)
     shipper_wallet_id = models.CharField(null=False, max_length=36)
     carrier_wallet_id = models.CharField(null=False, max_length=36)
     updated_at = models.DateTimeField(auto_now=True)
@@ -253,7 +282,7 @@ class Shipment(models.Model):
                 signing_wallet_id=self.shipper_wallet_id,
                 listener=self)
         else:
-            LOG.error(f'Shipment {self.id} tried to update_vault_hash before load_data.shipment_id was set!')
+            LOG.info(f'Shipment {self.id} tried to update_vault_hash before load_data.shipment_id was set.')
             log_metric('transmission.error', tags={'method': 'shipment.update_vault_hash', 'code': 'call_too_early',
                                                    'package': 'shipment.models'})
         return async_job

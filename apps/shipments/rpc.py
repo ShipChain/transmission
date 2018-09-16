@@ -7,6 +7,8 @@ from apps.rpc_client import RPCClient, RPCError
 
 LOG = logging.getLogger('transmission')
 
+from apps.rpc_client import RPCClient, RPCError
+
 
 class ShipmentRPCClient(RPCClient):
     def create_vault(self, storage_credentials_id, shipper_wallet_id, carrier_wallet_id):

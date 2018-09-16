@@ -2,17 +2,21 @@ import copy
 from unittest import mock
 
 import requests
+import boto3
+import json
 from geocoder.keys import mapbox_access_token
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
+from jose import jws
+from moto import mock_iot
 import httpretty
 import json
 import os
 import re
 from unittest.mock import patch
 
-from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus
+from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus, Device
 from apps.shipments.rpc import ShipmentRPCClient
 from django.contrib.gis.geos import Point
 from apps.utils import AuthenticatedUser, random_id
@@ -51,8 +55,7 @@ class ShipmentAPITests(APITestCase):
                                                       carrier_wallet_id=CARRIER_WALLET_ID,
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
-                                                      owner_id=self.user_1.id,
-                                                      load_data=self.load_datas[0]))
+                                                      owner_id=self.user_1.id))
 
     def create_load_data(self):
         self.load_datas = []
@@ -91,6 +94,68 @@ class ShipmentAPITests(APITestCase):
 
         # No devices created should return empty array
         self.assertEqual(len(response_data['data']), 0)
+
+    @mock_iot
+    def test_add_tracking_data(self):
+        from apps.rpc_client import requests
+        from tests.utils import mocked_rpc_response
+
+        device_id = 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'
+
+        # Create device 'thing'
+        iot = boto3.client('iot', region_name='us-east-1')
+        iot.create_thing(
+            thingName=device_id
+        )
+
+        # Load device cert into AWS
+        with open('tests/data/cert.pem', 'r') as cert_file:
+            cert_pem = cert_file.read()
+        cert_response = iot.register_certificate(
+            certificatePem=cert_pem,
+            status='ACTIVE'
+        )
+        certificate_id = cert_response['certificateId']
+
+        # Set device for Shipment
+        with mock.patch.object(requests, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_id": "TEST_VAULT_ID"
+                }
+            })
+            self.create_shipment()
+            self.shipments[0].device = Device.objects.create(
+                id=device_id,
+                certificate_id=certificate_id
+            )
+
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_signed": {'hash': "TEST_VAULT_SIGNATURE"}
+                }
+            })
+            self.shipments[0].save()
+
+            url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+
+            # Sign tracking data using cert
+            track_dic = {'position': {'latitude': -81.048253, 'longitude': 34.628643, 'altitude': 924, 'source': 'gps',
+                                      'certainty': 95, 'speed': 34}, 'version': '1.0.0',
+                         'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'}
+            with open('tests/data/eckey.pem', 'r') as key_file:
+                key_pem = key_file.read()
+            signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
+
+            # Send tracking update
+            response = self.client.post(url, {'payload': signed_data}, format='json')
+            print(response.json())
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
     #
     # def test_create(self):
     #     url = reverse('shipment-list', kwargs={'version': 'v1'})
