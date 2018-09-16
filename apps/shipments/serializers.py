@@ -172,7 +172,7 @@ class TrackingDataSerializer(serializers.Serializer):
             header = jws.get_unverified_header(payload)
 
             # Ensure that the device is allowed to update the Shipment tracking data
-            if header['kid'] != shipment.device.certificate_id:
+            if not shipment.device or header['kid'] != shipment.device.certificate_id:
                 raise serializers.ValidationError(f"Certificate {header['kid']} is "
                                                   f"not associated with shipment {shipment.id}")
 
