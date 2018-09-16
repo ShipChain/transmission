@@ -10,6 +10,7 @@ from django.db import transaction
 from enumfields.drf import EnumField
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
+from rest_framework import exceptions
 from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
 
@@ -170,12 +171,17 @@ class TrackingDataSerializer(serializers.Serializer):
         shipment = self.context['shipment']
         try:
             header = jws.get_unverified_header(payload)
+        except JWSError as exc:
+            raise exceptions.ValidationError(f"Invalid JWS: {exc}")
 
-            # Ensure that the device is allowed to update the Shipment tracking data
-            if not shipment.device or header['kid'] != shipment.device.certificate_id:
-                raise serializers.ValidationError(f"Certificate {header['kid']} is "
-                                                  f"not associated with shipment {shipment.id}")
+        # Ensure that the device is allowed to update the Shipment tracking data
+        if not shipment.device:
+            raise exceptions.PermissionDenied(f"No device for shipment {shipment.id}")
+        elif header['kid'] != shipment.device.certificate_id:
+            raise exceptions.PermissionDenied(f"Certificate {header['kid']} is "
+                                              f"not associated with shipment {shipment.id}")
 
+        try:
             # Look up JWK for device from AWS IoT
             iot = boto3.client('iot', region_name='us-east-1')
             cert = iot.describe_certificate(certificateId=header['kid'])
@@ -189,11 +195,11 @@ class TrackingDataSerializer(serializers.Serializer):
                 # Validate authenticity and integrity of message signature
                 attrs['payload'] = jws.verify(payload, public_key, header['alg'])
             else:
-                raise serializers.ValidationError(f"Certificate {header['kid']} is "
+                raise exceptions.PermissionDenied(f"Certificate {header['kid']} is "
                                                   f"not ACTIVE in IoT for shipment {shipment.id}")
         except ClientError as exc:
-            raise serializers.ValidationError(f'boto3 error when validating tracking update: {exc}')
+            raise exceptions.APIException(f'boto3 error when validating tracking update: {exc}')
         except JWSError as exc:
-            raise serializers.ValidationError(f'Error validating tracking data JWS: {exc}')
+            raise exceptions.PermissionDenied(f'Error validating tracking data JWS: {exc}')
 
         return attrs

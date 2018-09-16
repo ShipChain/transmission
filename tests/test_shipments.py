@@ -158,15 +158,14 @@ class ShipmentAPITests(APITestCase):
             # Certificate ID not in AWS
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': 'notarealcertificateid'}, algorithm='ES256')
             response = self.client.post(url, {'payload': signed_data}, format='json')
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            print(response.json())
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Signed by a different key
             with open('tests/data/eckey2.pem', 'r') as key_file:
                 bad_key = key_file.read()
             signed_data = jws.sign(track_dic, key=bad_key, headers={'kid': certificate_id}, algorithm='ES256')
             response = self.client.post(url, {'payload': signed_data}, format='json')
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Data from a different device
             bad_device_id = 'bdfc1e4c-7e61-4aee-b6f5-4d8b95a7ec76'
@@ -183,7 +182,7 @@ class ShipmentAPITests(APITestCase):
             bad_cert_id = cert_response['certificateId']
             signed_data = jws.sign(track_dic, key=bad_key, headers={'kid': bad_cert_id}, algorithm='ES256')
             response = self.client.post(url, {'payload': signed_data}, format='json')
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Invalid JWS
             response = self.client.post(url, {'payload': {'this': 'is not a jws'}}, format='json')
@@ -199,14 +198,14 @@ class ShipmentAPITests(APITestCase):
             iot.update_certificate(certificateId=certificate_id, newStatus='REVOKED')
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
             response = self.client.post(url, {'payload': signed_data}, format='json')
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
             iot.update_certificate(certificateId=certificate_id, newStatus='ACTIVE')
 
             # Device not assigned to shipment
             self.shipments[0].device = None
             self.shipments[0].save()
             response = self.client.post(url, {'payload': signed_data}, format='json')
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     #
     # def test_create(self):

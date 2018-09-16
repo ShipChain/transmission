@@ -1,7 +1,7 @@
 import logging
 
 from django.conf import settings
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
@@ -109,7 +109,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         elif request.method == 'POST':
             return self.add_tracking_data(request, version, pk)
         else:
-            raise NotImplementedError()
+            raise exceptions.MethodNotAllowed(request.method)
 
     def update(self, request, *args, **kwargs):
         """
