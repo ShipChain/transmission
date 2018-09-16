@@ -103,7 +103,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
     def create(self, validated_data):
         extra_args = {}
 
-        request = self.context['request']
+        auth = self.context['auth']
 
         with transaction.atomic():
             for location_field in ['ship_from_location', 'ship_to_location']:
@@ -114,7 +114,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                         'owner_id'])
 
             if 'device_id' in validated_data:
-                extra_args['device'] = Device.create_with_permission(request.auth, validated_data['device_id'])
+                extra_args['device'] = Device.create_with_permission(auth, validated_data['device_id'])
 
             return Shipment.objects.create(**validated_data, **extra_args)
 

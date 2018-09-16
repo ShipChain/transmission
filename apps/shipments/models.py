@@ -15,9 +15,9 @@ from rest_framework.exceptions import ValidationError, Throttled
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 
-from apps.eth.models import EthListener
-from apps.jobs.models import JobListener, AsyncJob
 from apps.utils import random_id
+from apps.jobs.models import JobListener, AsyncJob, JobState
+from apps.eth.models import EthListener
 from .rpc import ShipmentRPCClient
 
 LOG = logging.getLogger('transmission')
@@ -175,6 +175,8 @@ class LoadShipment(models.Model):
     shipment_canceled_by_shipper = models.BooleanField(default=False)
     escrow_paid = models.BooleanField(default=False)
 
+    vault_hash = models.CharField(max_length=66, blank=False, null=True)
+
 
 class Shipment(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
@@ -267,20 +269,56 @@ class Shipment(models.Model):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
         return f"{settings.PROFILES_URL}/api/v1/device/?on_shipment={self.vault_id}"
 
-    def update_vault_hash(self, vault_hash):
+    def update_vault_hash(self, vault_hash, rate_limit=False):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.load_data and self.load_data.shipment_id:
-            LOG.debug(f'Updating for shipment_id {self.load_data.shipment_id}')
-            async_job = AsyncJob.rpc_job_for_listener(
-                rpc_class=ShipmentRPCClient,
-                rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
-                rpc_parameters=[self.shipper_wallet_id,
-                                self.load_data.shipment_id,
-                                '',
-                                vault_hash],
-                signing_wallet_id=self.shipper_wallet_id,
-                listener=self)
+            if rate_limit:
+                LOG.debug(f'Shipment {self.id} requested a rate-limited vault hash update')
+                job_queryset = AsyncJob.objects.filter(
+                    state=JobState.PENDING,
+                    rpc_class=ShipmentRPCClient,
+                    rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
+                    signing_wallet_id=self.shipper_wallet_id,
+                    listener=self
+                )
+                if not job_queryset.count():
+                    LOG.debug(f'No pending vault hash updates for {self.id}, '
+                              f'sending one in {settings.VAULT_HASH_RATE_LIMIT} minutes')
+                    async_job = AsyncJob.rpc_job_for_listener(
+                        rpc_class=ShipmentRPCClient,
+                        rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
+                        rpc_parameters=[self.shipper_wallet_id,
+                                        self.load_data.shipment_id,
+                                        '',
+                                        vault_hash],
+                        signing_wallet_id=self.shipper_wallet_id,
+                        listener=self,
+                        delay=settings.VAULT_HASH_RATE_LIMIT)
+                else:
+                    # Update vault hash for current queued job
+                    async_job = job_queryset.first()
+                    LOG.debug(f'Shipment {self.id} found a pending vault hash update {async_job.id}, '
+                              f'updating its parameters with new hash')
+                    async_job.parameters['rpc_parameters'] = [
+                        self.shipper_wallet_id,
+                        self.load_data.shipment_id,
+                        '',
+                        vault_hash
+                    ]
+                    async_job.save()
+            else:
+                LOG.debug(f'Shipment {self.id} requested a vault hash update')
+                async_job = AsyncJob.rpc_job_for_listener(
+                    rpc_class=ShipmentRPCClient,
+                    rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
+                    rpc_parameters=[self.shipper_wallet_id,
+                                    self.load_data.shipment_id,
+                                    '',
+                                    vault_hash],
+                    signing_wallet_id=self.shipper_wallet_id,
+                    listener=self)
+            Shipment.objects.filter(self.id).update(vault_hash=vault_hash)
         else:
             LOG.info(f'Shipment {self.id} tried to update_vault_hash before load_data.shipment_id was set.')
             log_metric('transmission.error', tags={'method': 'shipment.update_vault_hash', 'code': 'call_too_early',

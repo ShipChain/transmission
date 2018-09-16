@@ -45,7 +45,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         LOG.debug(f'Creating a shipment object.')
         log_metric('transmission.info', tags={'method': 'shipments.create', 'package': 'shipments.views'})
         # Create Shipment
-        serializer = ShipmentCreateSerializer(data=request.data)
+        serializer = ShipmentCreateSerializer(data=request.data, context={'auth': request.auth})
         serializer.is_valid(raise_exception=True)
 
         shipment = self.perform_create(serializer)
