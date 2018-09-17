@@ -103,7 +103,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         from .tasks import tracking_data_update
         tracking_data_update.delay(shipment.id, serializer.validated_data['payload'])
 
-        return Response(status=status.HTTP_202_ACCEPTED)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get', 'post'], permission_classes=(IsUserOrDevice,))
     def tracking(self, request, version, pk):
