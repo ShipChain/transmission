@@ -81,15 +81,17 @@ class Location(models.Model):
 
         if not geocoder_response.ok:
             if 'OVER_QUERY_LIMIT' in geocoder_response.error:
-                log_metric('transmission.errors', tags={'method': f'locations.geocoder', 'code': 'service unavailable',
+                log_metric('transmission.errors', tags={'method': f'locations.geocoder',
+                                                        'code': 'service_unavailable', 'package': 'shipments.models',
                                                         'detail': f'error calling {method} geocoder'})
                 LOG.debug(f'{method} geocode for address {parsing_address} failed as query limit was reached')
                 raise ServiceUnavailable(detail=f'Over Query Limit for {method}',
                                          code=HTTP_503_SERVICE_UNAVAILABLE)
 
             elif 'No results found' or 'ZERO_RESULTS' in geocoder_response.error:
-                log_metric('transmission.errors', tags={'method': f'locations.geocoder', 'code': 'internal server error'
-                                                        , 'detail': f'No results returned from {method} geocoder'})
+                log_metric('transmission.errors', tags={'method': f'locations.geocoder',
+                                                        'code': 'internal_server_error', 'package': 'shipments.models',
+                                                        'detail': f'No results returned from {method} geocoder'})
                 LOG.debug(f'{method} geocode for address {parsing_address} failed with zero results returned')
                 raise APIException(detail='Invalid Location Address',
                                    code=HTTP_500_INTERNAL_SERVER_ERROR)
