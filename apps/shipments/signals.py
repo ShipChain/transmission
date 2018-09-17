@@ -85,7 +85,7 @@ def shipment_post_save(sender, **kwargs):
 @receiver(post_save, sender=LoadShipment, dispatch_uid='loadshipment_post_save')
 def loadshipment_post_save(sender, **kwargs):
     instance, created = kwargs["instance"], kwargs["created"]
-    LOG.debug(f'LoadShipment post save with sender {sender}.')
+    LOG.debug(f'LoadShipment post save for LoadShipment: {instance.id}')
     if created:
         LOG.debug(f'Creating a shipment on the load contract.')
         # Create shipment on the LOAD contract

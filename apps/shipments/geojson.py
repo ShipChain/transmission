@@ -17,7 +17,7 @@ def build_line_string_feature(shipment, tracking_data):
     """
     begin = (shipment.pickup_actual or datetime.min).replace(tzinfo=None)
     end = (shipment.delivery_actual or datetime.max).replace(tzinfo=None)
-    LOG.debug(f'Has object permission with tracking_data {tracking_data}.')
+    LOG.debug(f'Building line string feature for shipment {shipment.id}.')
     log_metric('transmission.info', tags={'method': 'build_line_string_feature', 'package': 'shipments.geojson'})
     tracking_points = []
     for point in tracking_data:
@@ -26,7 +26,7 @@ def build_line_string_feature(shipment, tracking_data):
             if begin <= dtp.timestamp <= end:
                 tracking_points.append(dtp)
         except InvalidTrackingPointError as err:
-            LOG.error(f'Error parsing tracking data for shipment {shipment.id}: {err}')
+            LOG.warning(f'Error parsing tracking data for shipment {shipment.id}: {err}')
     tracking_points.sort(key=lambda dt_point: dt_point.timestamp)
     return [DeviceTrackingPoint.get_linestring_feature(tracking_points)]
 
@@ -114,8 +114,8 @@ class DeviceTrackingPoint(object):
 
         try:
             return Point((self.lon, self.lat))
-        except Exception:
-            LOG.error(f'Device tracking as_point exception {Exception}.')
+        except Exception as ex:
+            LOG.error(f'Device tracking as_point exception {ex}.')
             log_metric('transmission.error', tags={'method': 'as_point_exception',
                                                    'package': 'shipments.geojson', 'code': 'as_point'})
 
@@ -132,8 +132,8 @@ class DeviceTrackingPoint(object):
                 "has_gps": self.has_gps,
                 "source": self.source,
             })
-        except Exception:
-            LOG.error(f'Device tracking as_point_feature exception {Exception}.')
+        except Exception as ex:
+            LOG.error(f'Device tracking as_point_feature exception {ex}.')
             log_metric('transmission.error', tags={'method': 'as_point_feature_exception',
                                                    'package': 'shipments.geojson', 'code': 'as_point_feature'})
 
@@ -155,8 +155,8 @@ class DeviceTrackingPoint(object):
             linestring, linestring_timestamps = DeviceTrackingPoint.get_linestring_list(tracking_points)
             return Feature(geometry=linestring, properties={"linestringTimestamps": linestring_timestamps})
 
-        except Exception:
-            LOG.error(f'Device tracking get_linestring_feature exception {Exception}.')
+        except Exception as ex:
+            LOG.error(f'Device tracking get_linestring_feature exception {ex}.')
             log_metric('transmission.error', tags={'method': 'get_linestring_feature'})
 
             raise InvalidTrackingPointError("Unable to build GeoJSON LineString Feature from tracking data")
