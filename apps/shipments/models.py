@@ -279,11 +279,10 @@ class Shipment(models.Model):
             if rate_limit:
                 LOG.debug(f'Shipment {self.id} requested a rate-limited vault hash update')
                 job_queryset = AsyncJob.objects.filter(
+                    joblistener__shipments__id=self.id,
                     state=JobState.PENDING,
-                    rpc_class=ShipmentRPCClient,
-                    rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
-                    signing_wallet_id=self.shipper_wallet_id,
-                    listener=self
+                    parameters__rpc_method=ShipmentRPCClient.update_vault_hash_transaction.__name__,
+                    parameters__signing_wallet_id=self.shipper_wallet_id,
                 )
                 if not job_queryset.count():
                     LOG.debug(f'No pending vault hash updates for {self.id}, '
@@ -319,7 +318,8 @@ class Shipment(models.Model):
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
                     listener=self)
-            Shipment.objects.filter(self.id).update(vault_hash=vault_hash)
+            self.load_data.vault_hash = vault_hash
+            self.load_data.save()
         else:
             LOG.info(f'Shipment {self.id} tried to update_vault_hash before load_data.shipment_id was set.')
             log_metric('transmission.error', tags={'method': 'shipment.update_vault_hash', 'code': 'call_too_early',

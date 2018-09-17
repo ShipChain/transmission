@@ -18,8 +18,8 @@ def tracking_data_update(self, shipment_id, payload):
     shipment = Shipment.objects.get(id=shipment_id)
 
     rpc_client = ShipmentRPCClient()
-    vault_hash = rpc_client.add_tracking_data(shipment.storage_credentials_id,
+    signature = rpc_client.add_tracking_data(shipment.storage_credentials_id,
                                               shipment.shipper_wallet_id,
                                               shipment.vault_id,
                                               payload)
-    shipment.update_vault_hash(vault_hash, rate_limit=True)
+    shipment.update_vault_hash(signature['hash'], rate_limit=True)
