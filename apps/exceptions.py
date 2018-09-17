@@ -24,14 +24,29 @@ def unhandled_drf_exception_handler(exc, context):
 
     errors = []
 
-    if isinstance(exc, (FieldError, FieldDoesNotExist,)):
-        keymatch = re.compile(r"^Cannot resolve keyword '(?P<keyword>\w+)' into field.")
+    if isinstance(exc, (FieldDoesNotExist,)):
+        keymatch = re.compile(r"^Cannot resolve keyword '(?P<keyword>[\w_]+)' into field.")
         matched = keymatch.match(str(exc))
         bad_kw = matched.group("keyword") if matched else "?"
 
         status_code = 400
         errors.append({
             "detail": f"Missing Query Parameter: '{bad_kw}'",
+            "source": {
+                "parameter": bad_kw,
+            },
+            "status": str(status_code),
+        })
+    elif isinstance(exc, (FieldError,)):
+        keymatch = re.compile(r"^Invalid field name\(s\) for model (?P<model>[\w_]+): '(?P<keyword>[\w_]+)'.")
+        matched = keymatch.match(str(exc))
+
+        bad_kw = matched.group("keyword") if matched else "?"
+        bad_model = matched.group("model") if matched else "?"
+
+        status_code = 400
+        errors.append({
+            "detail": f"No field {bad_kw} on model {bad_model}",
             "source": {
                 "parameter": bad_kw,
             },
