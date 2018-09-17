@@ -27,7 +27,7 @@ def message_post_save(sender, instance, **kwargs):
                     f'job {instance.async_job.id} received message {instance.id}')
     if instance.type == MessageType.ERROR:
         # Generic error handling
-        logging.error(f"Transaction failure for AsyncJob {instance.async_job.id}: {instance.body}")
+        LOG.error(f"Transaction failure for AsyncJob {instance.async_job.id}: {instance.body}")
         instance.async_job.state = JobState.FAILED
         instance.async_job.save()
 

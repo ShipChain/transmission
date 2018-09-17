@@ -19,7 +19,6 @@ LOG = logging.getLogger('transmission')
 @receiver(job_update, sender=Shipment, dispatch_uid='shipment_job_update')
 def shipment_job_update(sender, message, listener, **kwargs):
     LOG.debug(f'Shipment job update with message {message.id}.')
-    log_metric('transmission.info', tags={'method': 'shipment.shipment_job_update'})
 
     if message.type == MessageType.ETH_TRANSACTION:
         LOG.debug(f'Message type is {message.type}.')
@@ -33,7 +32,6 @@ def shipment_job_update(sender, message, listener, **kwargs):
 @receiver(event_update, sender=Shipment, dispatch_uid='shipment_event_update')
 def shipment_event_update(sender, event, listener, **kwargs):
     LOG.debug(f'Shipment event update with listener {listener.id}.')
-    log_metric('transmission.info', tags={'method': 'shipment.shipment_event_update'})
 
     if event.event_name == "CreateNewShipmentEvent":
         LOG.debug(f'Event.event_name is CreateNewShipmentEvent.')
@@ -56,7 +54,6 @@ def shipment_event_update(sender, event, listener, **kwargs):
 def shipment_post_save(sender, **kwargs):
     instance, created = kwargs["instance"], kwargs["created"]
     LOG.debug(f'Shipment post save with shipment {instance.id}.')
-    log_metric('transmission.info', tags={'method': 'shipment.shipment_post_save'})
 
     if created:
         # Create vault
@@ -90,7 +87,6 @@ def shipment_post_save(sender, **kwargs):
 def loadshipment_post_save(sender, **kwargs):
     instance, created = kwargs["instance"], kwargs["created"]
     LOG.debug(f'LoadShipment post save with sender {sender}.')
-    log_metric('transmission.info', tags={'method': 'loadshipment.loadshipment_post_save'})
     if created:
         LOG.debug(f'Creating a shipment on the load contract.')
         # Create shipment on the LOAD contract

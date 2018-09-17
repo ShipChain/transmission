@@ -28,7 +28,7 @@ class EventViewSet(mixins.CreateModelMixin,
     permission_classes = (permissions.AllowAny,)
 
     def create(self, request, *args, **kwargs):
-        log_metric('transmission.info', tags={'method': 'eth.events.create'})
+        log_metric('transmission.info', tags={'method': 'events.create', 'package': 'eth.views'})
         LOG.debug('Events create')
 
         is_many = isinstance(request.data, list)
@@ -44,6 +44,8 @@ class EventViewSet(mixins.CreateModelMixin,
             except ObjectDoesNotExist:
                 action = None
                 # TODO: Events without Receipt metric reporting
+                log_metric('transmission.error', tags={'method': 'events.create', 'code': 'object_does_not_exist',
+                                                       'package': 'eth.views', 'detail': 'events.is_many is false'})
                 LOG.info(f"Non-EthAction Event processed "
                          f"Tx: {serializer.data['transaction_hash']}")
 
@@ -60,6 +62,8 @@ class EventViewSet(mixins.CreateModelMixin,
                     action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
                 except ObjectDoesNotExist:
                     action = None
+                    log_metric('transmission.error', tags={'method': 'events.create', 'code': 'object_does_not_exist',
+                                                           'package': 'eth.views', 'detail': 'events.is_many is true'})
                     # TODO: Events without Receipt metric reporting
                     LOG.info(f"Non-EthAction Event processed "
                              f"Tx: {event['transaction_hash']}")
@@ -79,7 +83,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
     permission_classes = (permissions.IsAuthenticated, IsOwner) if settings.PROFILES_URL else (permissions.AllowAny,)
 
     def get_queryset(self):
-        log_metric('transmission.info', tags={'method': 'transaction.get_queryset'})
+        log_metric('transmission.info', tags={'method': 'transaction.get_queryset', 'package': 'eth.transaction'})
         LOG.debug('Getting tx details for a transaction hash.')
         queryset = self.queryset
         if settings.PROFILES_URL:

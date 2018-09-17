@@ -12,7 +12,8 @@ class EventRPCClient(RPCClient):
 
     def subscribe(self, url=Event.get_event_subscription_url(), project="LOAD", interval=5000, events=None):
         LOG.debug(f'Event subscription with url {url}.')
-        log_metric('transmission.info', tags={'method': 'eth.rpcclient.subscribe'})
+        log_metric('transmission.info', tags={'method': 'event_rpcclient.subscribe',
+                                              'package': 'eth.rpc'})
 
         result = self.call('event.subscribe', {
             "url": url,
@@ -25,4 +26,6 @@ class EventRPCClient(RPCClient):
             if 'subscription' in result:
                 return
 
+        log_metric('transmission.error', tags={'method': 'event_rpcclient.subscribe', 'code': 'RPCError',
+                                               'package': 'eth.rpc'})
         raise RPCError("Invalid response from Engine")

@@ -43,7 +43,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         Create a Shipment object and make Async Request to Engine
         """
         LOG.debug(f'Creating a shipment object.')
-        log_metric('transmission.info', tags={'method': 'shipments.create'})
+        log_metric('transmission.info', tags={'method': 'shipments.create', 'package': 'shipments.views'})
         # Create Shipment
         serializer = ShipmentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -64,7 +64,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         Retrieve tracking data for this Shipment after checking permissions with Profiles
         """
         LOG.debug(f'Retrieve tracking data for a shipment {pk}.')
-        log_metric('transmission.info', tags={'method': 'shipments.tracking'})
+        log_metric('transmission.info', tags={'method': 'shipments.tracking', 'package': 'shipments.views'})
         shipment = Shipment.objects.get(pk=pk)
 
         # TODO: re-implement device/shipment authorization for tracking data
@@ -96,7 +96,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         LOG.debug(f'Updating shipment {instance} with new details.')
-        log_metric('transmission.info', tags={'method': 'shipments.update'})
+        log_metric('transmission.info', tags={'method': 'shipments.update', 'package': 'shipments.views'})
 
         serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -141,7 +141,7 @@ class LocationViewSet(viewsets.ModelViewSet):
         serializer = LocationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         LOG.debug(f'Creating a location object.')
-        log_metric('transmission.info', tags={'method': 'location.create'})
+        log_metric('transmission.info', tags={'method': 'location.create', 'package': 'shipments.views'})
 
         location = self.perform_create(serializer)
 

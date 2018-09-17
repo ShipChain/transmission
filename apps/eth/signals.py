@@ -14,7 +14,6 @@ LOG = logging.getLogger('transmission')
 @receiver(post_save, sender=Event, dispatch_uid='event_post_save')
 def event_post_save(sender, instance, **kwargs):
     LOG.debug(f'Event post save with id {instance.id}.')
-    log_metric('transmission.info', tags={'method': 'eth.event_post_save'})
 
     # Update has been received, send signal to listener class
     if instance.eth_action:

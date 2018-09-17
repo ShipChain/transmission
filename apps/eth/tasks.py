@@ -13,7 +13,8 @@ LOG = logging.getLogger('transmission')
              retry_backoff=3, retry_backoff_max=60, max_retries=None)
 def engine_subscribe(self):
     from apps.eth.rpc import EventRPCClient, RPCError
-    log_metric('transmission.info', tags={'method': 'engine_subscribe'})
+    log_metric('transmission.info', tags={'method': 'eth.engine_subscribe',
+                                          'package': 'eth.tasks'})
 
     try:
         rpc_client = EventRPCClient()
@@ -21,6 +22,7 @@ def engine_subscribe(self):
         LOG.debug('Subscribed to events successfully with the rpc_client.')
 
     except RPCError as rpc_error:
-        # TODO: Metrics/Logs for subscribe failure
+        log_metric('transmission.info', tags={'method': 'eth.engine_subscribe', 'code': 'RPCError',
+                                              'package': 'eth.tasks'})
         LOG.error('Unable to subscribe to Events: {rpc_error}.')
         raise rpc_error
