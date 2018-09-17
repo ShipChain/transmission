@@ -18,7 +18,7 @@ def build_line_string_feature(shipment, tracking_data):
     begin = (shipment.pickup_actual or datetime.min).replace(tzinfo=None)
     end = (shipment.delivery_actual or datetime.max).replace(tzinfo=None)
     LOG.debug(f'Has object permission with tracking_data {tracking_data}.')
-    log_metric('transmission.info', tags={'method': 'build_line_string_feature'})
+    log_metric('transmission.info', tags={'method': 'build_line_string_feature', 'package': 'shipments.geojson'})
     tracking_points = []
     for point in tracking_data:
         try:
@@ -40,7 +40,7 @@ def build_point_features(shipment, tracking_data):
     begin = (shipment.pickup_actual or datetime.min).replace(tzinfo=None)
     end = (shipment.delivery_actual or datetime.max).replace(tzinfo=None)
     LOG.debug(f'Build point features with tracking_data {tracking_data}.')
-    log_metric('transmission.info', tags={'method': 'build_point_features'})
+    log_metric('transmission.info', tags={'method': 'build_point_features', 'package': 'shipments.geojson'})
     point_features = []
     for point in tracking_data:
         try:
@@ -59,7 +59,7 @@ def build_feature_collection(features):
     :return: All provided Features in a single FeatureCollection
     """
     LOG.debug(f'Build feature collection with features {features}.')
-    log_metric('transmission.info', tags={'method': 'build_feature_collection'})
+    log_metric('transmission.info', tags={'method': 'build_feature_collection', 'package': 'shipments.geojson'})
 
     feature_list = features
 
@@ -74,7 +74,8 @@ class InvalidTrackingPointError(APIException):
     Extend DRF APIException so these are automatically transformed via the exception handler
     """
     LOG.error(f'Invalid Tracking Point Error {APIException}.')
-    log_metric('transmission.error', tags={'method': 'invalid_tracking_point_error'})
+    log_metric('transmission.error', tags={'method': 'invalid_tracking_point_error', 'code': 'invalid_tracking_point',
+                                           'package': 'shipments.geojson'})
 
 
 class DeviceTrackingPoint(object):
@@ -95,31 +96,34 @@ class DeviceTrackingPoint(object):
 
         except IndexError:
             LOG.error(f'Device tracking index Error {IndexError}.')
-            log_metric('transmission.error', tags={'method': 'device_tracking_index_error'})
+            log_metric('transmission.error', tags={'method': 'device_tracking_index_error',
+                                                   'package': 'shipments.geojson', 'code': 'device_tracking_index'})
 
             raise InvalidTrackingPointError(f"Invalid Coordinates format from device")
 
         except KeyError as key_error:
             LOG.error(f'Device tracking key Error {key_error}.')
-            log_metric('transmission.error', tags={'method': 'device_tracking_key_error'})
+            log_metric('transmission.error', tags={'method': 'device_tracking_key_error',
+                                                   'package': 'shipments.geojson', 'code': 'device_tracking_key'})
 
             raise InvalidTrackingPointError(f"Missing field {key_error} in tracking data from device")
 
     def as_point(self):
         LOG.debug(f'Device tracking as_point.')
-        log_metric('transmission.info', tags={'method': 'as_point'})
+        log_metric('transmission.info', tags={'method': 'as_point', 'package': 'shipments.geojson'})
 
         try:
             return Point((self.lon, self.lat))
         except Exception:
             LOG.error(f'Device tracking as_point exception {Exception}.')
-            log_metric('transmission.error', tags={'method': 'as_point_exception'})
+            log_metric('transmission.error', tags={'method': 'as_point_exception',
+                                                   'package': 'shipments.geojson', 'code': 'as_point'})
 
             raise InvalidTrackingPointError("Unable to build GeoJSON Point from tracking data")
 
     def as_point_feature(self):
         LOG.debug(f'Device tracking as_point.')
-        log_metric('transmission.info', tags={'method': 'as_point_feature'})
+        log_metric('transmission.info', tags={'method': 'as_point_feature', 'package': 'shipments.geojson'})
 
         try:
             return Feature(geometry=self.as_point(), properties={
@@ -130,7 +134,8 @@ class DeviceTrackingPoint(object):
             })
         except Exception:
             LOG.error(f'Device tracking as_point_feature exception {Exception}.')
-            log_metric('transmission.error', tags={'method': 'as_point_feature_exception'})
+            log_metric('transmission.error', tags={'method': 'as_point_feature_exception',
+                                                   'package': 'shipments.geojson', 'code': 'as_point_feature'})
 
             raise InvalidTrackingPointError("Unable to build GeoJSON Point Feature from tracking data")
 
@@ -145,7 +150,7 @@ class DeviceTrackingPoint(object):
     def get_linestring_feature(tracking_points):
         try:
             LOG.debug(f'Device tracking get_linestring_list with tracking points {tracking_points}.')
-            log_metric('transmission.info', tags={'method': 'get_linestring_list'})
+            log_metric('transmission.info', tags={'method': 'get_linestring_list', 'package': 'shipments.geojson'})
 
             linestring, linestring_timestamps = DeviceTrackingPoint.get_linestring_list(tracking_points)
             return Feature(geometry=linestring, properties={"linestringTimestamps": linestring_timestamps})
@@ -159,7 +164,7 @@ class DeviceTrackingPoint(object):
     @staticmethod
     def __extract_date_fields(date):
         LOG.debug(f'Device tracking __extract_date_fields with date {date}.')
-        log_metric('transmission.info', tags={'method': '__extract_date_fields'})
+        log_metric('transmission.info', tags={'method': '__extract_date_fields', 'package': 'shipments.geojson'})
 
         day, month, year = int(date[:2]), int(date[2:4]), int("20" + date[4:6])
         return day, month, year
@@ -167,7 +172,7 @@ class DeviceTrackingPoint(object):
     @staticmethod
     def __extract_time_fields(time):
         LOG.debug(f'Device tracking __extract_time_fields with time {time}.')
-        log_metric('transmission.info', tags={'method': '__extract_time_fields'})
+        log_metric('transmission.info', tags={'method': '__extract_time_fields', 'package': 'shipments.geojson'})
 
         hour, minute, second = int(time[:2]), int(time[2:4]), int(time[4:6])
         return hour, minute, second
@@ -175,7 +180,7 @@ class DeviceTrackingPoint(object):
     @staticmethod
     def __build_timestamp(date, time):
         LOG.debug(f'Device tracking __build_timestamp with date {date} and time {time}.')
-        log_metric('transmission.info', tags={'method': '__extract_time_fields'})
+        log_metric('transmission.info', tags={'method': '__build_timestamp', 'package': 'shipments.geojson'})
 
         try:
             day, month, year = DeviceTrackingPoint.__extract_date_fields(date)
@@ -184,6 +189,7 @@ class DeviceTrackingPoint(object):
 
         except Exception as exception:
             LOG.error(f'Device tracking __build_timestamp exception {Exception}.')
-            log_metric('transmission.error', tags={'method': '__build_timestamp_exception'})
+            log_metric('transmission.error', tags={'method': '__build_timestamp_exception',
+                                                   'package': 'shipments.geojson', 'code': '__build_timestamp'})
 
             raise InvalidTrackingPointError(f"Error building timestamp from device tracking data: '{exception}'")
