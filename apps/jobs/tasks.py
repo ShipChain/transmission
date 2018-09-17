@@ -90,8 +90,8 @@ class AsyncTask:
                 eth_action.save()
             else:
                 # There is already a transaction with this transaction hash - retry later (get another nonce)
-                log_metric('transmission.error', tags={'method': 'async_task._sign_transaction', 'package': 'jobs.tasks'
-                                                       , 'code': 'transaction_in_progress'})
+                log_metric('transmission.error', tags={'method': 'async_task._sign_transaction',
+                                                       'package': 'jobs.tasks', 'code': 'transaction_in_progress'})
                 raise TransactionCollisionException(f'A transaction with the hash {hash_tx} is already in progress.')
 
         return signed_tx, eth_action

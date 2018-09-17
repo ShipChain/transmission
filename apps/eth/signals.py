@@ -2,7 +2,6 @@ import logging
 
 from django.db.models.signals import post_save
 from django.dispatch import Signal, receiver
-from influxdb_metrics.loader import log_metric
 
 # pylint:disable=invalid-name
 from apps.eth.models import Event

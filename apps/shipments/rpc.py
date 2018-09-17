@@ -102,7 +102,7 @@ class ShipmentRPCClient(RPCClient):
         LOG.debug(f'Updating vault hash transaction with current_shipment_id {current_shipment_id},'
                   f'vault_hash {vault_hash}, and wallet_id {wallet_id}.')
         log_metric('transmission.info', tags={'method': 'shipment_rpcclient.update_vault_hash_transaction',
-                                               'package': 'shipment.rpc'})
+                                              'package': 'shipment.rpc'})
 
         result = self.call('load.update_vault_hash_transaction', {
             "shipperWallet": wallet_id,

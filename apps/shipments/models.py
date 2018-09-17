@@ -5,11 +5,10 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.contrib.postgres.fields import JSONField
 from django.contrib.contenttypes.fields import GenericRelation
-from influxdb_metrics.loader import log_metric
-
-
 from enumfields import Enum
 from enumfields import EnumField
+from influxdb_metrics.loader import log_metric
+
 
 from apps.utils import random_id
 from apps.jobs.models import JobListener, AsyncJob

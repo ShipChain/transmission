@@ -2,7 +2,6 @@ import logging
 
 from django.dispatch import receiver
 from django.db.models.signals import post_save
-from influxdb_metrics.loader import log_metric
 
 from apps.eth.signals import event_update
 from apps.eth.models import TransactionReceipt
