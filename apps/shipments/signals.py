@@ -89,7 +89,6 @@ def loadshipment_post_save(sender, **kwargs):
         LOG.debug(f'Creating a shipment on the load contract.')
         # Create shipment on the LOAD contract
         AsyncJob.rpc_job_for_listener(
-            rpc_class=ShipmentRPCClient,
             rpc_method=ShipmentRPCClient.create_shipment_transaction,
             rpc_parameters=[instance.shipment.shipper_wallet_id,
                             instance.shipment.carrier_wallet_id,

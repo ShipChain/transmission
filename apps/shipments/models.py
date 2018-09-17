@@ -1,9 +1,13 @@
 import logging
 
+import requests
 import geocoder
 from geocoder.keys import mapbox_access_token
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.postgres.fields import JSONField
+from django.core.validators import RegexValidator
+from django.db import models
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Point
 from django.contrib.postgres.fields import JSONField
@@ -11,13 +15,15 @@ from django.core.validators import RegexValidator
 from django.db import models
 from enumfields import Enum
 from enumfields import EnumField
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.exceptions import ValidationError, Throttled
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 
-from apps.utils import random_id
-from apps.jobs.models import JobListener, AsyncJob, JobState
 from apps.eth.models import EthListener
+from apps.jobs.models import JobListener, AsyncJob, JobState
+from apps.utils import random_id
 from .rpc import ShipmentRPCClient
 
 LOG = logging.getLogger('transmission')
@@ -98,19 +104,16 @@ class Device(models.Model):
     certificate_id = models.CharField(unique=True, null=True, blank=False, max_length=255)
 
     @staticmethod
-    def create_with_permission(jwt, device_id):
-        import requests
-        from rest_framework import status
-        from rest_framework.exceptions import APIException
-
+    def get_or_create_with_permission(jwt, device_id):
         certificate_id = None
         if settings.PROFILES_URL:
             # Make a request to Profiles /api/v1/devices/{device_id} with the user's JWT
-            response = requests.get(f'{settings.PROFILES_URL}/api/v1/devices/{device_id}/',
-                                    headers={'Authorization': 'JWT {}'.format(jwt)})
+            response = requests.get(f'{settings.PROFILES_URL}/api/v1/device/{device_id}/',
+                                    headers={'Authorization': 'JWT {}'.format(jwt.decode())})
             if response.status_code != status.HTTP_200_OK:
-                raise APIException(detail="User does not have access to this device in ShipChain Profiles",
-                                   code=status.HTTP_403_FORBIDDEN)
+                raise PermissionDenied("User does not have access to this device in ShipChain Profiles")
+
+        if settings.ENVIRONMENT != 'LOCAL':
             import boto3
             iot = boto3.client('iot')
             response = iot.list_thing_principals(device_id)
@@ -118,7 +121,7 @@ class Device(models.Model):
                 # arn == arn:aws:iot:us-east-1:489745816517:cert/{certificate_id}
                 certificate_id = arn.rsplit('/', 1)[1]
                 break
-        return Device.objects.get_or_create(device_id=device_id, certificate_id=certificate_id)
+        return Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})[0]
 
 
 class FundingType(Enum):
@@ -286,7 +289,6 @@ class Shipment(models.Model):
                     LOG.debug(f'No pending vault hash updates for {self.id}, '
                               f'sending one in {settings.VAULT_HASH_RATE_LIMIT} minutes')
                     async_job = AsyncJob.rpc_job_for_listener(
-                        rpc_class=ShipmentRPCClient,
                         rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
                         rpc_parameters=[self.shipper_wallet_id,
                                         self.load_data.shipment_id,
@@ -310,7 +312,6 @@ class Shipment(models.Model):
             else:
                 LOG.debug(f'Shipment {self.id} requested a vault hash update')
                 async_job = AsyncJob.rpc_job_for_listener(
-                    rpc_class=ShipmentRPCClient,
                     rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
                     rpc_parameters=[self.shipper_wallet_id,
                                     self.load_data.shipment_id,

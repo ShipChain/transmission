@@ -10,8 +10,8 @@ from .geojson import build_line_string_feature, build_point_features, build_feat
 from .models import Shipment, Location
 from .permissions import IsOwner, IsUserOrDevice
 from .rpc import ShipmentRPCClient
-from .serializers import ShipmentSerializer, ShipmentCreateSerializer, \
-    ShipmentUpdateSerializer, ShipmentTxSerializer, LocationSerializer, TrackingDataSerializer
+from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer,\
+    LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer
 
 
 LOG = logging.getLogger('transmission')
@@ -93,7 +93,10 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = Shipment.objects.get(pk=pk)
 
         # Ensure payload is a valid JWS
-        serializer = TrackingDataSerializer(data=request.data, context={'shipment': shipment})
+        if settings.ENVIRONMENT == 'LOCAL':
+            serializer = UnvalidatedTrackingDataSerializer(data=request.data, context={'shipment': shipment})
+        else:
+            serializer = TrackingDataSerializer(data=request.data, context={'shipment': shipment})
         serializer.is_valid(raise_exception=True)
 
         # Add tracking data to shipment via Engine RPC
@@ -120,7 +123,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         LOG.debug(f'Updating shipment {instance} with new details.')
         log_metric('transmission.info', tags={'method': 'shipments.update', 'package': 'shipments.views'})
 
-        serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial)
+        serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial,
+                                              context={'auth': request.auth})
         serializer.is_valid(raise_exception=True)
 
         shipment = self.perform_update(serializer)

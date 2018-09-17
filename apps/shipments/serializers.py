@@ -11,6 +11,7 @@ from enumfields.drf import EnumField
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions
+from rest_framework.utils import model_meta
 from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
 
@@ -40,6 +41,12 @@ class NullableFieldsMixin:
                 ret[field.field_name] = representation
 
         return ret
+
+
+class DeviceSerializer(NullableFieldsMixin, serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = '__all__'
 
 
 class LocationSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -83,6 +90,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     load_data = LoadShipmentSerializer(required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
+    device = DeviceSerializer(required=False)
 
     transactions = serializers.SerializerMethodField()
 
@@ -100,6 +108,8 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
 
 
 class ShipmentCreateSerializer(ShipmentSerializer):
+    device_id = serializers.CharField(max_length=36)
+
     def create(self, validated_data):
         extra_args = {}
 
@@ -114,12 +124,14 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                         'owner_id'])
 
             if 'device_id' in validated_data:
-                extra_args['device'] = Device.create_with_permission(auth, validated_data['device_id'])
+                extra_args['device'] = Device.get_or_create_with_permission(auth, validated_data.pop('device_id'))
 
             return Shipment.objects.create(**validated_data, **extra_args)
 
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
+    device_id = serializers.CharField(max_length=36)
+
     class Meta:
         model = Shipment
         fields = '__all__'
@@ -129,6 +141,23 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         else:
             read_only_fields = ('vault_id', 'shipper_wallet_id', 'carrier_wallet_id', 'storage_credentials_id')
 
+    def update(self, instance, validated_data):
+        auth = self.context['auth']
+
+        if 'device_id' in validated_data:
+            instance.device = Device.get_or_create_with_permission(auth, validated_data.pop('device_id'))
+
+        info = model_meta.get_field_info(instance)
+        for attr, value in validated_data.items():
+            if attr in info.relations and info.relations[attr].to_many:
+                field = getattr(instance, attr)
+                field.set(value)
+            else:
+                setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+
 
 class ShipmentTxSerializer(serializers.ModelSerializer):
     async_job_id = serializers.CharField(max_length=36)
@@ -136,6 +165,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     load_data = LoadShipmentSerializer(required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
+    device = DeviceSerializer(required=False)
 
     class Meta:
         model = Shipment
@@ -160,7 +190,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         model = Shipment
         exclude = ('owner_id', 'load_data', 'storage_credentials_id',
                    'vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
-                   'contract_version')
+                   'contract_version', 'device')
 
 
 class TrackingDataSerializer(serializers.Serializer):
@@ -201,5 +231,18 @@ class TrackingDataSerializer(serializers.Serializer):
             raise exceptions.APIException(f'boto3 error when validating tracking update: {exc}')
         except JWSError as exc:
             raise exceptions.PermissionDenied(f'Error validating tracking data JWS: {exc}')
+
+        return attrs
+
+
+class UnvalidatedTrackingDataSerializer(serializers.Serializer):
+    payload = serializers.JSONField()
+
+    def validate(self, attrs):
+        shipment = self.context['shipment']
+
+        # Ensure that the device is allowed to update the Shipment tracking data
+        if not shipment.device:
+            raise exceptions.PermissionDenied(f"No device for shipment {shipment.id}")
 
         return attrs
