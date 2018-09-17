@@ -4,9 +4,11 @@ asn1crypto==0.24.0
 astroid==1.6.1
 aws-xray-sdk==0.95
 billiard==3.5.0.3
+blessings==1.7
 boto==2.49.0
 boto3==1.7.38
 botocore==1.10.38
+bpython==0.17.1
 CacheControl==0.12.5
 celery==4.2.1
 celery-once==2.0.0
@@ -21,6 +23,7 @@ coreapi==2.3.3
 coreschema==0.0.4
 coverage==4.5.1
 cryptography==2.2.1
+curtsies==0.3.0
 cytoolz==0.9.0
 decorator==4.3.0
 Django==2.0.7
@@ -53,6 +56,7 @@ flake8-polyfill==1.0.2
 future==0.16.0
 geocoder==1.38.1
 geojson==2.4.0
+greenlet==0.4.15
 gunicorn==19.7.1
 httpretty==0.9.5
 idna==2.6
@@ -90,6 +94,7 @@ pycparser==2.18
 pycryptodome==3.6.6
 pydocstyle==2.1.1
 pyflakes==1.6.0
+Pygments==2.2.0
 PyJWT==1.6.4
 pylint==1.8.2
 pylint-celery==0.3
@@ -121,6 +126,7 @@ snowballstemmer==1.2.1
 termstyle==0.1.11
 tld==0.7.10
 toolz==0.9.0
+typing==3.6.6
 Unidecode==1.0.22
 unittest-xml-reporting==2.1.1
 uritemplate==3.0.0
@@ -128,6 +134,7 @@ urllib3==1.22
 uWSGI==2.0.17.1
 vine==1.1.4
 watchdog==0.9.0
+wcwidth==0.1.7
 websocket-client==0.53.0
 Werkzeug==0.14.1
 whitenoise==3.3.1
