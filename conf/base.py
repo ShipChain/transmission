@@ -250,9 +250,13 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
+        'transmission': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     },
 }
@@ -276,6 +280,7 @@ if ELASTICSEARCH_URL:
         'use_ssl': True,
     }
     LOGGING['loggers']['oidc_provider']['handlers'].append('elasticsearch')
+    LOGGING['loggers']['transmission']['handlers'].append('elasticsearch')
     LOGGING['loggers']['django']['handlers'].append('elasticsearch')
 
 INFLUXDB_DISABLED = True
