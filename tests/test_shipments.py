@@ -153,7 +153,7 @@ class ShipmentAPITests(APITestCase):
 
             # Send tracking update
             response = self.client.post(url, {'payload': signed_data}, format='json')
-            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
             # Certificate ID not in AWS
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': 'notarealcertificateid'}, algorithm='ES256')
