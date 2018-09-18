@@ -33,6 +33,6 @@ def message_post_save(sender, instance, **kwargs):
 
     # Update has been received, send signal to listener class
     for listener in instance.async_job.joblistener_set.all():
-        LOG.debug(f'Update has been received, and signal sent to listener {listener}.')
+        LOG.debug(f'Update has been received, and signal sent to listener {instance.id}.')
         job_update.send(sender=listener.listener_type.model_class(),
                         message=instance, listener=listener.listener)

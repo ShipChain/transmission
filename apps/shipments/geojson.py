@@ -48,7 +48,7 @@ def build_point_features(shipment, tracking_data):
             if begin <= dtp.timestamp <= end:
                 point_features.append(dtp.as_point_feature())
         except InvalidTrackingPointError as err:
-            LOG.error(f'Error parsing tracking data for shipment {shipment.id}: {err}')
+            LOG.warning(f'Error parsing tracking data for shipment {shipment.id}: {err}')
     point_features.sort(key=lambda dt_feature: dt_feature.properties['time'])
     return point_features
 
