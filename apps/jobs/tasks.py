@@ -2,6 +2,7 @@
 import importlib
 import logging
 import random
+from datetime import datetime
 
 from celery import shared_task
 from django.conf import settings
@@ -33,6 +34,9 @@ class AsyncTask:
         from .models import JobState
         if self.async_job.state not in (JobState.RUNNING, JobState.COMPLETE):
             LOG.debug(f'Job {self.async_job.id} running with status {self.async_job.state}')
+            self.async_job.last_try = datetime.now()
+            self.async_job.save()
+
             wallet_id = self.async_job.parameters['signing_wallet_id']
             wallet_lock = cache.lock(wallet_id, timeout=settings.WALLET_TIMEOUT)
             if wallet_lock.acquire(blocking=False):  # Only one concurrent tx per wallet

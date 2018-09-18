@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 
 import requests
 import geocoder
@@ -308,6 +309,11 @@ class Shipment(models.Model):
                         vault_hash
                     ]
                     async_job.save()
+
+                    if (not async_job.last_try or
+                            async_job.last_try + timedelta(minutes=async_job.delay * 1.2) > datetime.now()):
+                        LOG.warning(f'Pending AsyncJob {async_job.id} is past its scheduled fire time, retrying now')
+                        async_job.fire()
             else:
                 LOG.debug(f'Shipment {self.id} requested a vault hash update')
                 async_job = AsyncJob.rpc_job_for_listener(
