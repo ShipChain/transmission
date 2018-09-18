@@ -22,6 +22,8 @@ RUN echo "AllowAgentForwarding yes" >> /etc/ssh/sshd_config
 RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
 # ------------------------- #
 
+RUN apt-get -y install binutils libproj-dev gdal-bin
+
 RUN pip install -r /build/requirements.txt --find-links /build/
 
 RUN mkdir /app
