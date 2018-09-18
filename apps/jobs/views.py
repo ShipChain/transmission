@@ -1,10 +1,16 @@
+import logging
+
 from rest_framework import viewsets, mixins, parsers, permissions, status, renderers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_json_api import parsers as jsapi_parsers
+from influxdb_metrics.loader import log_metric
 
 from .models import AsyncJob
 from .serializers import AsyncJobSerializer, MessageSerializer
+
+
+LOG = logging.getLogger('transmission')
 
 
 class JobsViewSet(mixins.ListModelMixin,
@@ -21,6 +27,9 @@ class JobsViewSet(mixins.ListModelMixin,
             permission_classes=[permissions.AllowAny],
             renderer_classes=[renderers.JSONRenderer])
     def message(self, request, version, pk):
+        LOG.debug(f'Jobs message called.')
+        log_metric('transmission.info', tags={'method': 'jobs.message', 'package': 'jobs.views'})
+
         serializer = MessageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

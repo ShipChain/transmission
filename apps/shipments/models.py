@@ -254,6 +254,8 @@ class Shipment(models.Model):
                 listener=self)
         else:
             LOG.error(f'Shipment {self.id} tried to update_vault_hash before load_data.shipment_id was set!')
+            log_metric('transmission.error', tags={'method': 'shipment.update_vault_hash', 'code': 'call_too_early',
+                                                   'package': 'shipment.models'})
         return async_job
 
     # Defaults
