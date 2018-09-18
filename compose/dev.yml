@@ -38,6 +38,7 @@ services:
       - ENGINE_RPC_URL=http://engine-rpc:2000
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
+      - ELASTICSEARCH_URL
     command: "bash"
     entrypoint: []
 
@@ -68,6 +69,7 @@ services:
       - ENGINE_RPC_URL=http://engine-rpc:2000
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
+      - ELASTICSEARCH_URL
 
   celery:
     extends:
@@ -94,6 +96,7 @@ services:
       - ENGINE_RPC_URL=http://engine-rpc:2000
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
+      - ELASTICSEARCH_URL
     entrypoint: []
 
 networks:

@@ -239,20 +239,21 @@ STATIC_URL = '/static/'
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'celery-style': {
+            'format': "[%(asctime)s: %(name)s %(levelname)s/%(processName)s] %(message)s",
+        }
+    },
     'handlers': {
         'console': {
-            'level': LOG_LEVEL,
             'class': 'logging.StreamHandler',
+            'formatter': 'celery-style'
         }
     },
     'loggers': {
-        'oidc_provider': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
         'transmission': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': LOG_LEVEL,
         },
         'django': {
             'handlers': ['console'],
@@ -264,7 +265,6 @@ LOGGING = {
 if ELASTICSEARCH_URL:
     ELASTICSEARCH_HOST = urlparse(ELASTICSEARCH_URL).netloc
     LOGGING['handlers']['elasticsearch'] = {
-        'level': LOG_LEVEL,
         'class': 'cmreslogging.handlers.NonBlockingCMRESHandler',
         'hosts': [{
             'host': ELASTICSEARCH_HOST,
@@ -279,7 +279,6 @@ if ELASTICSEARCH_URL:
         'auth_type': CMRESHandler.AuthType.NO_AUTH,
         'use_ssl': True,
     }
-    LOGGING['loggers']['oidc_provider']['handlers'].append('elasticsearch')
     LOGGING['loggers']['transmission']['handlers'].append('elasticsearch')
     LOGGING['loggers']['django']['handlers'].append('elasticsearch')
 

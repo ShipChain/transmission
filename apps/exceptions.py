@@ -1,3 +1,4 @@
+import logging
 import re
 
 from django.conf import settings
@@ -7,6 +8,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_json_api import utils
 from rest_framework_json_api.exceptions import rendered_with_json_api
+
+LOG = logging.getLogger('transmission')
 
 
 def unhandled_drf_exception_handler(exc, context):
@@ -72,6 +75,7 @@ def unhandled_drf_exception_handler(exc, context):
             "status": str(status_code),
         })
     else:
+        LOG.error(f'HTTP 500 error: {exc}')
         status_code = 500
         errors.append({
             "code": "server_error",
