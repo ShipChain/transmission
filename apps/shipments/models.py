@@ -1,18 +1,23 @@
 import logging
 
+import geocoder
+from geocoder.keys import mapbox_access_token
 from django.conf import settings
-from django.db import models
-from django.core.validators import RegexValidator
-from django.contrib.postgres.fields import JSONField
 from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.gis.db.models import GeometryField
+from django.contrib.gis.geos import Point
+from django.contrib.postgres.fields import JSONField
+from django.core.validators import RegexValidator
+from django.db import models
 from enumfields import Enum
 from enumfields import EnumField
+from rest_framework.exceptions import ValidationError, Throttled
+from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 
-
-from apps.utils import random_id
-from apps.jobs.models import JobListener, AsyncJob
 from apps.eth.models import EthListener
+from apps.jobs.models import JobListener, AsyncJob
+from apps.utils import random_id
 from .rpc import ShipmentRPCClient
 
 LOG = logging.getLogger('transmission')
@@ -34,9 +39,58 @@ class Location(models.Model):
                                  message="Invalid phone number.")
     phone_number = models.CharField(validators=[phone_regex], max_length=255, blank=True, null=True)
     fax_number = models.CharField(validators=[phone_regex], max_length=255, blank=True, null=True)
+    geometry = GeometryField(null=True)
 
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_lat_long_from_address(self):
+        LOG.debug(f'Creating lat/long point for location {self.id}')
+        log_metric('transmission.info', tags={'method': 'locations.get_lat_long'})
+        parsing_address = ''
+
+        if self.address_1:
+            parsing_address = self.address_1
+        if self.address_2:
+            parsing_address += ', ' + self.address_2
+        if self.city:
+            parsing_address += ', ' + self.city
+        if self.state:
+            parsing_address += ', ' + self.state
+        if self.country:
+            parsing_address += ', ' + self.country
+        if self.postal_code:
+            parsing_address += ', ' + self.postal_code
+
+        if parsing_address:
+            if mapbox_access_token:
+                self.geocoder(parsing_address, 'mapbox')
+            else:
+                self.geocoder(parsing_address, 'google')
+
+    def geocoder(self, parsing_address, method):
+        if method == 'mapbox':
+            geocoder_response = geocoder.mapbox(parsing_address)
+        elif method == 'google':
+            geocoder_response = geocoder.google(parsing_address)
+
+        if not geocoder_response.ok:
+            if 'OVER_QUERY_LIMIT' in geocoder_response.error:
+                log_metric('transmission.errors', tags={'method': f'locations.geocoder',
+                                                        'code': 'service_unavailable', 'package': 'shipments.models',
+                                                        'detail': f'error calling {method} geocoder'})
+                LOG.debug(f'{method} geocode for address {parsing_address} failed as query limit was reached')
+                raise Throttled(detail=f'Over Query Limit for {method}', code=HTTP_503_SERVICE_UNAVAILABLE)
+
+            elif 'No results found' or 'ZERO_RESULTS' in geocoder_response.error:
+                log_metric('transmission.errors', tags={'method': f'locations.geocoder',
+                                                        'code': 'internal_server_error', 'package': 'shipments.models',
+                                                        'detail': f'No results returned from {method} geocoder'})
+                LOG.debug(f'{method} geocode for address {parsing_address} failed with zero results returned')
+                raise ValidationError(detail='Invalid Location Address', code=HTTP_500_INTERNAL_SERVER_ERROR)
+
+        else:
+            self.geometry = Point(geocoder_response.latlng)
 
 
 class FundingType(Enum):
@@ -181,11 +235,14 @@ class Shipment(models.Model):
     customer_fields = JSONField(blank=True, null=True)
 
     def get_device_request_url(self):
+        LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
         return f"{settings.PROFILES_URL}/api/v1/device/?on_shipment={self.vault_id}"
 
     def update_vault_hash(self, vault_hash):
+        LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.load_data and self.load_data.shipment_id:
+            LOG.debug(f'Updating for shipment_id {self.load_data.shipment_id}')
             async_job = AsyncJob.rpc_job_for_listener(
                 rpc_class=ShipmentRPCClient,
                 rpc_method=ShipmentRPCClient.update_vault_hash_transaction,

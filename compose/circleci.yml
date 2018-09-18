@@ -18,15 +18,15 @@ services:
       --requirepass redis_pass
 
   psql:
-    image: sameersbn/postgresql:9.6-2
+    image: mdillon/postgis:9.6
     expose:
       - '5432'
     networks:
       - portal
     environment:
-      DB_NAME: transmission
-      DB_PASS: transmission
-      DB_USER: transmission
+      POSTGRES_USER: transmission
+      POSTGRES_PASSWORD: transmission
+      POSTGRES_DB: transmission
 
   runserver:
     extends:

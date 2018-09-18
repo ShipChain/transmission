@@ -72,7 +72,7 @@ if ENVIRONMENT in ('PROD', 'STAGE', 'DEV'):
         SecretId=f'TRANSMISSION_RDS_{ENVIRONMENT}'
     )['SecretString'])
 
-    os.environ['DATABASE_URL'] = (f'psql://{RDS_CREDS["username"]}:{RDS_CREDS["password"]}@'
+    os.environ['DATABASE_URL'] = (f'postgis://{RDS_CREDS["username"]}:{RDS_CREDS["password"]}@'
                                   f'{RDS_CREDS["host"]}:{RDS_CREDS["port"]}/{RDS_CREDS["dbname"]}')
 
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -98,6 +98,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
     'rest_framework',
+    'rest_framework_gis',
     'influxdb_metrics',
     'corsheaders',
     'gm2m',
@@ -181,7 +182,7 @@ TEST_OUTPUT_DIR = 'test-results/unittest/results.xml'
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
-    'default': ENV.db(default='psql://transmission:transmission@psql:5432/transmission'),
+    'default': ENV.db(default='postgis://transmission:transmission@psql:5432/transmission'),
 }
 
 # Caching

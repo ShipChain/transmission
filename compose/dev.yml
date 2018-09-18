@@ -11,13 +11,13 @@ services:
       --requirepass redis_pass
 
   psql:
-    image: sameersbn/postgresql:9.6-2
+    image: mdillon/postgis:9.6
     ports:
     - "5432:5432"
     environment:
-      DB_NAME: transmission
-      DB_PASS: transmission
-      DB_USER: transmission
+      POSTGRES_USER: transmission
+      POSTGRES_PASSWORD: transmission
+      POSTGRES_DB: transmission
     volumes:
       - /data/shipchain/transmission/postgresql:/var/lib/postgresql
 
