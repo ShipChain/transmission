@@ -1,7 +1,10 @@
+import logging
+
 from django.conf import settings
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from influxdb_metrics.loader import log_metric
 
 from .geojson import build_line_string_feature, build_point_features, build_feature_collection
 from .models import Shipment, Location
@@ -9,6 +12,9 @@ from .permissions import IsOwner
 from .rpc import ShipmentRPCClient
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, \
     ShipmentUpdateSerializer, ShipmentTxSerializer, LocationSerializer
+
+
+LOG = logging.getLogger('transmission')
 
 
 class ShipmentViewSet(viewsets.ModelViewSet):
@@ -36,6 +42,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         """
         Create a Shipment object and make Async Request to Engine
         """
+        LOG.debug(f'Creating a shipment object.')
+        log_metric('transmission.info', tags={'method': 'shipments.create', 'package': 'shipments.views'})
         # Create Shipment
         serializer = ShipmentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -45,6 +53,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         response = ShipmentTxSerializer(shipment)
         if async_job:
+            LOG.debug(f'AsyncJob created with id {async_job[0].id}.')
             response.instance.async_job_id = async_job[0].id
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
@@ -54,6 +63,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         """
         Retrieve tracking data for this Shipment after checking permissions with Profiles
         """
+        LOG.debug(f'Retrieve tracking data for a shipment {pk}.')
+        log_metric('transmission.info', tags={'method': 'shipments.tracking', 'package': 'shipments.views'})
         shipment = Shipment.objects.get(pk=pk)
 
         # TODO: re-implement device/shipment authorization for tracking data
@@ -84,6 +95,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        LOG.debug(f'Updating shipment {instance} with new details.')
+        log_metric('transmission.info', tags={'method': 'shipments.update', 'package': 'shipments.views'})
 
         serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -91,6 +104,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = self.perform_update(serializer)
         async_job = shipment.asyncjob_set.latest('created_at')
         response = ShipmentTxSerializer(shipment)
+        LOG.debug(f'Asyncjob created with id {async_job.id}.')
         if async_job:
             response.instance.async_job_id = async_job.id
 
@@ -126,6 +140,8 @@ class LocationViewSet(viewsets.ModelViewSet):
         # Create Location
         serializer = LocationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        LOG.debug(f'Creating a location object.')
+        log_metric('transmission.info', tags={'method': 'location.create', 'package': 'shipments.views'})
 
         location = self.perform_create(serializer)
 
