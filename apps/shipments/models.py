@@ -1,14 +1,12 @@
 import logging
 from datetime import datetime, timedelta
 
-import requests
 import geocoder
 from geocoder.keys import mapbox_access_token
+
+import requests
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
-from django.contrib.postgres.fields import JSONField
-from django.core.validators import RegexValidator
-from django.db import models
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Point
 from django.contrib.postgres.fields import JSONField
