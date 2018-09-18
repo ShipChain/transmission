@@ -11,12 +11,11 @@ from django.core.validators import RegexValidator
 from django.db import models
 from enumfields import Enum
 from enumfields import EnumField
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import ValidationError, Throttled
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 
 from apps.eth.models import EthListener
-from apps.exceptions import ServiceUnavailable
 from apps.jobs.models import JobListener, AsyncJob
 from apps.utils import random_id
 from .rpc import ShipmentRPCClient
@@ -51,17 +50,17 @@ class Location(models.Model):
         parsing_address = ''
 
         if self.address_1:
-            parsing_address += self.address_1 + ', '
+            parsing_address = self.address_1
         if self.address_2:
-            parsing_address += self.address_2 + ', '
+            parsing_address += ', ' + self.address_2
         if self.city:
-            parsing_address += self.city + ', '
+            parsing_address += ', ' + self.city
         if self.state:
-            parsing_address += self.state + ', '
+            parsing_address += ', ' + self.state
         if self.country:
-            parsing_address += self.country + ', '
+            parsing_address += ', ' + self.country
         if self.postal_code:
-            parsing_address += self.postal_code + ', '
+            parsing_address += ', ' + self.postal_code
 
         if parsing_address:
             if mapbox_access_token:
@@ -70,14 +69,10 @@ class Location(models.Model):
                 self.geocoder(parsing_address, 'google')
 
     def geocoder(self, parsing_address, method):
-        print(method)
-        print(mapbox_access_token)
         if method == 'mapbox':
             geocoder_response = geocoder.mapbox(parsing_address)
         elif method == 'google':
             geocoder_response = geocoder.google(parsing_address)
-
-        print(geocoder_response)
 
         if not geocoder_response.ok:
             if 'OVER_QUERY_LIMIT' in geocoder_response.error:
@@ -85,16 +80,14 @@ class Location(models.Model):
                                                         'code': 'service_unavailable', 'package': 'shipments.models',
                                                         'detail': f'error calling {method} geocoder'})
                 LOG.debug(f'{method} geocode for address {parsing_address} failed as query limit was reached')
-                raise ServiceUnavailable(detail=f'Over Query Limit for {method}',
-                                         code=HTTP_503_SERVICE_UNAVAILABLE)
+                raise Throttled(detail=f'Over Query Limit for {method}', code=HTTP_503_SERVICE_UNAVAILABLE)
 
             elif 'No results found' or 'ZERO_RESULTS' in geocoder_response.error:
                 log_metric('transmission.errors', tags={'method': f'locations.geocoder',
                                                         'code': 'internal_server_error', 'package': 'shipments.models',
                                                         'detail': f'No results returned from {method} geocoder'})
                 LOG.debug(f'{method} geocode for address {parsing_address} failed with zero results returned')
-                raise APIException(detail='Invalid Location Address',
-                                   code=HTTP_500_INTERNAL_SERVER_ERROR)
+                raise ValidationError(detail='Invalid Location Address', code=HTTP_500_INTERNAL_SERVER_ERROR)
 
         else:
             self.geometry = Point(geocoder_response.latlng)
