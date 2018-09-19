@@ -241,7 +241,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'celery-style': {
-            'format': "[%(asctime)s: %(name)s %(levelname)s/%(processName)s] %(message)s",
+            'format': "[%(asctime)s: %(levelname)s/%(processName)s %(filename)s:%(lineno)d] %(message)s",
         }
     },
     'handlers': {
