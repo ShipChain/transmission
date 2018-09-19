@@ -67,7 +67,7 @@ class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        exclude = ('owner_id',) if settings.PROFILES_URL else ()
+        exclude = ('owner_id', 'geometry') if settings.PROFILES_URL else ('geometry')
 
 
 class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
