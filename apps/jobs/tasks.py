@@ -4,6 +4,7 @@ import logging
 import random
 from datetime import datetime
 
+import pytz
 from celery import shared_task
 from django.conf import settings
 from django.core.cache import cache
@@ -34,7 +35,7 @@ class AsyncTask:
         from .models import JobState
         if self.async_job.state not in (JobState.RUNNING, JobState.COMPLETE):
             LOG.debug(f'Job {self.async_job.id} running with status {self.async_job.state}')
-            self.async_job.last_try = datetime.now()
+            self.async_job.last_try = datetime.utcnow().replace(tzinfo=pytz.UTC)
             self.async_job.save()
 
             wallet_id = self.async_job.parameters['signing_wallet_id']
@@ -119,33 +120,44 @@ class AsyncTask:
 @shared_task(bind=True, autoretry_for=(RPCError,),
              retry_backoff=3, retry_backoff_max=60, max_retries=10)
 def async_job_fire(self):
-    async_job_id = self.request.id
-    LOG.debug(f'AsyncJob {async_job_id} firing!')
-    log_metric('transmission.info', tags={'method': 'async_task.async_job_fire', 'package': 'jobs.tasks'})
-
-    task = None
-    try:
+    # Lock on Task ID to protect against tasks that are queued multiple times
+    task_lock = cache.lock(self.request.id)
+    if task_lock.acquire(blocking=False):
         try:
-            task = AsyncTask(async_job_id)
-            task.run()
-        except WalletInUseException as wallet_ex:
-            LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {wallet_ex}")
-            raise self.retry(exc=wallet_ex, countdown=settings.CELERY_WALLET_RETRY * random.uniform(0.5, 1.5))  # Jitter
-        except TransactionCollisionException as tx_ex:
-            LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {tx_ex}")
-            raise self.retry(exc=tx_ex, countdown=settings.CELERY_TXHASH_RETRY * random.uniform(0.5, 1.5))  # Jitter
-        except RPCError as rpc_error:
-            log_metric('transmission.error', tags={'method': 'async_job_fire', 'package': 'jobs.tasks',
-                                                   'code': 'RPCError'})
-            LOG.error(f"AsyncJob Exception ({async_job_id}): {rpc_error}")
-            raise rpc_error
-        except ObjectDoesNotExist as ex:
-            LOG.error(f'Could not find AsyncTask ({id}): {ex}')
+            async_job_id = self.request.id
+            LOG.debug(f'AsyncJob {async_job_id} firing!')
+            log_metric('transmission.info', tags={'method': 'async_task.async_job_fire', 'package': 'jobs.tasks'})
+
+            task = None
+            try:
+                task = AsyncTask(async_job_id)
+                task.run()
+            except WalletInUseException as wallet_ex:
+                LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {wallet_ex}")
+                raise self.retry(exc=wallet_ex, countdown=settings.CELERY_WALLET_RETRY * random.uniform(0.5, 1.5))
+            except TransactionCollisionException as tx_ex:
+                LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {tx_ex}")
+                raise self.retry(exc=tx_ex, countdown=settings.CELERY_TXHASH_RETRY * random.uniform(0.5, 1.5))
+            except RPCError as rpc_error:
+                log_metric('transmission.error', tags={'method': 'async_job_fire', 'package': 'jobs.tasks',
+                                                       'code': 'RPCError'})
+                LOG.error(f"AsyncJob Exception ({async_job_id}): {rpc_error}")
+                raise rpc_error
+            except ObjectDoesNotExist as ex:
+                LOG.error(f'Could not find AsyncTask ({async_job_id}): {ex}')
+                raise ex
+            except Exception as ex:
+                LOG.error(f'Unhandled AsyncJob exception ({async_job_id}): {ex}')
+                raise ex
+        except Exception as ex:
+            if self.request.retries >= self.max_retries and task:
+                from .models import JobState
+                LOG.error(f"AsyncJob ({async_job_id}) failed after max retries: {ex}")
+                task.async_job.state = JobState.FAILED
+                task.async_job.save()
             raise ex
-    except Exception as ex:
-        if self.request.retries >= self.max_retries and task:
-            from .models import JobState
-            LOG.error(f"AsyncJob ({async_job_id}) failed after max retries: {ex}")
-            task.async_job.state = JobState.FAILED
-            task.async_job.save()
-        raise ex
+        finally:
+            task_lock.release()
+    else:
+        # Celery Task with this ID is already in progress, must have been queued multiple times.
+        LOG.info(f'Disregarding Celery task {self.request.id}, it has already been locked for processing.')

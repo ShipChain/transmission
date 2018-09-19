@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+import pytz
 
 import geocoder
 from geocoder.keys import mapbox_access_token
@@ -282,29 +283,15 @@ class Shipment(models.Model):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.load_data and self.load_data.shipment_id:
-            if rate_limit:
-                LOG.debug(f'Shipment {self.id} requested a rate-limited vault hash update')
-                job_queryset = AsyncJob.objects.filter(
-                    joblistener__shipments__id=self.id,
-                    state=JobState.PENDING,
-                    parameters__rpc_method=ShipmentRPCClient.update_vault_hash_transaction.__name__,
-                    parameters__signing_wallet_id=self.shipper_wallet_id,
-                )
-                if not job_queryset.count():
-                    LOG.debug(f'No pending vault hash updates for {self.id}, '
-                              f'sending one in {settings.VAULT_HASH_RATE_LIMIT} minutes')
-                    async_job = AsyncJob.rpc_job_for_listener(
-                        rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
-                        rpc_parameters=[self.shipper_wallet_id,
-                                        self.load_data.shipment_id,
-                                        '',
-                                        vault_hash],
-                        signing_wallet_id=self.shipper_wallet_id,
-                        listener=self,
-                        delay=settings.VAULT_HASH_RATE_LIMIT)
-                else:
-                    # Update vault hash for current queued job
-                    async_job = job_queryset.first()
+            job_queryset = AsyncJob.objects.filter(
+                joblistener__shipments__id=self.id,
+                state=JobState.PENDING,
+                parameters__rpc_method=ShipmentRPCClient.update_vault_hash_transaction.__name__,
+                parameters__signing_wallet_id=self.shipper_wallet_id,
+            )
+            if job_queryset.count():
+                # Update vault hash for all current queued jobs
+                for async_job in job_queryset.all():
                     LOG.debug(f'Shipment {self.id} found a pending vault hash update {async_job.id}, '
                               f'updating its parameters with new hash')
                     async_job.parameters['rpc_parameters'] = [
@@ -315,10 +302,24 @@ class Shipment(models.Model):
                     ]
                     async_job.save()
 
-                    if (not async_job.last_try or
-                            async_job.last_try + timedelta(minutes=async_job.delay * 1.2) > datetime.now()):
-                        LOG.warning(f'Pending AsyncJob {async_job.id} is past its scheduled fire time, retrying now')
+                    if (not async_job.delay or async_job.created_at + timedelta(minutes=async_job.delay * 1.2) <
+                            datetime.utcnow().replace(tzinfo=pytz.UTC)):
+                        # If this is not a delayed job, or this job is after its fire time
+                        LOG.warning(f'Pending AsyncJob {async_job.id} is past its scheduled fire time, requeuing')
                         async_job.fire()
+            elif rate_limit:
+                LOG.debug(f'Shipment {self.id} requested a rate-limited vault hash update')
+                LOG.debug(f'No pending vault hash updates for {self.id}, '
+                          f'sending one in {settings.VAULT_HASH_RATE_LIMIT} minutes')
+                async_job = AsyncJob.rpc_job_for_listener(
+                    rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
+                    rpc_parameters=[self.shipper_wallet_id,
+                                    self.load_data.shipment_id,
+                                    '',
+                                    vault_hash],
+                    signing_wallet_id=self.shipper_wallet_id,
+                    listener=self,
+                    delay=settings.VAULT_HASH_RATE_LIMIT)
             else:
                 LOG.debug(f'Shipment {self.id} requested a vault hash update')
                 async_job = AsyncJob.rpc_job_for_listener(
