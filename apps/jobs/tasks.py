@@ -85,7 +85,7 @@ class AsyncTask:
                 'async_job': self.async_job
             })
             if created:
-                LOG.debug(f'Created new EthAction {eth_action.id}')
+                LOG.debug(f'Created new EthAction {eth_action.transaction_hash}')
                 for job_listener in self.async_job.joblistener_set.all():
                     eth_action.ethlistener_set.create(listener=job_listener.listener)
 
