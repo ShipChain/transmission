@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import geocoder
 from geocoder.keys import mapbox_access_token
 
+import boto3
+
 import requests
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -113,13 +115,18 @@ class Device(models.Model):
                 raise PermissionDenied("User does not have access to this device in ShipChain Profiles")
 
         if settings.ENVIRONMENT != 'LOCAL':
-            import boto3
             iot = boto3.client('iot')
-            response = iot.list_thing_principals(device_id)
-            for arn in response['principals']:
-                # arn == arn:aws:iot:us-east-1:489745816517:cert/{certificate_id}
-                certificate_id = arn.rsplit('/', 1)[1]
-                break
+
+            try:
+                response = iot.list_thing_principals(thingName=device_id)
+                if not response['principals']:
+                    raise PermissionDenied(f"No certificates found for device {device_id} in AWS IoT")
+                for arn in response['principals']:
+                    # arn == arn:aws:iot:us-east-1:489745816517:cert/{certificate_id}
+                    certificate_id = arn.rsplit('/', 1)[1]
+                    break
+            except iot.exceptions.ResourceNotFoundException:
+                raise PermissionDenied(f"Specified device {device_id} does not exist in AWS IoT")
         return Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})[0]
 
 
