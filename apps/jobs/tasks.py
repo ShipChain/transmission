@@ -132,12 +132,12 @@ def async_job_fire(self):
             try:
                 task = AsyncTask(async_job_id)
                 task.run()
-            except WalletInUseException as wallet_ex:
-                LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {wallet_ex}")
-                raise self.retry(exc=wallet_ex, countdown=settings.CELERY_WALLET_RETRY * random.uniform(0.5, 1.5))
-            except TransactionCollisionException as tx_ex:
-                LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {tx_ex}")
-                raise self.retry(exc=tx_ex, countdown=settings.CELERY_TXHASH_RETRY * random.uniform(0.5, 1.5))
+            except (WalletInUseException, TransactionCollisionException) as ex:
+                LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {ex}")
+
+                countdown = (settings.CELERY_TXHASH_RETRY if isinstance(ex, TransactionCollisionException)
+                             else settings.CELERY_WALLET_RETRY)
+                raise self.retry(exc=ex, countdown=countdown * random.uniform(0.5, 1.5))
             except RPCError as rpc_error:
                 log_metric('transmission.error', tags={'method': 'async_job_fire', 'package': 'jobs.tasks',
                                                        'code': 'RPCError'})
