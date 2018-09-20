@@ -108,7 +108,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
 
 
 class ShipmentCreateSerializer(ShipmentSerializer):
-    device_id = serializers.CharField(max_length=36)
+    device_id = serializers.CharField(max_length=36, required=False)
 
     def create(self, validated_data):
         extra_args = {}
