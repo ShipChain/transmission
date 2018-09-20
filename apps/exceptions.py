@@ -1,3 +1,4 @@
+import logging
 import re
 
 from django.conf import settings
@@ -7,6 +8,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_json_api import utils
 from rest_framework_json_api.exceptions import rendered_with_json_api
+
+LOG = logging.getLogger('transmission')
 
 
 def unhandled_drf_exception_handler(exc, context):
@@ -24,14 +27,29 @@ def unhandled_drf_exception_handler(exc, context):
 
     errors = []
 
-    if isinstance(exc, (FieldError, FieldDoesNotExist,)):
-        keymatch = re.compile(r"^Cannot resolve keyword '(?P<keyword>\w+)' into field.")
+    if isinstance(exc, (FieldDoesNotExist,)):
+        keymatch = re.compile(r"^Cannot resolve keyword '(?P<keyword>[\w_]+)' into field.")
         matched = keymatch.match(str(exc))
         bad_kw = matched.group("keyword") if matched else "?"
 
         status_code = 400
         errors.append({
             "detail": f"Missing Query Parameter: '{bad_kw}'",
+            "source": {
+                "parameter": bad_kw,
+            },
+            "status": str(status_code),
+        })
+    elif isinstance(exc, (FieldError,)):
+        keymatch = re.compile(r"^Invalid field name\(s\) for model (?P<model>[\w_]+): '(?P<keyword>[\w_]+)'.")
+        matched = keymatch.match(str(exc))
+
+        bad_kw = matched.group("keyword") if matched else "?"
+        bad_model = matched.group("model") if matched else "?"
+
+        status_code = 400
+        errors.append({
+            "detail": f"No field {bad_kw} on model {bad_model}",
             "source": {
                 "parameter": bad_kw,
             },
@@ -57,6 +75,7 @@ def unhandled_drf_exception_handler(exc, context):
             "status": str(status_code),
         })
     else:
+        LOG.error(f'HTTP 500 error: {exc}')
         status_code = 500
         errors.append({
             "code": "server_error",

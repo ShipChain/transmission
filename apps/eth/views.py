@@ -39,7 +39,7 @@ class EventViewSet(mixins.CreateModelMixin,
             serializer.is_valid(raise_exception=True)
 
             try:
-                LOG.debug(f'Finding contract receipt for tx hash: {serializer.data["transactionHash"]}')
+                LOG.debug(f'Finding contract receipt for tx hash: {serializer.data["transaction_hash"]}')
                 action = EthAction.objects.get(transaction_hash=serializer.data['transaction_hash'])
             except ObjectDoesNotExist:
                 action = None
@@ -58,7 +58,7 @@ class EventViewSet(mixins.CreateModelMixin,
 
             for event in serializer.data:
                 try:
-                    LOG.debug(f'Finding contract receipt for tx hash: {serializer.event["transactionHash"]}')
+                    LOG.debug(f'Finding contract receipt for tx hash: {event["transaction_hash"]}')
                     action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
                 except ObjectDoesNotExist:
                     action = None

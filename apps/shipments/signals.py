@@ -32,8 +32,8 @@ def shipment_job_update(sender, message, listener, **kwargs):
 def shipment_event_update(sender, event, listener, **kwargs):
     LOG.debug(f'Shipment event update with listener {listener.id}.')
 
-    if event.event_name == "CreateNewShipmentEvent":
-        LOG.debug(f'Event.event_name is CreateNewShipmentEvent.')
+    if event.event_name == "CreateNewShipmentEvent" and not listener.load_data.shipment_id:
+        LOG.debug(f'Handling CreateNewShipmentEvent.')
         listener.load_data.shipment_id = event.return_values['shipmentID']
         listener.load_data.start_block = event.block_number
         listener.load_data.shipment_created = True
@@ -57,20 +57,19 @@ def shipment_post_save(sender, **kwargs):
     if created:
         # Create vault
         rpc_client = ShipmentRPCClient()
-        instance.vault_id = rpc_client.create_vault(instance.storage_credentials_id, instance.shipper_wallet_id,
-                                                    instance.carrier_wallet_id)
-        instance.save()
-        LOG.debug(f'Creating vault with vault_id {instance.vault_id}.')
+        vault_id = rpc_client.create_vault(instance.storage_credentials_id, instance.shipper_wallet_id,
+                                           instance.carrier_wallet_id)
 
+        LOG.debug(f'Created vault with vault_id {instance.vault_id}.')
         # Create LoadShipment entity
         # TODO: Get FundingType,ShipmentAmount,ValidUntil for use in LOAD Contract/LoadShipment
-        instance.load_data = LoadShipment.objects.create(shipment=instance,
-                                                         shipper=instance.shipper_wallet_id,
-                                                         carrier=instance.carrier_wallet_id,
-                                                         valid_until=Shipment.VALID_UNTIL,
-                                                         funding_type=Shipment.FUNDING_TYPE,
-                                                         shipment_amount=Shipment.SHIPMENT_AMOUNT)
-        instance.save()
+        load_shipment = LoadShipment.objects.create(shipment=instance,
+                                                    shipper=instance.shipper_wallet_id,
+                                                    carrier=instance.carrier_wallet_id,
+                                                    valid_until=Shipment.VALID_UNTIL,
+                                                    funding_type=Shipment.FUNDING_TYPE,
+                                                    shipment_amount=Shipment.SHIPMENT_AMOUNT)
+        Shipment.objects.filter(id=instance.id).update(vault_id=vault_id, load_data=load_shipment)
     else:
         # Update Shipment vault data
         rpc_client = ShipmentRPCClient()
@@ -90,7 +89,6 @@ def loadshipment_post_save(sender, **kwargs):
         LOG.debug(f'Creating a shipment on the load contract.')
         # Create shipment on the LOAD contract
         AsyncJob.rpc_job_for_listener(
-            rpc_class=ShipmentRPCClient,
             rpc_method=ShipmentRPCClient.create_shipment_transaction,
             rpc_parameters=[instance.shipment.shipper_wallet_id,
                             instance.shipment.carrier_wallet_id,

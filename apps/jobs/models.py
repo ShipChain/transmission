@@ -29,6 +29,9 @@ class AsyncJob(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     wallet_lock_token = models.CharField(blank=True, null=True, max_length=32)
 
+    last_try = models.DateTimeField(null=True)
+    delay = models.IntegerField(default=0)
+
     class Meta:
         ordering = ('created_at',)
 
@@ -37,21 +40,27 @@ class AsyncJob(models.Model):
 
     listeners = GM2MField('shipments.Shipment', through='JobListener')
 
-    def fire(self):
+    def fire(self, delay=None):
         # Use send_task to avoid cyclic import
-        celery.current_app.send_task('apps.jobs.tasks.async_job_fire', (self.id,))
+        celery.current_app.send_task('apps.jobs.tasks.async_job_fire', task_id=self.id,
+                                     countdown=delay * 60 if delay else None)
+
+    def get_task(self):
+        return celery.current_app.AsyncResult(self.id)
 
     @staticmethod
-    def rpc_job_for_listener(rpc_class, rpc_method, rpc_parameters, signing_wallet_id, listener):
+    def rpc_job_for_listener(rpc_method, rpc_parameters, signing_wallet_id, listener, delay=0):
+        rpc_module = rpc_method.__module__
+        rpc_class, rpc_method = rpc_method.__qualname__.rsplit('.')
         job = AsyncJob.objects.create(parameters={
-            'rpc_class': f'{rpc_class.__module__}.{rpc_class.__name__}',
-            'rpc_method': f'{rpc_method.__name__}',
+            'rpc_class': f'{rpc_module}.{rpc_class}',
+            'rpc_method': f'{rpc_method}',
             'rpc_parameters': rpc_parameters,
             'signing_wallet_id': signing_wallet_id,
-        })
+        }, delay=delay)
         job.joblistener_set.create(listener=listener)
         job.save()
-        job.fire()
+        job.fire(delay)
         return job
 
 

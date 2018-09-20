@@ -105,7 +105,7 @@ running outside of ShipChain's infrastructure.
 
 ##### AWS
 
-If you intend to utilize any AWS services (such as Secrets Manager and RDS as we do in-house) you may want to include 
+If you intend to utilize any AWS services (such as Secrets Manager, IoT and RDS as we do in-house) you may want to include 
 the following variables:
 * `AWS_ACCESS_KEY_ID`
 * `AWS_SECRET_ACCESS_KEY`
@@ -185,12 +185,13 @@ be provided to Transmission as a bearer token in the `Authorization` request hea
 `JWT {token}`. ShipChain Profiles is a full-featured OIDC provider and all JWTs will be validated using
 the Profiles JWK.
 
-Tracking updates from ShipChain AXLE devices are authenticated via AWS IoT, and all messages are signed
-by the device itself and validated using the device's AWS IoT certificate.
-
 Transmission's JWT authentication mechanism can be disabled by setting the `PROFILES_URL` environment variable to `DISABLED`.
 This is required for the use of Transmission and Engine outside of ShipChain's infrastructure; all authentication and authorization
 in this case is left up to you. 
+
+Tracking updates from ShipChain AXLE devices are authenticated via AWS IoT, and all messages are signed
+by the device itself and validated using the device's AWS IoT certificate. If `ENVIRONMENT` is set to `LOCAL`,
+all AWS IoT validation is disabled, and devices should post their raw payloads directly to the endpoint.
 
 ### Asynchronous Requests
 Transmission interacts with ShipChain Engine asynchronously; any long-running Engine RPC calls are passed a callback

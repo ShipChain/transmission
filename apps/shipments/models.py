@@ -1,7 +1,13 @@
 import logging
+from datetime import datetime, timedelta
+import pytz
 
 import geocoder
 from geocoder.keys import mapbox_access_token
+
+import boto3
+
+import requests
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import GeometryField
@@ -11,12 +17,14 @@ from django.core.validators import RegexValidator
 from django.db import models
 from enumfields import Enum
 from enumfields import EnumField
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.exceptions import ValidationError, Throttled
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 
 from apps.eth.models import EthListener
-from apps.jobs.models import JobListener, AsyncJob
+from apps.jobs.models import JobListener, AsyncJob, JobState
 from apps.utils import random_id
 from .rpc import ShipmentRPCClient
 
@@ -93,6 +101,36 @@ class Location(models.Model):
             self.geometry = Point(geocoder_response.latlng)
 
 
+class Device(models.Model):
+    id = models.CharField(primary_key=True, null=False, max_length=36)
+    certificate_id = models.CharField(unique=True, null=True, blank=False, max_length=255)
+
+    @staticmethod
+    def get_or_create_with_permission(jwt, device_id):
+        certificate_id = None
+        if settings.PROFILES_URL:
+            # Make a request to Profiles /api/v1/devices/{device_id} with the user's JWT
+            response = requests.get(f'{settings.PROFILES_URL}/api/v1/device/{device_id}/',
+                                    headers={'Authorization': 'JWT {}'.format(jwt.decode())})
+            if response.status_code != status.HTTP_200_OK:
+                raise PermissionDenied("User does not have access to this device in ShipChain Profiles")
+
+        if settings.ENVIRONMENT != 'LOCAL':
+            iot = boto3.client('iot')
+
+            try:
+                response = iot.list_thing_principals(thingName=device_id)
+                if not response['principals']:
+                    raise PermissionDenied(f"No certificates found for device {device_id} in AWS IoT")
+                for arn in response['principals']:
+                    # arn == arn:aws:iot:us-east-1:489745816517:cert/{certificate_id}
+                    certificate_id = arn.rsplit('/', 1)[1]
+                    break
+            except iot.exceptions.ResourceNotFoundException:
+                raise PermissionDenied(f"Specified device {device_id} does not exist in AWS IoT")
+        return Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})[0]
+
+
 class FundingType(Enum):
     SHIP = 0
     CASH = 1
@@ -147,14 +185,17 @@ class LoadShipment(models.Model):
     shipment_canceled_by_shipper = models.BooleanField(default=False)
     escrow_paid = models.BooleanField(default=False)
 
+    vault_hash = models.CharField(max_length=66, blank=False, null=True)
+
 
 class Shipment(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     owner_id = models.CharField(null=False, max_length=36)
-    load_data = models.OneToOneField(LoadShipment, on_delete=models.CASCADE, null=True)
+    load_data = models.OneToOneField(LoadShipment, on_delete=models.PROTECT, null=True)
 
     storage_credentials_id = models.CharField(null=False, max_length=36)
     vault_id = models.CharField(null=True, max_length=36)
+    device = models.ForeignKey(Device, on_delete=models.PROTECT, null=True)
     shipper_wallet_id = models.CharField(null=False, max_length=36)
     carrier_wallet_id = models.CharField(null=False, max_length=36)
     updated_at = models.DateTimeField(auto_now=True)
@@ -238,22 +279,61 @@ class Shipment(models.Model):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
         return f"{settings.PROFILES_URL}/api/v1/device/?on_shipment={self.vault_id}"
 
-    def update_vault_hash(self, vault_hash):
+    def update_vault_hash(self, vault_hash, rate_limit=False):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.load_data and self.load_data.shipment_id:
-            LOG.debug(f'Updating for shipment_id {self.load_data.shipment_id}')
-            async_job = AsyncJob.rpc_job_for_listener(
-                rpc_class=ShipmentRPCClient,
-                rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
-                rpc_parameters=[self.shipper_wallet_id,
-                                self.load_data.shipment_id,
-                                '',
-                                vault_hash],
-                signing_wallet_id=self.shipper_wallet_id,
-                listener=self)
+            job_queryset = AsyncJob.objects.filter(
+                joblistener__shipments__id=self.id,
+                state=JobState.PENDING,
+                parameters__rpc_method=ShipmentRPCClient.update_vault_hash_transaction.__name__,
+                parameters__signing_wallet_id=self.shipper_wallet_id,
+            )
+            if job_queryset.count():
+                # Update vault hash for all current queued jobs
+                for async_job in job_queryset.all():
+                    LOG.debug(f'Shipment {self.id} found a pending vault hash update {async_job.id}, '
+                              f'updating its parameters with new hash')
+                    async_job.parameters['rpc_parameters'] = [
+                        self.shipper_wallet_id,
+                        self.load_data.shipment_id,
+                        '',
+                        vault_hash
+                    ]
+                    async_job.save()
+
+                    if (not async_job.delay or async_job.created_at + timedelta(minutes=async_job.delay * 1.2) <
+                            datetime.utcnow().replace(tzinfo=pytz.UTC)):
+                        # If this is not a delayed job, or this job is after its fire time
+                        LOG.warning(f'Pending AsyncJob {async_job.id} is past its scheduled fire time, requeuing')
+                        async_job.fire()
+            elif rate_limit:
+                LOG.debug(f'Shipment {self.id} requested a rate-limited vault hash update')
+                LOG.debug(f'No pending vault hash updates for {self.id}, '
+                          f'sending one in {settings.VAULT_HASH_RATE_LIMIT} minutes')
+                async_job = AsyncJob.rpc_job_for_listener(
+                    rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
+                    rpc_parameters=[self.shipper_wallet_id,
+                                    self.load_data.shipment_id,
+                                    '',
+                                    vault_hash],
+                    signing_wallet_id=self.shipper_wallet_id,
+                    listener=self,
+                    delay=settings.VAULT_HASH_RATE_LIMIT)
+            else:
+                LOG.debug(f'Shipment {self.id} requested a vault hash update')
+                async_job = AsyncJob.rpc_job_for_listener(
+                    rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
+                    rpc_parameters=[self.shipper_wallet_id,
+                                    self.load_data.shipment_id,
+                                    '',
+                                    vault_hash],
+                    signing_wallet_id=self.shipper_wallet_id,
+                    listener=self)
+            self.load_data.vault_hash = vault_hash
+            self.load_data.save()
         else:
-            LOG.error(f'Shipment {self.id} tried to update_vault_hash before load_data.shipment_id was set!')
+            LOG.info(f'Shipment {self.id} tried to update_vault_hash before load_data.shipment_id was set.')
             log_metric('transmission.error', tags={'method': 'shipment.update_vault_hash', 'code': 'call_too_early',
                                                    'package': 'shipment.models'})
         return async_job

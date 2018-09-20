@@ -24,5 +24,5 @@ def engine_subscribe(self):
     except RPCError as rpc_error:
         log_metric('transmission.info', tags={'method': 'eth.engine_subscribe', 'code': 'RPCError',
                                               'package': 'eth.tasks'})
-        LOG.error('Unable to subscribe to Events: {rpc_error}.')
+        LOG.error(f'Unable to subscribe to Events: {rpc_error}.')
         raise rpc_error

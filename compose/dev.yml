@@ -8,7 +8,7 @@ services:
     volumes:
       - /data/shipchain/transmission/redis:/data
     command: >
-      --requirepass redis_pass
+      --requirepass redis_pass --appendonly yes
 
   psql:
     image: mdillon/postgis:9.6
@@ -38,6 +38,7 @@ services:
       - ENGINE_RPC_URL=http://engine-rpc:2000
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
+      - ELASTICSEARCH_URL
     command: "bash"
     entrypoint: []
 
@@ -68,12 +69,13 @@ services:
       - ENGINE_RPC_URL=http://engine-rpc:2000
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
+      - ELASTICSEARCH_URL
 
   celery:
     extends:
       service: transmission-django-dev
       file: build.yml
-    command: ["celery", "-A", "apps", "worker"]
+    command: ["watchmedo", "auto-restart", "-d", ".", "-p", "'*.py'", "--", "celery", "worker", "-A", "apps"]
     networks:
       default:
         aliases:
@@ -94,6 +96,7 @@ services:
       - ENGINE_RPC_URL=http://engine-rpc:2000
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
+      - ELASTICSEARCH_URL
     entrypoint: []
 
 networks:
