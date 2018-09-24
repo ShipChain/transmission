@@ -8,9 +8,6 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /build
 WORKDIR /build
 
-ADD ./compose/django/requirements.txt /build/
-ADD ./compose/django/pip.cache/ /build/
-
 # SUPPORT SSH FOR IAM USERS #
 RUN apt-get update && apt-get -y install openssh-server
 RUN mkdir /var/run/sshd /etc/cron.d
@@ -22,9 +19,11 @@ RUN echo "AllowAgentForwarding yes" >> /etc/ssh/sshd_config
 RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
 # ------------------------- #
 
-RUN apt-get -y install binutils libproj-dev gdal-bin
+RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync
 
-RUN pip install -r /build/requirements.txt --find-links /build/
+COPY ./compose/django/requirements.txt /build/
+COPY ./compose/django/pip.cache /build/pip.cache
+RUN pip install -r /build/requirements.txt --cache-dir=/build/pip.cache
 
 RUN mkdir /app
 WORKDIR /app

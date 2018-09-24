@@ -8,12 +8,11 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /build
 WORKDIR /build
 
-ADD ./requirements.txt /build/
-ADD ./pip.cache/ /build/
+RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync
 
-RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin
-
-RUN pip install -r /build/requirements.txt --find-links /build/
+COPY ./requirements.txt /build/
+COPY pip.cache /build/pip.cache
+RUN pip install -r /build/requirements.txt --cache-dir=/build/pip.cache
 
 RUN mkdir /app
 WORKDIR /app

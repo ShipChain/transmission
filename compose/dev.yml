@@ -61,6 +61,7 @@ services:
       - redis_db
     volumes:
       - ../:/app
+      - ./django/pip.cache:/build/pip.volume
     environment:
       - ENV
       - SECRET_KEY

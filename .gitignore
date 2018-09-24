@@ -24,9 +24,7 @@ parts/
 sdist/
 var/
 wheels/
-compose/*/pip.cache/*.whl
-compose/*/pip.cache/*.zip
-compose/*/pip.cache/*.tar.gz
+compose/*/pip.cache/*
 *.egg-info/
 .installed.cfg
 *.egg
