@@ -1106,8 +1106,153 @@
                 "response": []
               }
             ]
+          },
+          {
+            "name": "AsyncJobs",
+            "item": [
+              {
+                "name": "List Jobs",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/jobs/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "jobs",
+                      ""
+                    ]
+                  }
+                },
+                "response": [
+
+                ]
+              },
+              {
+                "name": "Get Job",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/jobs/{{job_id}}/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "jobs",
+                      "{{job_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": [
+
+                ]
+              },
+              {
+                "name": "Add Job Message",
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "type",
+                        "value": "ERROR",
+                        "type": "text"
+                      },
+                      {
+                        "key": "body",
+                        "value": "{\"error\": \"wat hav u dun\"}",
+                        "type": "text"
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/jobs/{{job_id}}/message",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "jobs",
+                      "{{job_id}}",
+                      "message"
+                    ]
+                  }
+                },
+                "response": [
+
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Transactions",
+            "item": [
+              {
+                "name": "Get Transaction",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/transactions/{{transaction_hash}}/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "transaction",
+                      "{{transaction_hash}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": [
+
+                ]
+              }
+            ]
           }
-        ],
+    ],
     "event": [
       {
         "listen": "prerequest",
