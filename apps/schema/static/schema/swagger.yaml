@@ -331,12 +331,8 @@ paths:
       tags:
       - Locations
       responses:
-        '200':
+        '204':
           description: *response_204
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/location/getResponse'
         '401':
           description: *response_401
           content:
@@ -795,7 +791,7 @@ components:
               title: carrier_instructions
               description: Shipper's instructions to the carrier
               type: string
-              example: 'Make sure package is carefully packed'
+              example: 'deliver to dock #2'
 
         proNumber:
           properties:
@@ -803,7 +799,7 @@ components:
               title: pro_number
               description: Progressive Number for shipment tracking
               type: string
-              example: 'A113'
+              example: '12345678'
 
         masterBill:
           properties:
@@ -1680,6 +1676,24 @@ components:
               type: string
               example: '555-555-5555'
 
+        coordinates:
+          properties:
+            coordinates:
+              title: coordinates
+              description: Latitude and Longitude of location
+              type: array
+              items:
+                type: number
+                example: 50.924085, -1.475295
+
+        type:
+          properties:
+            type:
+              title: type
+              description: Type of field
+              type: string
+              example: 'Point'
+
     # Models
     jsonApi:
       resource:
@@ -2183,6 +2197,15 @@ components:
           type:
             example: Location
 
+      geometry:
+        properties:
+          geometry:
+            type: object
+            name: geometry
+            allOf:
+            - $ref: '#/components/schemas/dataTypes/location/type'
+            - $ref: '#/components/schemas/dataTypes/location/coordinates'
+
       attributes:
         allOf:
         - $ref: '#/components/schemas/dataTypes/location/name'
@@ -2196,6 +2219,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/location/faxNumber'
         - $ref: '#/components/schemas/dataTypes/createdAt'
         - $ref: '#/components/schemas/dataTypes/updatedAt'
+        - $ref: '#/components/schemas/location/geometry'
 
       getResource:
         allOf:
