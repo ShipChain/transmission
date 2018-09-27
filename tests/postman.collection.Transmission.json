@@ -1182,19 +1182,8 @@
                     }
                   ],
                   "body": {
-                    "mode": "formdata",
-                    "formdata": [
-                      {
-                        "key": "type",
-                        "value": "ERROR",
-                        "type": "text"
-                      },
-                      {
-                        "key": "body",
-                        "value": "{\"error\": \"wat hav u dun\"}",
-                        "type": "text"
-                      }
-                    ]
+                      "mode": "raw",
+                      "raw": "{\n  \"type\": \"ERROR\",\n  \"body\": { \"exception\": \"wat hav u dun\"  }\n}"
                   },
                   "url": {
                     "raw": "{{transmission_url}}/api/v1/jobs/{{job_id}}/message",
