@@ -2,7 +2,7 @@
   <img src="https://shipchain.io/img/logo.png" alt="ShipChain"/>
 </p>
 
-[![CircleCI](https://circleci.com/gh/ShipChain/transmission/tree/master.svg?style=svg)](https://circleci.com/gh/ShipChain/transmission/tree/master)
+[![CircleCI](https://img.shields.io/circleci/project/github/ShipChain/transmission/master.svg)](https://circleci.com/gh/ShipChain/transmission/tree/master)
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Code style: prospector](https://img.shields.io/badge/code_style-prospector-ff69b4.svg?style=svg)](https://github.com/PyCQA/prospector)
 [![Chat](https://img.shields.io/badge/gitter-ShipChain/lobby-green.svg)](https://gitter.im/ShipChain/Lobby)
