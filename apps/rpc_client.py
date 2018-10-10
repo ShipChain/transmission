@@ -34,7 +34,7 @@ class RPCClient(object):
 
     def call(self, method, args=None):
         LOG.debug(f'Calling RPCClient with method {method}.')
-        log_metric('transmission.info', tags={'method': 'RPCClient.call', 'module': __name__})
+        log_metric('transmission.info', tags={'method': 'RPCClient.call', 'package': 'rpc_client'})
 
         if args and not isinstance(args, object):
             raise RPCError("Invalid parameter type for Engine RPC call")
@@ -50,7 +50,7 @@ class RPCClient(object):
 
             if 'error' in response_json:
                 log_metric('engine_rpc.error', tags={'method': method, 'code': response_json['error']['code'],
-                                                     'module': __name__})
+                                                     'package': 'rpc_client'})
                 LOG.error('rpc_client(%s) error: %s', method, response_json['error'])
                 raise RPCError(response_json['error']['message'])
 
@@ -58,19 +58,19 @@ class RPCClient(object):
 
         except requests.exceptions.ConnectionError:
             # Don't return the true ConnectionError as it can contain internal URLs
-            log_metric('engine_rpc.error', tags={'method': method, 'code': 'ConnectionError', 'module': __name__})
+            log_metric('engine_rpc.error', tags={'method': method, 'code': 'ConnectionError', 'package': 'rpc_client'})
             raise RPCError("Service temporarily unavailable, try again later", status.HTTP_503_SERVICE_UNAVAILABLE,
                            'service_unavailable')
 
         except Exception as exception:
-            log_metric('engine_rpc.error', tags={'method': method, 'code': 'Exception', 'module': __name__})
+            log_metric('engine_rpc.error', tags={'method': method, 'code': 'Exception', 'package': 'rpc_client'})
             raise RPCError(str(exception))
 
         return response_json
 
     def sign_transaction(self, wallet_id, transaction):
         LOG.debug(f'Signing transaction {transaction} with wallet_id {wallet_id}.')
-        log_metric('transmission.info', tags={'method': 'RPCClient.sign_transaction', 'module': __name__})
+        log_metric('transmission.info', tags={'method': 'RPCClient.sign_transaction', 'package': 'rpc_client'})
 
         result = self.call('transaction.sign', {
             "signerWallet": wallet_id,
@@ -82,12 +82,12 @@ class RPCClient(object):
                 LOG.debug(f'Successful signing of transaction.')
                 return result['transaction'], result['hash']
 
-        log_metric('engine_rpc.error', tags={'method': 'RPCClient.sign_transaction', 'module': __name__})
+        log_metric('engine_rpc.error', tags={'method': 'RPCClient.sign_transaction', 'package': 'rpc_client'})
         raise RPCError("Invalid response from Engine")
 
     def send_transaction(self, signed_transaction, callback_url):
         LOG.debug(f'Sending transaction {signed_transaction} with callback_url {callback_url}.')
-        log_metric('transmission.info', tags={'method': 'RPCClient.send_transaction', 'module': __name__})
+        log_metric('transmission.info', tags={'method': 'RPCClient.send_transaction', 'package': 'rpc_client'})
 
         result = self.call('transaction.send', {
             "callbackUrl": callback_url,
@@ -99,5 +99,5 @@ class RPCClient(object):
                 LOG.debug(f'Successful sending of transaction.')
                 return result['receipt']
 
-        log_metric('engine_rpc.error', tags={'method': 'RPCClient.sign_transaction', 'module': __name__})
+        log_metric('engine_rpc.error', tags={'method': 'RPCClient.sign_transaction', 'package': 'rpc_client'})
         raise RPCError("Invalid response from Engine")
