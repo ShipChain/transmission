@@ -54,7 +54,7 @@ class Location(models.Model):
 
     def get_lat_long_from_address(self):
         LOG.debug(f'Creating lat/long point for location {self.id}')
-        log_metric('transmission.info', tags={'method': 'locations.get_lat_long'})
+        log_metric('transmission.info', tags={'method': 'locations.get_lat_long', 'package': 'shipments.models'})
         parsing_address = ''
 
         if self.address_1:

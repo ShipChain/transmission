@@ -14,7 +14,7 @@ LOG = logging.getLogger('transmission')
 @shared_task(bind=True, autoretry_for=(RPCError,),
              retry_backoff=3, retry_backoff_max=60, max_retries=10)
 def tracking_data_update(self, shipment_id, payload):
-    log_metric('transmission.info', tags={'method': 'shipments.tasks.tracking_data_update'})
+    log_metric('transmission.info', tags={'method': 'shipments_tasks.tracking_data_update', 'package': 'shipments.tasks'})
     shipment = Shipment.objects.get(id=shipment_id)
 
     rpc_client = ShipmentRPCClient()
