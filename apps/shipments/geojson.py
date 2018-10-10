@@ -148,7 +148,7 @@ class DeviceTrackingPoint(object):
 
         except Exception as exception:
             LOG.error(f'Device tracking get_linestring_feature exception {exception}.')
-            log_metric('transmission.error', tags={'method': 'get_linestring_feature'})
+            log_metric('transmission.error', tags={'method': 'get_linestring_feature', 'package': 'shipments.geojson'})
 
             raise APIException(detail="Unable to build GeoJSON LineString Feature from tracking data")
 
