@@ -8,4 +8,4 @@ CELERY_WALLET_RETRY = 30
 CELERY_TXHASH_RETRY = 30
 
 # Time in minutes to be used when rate limiting vault hash updates
-VAULT_HASH_RATE_LIMIT = 60 if ENVIRONMENT == 'PROD' else 5
+VAULT_HASH_RATE_LIMIT = 120 if ENVIRONMENT == 'PROD' else 5
