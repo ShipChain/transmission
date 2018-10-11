@@ -69,13 +69,13 @@ def shipment_post_save(sender, **kwargs):
                                                     valid_until=Shipment.VALID_UNTIL,
                                                     funding_type=Shipment.FUNDING_TYPE,
                                                     shipment_amount=Shipment.SHIPMENT_AMOUNT)
+        instance.vault_id = vault_id
         Shipment.objects.filter(id=instance.id).update(vault_id=vault_id, load_data=load_shipment)
     else:
         # Update Shipment vault data
         rpc_client = ShipmentRPCClient()
         signature = rpc_client.add_shipment_data(instance.storage_credentials_id, instance.shipper_wallet_id,
                                                  instance.vault_id, ShipmentVaultSerializer(instance).data)
-
         LOG.debug(f'Updating LOAD contract with vault uri/hash {signature["hash"]}.')
         # Update LOAD contract with vault uri/hash
         instance.update_vault_hash(signature['hash'])
