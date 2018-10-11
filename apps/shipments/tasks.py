@@ -15,7 +15,7 @@ LOG = logging.getLogger('transmission')
              retry_backoff=3, retry_backoff_max=60, max_retries=10)
 def tracking_data_update(self, shipment_id, payload):
     log_metric('transmission.info', tags={'method': 'shipments_tasks.tracking_data_update',
-                                          'package': 'shipments.tasks'})
+                                          'module': __name__})
     shipment = Shipment.objects.get(id=shipment_id)
 
     rpc_client = ShipmentRPCClient()
