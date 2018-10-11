@@ -17,7 +17,7 @@ LOG = logging.getLogger('transmission')
 @receiver(post_save, sender=Message, dispatch_uid='message_post_save')
 def message_post_save(sender, instance, **kwargs):
     LOG.debug(f'Message post save with message {instance.id}.')
-    log_metric('transmission.info', tags={'method': 'jobs.message_post_save', 'package': 'jobs.signals'})
+    log_metric('transmission.info', tags={'method': 'jobs.message_post_save', 'module': __name__})
     try:
         wallet_lock = cache.lock(instance.async_job.parameters['signing_wallet_id'])
         wallet_lock.local.token = instance.async_job.wallet_lock_token
