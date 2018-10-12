@@ -142,10 +142,25 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             read_only_fields = ('vault_id', 'shipper_wallet_id', 'carrier_wallet_id', 'storage_credentials_id')
 
     def update(self, instance, validated_data):
+        print(validated_data)
         auth = self.context['auth']
 
         if 'device_id' in validated_data:
             instance.device = Device.get_or_create_with_permission(auth, validated_data.pop('device_id'))
+
+        for location_field in ['ship_from_location', 'ship_to_location']:
+            if location_field in validated_data:
+                location = getattr(instance, location_field)
+                data = validated_data.pop(location_field)
+
+                if location:
+                    for attr, value in data.items():
+                        setattr(location, attr, value)
+                    location.save()
+
+                else:
+                    location, _ = Location.objects.get_or_create(**data)
+                    setattr(instance, location_field, location)
 
         info = model_meta.get_field_info(instance)
         for attr, value in validated_data.items():
