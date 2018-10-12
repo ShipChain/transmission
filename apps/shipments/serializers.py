@@ -138,8 +138,11 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         if settings.PROFILES_URL:
             read_only_fields = ('owner_id', 'vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
                                 'storage_credentials_id')
+                                'storage_credentials_id', 'contract_version')
         else:
             read_only_fields = ('vault_id', 'shipper_wallet_id', 'carrier_wallet_id', 'storage_credentials_id')
+            read_only_fields = ('vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
+                                'storage_credentials_id', 'contract_version')
 
     def update(self, instance, validated_data):
         print(validated_data)
