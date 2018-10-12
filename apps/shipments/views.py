@@ -21,6 +21,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     queryset = Shipment.objects.all()
     serializer_class = ShipmentSerializer
     permission_classes = (permissions.IsAuthenticated, IsOwner) if settings.PROFILES_URL else (permissions.AllowAny,)
+    http_method_names = ['get', 'post', 'delete', 'patch']
 
     def get_queryset(self):
         queryset = self.queryset
@@ -142,6 +143,7 @@ class LocationViewSet(viewsets.ModelViewSet):
     serializer_class = LocationSerializer
     # TODO: Clarify/Solidify the permissions for Locations w/ respect to owner_id
     permission_classes = (permissions.IsAuthenticated, IsOwner) if settings.PROFILES_URL else (permissions.AllowAny,)
+    http_method_names = ['get', 'post', 'delete', 'patch']
 
     def get_queryset(self):
         queryset = self.queryset
