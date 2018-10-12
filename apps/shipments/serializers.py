@@ -137,10 +137,8 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         fields = '__all__'
         if settings.PROFILES_URL:
             read_only_fields = ('owner_id', 'vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
-                                'storage_credentials_id')
                                 'storage_credentials_id', 'contract_version')
         else:
-            read_only_fields = ('vault_id', 'shipper_wallet_id', 'carrier_wallet_id', 'storage_credentials_id')
             read_only_fields = ('vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
                                 'storage_credentials_id', 'contract_version')
 
@@ -162,6 +160,8 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                     location.save()
 
                 else:
+                    if not data['name']:
+                        raise exceptions.ValidationError(detail='Invalid name for location')
                     location, _ = Location.objects.get_or_create(**data)
                     setattr(instance, location_field, location)
 
