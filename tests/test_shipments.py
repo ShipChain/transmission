@@ -257,7 +257,6 @@ class ShipmentAPITests(APITestCase):
         post_data = replace_variables_in_string(post_data, parameters)
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
-        print(response.json()['included'])
 
         response_data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -748,7 +747,6 @@ class ShipmentAPITests(APITestCase):
         self.set_user(self.user_1)
 
         response = self.client.patch(url, one_location, content_type=content_type)
-        print(response.content)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)

@@ -143,7 +143,6 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                                 'storage_credentials_id', 'contract_version')
 
     def update(self, instance, validated_data):
-        print(validated_data)
         auth = self.context['auth']
 
         if 'device_id' in validated_data:
@@ -160,8 +159,6 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                     location.save()
 
                 else:
-                    if not data['name']:
-                        raise exceptions.ValidationError(detail='Invalid name for location')
                     location, _ = Location.objects.get_or_create(**data)
                     setattr(instance, location_field, location)
 
