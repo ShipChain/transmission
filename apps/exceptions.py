@@ -111,8 +111,8 @@ def exception_handler(exc, context):
         for field, detail in list(exc.detail.items()):
             if isinstance(detail, dict):
                 keys = detail.keys()
-                for x in keys:
-                    exc.detail[f'{field}.{x}'] = detail[x]
+                for key in keys:
+                    exc.detail[f'{field}.{key}'] = detail[key]
                 exc.detail.pop(field)
 
     # Use regular DRF format if not rendered by DRF JSON API and not uniform
