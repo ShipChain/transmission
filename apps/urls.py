@@ -42,3 +42,8 @@ urlpatterns = [
 urlpatterns += router.urls
 
 urlpatterns = format_suffix_patterns(urlpatterns)
+
+# Fallback to Generic API responses instead of Django's built-in rendered HTML responses
+handler500 = 'apps.exceptions.server_error'
+handler400 = 'apps.exceptions.bad_request'
+handler404 = 'apps.exceptions.invalid_url'

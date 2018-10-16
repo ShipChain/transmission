@@ -147,3 +147,16 @@ def bad_request(request, exception, *args, **kwargs):
         }]
     }
     return JsonResponse(data, status=status.HTTP_400_BAD_REQUEST)
+
+
+def invalid_url(request, exception, *args, **kwargs):
+    """
+    Generic 404 error handler.
+    """
+    data = {
+        "errors": [{
+            "detail": "Error 404, page not foud",
+            "status": "404"
+        }]
+    }
+    return JsonResponse(data, status=status.HTTP_404_NOT_FOUND)
