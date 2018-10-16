@@ -110,8 +110,7 @@ def exception_handler(exc, context):
     if response.status_code == status.HTTP_400_BAD_REQUEST:
         for field, detail in list(exc.detail.items()):
             if isinstance(detail, dict):
-                keys = detail.keys()
-                for key in keys:
+                for key in detail.keys():
                     exc.detail[f'{field}.{key}'] = detail[key]
                 exc.detail.pop(field)
 
