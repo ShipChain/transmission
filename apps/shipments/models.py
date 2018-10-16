@@ -54,7 +54,7 @@ class Location(models.Model):
 
     def get_lat_long_from_address(self):
         LOG.debug(f'Creating lat/long point for location {self.id}')
-        log_metric('transmission.info', tags={'method': 'locations.get_lat_long'})
+        log_metric('transmission.info', tags={'method': 'locations.get_lat_long', 'module': __name__})
         parsing_address = ''
 
         if self.address_1:
@@ -85,14 +85,14 @@ class Location(models.Model):
         if not geocoder_response.ok:
             if 'OVER_QUERY_LIMIT' in geocoder_response.error:
                 log_metric('transmission.errors', tags={'method': f'locations.geocoder',
-                                                        'code': 'service_unavailable', 'package': 'shipments.models',
+                                                        'code': 'service_unavailable', 'module': __name__,
                                                         'detail': f'error calling {method} geocoder'})
                 LOG.debug(f'{method} geocode for address {parsing_address} failed as query limit was reached')
                 raise Throttled(detail=f'Over Query Limit for {method}', code=HTTP_503_SERVICE_UNAVAILABLE)
 
             elif 'No results found' or 'ZERO_RESULTS' in geocoder_response.error:
                 log_metric('transmission.errors', tags={'method': f'locations.geocoder',
-                                                        'code': 'internal_server_error', 'package': 'shipments.models',
+                                                        'code': 'internal_server_error', 'module': __name__,
                                                         'detail': f'No results returned from {method} geocoder'})
                 LOG.debug(f'{method} geocode for address {parsing_address} failed with zero results returned')
                 raise ValidationError(detail='Invalid Location Address', code=HTTP_500_INTERNAL_SERVER_ERROR)
@@ -335,7 +335,7 @@ class Shipment(models.Model):
         else:
             LOG.info(f'Shipment {self.id} tried to update_vault_hash before load_data.shipment_id was set.')
             log_metric('transmission.error', tags={'method': 'shipment.update_vault_hash', 'code': 'call_too_early',
-                                                   'package': 'shipment.models'})
+                                                   'module': __name__})
         return async_job
 
     # Defaults

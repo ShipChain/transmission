@@ -31,7 +31,7 @@ class AsyncTask:
         self.rpc_client = getattr(module, rpc_class_name)()
 
     def run(self):
-        log_metric('transmission.info', tags={'method': 'async_task.run', 'package': 'jobs.tasks'})
+        log_metric('transmission.info', tags={'method': 'async_task.run', 'module': __name__})
         from .models import JobState
         if self.async_job.state not in (JobState.RUNNING, JobState.COMPLETE):
             LOG.debug(f'Job {self.async_job.id} running with status {self.async_job.state}')
@@ -51,15 +51,15 @@ class AsyncTask:
                     wallet_lock.release()
                     raise e
                 LOG.debug(f'Transaction submitted via AsyncJob {self.async_job.id}')
-                log_metric('transmission.info', tags={'method': 'async_job_fire', 'package': 'jobs.tasks'})
+                log_metric('transmission.info', tags={'method': 'async_job_fire', 'module': __name__})
             else:  # Could not lock on wallet, transaction already in progress
-                log_metric('transmission.error', tags={'method': 'async_task.run', 'package': 'jobs.tasks',
+                log_metric('transmission.error', tags={'method': 'async_task.run', 'module': __name__,
                                                        'code': 'wallet_in_use'})
                 raise WalletInUseException(f'Wallet {wallet_id} is currently already in use.')
 
     def _get_transaction(self):
         LOG.debug(f'Getting transaction for job {self.async_job.id}, {self.async_job.parameters["rpc_method"]}')
-        log_metric('transmission.info', tags={'method': 'async_task._get_transaction', 'package': 'jobs.tasks'})
+        log_metric('transmission.info', tags={'method': 'async_task._get_transaction', 'module': __name__})
         if self.async_job.parameters['rpc_method'] == 'create_shipment_transaction':
             contract_version, unsigned_tx = getattr(self.rpc_client, self.async_job.parameters['rpc_method'])(
                 *self.async_job.parameters['rpc_parameters'])
@@ -73,7 +73,7 @@ class AsyncTask:
 
     def _sign_transaction(self, unsigned_tx):
         LOG.debug(f'Signing transaction for job {self.async_job.id}')
-        log_metric('transmission.info', tags={'method': 'async_task._sign_transaction', 'package': 'jobs.tasks'})
+        log_metric('transmission.info', tags={'method': 'async_task._sign_transaction', 'module': __name__})
         from apps.eth.models import EthAction, Transaction
 
         signed_tx, hash_tx = getattr(self.rpc_client, 'sign_transaction')(
@@ -97,7 +97,7 @@ class AsyncTask:
             else:
                 # There is already a transaction with this transaction hash - retry later (get another nonce)
                 log_metric('transmission.error', tags={'method': 'async_task._sign_transaction',
-                                                       'package': 'jobs.tasks', 'code': 'transaction_in_progress'})
+                                                       'module': __name__, 'code': 'transaction_in_progress'})
                 raise TransactionCollisionException(f'A transaction with the hash {hash_tx} is already in progress.')
 
         return signed_tx, eth_action
@@ -106,7 +106,7 @@ class AsyncTask:
         from .models import JobState
         from apps.eth.models import TransactionReceipt
         LOG.debug(f'Sending transaction for job {self.async_job.id}, hash {eth_action.transaction_hash}')
-        log_metric('transmission.info', tags={'method': 'async_task._send_transaction', 'package': 'jobs.tasks'})
+        log_metric('transmission.info', tags={'method': 'async_task._send_transaction', 'module': __name__})
 
         receipt = getattr(self.rpc_client, 'send_transaction')(signed_tx, self.async_job.get_callback_url())
         with transaction.atomic():
@@ -126,7 +126,7 @@ def async_job_fire(self):
         try:
             async_job_id = self.request.id
             LOG.debug(f'AsyncJob {async_job_id} firing!')
-            log_metric('transmission.info', tags={'method': 'async_task.async_job_fire', 'package': 'jobs.tasks'})
+            log_metric('transmission.info', tags={'method': 'async_task.async_job_fire', 'module': __name__})
 
             task = None
             try:
@@ -139,7 +139,7 @@ def async_job_fire(self):
                              else settings.CELERY_WALLET_RETRY)
                 raise self.retry(exc=ex, countdown=countdown * random.uniform(0.5, 1.5))
             except RPCError as rpc_error:
-                log_metric('transmission.error', tags={'method': 'async_job_fire', 'package': 'jobs.tasks',
+                log_metric('transmission.error', tags={'method': 'async_job_fire', 'module': __name__,
                                                        'code': 'RPCError'})
                 LOG.error(f"AsyncJob Exception ({async_job_id}): {rpc_error}")
                 raise rpc_error
