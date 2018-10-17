@@ -13,9 +13,7 @@ from django.db import transaction
 from enumfields.drf import EnumField
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
-from rest_framework import exceptions
-from rest_framework import status
-from rest_framework import serializers as rest_serializers
+from rest_framework import exceptions, status, serializers as rest_serializers
 from rest_framework.utils import model_meta
 from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers

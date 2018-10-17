@@ -158,15 +158,14 @@ class ShipmentAPITests(APITestCase):
 
             url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
 
-            # Sign tracking data using cert
             # track_dic = {'position': {'latitude': -81.048253, 'longitude': 34.628643, 'altitude': 924, 'source': 'gps',
             #                           'certainty': 95, 'speed': 34}, 'version': '1.0.0',
-            #              'device': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'}
+            #              'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'}
             track_dic = {
                 'position': {
                     'latitude': 75.0587610,
                     'longitude': -35.628643,
-                    'altitude': 554.585,
+                    'altitude': 554,
                     'source': 'gps',
                     'uncertainty': 92,
                     'speed': 34
@@ -380,10 +379,6 @@ class ShipmentAPITests(APITestCase):
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        with self.settings(PROFILES_ENABLED=False):
-            response = self.client.post(url, post_data, content_type='application/vnd.api+json')
-            print(response.content)
-            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
     @httpretty.activate
     def test_create_with_location(self):
