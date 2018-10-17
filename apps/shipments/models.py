@@ -17,11 +17,8 @@ from django.core.validators import RegexValidator, MaxValueValidator, MinValueVa
 from django.db import models
 from enumfields import Enum
 from enumfields import EnumField
+from rest_framework.status import HTTP_200_OK
 from rest_framework.exceptions import ValidationError, Throttled, PermissionDenied, APIException
-from rest_framework.status import HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
-from rest_framework import status
-from rest_framework.exceptions import PermissionDenied, APIException
-from rest_framework.exceptions import ValidationError, Throttled
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 
@@ -404,6 +401,16 @@ class TrackingData(models.Model):
 
     class Meta:
         ordering = ('created_at',)
+
+    def shipment_has_device(self):
+        return bool(self.shipment.device)
+
+    def set_device_id(self):
+        if self.shipment_has_device():
+            self.device_id = self.shipment.device.id
+
+    def set_geometry(self):
+        self.geometry = Point(self.latitude, self.longitude)
 
     @property
     def timestamp_no_tz(self):
