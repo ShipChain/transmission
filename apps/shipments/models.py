@@ -401,6 +401,16 @@ class TrackingData(models.Model):
     class Meta:
         ordering = ('created_at',)
 
+    def shipment_has_device(self):
+        return bool(self.shipment.device)
+
+    def set_device_id(self):
+        if self.shipment_has_device():
+            self.device_id = self.shipment.device.id
+
+    def set_geometry(self):
+        self.geometry = Point(self.latitude, self.longitude)
+
     @property
     def timestamp_no_tz(self):
         return self.timestamp.replace(tzinfo=None)
