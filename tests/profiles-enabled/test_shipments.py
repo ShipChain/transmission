@@ -12,12 +12,17 @@ import json
 import os
 import re
 from conf import test_settings
+from unittest.mock import patch
 
-from apps.shipments.models import Shipment, Location, Device
 from apps.shipments.rpc import Load110RPCClient
+from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus, Device, \
+    TrackingData, Device
+from apps.shipments.rpc import ShipmentRPCClient
 from apps.authentication import AuthenticatedUser
 from apps.utils import random_id
 from tests.utils import replace_variables_in_string, create_form_content
+
+from apps.shipments.views import ShipmentViewSet
 
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
@@ -150,9 +155,22 @@ class ShipmentAPITests(APITestCase):
             url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
 
             # Sign tracking data using cert
-            track_dic = {'position': {'latitude': -81.048253, 'longitude': 34.628643, 'altitude': 924, 'source': 'gps',
-                                      'certainty': 95, 'speed': 34}, 'version': '1.0.0',
-                         'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'}
+            # track_dic = {'position': {'latitude': -81.048253, 'longitude': 34.628643, 'altitude': 924, 'source': 'gps',
+            #                           'certainty': 95, 'speed': 34}, 'version': '1.0.0',
+            #              'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'}
+            track_dic = {
+                'position': {
+                    'latitude': 75.0587610,
+                    'longitude': -35.628643,
+                    'altitude': 554,
+                    'source': 'gps',
+                    'uncertainty': 92,
+                    'speed': 34
+                },
+                'version': '1.0.0',
+                'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75',
+                'timestamp': '2018-09-18T15:02:30.563847+00:00'
+            }
             with open('tests/data/eckey.pem', 'r') as key_file:
                 key_pem = key_file.read()
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
@@ -160,6 +178,47 @@ class ShipmentAPITests(APITestCase):
             # Send tracking update
             response = self.client.post(url, {'payload': signed_data}, format='json')
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+            # Tracking data in db
+            data_from_db = TrackingData.objects.all()
+            self.assertTrue(data_from_db.count(), 1)
+            self.assertEqual(data_from_db[0].device_id, track_dic['device_id'])
+            self.assertTrue(isinstance(data_from_db[0].shipment, Shipment))
+            self.assertEqual(data_from_db[0].geometry.x, track_dic['position']['latitude'])
+
+            # Get tracking data
+            response = self.client.get(url)
+
+            # Unauthenticated request should fail
+            self.assertEqual(response.status_code, 403)
+
+            # Authenticated request should succeed
+            self.set_user(self.user_1)
+            response = self.client.get(url)
+            self.assertTrue(response.status_code, status.HTTP_200_OK)
+            data = response.data
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0]['source'], track_dic['position']['source'])
+            self.assertTrue('shipment' not in data[0].keys())
+
+            # Add second tracking data
+            track_dic_2 = copy.deepcopy(track_dic)
+            track_dic_2['timestamp'] = '2018-09-18T15:02:40.563847+00:00'
+            track_dic_2['position']['latitude'] -= 2
+            track_dic_2['position']['longitude'] += 2
+
+            signed_data = jws.sign(track_dic_2, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
+
+            # Send second tracking data
+            response = self.client.post(url, {'payload': signed_data}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+            # Test second tracking data
+            response = self.client.get(url)
+            self.assertTrue(response.status_code, status.HTTP_200_OK)
+            data = response.data
+            self.assertEqual(len(data), 2)
+            self.assertNotEqual(data[1]['latitude'], track_dic['position']['latitude'])
 
             # Certificate ID not in AWS
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': 'notarealcertificateid'}, algorithm='ES256')
@@ -1114,3 +1173,85 @@ class LocationAPITests(APITestCase):
         # Authenticated request should fail
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class TrackingDataAPITests(APITestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user_1 = AuthenticatedUser({
+            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7b',
+            'username': 'user1@shipchain.io',
+            'email': 'user1@shipchain.io',
+        })
+
+    def set_user(self, user, token=None):
+        self.client.force_authenticate(user=user, token=token)
+
+    def create_shipment(self):
+        self.shipments = []
+        self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
+                                                      carrier_wallet_id=CARRIER_WALLET_ID,
+                                                      shipper_wallet_id=SHIPPER_WALLET_ID,
+                                                      storage_credentials_id=STORAGE_CRED_ID,
+                                                      owner_id=self.user_1.id))
+
+    def create_tracking_data(self):
+        self.tracking_data = []
+        self.tracking_data.append(TrackingData.objects.create(latitude=-81.04825300,
+                                                              longitude=34.628643,
+                                                              altitude=335,
+                                                              source='gps',
+                                                              timestamp="2018-09-18T14:56:23.563847+00:00"))
+
+    @mock_iot
+    def test_set_device_id(self):
+        from apps.rpc_client import requests
+        from tests.utils import mocked_rpc_response
+
+        self.create_tracking_data()
+        self.assertEqual(TrackingData.objects.all().count(), 1)
+
+        device_id = 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'
+
+        # Create device 'thing'
+        iot = boto3.client('iot', region_name='us-east-1')
+        iot.create_thing(
+            thingName=device_id
+        )
+
+        # Load device cert into AWS
+        with open('tests/data/cert.pem', 'r') as cert_file:
+            cert_pem = cert_file.read()
+        cert_response = iot.register_certificate(
+            certificatePem=cert_pem,
+            status='ACTIVE'
+        )
+        certificate_id = cert_response['certificateId']
+
+        # Set device for Shipment
+        with mock.patch.object(requests, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_id": "TEST_VAULT_ID"
+                }
+            })
+            self.create_shipment()
+            self.shipments[0].device = Device.objects.create(
+                id=device_id,
+                certificate_id=certificate_id
+            )
+
+            # Attache shipment to tracking data object
+            self.tracking_data[0].shipment = self.shipments[0]
+
+            # Set device_id on the current tracking data
+            self.tracking_data[0].set_device_id()
+            self.assertEqual(self.shipments[0].device.id, device_id)
+
+            # Check float data type in db
+            self.assertTrue(isinstance(self.tracking_data[0].latitude, float))
+            self.assertEqual(self.tracking_data[0].altitude, 335)

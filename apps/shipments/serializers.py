@@ -18,7 +18,8 @@ from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
 
 
-from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState
+from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
+    TrackingData
 
 
 class NullableFieldsMixin:
@@ -288,3 +289,31 @@ class UnvalidatedTrackingDataSerializer(serializers.Serializer):
             raise exceptions.PermissionDenied(f"No device for shipment {shipment.id}")
 
         return attrs
+
+
+class TrackingDataToDbSerializer(serializers.ModelSerializer):
+    """
+    Serializer for tracking data to be cached in db
+    """
+    shipment = ShipmentSerializer(read_only=True)
+
+    class Meta:
+        model = TrackingData
+        fields = '__all__'
+
+    def create(self, validated_data):
+        data = TrackingData.objects.create(**validated_data, shipment=self.context['shipment'])
+        data.set_geometry()
+        data.save()
+
+        return data
+
+
+class TrackingDataResponseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for tracking data returned from db
+    """
+
+    class Meta:
+        model = TrackingData
+        exclude = ['shipment', ]

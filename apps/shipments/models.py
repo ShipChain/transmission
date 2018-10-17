@@ -381,3 +381,32 @@ class LoadShipment(models.Model):
     # Vault.Data
     vault_hash = HashField()
     vault_uri = models.CharField(max_length=255, blank=True)
+
+
+class TrackingData(models.Model):
+    id = models.CharField(primary_key=True, default=random_id, max_length=36)
+    created_at = models.DateTimeField(auto_now_add=True)
+    device_id = models.CharField(blank=True, null=True, max_length=36)
+    shipment = models.ForeignKey(Shipment, on_delete=models.PROTECT, null=True)
+    latitude = models.FloatField(default=None)
+    longitude = models.FloatField(default=None)
+    altitude = models.FloatField(default=None)
+    source = models.CharField(max_length=10)
+    uncertainty = models.IntegerField(blank=True, null=True)
+    speed = models.IntegerField(blank=True, null=True)
+    timestamp = models.CharField(max_length=50)
+    geometry = GeometryField(null=True)
+    version = models.CharField(max_length=10, null=True, blank=True)
+
+    class Meta:
+        ordering = ('created_at',)
+
+    def shipment_has_device(self):
+        return bool(self.shipment.device)
+
+    def set_device_id(self):
+        if self.shipment_has_device():
+            self.device_id = self.shipment.device.id
+
+    def set_geometry(self):
+        self.geometry = Point(self.latitude, self.longitude)

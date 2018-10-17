@@ -6,12 +6,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
-from .geojson import build_line_string_feature, build_point_features, build_feature_collection
-from .models import Shipment, Location
+from .models import Shipment, Location, TrackingData
 from .permissions import IsOwner, IsUserOrDevice
-from .rpc import RPCClientFactory
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer,\
-    LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer
+    LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer,\
+    TrackingDataResponseSerializer
 
 
 LOG = logging.getLogger('transmission')
@@ -40,6 +39,14 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         return serializer.save()
 
+    def data_to_db(self, payload):
+        data = {}
+        data.update(payload['position'])
+        payload.pop('position')
+        data.update(payload)
+
+        return data
+
     def create(self, request, *args, **kwargs):
         """
         Create a Shipment object and make Async Request to Engine
@@ -62,34 +69,16 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
     def get_tracking_data(self, request, version, pk):
         """
-        Retrieve tracking data for this Shipment after checking permissions with Profiles
+        Retrieve tracking data from db
         """
         LOG.debug(f'Retrieve tracking data for a shipment {pk}.')
         log_metric('transmission.info', tags={'method': 'shipments.tracking', 'module': __name__})
         shipment = Shipment.objects.get(pk=pk)
 
-        # TODO: re-implement device/shipment authorization for tracking data
-        # GET Profiles /api/v1/devices/{id}
+        data_queryset = TrackingData.objects.filter(shipment=shipment)
+        data = TrackingDataResponseSerializer(data_queryset, many=True)
 
-        rpc_client = RPCClientFactory.get_client()
-        tracking_data = rpc_client.get_tracking_data(shipment.storage_credentials_id,
-                                                     shipment.shipper_wallet_id,
-                                                     shipment.vault_id)
-
-        if 'as_line' in request.query_params:
-            all_features = build_line_string_feature(shipment, tracking_data)
-
-        elif 'as_point' in request.query_params:
-            all_features = build_point_features(shipment, tracking_data)
-
-        else:
-            all_features = []
-            all_features += build_line_string_feature(shipment, tracking_data)
-            all_features += build_point_features(shipment, tracking_data)
-
-        feature_collection = build_feature_collection(all_features)
-
-        return Response(data=feature_collection, status=status.HTTP_200_OK)
+        return Response(data=data.data, status=status.HTTP_200_OK)
 
     def add_tracking_data(self, request, version, pk):
         shipment = Shipment.objects.get(pk=pk)
@@ -104,6 +93,15 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         # Add tracking data to shipment via Engine RPC
         from .tasks import tracking_data_update
         tracking_data_update.delay(shipment.id, serializer.validated_data['payload'])
+
+        # Cache data to db
+        payload = serializer.validated_data['payload']
+        tracking_model_serializer = TrackingDataToDbSerializer(data=self.data_to_db(payload),
+                                                               context={'shipment': shipment})
+
+        tracking_model_serializer.is_valid()
+        LOG.debug(f'Added tracking dat for Shipment: {shipment.id}')
+        tracking_model_serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
