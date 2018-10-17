@@ -3,9 +3,12 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 from unittest import mock
+from moto import mock_iot
 
+from apps.shipments.models import Shipment
 from apps.jobs.models import AsyncJob, Message, MessageType, JobState
 from apps.rpc_client import RPCClient
+from apps.shipments.rpc import ShipmentRPCClient
 from apps.utils import AuthenticatedUser
 
 MESSAGE = [
@@ -33,6 +36,11 @@ TRANSACTION_BODY = {
     "transactionHash": 'TxHash',
     "transactionIndex": 0
 }
+
+VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
+CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
+SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
+STORAGE_CRED_ID = '77b72202-5bcd-49f4-9860-bc4ec4fee07b'
 
 
 class JobsAPITests(APITestCase):
@@ -83,6 +91,18 @@ class JobsAPITests(APITestCase):
                                                        parameters=RPC_PARAMS,
                                                        wallet_lock_token='wallet_lock_token'))
 
+    def create_shipment(self):
+        self.shipments = []
+        self.load_shipments = []
+
+        self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
+                                                      owner_id=self.user_1.id,
+                                                      carrier_wallet_id=CARRIER_WALLET_ID,
+                                                      shipper_wallet_id=SHIPPER_WALLET_ID,
+                                                      storage_credentials_id=STORAGE_CRED_ID))
+
+        self.load_shipments.append(self.shipments[0].load_data)
+
     def test_jobs_empty(self):
         """
         Test listing jobs requires authentication
@@ -126,27 +146,51 @@ class JobsAPITests(APITestCase):
         # No devices created should return empty array
         self.assertEqual(len(response_data), 1)
 
-    def test_add_jobs_message(self):
+    @mock_iot
+    def test_add_jobs_message_error(self):
         """
         Test calling a specific job only returns one object
         """
         self.create_async_jobs()
         url = reverse('job-message', kwargs={'version': 'v1', 'pk': self.async_jobs[1].id})
 
-        mock_rpc_client = RPCClient
+        error_message = {"type": "ERROR", "body": {"exception": "Test Exception"}}
 
-        mock_rpc_client.send_transaction = mock.Mock(return_value={
-            "type": "ETH_TRANSACTION",
-            "body": TRANSACTION_BODY
-        })
-        mock_rpc_client.sign_transaction = mock.Mock(return_value={
-            "type": "ETH_TRANSACTION",
-            "body": TRANSACTION_BODY
-        })
-
-        message = {"type": "ERROR", "body": {"exception": "Test Exception"}}
-
-        response = self.client.post(url, json.dumps(message), content_type="application/json")
+        response = self.client.post(url, json.dumps(error_message), content_type="application/json")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         async_job = AsyncJob.objects.get(pk=self.async_jobs[1].id)
         self.assertEqual(async_job.state, JobState.FAILED)
+
+
+    @mock_iot
+    def test_add_jobs_message_success(self):
+        """
+        Test calling a specific job only returns one object
+        """
+        from apps.rpc_client import requests
+        from tests.utils import mocked_rpc_response
+        self.create_async_jobs()
+
+        mock_shipment_rpc = ShipmentRPCClient
+
+        mock_shipment_rpc.create_vault = mock.Mock(return_value=VAULT_ID)
+
+        success_message = {"type": "ETH_TRANSACTION", "body": TRANSACTION_BODY}
+
+        with mock.patch.object(requests, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "vault_id": VAULT_ID
+            })
+            mock_method.return_value = mocked_rpc_response({
+                "success": True,
+                "vault_signed": {'hash': "TEST_VAULT_SIGNATURE"}
+            })
+            self.create_shipment()
+
+            async_job = self.shipments[0].asyncjob_set.all()[:1].get()
+            url = reverse('job-message', kwargs={'version': 'v1', 'pk': async_job.id})
+
+            response = self.client.post(url, json.dumps(success_message), content_type="application/json")
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+            async_job = AsyncJob.objects.get(pk=async_job.id)
+            self.assertEqual(async_job.state, JobState.COMPLETE)
