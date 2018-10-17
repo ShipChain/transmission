@@ -108,11 +108,12 @@ def exception_handler(exc, context):
         return unhandled_drf_exception_handler(exc, context)
 
     if response.status_code == status.HTTP_400_BAD_REQUEST:
-        for field, detail in list(exc.detail.items()):
-            if isinstance(detail, dict):
-                for key in detail.keys():
-                    exc.detail[f'{field}.{key}'] = detail[key]
-                exc.detail.pop(field)
+        if isinstance(exc.detail, dict):
+            for field, detail in list(exc.detail.items()):
+                if isinstance(detail, dict):
+                    for key in detail.keys():
+                        exc.detail[f'{field}.{key}'] = detail[key]
+                    exc.detail.pop(field)
 
     # Use regular DRF format if not rendered by DRF JSON API and not uniform
     is_json_api_view = rendered_with_json_api(context['view'])
