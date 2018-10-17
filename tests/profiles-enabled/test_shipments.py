@@ -159,6 +159,7 @@ class ShipmentAPITests(APITestCase):
 
             url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
 
+            # Sign tracking data using cert
             # track_dic = {'position': {'latitude': -81.048253, 'longitude': 34.628643, 'altitude': 924, 'source': 'gps',
             #                           'certainty': 95, 'speed': 34}, 'version': '1.0.0',
             #              'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'}
@@ -205,7 +206,7 @@ class ShipmentAPITests(APITestCase):
 
             # Add second tracking data
             track_dic_2 = copy.deepcopy(track_dic)
-            track_dic_2['timestamp'] = '2018-09-18T15:02:20.563847+00:00'
+            track_dic_2['timestamp'] = '2018-09-18T15:02:40.563847+00:00'
             track_dic_2['position']['latitude'] -= 2
             track_dic_2['position']['longitude'] += 2
 
