@@ -398,6 +398,7 @@ class TrackingData(models.Model):
     timestamp = models.DateTimeField()
     version = models.CharField(max_length=36)
 
+
     class Meta:
         ordering = ('created_at',)
 
