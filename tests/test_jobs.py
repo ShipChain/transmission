@@ -1,26 +1,12 @@
-import copy
-from unittest import mock
-
-import requests
-import boto3
 import json
-from geocoder.keys import mapbox_access_token
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
-from jose import jws
-from moto import mock_iot
-import httpretty
-import json
-import os
-import re
-from unittest.mock import patch
+from unittest import mock
 
-from apps.jobs.models import AsyncJob, Message, MessageType, JobListener, JobState
+from apps.jobs.models import AsyncJob, Message, MessageType, JobState
 from apps.rpc_client import RPCClient
-from django.contrib.gis.geos import Point
-from apps.utils import AuthenticatedUser, random_id
-from tests.utils import replace_variables_in_string, create_form_content
+from apps.utils import AuthenticatedUser
 
 MESSAGE = [
     {'type': 'message'}
