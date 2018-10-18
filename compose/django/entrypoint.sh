@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ "$ENV" = "PROD" ] || [ "$ENV" = "STAGE" ] || [ "$ENV" = "DEV" ];
+if [ "$ENV" = "PROD" ] || [ "$ENV" = "DEMO" ] || [ "$ENV" = "STAGE" ] || [ "$ENV" = "DEV" ];
 then
     echo "Not running in a docker-compose environment, skipping wait-for-it"
 else

@@ -53,8 +53,8 @@ CSRF_USE_SESSIONS = True
 
 CORS_ORIGIN_ALLOW_ALL = True
 
-if ENVIRONMENT in ('PROD', 'STAGE', 'DEV'):
-    if ENVIRONMENT == 'PROD':
+if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
+    if ENVIRONMENT in ('PROD', 'DEMO'):
         DEBUG = False
         LOG_LEVEL = 'INFO'
     else:

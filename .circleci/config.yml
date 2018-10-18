@@ -158,6 +158,32 @@ jobs:
                 \"image\": \"$ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH\"
               }" outputfile.txt && cat outputfile.txt
 
+  deploy-to-demo:
+    docker:
+    - image: docker:stable-git
+
+    steps:
+    - run:
+        name: Set dynamic ENV variables
+        command: |
+          echo 'export SHORT_GIT_HASH=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
+
+    - run:
+        name: Install dependencies
+        command: |
+          apk add --no-cache py-pip
+          pip install awscli
+
+    - run:
+        name: Deploy new Task Revision to ECS
+        command: |
+          source $BASH_ENV
+          aws lambda invoke --function-name DeployImageToECS --payload "{
+              \"app\": \"transmission\",
+              \"env\": \"DEMO\",
+              \"image\": \"$ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH\"
+            }" outputfile.txt && cat outputfile.txt
+
   deploy-to-prod:
     docker:
       - image: docker:stable-git
@@ -214,6 +240,19 @@ workflows:
               only: master
           requires:
             - hold-deploy-stage
+      - hold-deploy-demo:
+          filters:
+            branches:
+              only: master
+          type: approval
+          requires:
+          - deploy-to-dev
+      - deploy-to-demo:
+          filters:
+            branches:
+              only: master
+          requires:
+          - hold-deploy-demo
       - hold-deploy-prod:
           filters:
             branches:
