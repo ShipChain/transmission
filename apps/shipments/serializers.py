@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+import json
 import boto3
 from botocore.exceptions import ClientError
 from cryptography import x509
@@ -238,7 +239,7 @@ class TrackingDataSerializer(serializers.Serializer):
                     encoding=Encoding.PEM, format=PublicFormat.SubjectPublicKeyInfo).decode()
 
                 # Validate authenticity and integrity of message signature
-                attrs['payload'] = jws.verify(payload, public_key, header['alg'])
+                attrs['payload'] = json.loads(jws.verify(payload, public_key, header['alg']).decode("utf-8"))
             else:
                 raise exceptions.PermissionDenied(f"Certificate {header['kid']} is "
                                                   f"not ACTIVE in IoT for shipment {shipment.id}")
