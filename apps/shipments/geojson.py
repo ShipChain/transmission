@@ -118,7 +118,7 @@ class DeviceTrackingPoint(object):
 
         try:
             return Feature(geometry=self.as_point(), properties={
-                "time": self.timestamp,
+                "time": self.timestamp.isoformat(),
                 "uncertainty": self.uncertainty,
                 "has_gps": self.has_gps,
                 "source": self.source,
