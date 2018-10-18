@@ -135,7 +135,7 @@ REST_FRAMEWORK = {
 
 if PROFILES_URL:
     REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
-        'apps.utils.PassiveJSONWebTokenAuthentication'
+        'apps.authentication.PassiveJSONWebTokenAuthentication'
     ),
     REST_FRAMEWORK['DEFAULT_PERMISSION_CLASSES'] = (
         'rest_framework.permissions.IsAuthenticated'
