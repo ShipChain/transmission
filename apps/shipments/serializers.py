@@ -307,13 +307,3 @@ class TrackingDataToDbSerializer(serializers.ModelSerializer):
         data.save()
 
         return data
-
-
-class TrackingDataResponseSerializer(serializers.ModelSerializer):
-    """
-    Serializer for tracking data returned from db
-    """
-
-    class Meta:
-        model = TrackingData
-        exclude = ['shipment', ]

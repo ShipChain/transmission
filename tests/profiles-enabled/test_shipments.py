@@ -7,6 +7,7 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient, force_authenticate
 from jose import jws
 from moto import mock_iot
+from geojson import Feature, FeatureCollection, LineString, Point
 import httpretty
 import json
 import os
@@ -197,13 +198,11 @@ class ShipmentAPITests(APITestCase):
             response = self.client.get(url)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
             data = response.data
-            self.assertEqual(len(data), 1)
-            self.assertEqual(data[0]['source'], track_dic['position']['source'])
-            self.assertTrue('shipment' not in data[0].keys())
+            self.assertEqual(data['type'], 'FeatureCollection')
 
             # Add second tracking data
             track_dic_2 = copy.deepcopy(track_dic)
-            track_dic_2['timestamp'] = '2018-09-18T15:02:40.563847+00:00'
+            track_dic_2['timestamp'] = '2018-09-18T15:02:20.563847+00:00'
             track_dic_2['position']['latitude'] -= 2
             track_dic_2['position']['longitude'] += 2
 
@@ -217,8 +216,12 @@ class ShipmentAPITests(APITestCase):
             response = self.client.get(url)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
             data = response.data
-            self.assertEqual(len(data), 2)
-            self.assertNotEqual(data[1]['latitude'], track_dic['position']['latitude'])
+            self.assertEqual(len(data['features']), 3)
+
+            # We expect the second point data to be the first in LineString
+            # since it has been  generated first. See timestamp values
+            pos = track_dic_2['position']
+            self.assertEqual(data['features'][0]['geometry']['coordinates'][0], [pos['longitude'], pos['latitude']])
 
             # Certificate ID not in AWS
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': 'notarealcertificateid'}, algorithm='ES256')
@@ -1248,9 +1251,9 @@ class TrackingDataAPITests(APITestCase):
             # Attache shipment to tracking data object
             self.tracking_data[0].shipment = self.shipments[0]
 
-            # Set device_id on the current tracking data
-            self.tracking_data[0].set_device_id()
-            self.assertEqual(self.shipments[0].device.id, device_id)
+            # Set geometry's field value on the current tracking data
+            self.tracking_data[0].set_geometry()
+            self.assertTrue(isinstance(self.tracking_data[0].geometry, Point))
 
             # Check float data type in db
             self.assertTrue(isinstance(self.tracking_data[0].latitude, float))
