@@ -10,8 +10,7 @@ from .geojson import build_line_string_feature, build_point_features, build_feat
 from .models import Shipment, Location, TrackingData
 from .permissions import IsOwner, IsUserOrDevice
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer,\
-    LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer,\
-    TrackingDataResponseSerializer
+    LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer
 
 LOG = logging.getLogger('transmission')
 
@@ -115,7 +114,6 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         tracking_model_serializer.save()
 
         # Cache data to db
-        payload = serializer.validated_data['payload']
         tracking_model_serializer = TrackingDataToDbSerializer(data=self.data_to_db(payload),
                                                                context={'shipment': shipment})
 
