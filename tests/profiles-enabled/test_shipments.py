@@ -206,7 +206,7 @@ class ShipmentAPITests(APITestCase):
 
             # Add second tracking data
             track_dic_2 = copy.deepcopy(track_dic)
-            track_dic_2['timestamp'] = '2018-09-18T15:02:40.563847+00:00'
+            track_dic_2['timestamp'] = '2018-09-18T15:02:20.563847+00:00'
             track_dic_2['position']['latitude'] -= 2
             track_dic_2['position']['longitude'] += 2
 

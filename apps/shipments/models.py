@@ -467,3 +467,4 @@ class TrackingData(models.Model):
             log_metric('transmission.error', tags={'method': 'get_linestring_feature', 'module': __name__})
 
             raise APIException(detail="Unable to build GeoJSON LineString Feature from tracking data")
+
