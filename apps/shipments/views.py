@@ -114,15 +114,6 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         LOG.debug(f'Added tracking data for Shipment: {shipment.id}')
         tracking_model_serializer.save()
 
-        # Cache data to db
-        payload = serializer.validated_data['payload']
-        tracking_model_serializer = TrackingDataToDbSerializer(data=self.data_to_db(payload),
-                                                               context={'shipment': shipment})
-
-        tracking_model_serializer.is_valid()
-        LOG.debug(f'Added tracking dat for Shipment: {shipment.id}')
-        tracking_model_serializer.save()
-
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get', 'post'], permission_classes=(IsUserOrDevice,))
