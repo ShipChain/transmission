@@ -63,7 +63,7 @@ def build_feature_collection(features):
     :return: All provided Features in a single FeatureCollection
     """
     LOG.debug(f'Build feature collection with features {features}.')
-    log_metric('transmission.info', tags={'method': 'build_feature_collection', 'package': 'shipments.geojson'})
+    log_metric('transmission.info', tags={'method': 'build_feature_collection', 'module': __name__})
 
     feature_list = features
 
