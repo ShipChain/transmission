@@ -23,5 +23,5 @@ class AuthTests(TestCase):
         self.assertFalse(engine_request.has_permission(request, {}))
         request.META['X_NGINX_SOURCE'] = 'alb'
         self.assertFalse(engine_request.has_permission(request, {}))
-        request.META['X_NGINX_SOURCE'] = 'engine'
+        request.META['X_NGINX_SOURCE'] = 'internal'
         self.assertTrue(engine_request.has_permission(request, {}))

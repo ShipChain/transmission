@@ -56,6 +56,6 @@ class EngineRequest(BasePermission):
     def has_permission(self, request, view):
         if settings.ENVIRONMENT in ('LOCAL',):
             return True
-        elif 'X_NGINX_SOURCE' in request.META and request.META['X_NGINX_SOURCE'] == 'engine':
+        elif 'X_NGINX_SOURCE' in request.META and request.META['X_NGINX_SOURCE'] == 'internal':
             return True
         return False
