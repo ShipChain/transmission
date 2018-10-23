@@ -1,7 +1,8 @@
 from rest_framework import exceptions
 from django.test import TestCase
+from django.http.request import HttpRequest
 
-from apps.authentication import PassiveJSONWebTokenAuthentication
+from apps.authentication import PassiveJSONWebTokenAuthentication, EngineRequest
 
 
 class AuthTests(TestCase):
@@ -14,3 +15,13 @@ class AuthTests(TestCase):
         self.assertEqual(user.is_staff(), False)
         self.assertEqual(user.is_superuser(), False)
         self.assertEqual(user.username, 'wat@wat.com')
+
+    def test_engine_auth_requires_header(self):
+        engine_request = EngineRequest()
+        request = HttpRequest()
+
+        self.assertFalse(engine_request.has_permission(request, {}))
+        request.META['X_NGINX_SOURCE'] = 'alb'
+        self.assertFalse(engine_request.has_permission(request, {}))
+        request.META['X_NGINX_SOURCE'] = 'engine'
+        self.assertTrue(engine_request.has_permission(request, {}))

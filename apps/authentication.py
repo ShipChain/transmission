@@ -54,7 +54,7 @@ class PassiveJSONWebTokenAuthentication(JSONWebTokenAuthentication):
 
 class EngineRequest(BasePermission):
     def has_permission(self, request, view):
-        if settings.ENVIRONMENT in ('LOCAL', 'TEST'):
+        if settings.ENVIRONMENT in ('LOCAL',):
             return True
         elif 'X_NGINX_SOURCE' in request.META and request.META['X_NGINX_SOURCE'] == 'engine':
             return True

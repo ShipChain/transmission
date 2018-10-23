@@ -155,7 +155,7 @@ class JobsAPITests(APITestCase):
 
         error_message = {"type": "ERROR", "body": {"exception": "Test Exception"}}
 
-        response = self.client.post(url, json.dumps(error_message), content_type="application/json")
+        response = self.client.post(url, json.dumps(error_message), content_type="application/json", X_NGINX_SOURCE='engine')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         async_job = AsyncJob.objects.get(pk=self.async_jobs[1].id)
         self.assertEqual(async_job.state, JobState.FAILED)
@@ -189,7 +189,7 @@ class JobsAPITests(APITestCase):
             async_job = self.shipments[0].asyncjob_set.all()[:1].get()
             url = reverse('job-message', kwargs={'version': 'v1', 'pk': async_job.id})
 
-            response = self.client.post(url, json.dumps(success_message), content_type="application/json")
+            response = self.client.post(url, json.dumps(success_message), content_type="application/json", X_NGINX_SOURCE='engine')
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             async_job = AsyncJob.objects.get(pk=async_job.id)
             self.assertEqual(async_job.state, JobState.COMPLETE)
