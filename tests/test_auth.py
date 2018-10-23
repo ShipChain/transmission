@@ -24,4 +24,14 @@ class AuthTests(TestCase):
         request.META['X_NGINX_SOURCE'] = 'alb'
         self.assertFalse(engine_request.has_permission(request, {}))
         request.META['X_NGINX_SOURCE'] = 'internal'
+        self.assertRaises(KeyError, engine_request.has_permission, request, {})
+        request.META['X_SSL_CLIENT_VERIFY'] = 'NONE'
+        self.assertFalse(engine_request.has_permission(request, {}))
+        request.META['X_SSL_CLIENT_VERIFY'] = 'SUCCESS'
+        self.assertRaises(KeyError, engine_request.has_permission, request, {})
+        request.META['X_SSL_CLIENT_DN'] = '/CN=engine.h4ck3d'
+        self.assertFalse(engine_request.has_permission(request, {}))
+        request.META['X_SSL_CLIENT_DN'] = '/CN=profiles.test-internal'
+        self.assertFalse(engine_request.has_permission(request, {}))
+        request.META['X_SSL_CLIENT_DN'] = '/CN=engine.test-internal'
         self.assertTrue(engine_request.has_permission(request, {}))

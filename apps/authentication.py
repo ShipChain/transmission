@@ -21,6 +21,8 @@ from rest_framework.permissions import BasePermission
 from rest_framework_jwt.settings import api_settings
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
+from .utils import parse_dn
+
 
 class AuthenticatedUser:
     def __init__(self, payload):
@@ -56,6 +58,8 @@ class EngineRequest(BasePermission):
     def has_permission(self, request, view):
         if settings.ENVIRONMENT in ('LOCAL',):
             return True
-        elif 'X_NGINX_SOURCE' in request.META and request.META['X_NGINX_SOURCE'] == 'internal':
-            return True
+        elif ('X_NGINX_SOURCE' in request.META and request.META['X_NGINX_SOURCE'] == 'internal'
+              and request.META['X_SSL_CLIENT_VERIFY'] == 'SUCCESS'):
+            certificate_cn = parse_dn(request.META['X_SSL_CLIENT_DN'])['CN']
+            return certificate_cn == f'engine.{settings.ENVIRONMENT.lower()}-internal'
         return False

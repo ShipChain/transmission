@@ -1,5 +1,7 @@
-import json
 import decimal
+import json
+import re
+
 from drf_enum_field.fields import EnumField
 
 
@@ -61,6 +63,13 @@ def build_auth_headers_from_request(request):
 
     token = request.auth.decode('utf-8')
     return {'Authorization': f"JWT {token}"}
+
+
+DN_REGEX = re.compile(r'(?:/?)(.+?)(?:=)([^/]+)')
+
+
+def parse_dn(ssl_dn):
+    return dict(DN_REGEX.findall(ssl_dn))
 
 
 class DecimalEncoder(json.JSONEncoder):
