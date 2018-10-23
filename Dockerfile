@@ -19,7 +19,12 @@ RUN echo "AllowAgentForwarding yes" >> /etc/ssh/sshd_config
 RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
 # ------------------------- #
 
-RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync
+RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync jq
+
+# Virtualenv for awscli #
+RUN pip install virtualenv
+RUN virtualenv /opt/aws
+RUN . /opt/aws/bin/activate && pip install --upgrade awscli
 
 COPY ./compose/django/requirements.txt /build/
 COPY ./compose/django/pip.cache /build/pip.cache

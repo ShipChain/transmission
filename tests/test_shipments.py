@@ -19,7 +19,8 @@ from unittest.mock import patch
 from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus, Device
 from apps.shipments.rpc import ShipmentRPCClient
 from django.contrib.gis.geos import Point
-from apps.utils import AuthenticatedUser, random_id
+from apps.authentication import AuthenticatedUser
+from apps.utils import random_id
 from tests.utils import replace_variables_in_string, create_form_content
 
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
@@ -109,7 +110,7 @@ class ShipmentAPITests(APITestCase):
         certificate_id = cert_response['certificateId']
 
         # Set device for Shipment
-        with mock.patch.object(requests, 'post') as mock_method:
+        with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
                 "result": {

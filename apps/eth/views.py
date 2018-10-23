@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework_json_api import renderers as jsapi_renderers
 from influxdb_metrics.loader import log_metric
 
+from apps.authentication import EngineRequest
 from apps.eth.models import EthAction, Event
 from apps.eth.serializers import EventSerializer, EthActionSerializer
 
@@ -24,8 +25,7 @@ class EventViewSet(mixins.CreateModelMixin,
     serializer_class = EventSerializer
     parser_classes = (parsers.JSONParser,)
     renderer_classes = (renderers.JSONRenderer, jsapi_renderers.JSONRenderer)
-    # TODO: Restrict for Engine
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (EngineRequest,)
 
     def create(self, request, *args, **kwargs):
         log_metric('transmission.info', tags={'method': 'events.create', 'module': __name__})

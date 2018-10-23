@@ -1,9 +1,7 @@
-import json
 import decimal
-from collections import namedtuple
-from rest_framework import exceptions
-from rest_framework_jwt.settings import api_settings
-from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+import json
+import re
+
 from drf_enum_field.fields import EnumField
 
 
@@ -55,37 +53,6 @@ class EnumToNameField(EnumField):
         return super(EnumToNameField, self).to_internal_value(data).name
 
 
-class AuthenticatedUser:
-    def __init__(self, payload):
-        self.id = payload.get('user_id')  # pylint:disable=invalid-name
-        self.username = payload.get('username')
-        self.email = payload.get('email')
-
-    def is_authenticated(self):
-        return True
-
-    def is_staff(self):
-        return False
-
-    def is_superuser(self):
-        return False
-
-
-class PassiveJSONWebTokenAuthentication(JSONWebTokenAuthentication):
-
-    def authenticate_credentials(self, payload):
-        if 'sub' not in payload:
-            raise exceptions.AuthenticationFailed('Invalid payload.')
-
-        payload['pk'] = payload['sub']
-        payload = namedtuple("User", payload.keys())(*payload.values())
-        payload = api_settings.JWT_PAYLOAD_HANDLER(payload)
-
-        user = AuthenticatedUser(payload)
-
-        return user
-
-
 def snake_to_sentence(word):
     return ' '.join(x.capitalize() or '_' for x in word.split('_'))
 
@@ -96,6 +63,13 @@ def build_auth_headers_from_request(request):
 
     token = request.auth.decode('utf-8')
     return {'Authorization': f"JWT {token}"}
+
+
+DN_REGEX = re.compile(r'(?:/?)(.+?)(?:=)([^/]+)')
+
+
+def parse_dn(ssl_dn):
+    return dict(DN_REGEX.findall(ssl_dn))
 
 
 class DecimalEncoder(json.JSONEncoder):
