@@ -31,7 +31,7 @@ class RPCClient(object):
         self.url = settings.ENGINE_RPC_URL
         self.payload = {"jsonrpc": "2.0", "id": 0, "params": {}}
         self.session = requests.session()
-        if settings.ENVIRONMENT in ('PROD', 'STAGE', 'DEV'):
+        if settings.ENVIRONMENT in ('PROD', 'STAGE', 'DEV', 'DEMO'):
             self.session.cert = ('/app/client-cert.crt', '/app/client-cert.key')
             self.session.verify = '/app/ca-bundle.crt'
         self.session.headers = {'content-type': 'application/json'}

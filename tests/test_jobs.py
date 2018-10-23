@@ -7,9 +7,8 @@ from moto import mock_iot
 
 from apps.shipments.models import Shipment
 from apps.jobs.models import AsyncJob, Message, MessageType, JobState
-from apps.rpc_client import RPCClient
 from apps.shipments.rpc import ShipmentRPCClient
-from apps.utils import AuthenticatedUser
+from apps.authentication import AuthenticatedUser
 
 MESSAGE = [
     {'type': 'message'}
@@ -177,7 +176,7 @@ class JobsAPITests(APITestCase):
 
         success_message = {"type": "ETH_TRANSACTION", "body": TRANSACTION_BODY}
 
-        with mock.patch.object(requests, 'post') as mock_method:
+        with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "vault_id": VAULT_ID
             })

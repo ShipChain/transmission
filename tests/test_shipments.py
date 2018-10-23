@@ -110,7 +110,7 @@ class ShipmentAPITests(APITestCase):
         certificate_id = cert_response['certificateId']
 
         # Set device for Shipment
-        with mock.patch.object(requests, 'post') as mock_method:
+        with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
                 "result": {
