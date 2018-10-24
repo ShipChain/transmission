@@ -106,6 +106,7 @@ INSTALLED_APPS = [
     'apps.eth',
     'apps.shipments',
     'apps.schema',
+    'channels',
 ]
 
 REST_FRAMEWORK = {
@@ -175,6 +176,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'apps.wsgi.application'
+ASGI_APPLICATION = 'apps.routing.application'
 
 TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
 TEST_OUTPUT_DIR = 'test-results/unittest/results.xml'

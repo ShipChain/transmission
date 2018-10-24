@@ -1,7 +1,12 @@
 amqp==2.2.2
 argh==0.26.2
+asgiref==2.3.2
 asn1crypto==0.24.0
 astroid==1.6.1
+async-timeout==3.0.1
+attrs==18.2.0
+autobahn==18.10.1
+Automat==0.7.0
 aws-xray-sdk==0.95
 billiard==3.5.0.3
 blessings==1.7
@@ -14,10 +19,12 @@ celery==4.2.1
 celery-once==2.0.0
 certifi==2018.1.18
 cffi==1.11.5
+channels==2.1.5
 chardet==3.0.4
 click==6.7
 -e git://github.com/kusha/python-elasticsearch-logger.git@91b458a58e12ab1e9a8fe16a28d225f610e29183#egg=CMRESHandler
 colorama==0.3.7
+constantly==15.1.0
 cookies==2.2.1
 coreapi==2.3.3
 coreschema==0.0.4
@@ -25,6 +32,7 @@ coverage==4.5.1
 cryptography==2.3.1
 curtsies==0.3.0
 cytoolz==0.9.0
+daphne==2.2.2
 decorator==4.3.0
 Django==2.0.9
 django-cors-headers==2.2.0
@@ -59,7 +67,9 @@ geojson==2.4.0
 greenlet==0.4.15
 gunicorn==19.7.1
 httpretty==0.9.5
+hyperlink==18.0.0
 idna==2.6
+incremental==17.5.0
 inflection==0.3.1
 influxdb==5.0.0
 iso3166==0.9
@@ -95,6 +105,7 @@ pycryptodome==3.6.6
 pydocstyle==2.1.1
 pyflakes==1.6.0
 Pygments==2.2.0
+PyHamcrest==1.9.0
 PyJWT==1.6.4
 pylint==1.8.2
 pylint-celery==0.3
@@ -126,6 +137,8 @@ snowballstemmer==1.2.1
 termstyle==0.1.11
 tld==0.7.10
 toolz==0.9.0
+Twisted==18.9.0
+txaio==18.8.1
 typing==3.6.6
 Unidecode==1.0.22
 unittest-xml-reporting==2.1.1
@@ -140,3 +153,4 @@ Werkzeug==0.14.1
 whitenoise==3.3.1
 wrapt==1.10.11
 xmltodict==0.11.0
+zope.interface==4.6.0
