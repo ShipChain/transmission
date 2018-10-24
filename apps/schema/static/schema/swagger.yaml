@@ -53,6 +53,7 @@ paths:
         Retrieve an array of `Shipment` objects associated with the current user ordered by the `Shipment.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/page_size'
       tags:
       - Shipments
       responses:
@@ -183,6 +184,7 @@ paths:
         Retrieve an array of `AsyncJob` actions initiated by the user ordered by the `AsyncJob.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/page_size'
       tags:
       - AsyncJobs
       responses:
@@ -252,6 +254,7 @@ paths:
         Retrieve an array of `Location` objects associated with the current user ordered by the `Location.created_at` date.
       parameters:
       - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/page_size'
       tags:
       - Locations
       responses:
@@ -376,6 +379,15 @@ components:
       name: page
       in: query
       description: Page number used for pagination
+      required: false
+      schema:
+        type: integer
+        format: int32
+
+    page_size:
+      name: page
+      in: query
+      description: Quantity of objects per page
       required: false
       schema:
         type: integer
@@ -2039,6 +2051,8 @@ components:
         - properties:
             attributes:
               $ref: '#/components/schemas/shipment/attributes'
+            relationships:
+              $ref: '#/components/schemas/shipment/relationships/properties/relationships'
 
       getResponse:
         allOf:
