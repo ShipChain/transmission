@@ -7,7 +7,6 @@ from geocoder.keys import mapbox_access_token
 
 import boto3
 
-import requests
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import GeometryField
@@ -110,8 +109,8 @@ class Device(models.Model):
         certificate_id = None
         if settings.PROFILES_URL:
             # Make a request to Profiles /api/v1/devices/{device_id} with the user's JWT
-            response = requests.get(f'{settings.PROFILES_URL}/api/v1/device/{device_id}/',
-                                    headers={'Authorization': 'JWT {}'.format(jwt.decode())})
+            response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/device/{device_id}/',
+                                                     headers={'Authorization': 'JWT {}'.format(jwt.decode())})
             if response.status_code != status.HTTP_200_OK:
                 raise PermissionDenied("User does not have access to this device in ShipChain Profiles")
 
