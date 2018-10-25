@@ -30,11 +30,6 @@ class RPCClient(object):
     def __init__(self):
         self.url = settings.ENGINE_RPC_URL
         self.payload = {"jsonrpc": "2.0", "id": 0, "params": {}}
-        self.session = requests.session()
-        if settings.ENVIRONMENT in ('PROD', 'STAGE', 'DEV', 'DEMO'):
-            self.session.cert = ('/app/client-cert.crt', '/app/client-cert.key')
-            self.session.verify = '/app/ca-bundle.crt'
-        self.session.headers = {'content-type': 'application/json'}
 
     def call(self, method, args=None):
         LOG.debug(f'Calling RPCClient with method {method}.')
@@ -48,7 +43,8 @@ class RPCClient(object):
 
         try:
             with TimingMetric('engine_rpc.call', tags={'method': method}) as timer:
-                response_json = self.session.post(self.url, data=json.dumps(self.payload, cls=DecimalEncoder)).json()
+                response_json = settings.REQUESTS_SESSION.post(self.url,
+                                                               data=json.dumps(self.payload, cls=DecimalEncoder)).json()
                 LOG.info('rpc_client(%s) duration: %.3f', method, timer.elapsed)
 
             if 'error' in response_json:
