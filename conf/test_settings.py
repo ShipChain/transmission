@@ -1,4 +1,4 @@
-from . import *
+from conf import *
 
 ENVIRONMENT = 'TEST'
 INFLUXDB_DISABLED = True

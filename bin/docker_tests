@@ -9,14 +9,14 @@ cd "${0%/*}/.."
 
 echo "Running tests"
 
+find -name "*.pyc" -delete
+
 bin/dc build
 
 bin/dc up -d
 
 bin/dc exec -T runserver prospector -o pylint
 
-bin/dc exec -T runserver coverage run manage.py test --noinput tests --settings conf.test_settings
-
-bin/dc exec -T runserver coverage report
+bin/dc exec -T runserver pytest --cov=apps --cov-config=.coveragerc
 
 bin/dc down
