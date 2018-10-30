@@ -48,6 +48,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         # Create Shipment
         serializer = ShipmentCreateSerializer(data=request.data, context={'auth': request.auth})
         serializer.is_valid(raise_exception=True)
+        print('Request.ath: ', request.auth)
+        serializer.validate_wallet_ownership(request.data['shipper_wallet_id'])
 
         shipment = self.perform_create(serializer)
         async_job = shipment.asyncjob_set.all()[:1]

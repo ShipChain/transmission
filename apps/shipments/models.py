@@ -16,10 +16,8 @@ from django.core.validators import RegexValidator
 from django.db import models
 from enumfields import Enum
 from enumfields import EnumField
-from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.exceptions import ValidationError, Throttled
-from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
+from rest_framework.exceptions import ValidationError, Throttled, PermissionDenied
+from rest_framework.status import HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 
 from apps.eth.models import EthListener
@@ -111,7 +109,7 @@ class Device(models.Model):
             # Make a request to Profiles /api/v1/devices/{device_id} with the user's JWT
             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/device/{device_id}/',
                                                      headers={'Authorization': 'JWT {}'.format(jwt.decode())})
-            if response.status_code != status.HTTP_200_OK:
+            if response.status_code != HTTP_200_OK:
                 raise PermissionDenied("User does not have access to this device in ShipChain Profiles")
 
         if settings.ENVIRONMENT != 'LOCAL':

@@ -7,14 +7,17 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from enumfields.drf import EnumField
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions
+from rest_framework import status
 from rest_framework.utils import model_meta
 from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
+
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus
 
@@ -128,6 +131,19 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                 extra_args['device'] = Device.get_or_create_with_permission(auth, validated_data.pop('device_id'))
 
             return Shipment.objects.create(**validated_data, **extra_args)
+
+    def validate_wallet_ownership(self, shipper_wallet_id):
+        if settings.PROFILES_URL:
+            print('Self.context: ', self.context['auth'])
+            auth = self.context['auth']
+            print('Auth decoded: ', auth.decode())
+
+            response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
+                                                     headers={'Authorization': 'JWT {}'.format(auth.decode())})
+
+            if response.status_code != status.HTTP_200_OK:
+                raise ValidationError({'shipper_wallet_id':
+                                       'User does not have access to this wallet in ShipChain Profiles'})
 
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
