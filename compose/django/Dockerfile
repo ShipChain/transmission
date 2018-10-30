@@ -8,11 +8,11 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /build
 WORKDIR /build
 
-RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync
+RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync python3-pip
 
-COPY ./requirements.txt /build/
-COPY pip.cache /build/pip.cache
-RUN pip install -r /build/requirements.txt --cache-dir=/build/pip.cache
+RUN pip3 install --upgrade pip pipenv
+COPY ./Pipfile /build/Pipfile
+RUN pipenv install --skip-lock --system
 
 RUN mkdir /app
 WORKDIR /app
