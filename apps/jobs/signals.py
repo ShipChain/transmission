@@ -1,16 +1,18 @@
 import logging
-from redis.lock import LockError
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.core.cache import cache
 from django.db.models.signals import post_save
 from django.dispatch import Signal, receiver
+from redis.lock import LockError
 from influxdb_metrics.loader import log_metric
 
 from .models import Message, MessageType, JobState
 
 # pylint:disable=invalid-name
 job_update = Signal(providing_args=["message", "listener"])
-
+channel_layer = get_channel_layer()
 LOG = logging.getLogger('transmission')
 
 
@@ -36,3 +38,6 @@ def message_post_save(sender, instance, **kwargs):
         LOG.debug(f'Update has been received, and signal sent to listener {instance.id}.')
         job_update.send(sender=listener.listener_type.model_class(),
                         message=instance, listener=listener.listener)
+        async_to_sync(channel_layer.group_send)(listener.listener.owner_id,
+                                                {"type": "jobs.update", "async_job_id": instance.async_job.id})
+

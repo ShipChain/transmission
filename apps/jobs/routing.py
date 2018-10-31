@@ -14,12 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from channels.routing import ProtocolTypeRouter, URLRouter
-import apps.jobs.routing
+from django.conf.urls import url
 
-application = ProtocolTypeRouter({
-    # (http->django views is added by default)
-    'websocket': URLRouter(
-        apps.jobs.routing.websocket_urlpatterns
-    ),
-})
+from . import consumers
+
+websocket_urlpatterns = [
+    url(r'^ws/(?P<user_id>[^/]+)/notifications$', consumers.JobsConsumer),
+]

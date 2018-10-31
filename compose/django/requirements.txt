@@ -46,6 +46,7 @@ django-extensions==2.0.6
 django-filter==1.1.0
 django-gm2m==0.6.1
 -e git://github.com/lwbco/django-influxdb-tagged-metrics.git@add895558ed6ab59c621b19beae026f8933d4848#egg=django_influxdb_metrics
+django-mock-queries==2.1.1
 django-redis==4.9.0
 djangorestframework==3.8.2
 djangorestframework-gis==0.13
@@ -91,6 +92,7 @@ Markdown==2.6.11
 MarkupSafe==1.0
 mccabe==0.6.1
 mock==2.0.0
+model-mommy==1.6.0
 more-itertools==4.3.0
 -e git://github.com/ShipChain/moto.git@e7f9d7c6bfb9098e66785d810af726d740e0632d#egg=moto
 msgpack==0.5.6
