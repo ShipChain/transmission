@@ -14,14 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from asgiref import sync
 from collections import namedtuple
-from django.conf import settings
+
+from asgiref import sync
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.conf import settings
+from jwt.exceptions import InvalidTokenError
 from rest_framework import exceptions
+from rest_framework.exceptions import APIException
 from rest_framework.permissions import BasePermission
-from rest_framework_jwt.settings import api_settings
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication, jwt_decode_handler
+from rest_framework_jwt.settings import api_settings
 
 from .utils import parse_dn
 
@@ -42,7 +45,7 @@ class AuthenticatedUser:
         return False
 
 
-def passive_credentials_authentication(payload):
+def passive_credentials_auth(payload):
     if 'sub' not in payload:
         raise exceptions.AuthenticationFailed('Invalid payload.')
 
@@ -57,7 +60,7 @@ def passive_credentials_authentication(payload):
 
 class PassiveJSONWebTokenAuthentication(JSONWebTokenAuthentication):
     def authenticate_credentials(self, payload):
-        return passive_credentials_authentication(payload)
+        return passive_credentials_auth(payload)
 
 
 class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
@@ -115,8 +118,9 @@ class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
         try:
             if self.scope['jwt']:
                 payload = await sync.sync_to_async(jwt_decode_handler)(self.scope['jwt'])
-                user = await sync.sync_to_async(passive_credentials_authentication)(payload)
-        except Exception:
+                user = await sync.sync_to_async(passive_credentials_auth)(payload)
+        except (APIException, InvalidTokenError):
+            # Can ignore JWT auth failures, scope['user'] will not be set.
             pass
 
         return user

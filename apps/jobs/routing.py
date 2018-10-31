@@ -18,6 +18,7 @@ from django.conf.urls import url
 
 from . import consumers
 
+# pylint:disable=invalid-name
 websocket_urlpatterns = [
     url(r'^ws/(?P<user_id>[^/]+)/notifications$', consumers.JobsConsumer),
 ]

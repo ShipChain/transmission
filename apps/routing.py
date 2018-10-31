@@ -17,6 +17,7 @@ limitations under the License.
 from channels.routing import ProtocolTypeRouter, URLRouter
 import apps.jobs.routing
 
+# pylint:disable=invalid-name
 application = ProtocolTypeRouter({
     # (http->django views is added by default)
     'websocket': URLRouter(

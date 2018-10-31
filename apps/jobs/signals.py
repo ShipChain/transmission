@@ -40,4 +40,3 @@ def message_post_save(sender, instance, **kwargs):
                         message=instance, listener=listener.listener)
         async_to_sync(channel_layer.group_send)(listener.listener.owner_id,
                                                 {"type": "jobs.update", "async_job_id": instance.async_job.id})
-
