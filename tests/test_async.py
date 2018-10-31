@@ -135,3 +135,5 @@ async def test_job_notification(communicator):
             assert job.joblistener_set.count() == 1
             response = await communicator.receive_json_from()
             assert response['id'] == job.id
+
+    await communicator.disconnect()
