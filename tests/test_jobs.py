@@ -56,12 +56,14 @@ class JobsAPITests(APITestCase):
             'email': 'user1@shipchain.io',
         })
 
+        self.create_shipment()
+
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
     def create_message(self):
         if not self.async_jobs:
-            self.create_async_jobs()
+            self.create_async_jobs(self.shipments[0])
 
         self.messages = []
 
@@ -71,7 +73,7 @@ class JobsAPITests(APITestCase):
         self.messages.append(Message.objects.create(type=MessageType.ERROR,
                                                     async_job=self.async_jobs[0].id))
 
-    def create_async_jobs(self):
+    def create_async_jobs(self, shipment):
         self.async_jobs = []
 
         self.async_jobs.append(AsyncJob.objects.create(state=JobState.PENDING,
@@ -89,54 +91,60 @@ class JobsAPITests(APITestCase):
         self.async_jobs.append(AsyncJob.objects.create(state=JobState.COMPLETE,
                                                        parameters=RPC_PARAMS,
                                                        wallet_lock_token='wallet_lock_token'))
+        for job in self.async_jobs:
+            job.joblistener_set.create(listener=shipment)
 
     def create_shipment(self):
-        self.shipments = []
-        self.load_shipments = []
+        from apps.rpc_client import requests
+        from tests.utils import mocked_rpc_response
 
-        self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
-                                                      owner_id=self.user_1.id,
-                                                      carrier_wallet_id=CARRIER_WALLET_ID,
-                                                      shipper_wallet_id=SHIPPER_WALLET_ID,
-                                                      storage_credentials_id=STORAGE_CRED_ID))
+        mock_shipment_rpc = ShipmentRPCClient
 
-        self.load_shipments.append(self.shipments[0].load_data)
+        mock_shipment_rpc.create_vault = mock.Mock(return_value=VAULT_ID)
 
-    def test_jobs_empty(self):
-        """
-        Test listing jobs requires authentication
-        """
-        url = reverse('job-list', kwargs={'version': 'v1'})
+        with mock.patch.object(requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "vault_id": VAULT_ID
+            })
+            mock_method.return_value = mocked_rpc_response({
+                "success": True,
+                "vault_signed": {'hash': "TEST_VAULT_SIGNATURE"}
+            })
 
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.shipments = []
+            self.load_shipments = []
 
-        response_data = response.json()
+            self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
+                                                          owner_id=self.user_1.id,
+                                                          carrier_wallet_id=CARRIER_WALLET_ID,
+                                                          shipper_wallet_id=SHIPPER_WALLET_ID,
+                                                          storage_credentials_id=STORAGE_CRED_ID))
 
-        # No devices created should return empty array
-        self.assertEqual(len(response_data['data']), 0)
+            self.load_shipments.append(self.shipments[0].load_data)
 
     def test_jobs_populated(self):
         """
         Test listing jobs responds with correct amount
         """
-        self.create_async_jobs()
+        self.create_async_jobs(self.shipments[0])
         url = reverse('job-list', kwargs={'version': 'v1'})
 
+        self.set_user(self.user_1)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         response_data = response.json()['data']
 
-        self.assertEqual(len(response_data), 4)
+        self.assertEqual(len(response_data), len(self.async_jobs) + len(self.shipments))
 
     def test_jobs_detail(self):
         """
         Test calling a specific job only returns one object
         """
-        self.create_async_jobs()
+        self.create_async_jobs(self.shipments[0])
         url = reverse('job-detail', kwargs={'version': 'v1', 'pk': self.async_jobs[0].id})
 
+        self.set_user(self.user_1)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -150,7 +158,7 @@ class JobsAPITests(APITestCase):
         """
         Test calling a specific job only returns one object
         """
-        self.create_async_jobs()
+        self.create_async_jobs(self.shipments[0])
         url = reverse('job-message', kwargs={'version': 'v1', 'pk': self.async_jobs[1].id})
 
         error_message = {"type": "ERROR", "body": {"exception": "Test Exception"}}
@@ -166,30 +174,12 @@ class JobsAPITests(APITestCase):
         """
         Test calling a specific job only returns one object
         """
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
-        self.create_async_jobs()
-
-        mock_shipment_rpc = ShipmentRPCClient
-
-        mock_shipment_rpc.create_vault = mock.Mock(return_value=VAULT_ID)
-
         success_message = {"type": "ETH_TRANSACTION", "body": TRANSACTION_BODY}
 
-        with mock.patch.object(requests.Session, 'post') as mock_method:
-            mock_method.return_value = mocked_rpc_response({
-                "vault_id": VAULT_ID
-            })
-            mock_method.return_value = mocked_rpc_response({
-                "success": True,
-                "vault_signed": {'hash': "TEST_VAULT_SIGNATURE"}
-            })
-            self.create_shipment()
+        async_job = self.shipments[0].asyncjob_set.all()[:1].get()
+        url = reverse('job-message', kwargs={'version': 'v1', 'pk': async_job.id})
 
-            async_job = self.shipments[0].asyncjob_set.all()[:1].get()
-            url = reverse('job-message', kwargs={'version': 'v1', 'pk': async_job.id})
-
-            response = self.client.post(url, json.dumps(success_message), content_type="application/json", X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
-            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-            async_job = AsyncJob.objects.get(pk=async_job.id)
-            self.assertEqual(async_job.state, JobState.COMPLETE)
+        response = self.client.post(url, json.dumps(success_message), content_type="application/json", X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        async_job = AsyncJob.objects.get(pk=async_job.id)
+        self.assertEqual(async_job.state, JobState.COMPLETE)
