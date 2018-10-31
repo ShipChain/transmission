@@ -15,10 +15,17 @@ limitations under the License.
 """
 
 from channels.db import database_sync_to_async
+from enumfields import Enum
 from rest_framework.renderers import JSONRenderer
+
 from apps.authentication import AsyncJsonAuthConsumer
 from .models import AsyncJob
 from .serializers import AsyncJobSerializer
+
+
+class EventTypes(Enum):
+    error = 0
+    asyncjob_update = 1
 
 
 class JobsConsumer(AsyncJsonAuthConsumer):
@@ -28,11 +35,11 @@ class JobsConsumer(AsyncJsonAuthConsumer):
 
     def render_async_job(self, job_id):
         job = AsyncJob.objects.get(id=job_id)
-        return JSONRenderer().render(AsyncJobSerializer(job).data).decode()
+        return JSONRenderer().render({'event': str(EventTypes.asyncjob_update),
+                                      'data': AsyncJobSerializer(job).data}).decode()
 
     async def receive_json(self, content, **kwargs):
-        user_id = self.scope["url_route"]["kwargs"]["user_id"]
         await self.send_json({
-            "user_id": user_id,
-            "error": "This websocket endpoint is read-only",
+            "event": str(EventTypes.error),
+            "data": "This websocket endpoint is read-only",
         })

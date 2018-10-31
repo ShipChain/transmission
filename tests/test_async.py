@@ -25,6 +25,7 @@ from django_mock_queries.mocks import mocked_relations
 from mock import patch
 
 from apps.jobs.models import AsyncJob, JobListener, MessageType
+from apps.jobs.consumers import EventTypes
 from apps.routing import application
 
 USER_ID = '00000000-0000-0000-0000-000000000000'
@@ -52,7 +53,7 @@ async def communicator():
     connected, subprotocol = await communicator.connect()
     assert connected
     assert subprotocol == "base64.authentication.jwt"
-    assert communicator.receive_nothing()
+    assert await communicator.receive_nothing()
     return communicator
 
 
@@ -101,7 +102,9 @@ async def test_jwt_refresh():
     communicator = await get_communicator(my_jwt)
     await communicator.send_json_to({"event": "refresh_jwt", "data": my_jwt})
     await communicator.send_json_to({"hello": "world"})
-    await communicator.receive_from()
+    response = await communicator.receive_json_from()
+    assert response['event'] == str(EventTypes.error)
+    assert response['data'] == "This websocket endpoint is read-only"
 
     await communicator.disconnect()
 
@@ -134,6 +137,7 @@ async def test_job_notification(communicator):
             await sync_to_async(job.message_set.create)(type=MessageType.ETH_TRANSACTION, body=json.dumps({'foo': 'bar'}))
             assert job.joblistener_set.count() == 1
             response = await communicator.receive_json_from()
-            assert response['id'] == job.id
+            assert response['event'] == str(EventTypes.asyncjob_update)
+            assert response['data']['id'] == job.id
 
     await communicator.disconnect()
