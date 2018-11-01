@@ -75,6 +75,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         log_metric('transmission.info', tags={'method': 'shipments.tracking', 'module': __name__})
         shipment = Shipment.objects.get(pk=pk)
 
+        # TODO: re-implement device/shipment authorization for tracking data
+
         tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
 
         if 'as_line' in request.query_params:
@@ -105,12 +107,12 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         from .tasks import tracking_data_update
         tracking_data_update.delay(shipment.id, payload)
 
-        # Cache data to db
+        # Cache tracking data to db
         tracking_model_serializer = TrackingDataToDbSerializer(data=self.data_to_db(payload),
                                                                context={'shipment': shipment})
 
         tracking_model_serializer.is_valid()
-        LOG.debug(f'Added tracking dat for Shipment: {shipment.id}')
+        LOG.debug(f'Added tracking data for Shipment: {shipment.id}')
         tracking_model_serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)

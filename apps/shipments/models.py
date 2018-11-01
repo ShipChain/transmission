@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 import pytz
+from dateutil.parser import parse
 
 import geocoder
 from geocoder.keys import mapbox_access_token
@@ -18,6 +19,11 @@ from enumfields import Enum
 from enumfields import EnumField
 from rest_framework.exceptions import ValidationError, Throttled, PermissionDenied
 from rest_framework.status import HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied, APIException
+from rest_framework.exceptions import ValidationError, Throttled
+from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
+from geojson import Feature, LineString, Point as Geo_Point
 from influxdb_metrics.loader import log_metric
 
 from apps.eth.fields import AddressField, HashField
@@ -403,3 +409,76 @@ class TrackingData(models.Model):
 
     def set_geometry(self):
         self.geometry = Point(self.latitude, self.longitude)
+
+    @property
+    def datetime_timestamp(self):
+        try:
+            return parse(self.timestamp).replace(tzinfo=None)
+        except Exception as exception:
+            LOG.warning(f'Error Encountered while processing tracking data timestamp: \
+            {self.id}. Error message: {exception}')
+
+            raise APIException(detail="Unable to parse tracking data timestamp to datetime object")
+
+    @property
+    def timestamp_str(self):
+        return self.datetime_timestamp.isoformat()
+
+    @property
+    def has_gps(self):
+        return True if self.source == 'gps' else False
+
+    @property
+    def as_point(self):
+        LOG.debug(f'Device tracking as_point.')
+        log_metric('transmission.info', tags={'method': 'as_point', 'module': __name__})
+
+        try:
+            return Geo_Point((self.longitude, self.latitude))
+        except Exception as exception:
+            LOG.error(f'Device tracking as_point exception {exception}.')
+            log_metric('transmission.error', tags={'method': 'as_point_exception',
+                                                   'module': __name__, 'code': 'as_point'})
+
+            raise APIException(detail="Unable to build GeoJSON Point from tracking data")
+
+    @property
+    def as_point_feature(self):
+        LOG.debug(f'Device tracking as_point.')
+        log_metric('transmission.info', tags={'method': 'as_point_feature', 'module': __name__})
+
+        try:
+            return Feature(geometry=self.as_point, properties={
+                "time": self.timestamp_str,
+                "uncertainty": self.uncertainty,
+                "has_gps": self.has_gps,
+                "source": self.source,
+            })
+        except Exception as exception:
+            LOG.error(f'Device tracking as_point_feature exception {exception}.')
+            log_metric('transmission.error', tags={'method': 'as_point_feature_exception',
+                                                   'module': __name__, 'code': 'as_point_feature'})
+
+            raise APIException(detail="Unable to build GeoJSON Point Feature from tracking data")
+
+    @staticmethod
+    def get_linestring_list(tracking_points):
+        linestring = LineString([(point.longitude, point.latitude) for point in tracking_points])
+        linestring_timestamps = [point.timestamp_str for point in tracking_points]
+
+        return linestring, linestring_timestamps
+
+    @staticmethod
+    def get_linestring_feature(tracking_points):
+        try:
+            LOG.debug(f'Device tracking get_linestring_list with tracking points {tracking_points}.')
+            log_metric('transmission.info', tags={'method': 'get_linestring_list', 'module': __name__})
+
+            linestring, linestring_timestamps = TrackingData.get_linestring_list(tracking_points)
+            return Feature(geometry=linestring, properties={"linestringTimestamps": linestring_timestamps})
+
+        except Exception as exception:
+            LOG.error(f'Device tracking get_linestring_feature exception {exception}.')
+            log_metric('transmission.error', tags={'method': 'get_linestring_feature', 'module': __name__})
+
+            raise APIException(detail="Unable to build GeoJSON LineString Feature from tracking data")
