@@ -460,7 +460,7 @@ components:
       asLine:
         name: as_line
         in: query
-        description: Returns tracking data as points
+        description: Returns tracking data as line
         schema:
           type: string
           example: 'as_line'
@@ -2522,7 +2522,7 @@ components:
         properties:
           data:
             type: object
-            description: A GeoJSON FeatureCollection containing Lime data.
+            description: A GeoJSON FeatureCollection containing Line data.
             properties:
               type:
                 type: string
