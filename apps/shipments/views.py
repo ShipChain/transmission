@@ -118,7 +118,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                                                                context={'shipment': shipment})
 
         tracking_model_serializer.is_valid()
-        LOG.debug(f'Added tracking dat for Shipment: {shipment.id}')
+        LOG.debug(f'Added tracking data for Shipment: {shipment.id}')
         tracking_model_serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
