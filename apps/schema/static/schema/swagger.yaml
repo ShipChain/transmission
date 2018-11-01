@@ -761,7 +761,7 @@ components:
           properties:
             has_gps:
               title: has_gps
-              description: Whether or not it has gps
+              description: Was the location obtained via GPS
               type: boolean
               example: True
 
