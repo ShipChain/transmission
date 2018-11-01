@@ -10,16 +10,12 @@ info:
     the Ethereum smart contract platform. Transmission facilitates the reliable submission and retrying of asynchronous
     transactions sent to the ShipChain Ethereum smart contracts. Transmission is also responsible for the implementation
     of the Shipment-related business logic required for the ShipChain Portal and AXLE Gateway projects.
-
     # Data Format
     All response payloads will be formatted using the [JSON API](http://jsonapi.org) specification.
-
     Requests can be made to Transmission using `application/json`, `application/vnd.api+json`, and `multipart/form-data`,
     formatted as documented below.
-
     # Errors
     The API uses standard HTTP status codes and the [JSON API](http://jsonapi.org/examples/#error-objects) specification to indicate the success or failure of the API call. The body of the response will be JSON in the following format:
-
     ```
     {
       "errors": [
@@ -31,7 +27,6 @@ info:
       ]
     }
     ```
-
   x-logo:
     url: '/static/schema/shipchain-logo.png'
 
@@ -175,6 +170,58 @@ paths:
             schema:
               allOf:
               - $ref: '#/components/requestBodies/shipment/createAttributes'
+
+  /api/v1/shipments/{shipment_id}/tracking/:
+    post:
+      summary: Add tracking data
+      description: >
+        Associate GPS tracking data with a `Shipment`.
+      parameters:
+      - $ref: '#/components/parameters/shipment/path'
+      tags:
+      - Shipments
+      responses:
+        '204':
+          description: *response_204
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/shipment/tracking/payload'
+
+    get:
+      summary: Get tracking data
+      description: >
+        Retrieve GPS tracking data associated with a `Shipment` as points or line or both (content returned in 'data' attribute conforms to the [GeoJSON](https://tools.ietf.org/html/rfc7946) spec).
+      parameters:
+      - $ref: '#/components/parameters/shipment/path'
+      - $ref: '#/components/parameters/shipment/asPoint'
+      - $ref: '#/components/parameters/shipment/asLine'
+      tags:
+      - Shipments
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/tracking/pointResponse'
+                - $ref: '#/components/schemas/tracking/lineResponse'
+                - $ref: '#/components/schemas/tracking/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
 
   /api/v1/jobs/:
     get:
@@ -399,6 +446,20 @@ components:
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
+      asPoint:
+        name: as_point
+        in: query
+        description: Returns tracking data as points
+        schema:
+          type: string
+
+      asLine:
+        name: as_line
+        in: query
+        description: Returns tracking data as line
+        schema:
+          type: string
+
     location:
       path:
         required: true
@@ -596,7 +657,6 @@ components:
                   \"removed\": false, \"topics\": [\"0x485397dbe4d658daac8124e3080f66a255b9207fa36d7e757ba4d52fe6c21f54\"],
                   \"transactionHash\": \"0xf53ffac288474d65dc7ad79ea484ab742cc452ccc119053a8274b29f4bdfc888\",
                   \"transactionIndex\": 9, \"id\": \"log_43b39da9\"}]
-
           logsBloom:
             properties:
               logsBloom:
@@ -610,7 +670,6 @@ components:
                   000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
                   000000000000000000400000000000000020000000000000000000000000000000000000000000000000000000000000000000
                   0000
-
           status:
             properties:
               status:
@@ -695,8 +754,141 @@ components:
                   c364d772e1135700953e69a0ae7a5104f282000000000000000000000000000000000000000000000000000000000000001800
                   000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
                   000000000000000000000001
-
       # General Shipment Parameters
+
+      tracking:
+        hasGPS:
+          properties:
+            has_gps:
+              title: has_gps
+              description: Was the location obtained via GPS
+              type: boolean
+              example: True
+
+        version:
+          properties:
+            version:
+              title: version
+              description: Version of the tracking data format
+              type: string
+              example: '1.0.0'
+
+        time:
+          properties:
+            time:
+              title: time
+              description: Timestamp of the GPS fix (ISO 8601 format)
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+        latitude:
+          properties:
+            latitude:
+              title: latitude
+              description: Latitude at the device's position
+              type: number
+              format: double
+              example: -81.048253
+
+        longitude:
+          properties:
+            longitude:
+              title: longitude
+              description: Longitude at the device's position
+              type: number
+              format: double
+              example: 34.628643
+
+        altitude:
+          properties:
+            altitude:
+              title: altitude
+              description: Altitude at the device's position
+              type: number
+              example: 924
+
+        uncertainty:
+          properties:
+            uncertainty:
+              title: uncertainty
+              description: Estimated accuracy of the GPS fix in meters
+              type: number
+              example: 95
+
+        speed:
+          properties:
+            speed:
+              title: speed
+              description: The device's current velocity in m/s
+              type: number
+              example: 34
+
+        source:
+          properties:
+            source:
+              title: source
+              description: Geolocation method
+              type: string
+              example: gps
+
+        pointCoordinates:
+          title: coordinates
+          description: Tuple of the Latitude and Longitude of the device location
+          example: [-80.123635, 33.018413333333335]
+          type: array
+          items:
+            type: number
+
+        lineCoordinates:
+          title: coordinates
+          description: Array of tuples of the Latitude and Longitude of the device location
+          example: [[-80.123635, 33.018413333333335], [-81.123635, 34.018413333333335]]
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+
+        linestringTimestamps:
+          properties:
+            linestringTimestamps:
+              title: linestringTimestamps
+              description: Array of timestamps associated with tracking points
+              example: ['2018-07-27T21:07:14', '2018-07-28T21:10:14']
+              type: array
+              items:
+                type: string
+
+        point:
+          type: object
+          properties:
+            geometry:
+              type: object
+              description: The GeoJSON geometry associated with this feature
+              properties:
+                type:
+                  title: type
+                  description: Type of geometry object
+                  example: Point
+                  type: string
+                coordinates:
+                  $ref: '#/components/schemas/dataTypes/tracking/pointCoordinates'
+
+        line:
+          type: object
+          properties:
+            geometry:
+              type: object
+              description: The GeoJSON geometry associated with this feature
+              properties:
+                type:
+                  title: type
+                  description: Type of geometry object
+                  example: LineString
+                  type: string
+                coordinates:
+                  $ref: '#/components/schemas/dataTypes/tracking/lineCoordinates'
+
       shipment:
         storageCredentialsId:
           properties:
@@ -711,6 +903,13 @@ components:
               <<: *uuid
               title: vault_id
               description: Vault UUID associated with the shipment
+
+        deviceId:
+          properties:
+            device_id:
+              <<: *uuid
+              title: device_id
+              description: Device UUID associated with the shipment
 
         transactions:
           properties:
@@ -1178,6 +1377,73 @@ components:
                   <<: *uuid
                   title: id
                   description: LoadShipment UUID associated with the shipment
+
+        tracking:
+          version:
+            properties:
+              version:
+                title: version
+                description: Version of the tracking data format
+                type: string
+                example: '1.0.0'
+
+          timestamp:
+            properties:
+              timestamp:
+                title: timestamp
+                description: Timestamp of the GPS fix (ISO 8601 format)
+                type: string
+                example: '2018-08-22T17:44:39.874352'
+
+          latitude:
+            properties:
+              latitude:
+                title: latitude
+                description: Latitude at the device's position
+                type: number
+                format: double
+                example: -81.048253
+
+          longitude:
+            properties:
+              longitude:
+                title: longitude
+                description: Longitude at the device's position
+                type: number
+                format: double
+                example: 34.628643
+
+          altitude:
+            properties:
+              altitude:
+                title: altitude
+                description: Altitude at the device's position
+                type: number
+                example: 924
+
+          uncertainty:
+            properties:
+              uncertainty:
+                title: uncertainty
+                description: Estimated accuracy of the GPS fix in meters
+                type: number
+                example: 95
+
+          speed:
+            properties:
+              speed:
+                title: speed
+                description: The device's current velocity in m/s
+                type: number
+                example: 34
+
+          source:
+            properties:
+              source:
+                title: source
+                description: Geolocation method
+                type: string
+                example: gps
 
       # General Job Parameters
       job:
@@ -2191,6 +2457,126 @@ components:
             included:
               $ref: '#/components/schemas/shipment/included'
 
+    tracking:
+      collectionResource:
+        properties:
+          type:
+            description: Type of GeoJSON object
+            example: FeatureCollection
+
+      singularResource:
+        properties:
+          type:
+            description: Type of GeoJSON object
+            example: Feature
+
+      pointProperties:
+        type: object
+        properties:
+          properties:
+            type: object
+            description: Metadata associated with this `Point` feature
+            allOf:
+            - $ref: '#/components/schemas/dataTypes/tracking/time'
+            - $ref: '#/components/schemas/dataTypes/tracking/uncertainty'
+            - $ref: '#/components/schemas/dataTypes/tracking/hasGPS'
+            - $ref: '#/components/schemas/dataTypes/tracking/source'
+
+      lineProperties:
+        type: object
+        properties:
+          properties:
+            type: object
+            description: Metadata associated with this `Line` feature
+            allOf:
+            - $ref: '#/components/schemas/dataTypes/tracking/linestringTimestamps'
+
+      getPointResource:
+        type: object
+        properties:
+          data:
+            type: object
+            description: A GeoJSON FeatureCollection containing Point data.
+            properties:
+              type:
+                type: string
+                description: Type of GeoJSON object
+                example: FeatureCollection
+              features:
+                type: array
+                description: GeoJSON `Feature`s in the `FeatureCollection`
+                items:
+                 $ref: '#/components/schemas/tracking/pointFeature'
+
+      pointResponse:
+        title: Point Collection
+        description: Response data with parameter as_point
+        allOf:
+        - $ref: '#/components/schemas/tracking/getPointResource'
+
+      getLineResource:
+        type: object
+        properties:
+          data:
+            type: object
+            description: A GeoJSON FeatureCollection containing Line data.
+            properties:
+              type:
+                type: string
+                description: Type of GeoJSON object
+                example: FeatureCollection
+              features:
+                type: array
+                description: GeoJSON `Feature`s in the `FeatureCollection`
+                items:
+                  $ref: '#/components/schemas/tracking/lineFeature'
+
+      lineResponse:
+        title: Line Collection
+        description: Response data with parameter as_line
+        allOf:
+        - $ref: '#/components/schemas/tracking/getLineResource'
+
+      pointFeature:
+        allOf:
+        - $ref: '#/components/schemas/tracking/singularResource'
+        - $ref: '#/components/schemas/dataTypes/tracking/point'
+        - $ref: '#/components/schemas/tracking/pointProperties'
+
+      lineFeature:
+        allOf:
+        - $ref: '#/components/schemas/tracking/singularResource'
+        - $ref: '#/components/schemas/dataTypes/tracking/line'
+        - $ref: '#/components/schemas/tracking/lineProperties'
+
+      getFeatures:
+        type: object
+        description: A GeoJSON FeatureCollection containing Point and Line data.
+        properties:
+          type:
+            type: string
+            description: Type of GeoJSON object
+            example: FeatureCollection
+          features:
+            type: array
+            description: GeoJSON `Feature`s in the `FeatureCollection`
+            items:
+            - $ref: '#/components/schemas/tracking/pointFeature'
+            - $ref: '#/components/schemas/tracking/lineFeature'
+
+      getResource:
+        allOf:
+        - type: object
+        - properties:
+            data:
+             $ref: '#/components/schemas/tracking/getFeatures'
+
+      getResponse:
+        title: Point and Line Collection
+        description: Normal response data
+        allOf:
+        - $ref: '#/components/schemas/tracking/getResource'
+
     location:
       resource:
         properties:
@@ -2527,6 +2913,51 @@ components:
         - properties:
             data:
               $ref: '#/components/requestBodies/shipment/createResource'
+
+      tracking:
+        createResource:
+         allOf:
+         - properties:
+            attributes:
+              $ref: '#/components/requestBodies/shipment/tracking/createAttributes'
+
+
+        createRequest:
+          allOf:
+          - properties:
+              data:
+                $ref: '#/components/requestBodies/shipment/tracking/createResource'
+
+        position:
+          properties:
+            position:
+              description: GPS data related to a device's position
+              allOf:
+              - $ref: '#/components/schemas/dataTypes/shipment/tracking/latitude'
+              - $ref: '#/components/schemas/dataTypes/shipment/tracking/longitude'
+              - $ref: '#/components/schemas/dataTypes/shipment/tracking/altitude'
+              - $ref: '#/components/schemas/dataTypes/shipment/tracking/source'
+              - $ref: '#/components/schemas/dataTypes/shipment/tracking/uncertainty'
+              - $ref: '#/components/schemas/dataTypes/shipment/tracking/speed'
+
+        payload:
+          properties:
+            payload:
+              description: Tracking data payload
+              allOf:
+                - $ref: '#/components/requestBodies/shipment/tracking/createAttributes'
+
+        createAttributes:
+          required:
+          - position
+          - version
+          - timestamp
+          - device_id
+          allOf:
+          - $ref: '#/components/requestBodies/shipment/tracking/position'
+          - $ref: '#/components/schemas/dataTypes/shipment/tracking/version'
+          - $ref: '#/components/schemas/dataTypes/shipment/tracking/timestamp'
+          - $ref: '#/components/schemas/dataTypes/shipment/deviceId'
 
     location:
       createResource:
