@@ -140,6 +140,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             if response.status_code != status.HTTP_200_OK:
                 raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
 
+        return shipper_wallet_id
+
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36)
