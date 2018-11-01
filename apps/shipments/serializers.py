@@ -7,7 +7,6 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from enumfields.drf import EnumField
 from enumfields.drf.serializers import EnumSupportSerializerMixin
@@ -132,18 +131,14 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
             return Shipment.objects.create(**validated_data, **extra_args)
 
-    def validate_wallet_ownership(self, shipper_wallet_id):
+    def validate_shipper_wallet_id(self, shipper_wallet_id):
         if settings.PROFILES_URL:
-            print('Self.context: ', self.context['auth'])
             auth = self.context['auth']
-            print('Auth decoded: ', auth.decode())
-
             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
                                                      headers={'Authorization': 'JWT {}'.format(auth.decode())})
 
             if response.status_code != status.HTTP_200_OK:
-                raise ValidationError({'shipper_wallet_id':
-                                       'User does not have access to this wallet in ShipChain Profiles'})
+                raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
 
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
