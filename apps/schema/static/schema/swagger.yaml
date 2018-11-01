@@ -195,14 +195,11 @@ paths:
             schema:
               allOf:
               - $ref: '#/components/requestBodies/shipment/tracking/payload'
-          multipart/form-data:
-            schema:
-              allOf:
-              - $ref: '#/components/requestBodies/shipment/tracking/payload'
+
     get:
       summary: Get tracking data
       description: >
-        Associate GPS tracking data with a `Shipment`.
+        Retrieve GPS tracking data associated with a `Shipment` as points or line or both (content returned in 'data' attribute conforms to the [GeoJSON](https://tools.ietf.org/html/rfc7946) spec).
       parameters:
       - $ref: '#/components/parameters/shipment/path'
       - $ref: '#/components/parameters/shipment/asPoint'
@@ -455,7 +452,6 @@ components:
         description: Returns tracking data as points
         schema:
           type: string
-          example: 'as_point'
 
       asLine:
         name: as_line
@@ -463,7 +459,6 @@ components:
         description: Returns tracking data as line
         schema:
           type: string
-          example: 'as_line'
 
     location:
       path:
@@ -766,7 +761,7 @@ components:
           properties:
             has_gps:
               title: has_gps
-              description: Estimated accuracy of the GPS fix in meters
+              description: Whether or not it has gps
               type: boolean
               example: True
 
@@ -1396,7 +1391,7 @@ components:
             properties:
               timestamp:
                 title: timestamp
-                description: Timestamp of the GPS fix
+                description: Timestamp of the GPS fix (ISO 8601 format)
                 type: string
                 example: '2018-08-22T17:44:39.874352'
 
@@ -2466,11 +2461,13 @@ components:
       collectionResource:
         properties:
           type:
+            description: Type of GeoJSON object
             example: FeatureCollection
 
       singularResource:
         properties:
           type:
+            description: Type of GeoJSON object
             example: Feature
 
       pointProperties:
@@ -2496,10 +2493,10 @@ components:
 
       getPointResource:
         type: object
-        description: A GeoJSON FeatureCollection containing Point data.
         properties:
           data:
             type: object
+            description: A GeoJSON FeatureCollection containing Point data.
             properties:
               type:
                 type: string
@@ -2934,6 +2931,7 @@ components:
         position:
           properties:
             position:
+              description: GPS data related to a device's position
               allOf:
               - $ref: '#/components/schemas/dataTypes/shipment/tracking/latitude'
               - $ref: '#/components/schemas/dataTypes/shipment/tracking/longitude'
@@ -2945,6 +2943,7 @@ components:
         payload:
           properties:
             payload:
+              description: Tracking data payload
               allOf:
                 - $ref: '#/components/requestBodies/shipment/tracking/createAttributes'
 
@@ -2953,7 +2952,7 @@ components:
           - position
           - version
           - timestamp
-          - deviceId
+          - device_id
           allOf:
           - $ref: '#/components/requestBodies/shipment/tracking/position'
           - $ref: '#/components/schemas/dataTypes/shipment/tracking/version'
