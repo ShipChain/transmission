@@ -3,11 +3,12 @@ from unittest import mock
 
 import requests
 import boto3
+import jwt
 import json
 from geocoder.keys import mapbox_access_token
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase, APIClient, force_authenticate
 from jose import jws
 from moto import mock_iot
 import httpretty
@@ -15,6 +16,7 @@ import json
 import os
 import re
 from unittest.mock import patch
+
 
 from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus, Device
 from apps.shipments.rpc import ShipmentRPCClient
@@ -36,6 +38,23 @@ LOCATION_NUMBER = "555-555-5555"
 
 mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
 google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
+
+
+private_key = b"""-----BEGIN RSA PRIVATE KEY-----
+MIICXgIBAAKBgQDtAMh97vXP8KnZUEUrnUT8nz0+8oLrOfBB19+eLIDfNvACNA2D
+swOK9gCY+/QcOCR+c5yGTe8lCNwlwW42ingABeM5PigYZ1AfNHVPatcLzO9u3dZG
+WMsAB6Un9xmaJfIuKv85jX7Wu9Pkq7EaZbr8pbbMNcYiX1amCrXggZDWOQIDAQAB
+AoGBAINMQsZZov5+8mm86YUfDH/zbAe6bEMKhwrDIFRNjVub4N0nnzEN9HGAlZYr
+RvJ3O+h9/gH9nPXkcanM/lTi41T27Vn2TZ9Fp71BwOVgnaisjwtY01AIASTl8gWA
+rwleIhGY3Kbw6D7V5lqyr8UWsi20SBc9+EILF+ugpUZoXbWtAkEA/GikOeojxPJa
+L3MPD+Bc6pz570VpYYtkDUHH9gJgVSb/xohNWoA4zT71rxjD0yjA06mhgxWqg3PP
+WAZ9276gkwJBAPBgB2SaibmtP7efiWZfMNUGo2J6t47g7B5wv2C/YmSO2twlaik6
+SL2wXVzLnU/Phmjb+bbjYE5hVASlenRSiYMCQGl1dxhTgXpqH9AvbJ2finLj/3E/
+ORZuXPFFCLz6pTEuyDM1A8zKQfFPWus7l6YEIvzMpRTV2pZtrrYCkFddwE0CQQCi
+IHL8FQuts7/VLwKyjKPYGukaZCDoeqZnha5fJ9bKclwFviqTch9b6dee3irViOhk
+U3JjO4tacmUD2UT1rjHXAkEAjpPF0Zdv4Dbf52MfeowoLw/KyreQfRVCIeSG9A4H
+3xlhpEJUcgzUV1E2BJRitz2w6ItAFm9Lhx7EPO4ZPHPylQ==
+-----END RSA PRIVATE KEY-----"""
 
 
 class ShipmentAPITests(APITestCase):
@@ -199,6 +218,7 @@ class ShipmentAPITests(APITestCase):
             response = self.client.post(url, {'payload': signed_data}, format='json')
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    @httpretty.activate
     def test_create(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})
 
@@ -253,11 +273,19 @@ class ShipmentAPITests(APITestCase):
         })
 
         # Authenticated request should succeed
-        self.set_user(self.user_1)
+        token = jwt.encode({'email': 'a@domain.com', 'username': 'a@domain.com', 'aud': '11111'},
+                           private_key, algorithm='RS256',
+                           headers={'kid': '230498151c214b788dd97f22b85410a5', 'aud': '11111'})
+        self.set_user(self.user_1, token)
 
         post_data = replace_variables_in_string(post_data, parameters)
 
+        httpretty.register_uri(httpretty.GET,
+                               f"http://INTENTIONALLY_DISCONNECTED:9999/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
+        force_authenticate(response, user=self.user_1, token=token)
 
         response_data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -272,7 +300,7 @@ class ShipmentAPITests(APITestCase):
         url = reverse('shipment-list', kwargs={'version': 'v1'})
 
         # Unauthenticated request should fail with 403
-        response = self.client.patch(url, '{}', content_type='application/vnd.api+json')
+        response = self.client.post(url, '{}', content_type='application/vnd.api+json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         parameters = {
@@ -338,11 +366,22 @@ class ShipmentAPITests(APITestCase):
 
         httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
         httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
+        httpretty.register_uri(httpretty.GET,
+                               f"http://INTENTIONALLY_DISCONNECTED:9999/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
 
         # Authenticated request should succeed using mapbox (if exists)
-        self.set_user(self.user_1)
+        token = jwt.encode({'email': 'a@domain.com', 'username': 'a@domain.com', 'aud': '11111'},
+                           private_key, algorithm='RS256',
+                           headers={'kid': '230498151c214b788dd97f22b85410a5', 'aud': '11111'})
+        token2 = jwt.encode({'email': 'a@domain.com', 'username': 'a@domain.com', 'aud': '11111'},
+                           private_key, algorithm='RS256',
+                           headers={'kid': '230498151c214b788dd97f22b85410a5', 'aud': '11111'})
+        self.set_user(self.user_1, token)
 
         response = self.client.post(url, one_location, content_type=content_type)
+
+        force_authenticate(response, user=self.user_1, token=token)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -362,9 +401,8 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.geometry.coords, (12.0, 23.0))
 
         # Authenticated request should succeed using mapbox in creating two locations (if exists)
-        self.set_user(self.user_1)
-
         response = self.client.post(url, two_locations, content_type=content_type)
+        force_authenticate(response, token=token)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -392,9 +430,9 @@ class ShipmentAPITests(APITestCase):
 
         # Authenticated request should succeed using google
         mapbox_access_token = None
-        self.set_user(self.user_1)
 
         response = self.client.post(url, one_location, content_type=content_type)
+        force_authenticate(response, user=self.user_1, token=token)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -414,9 +452,8 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.geometry.coords, (12.0, 23.0))
 
         # Authenticated request should succeed using google in creating two locations
-        self.set_user(self.user_1)
-
         response = self.client.post(url, two_locations, content_type=content_type)
+        force_authenticate(response, user=self.user_1, token=token)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -889,7 +926,8 @@ class LocationAPITests(APITestCase):
 
         response_data = response.json()
 
-        # No devices created should return empty array
+        # No Locations
+        #  created should return empty array
         self.assertEqual(len(response_data['data']), 0)
 
     @httpretty.activate
