@@ -283,6 +283,9 @@ class ShipmentAPITests(APITestCase):
         httpretty.register_uri(httpretty.GET,
                                f"http://INTENTIONALLY_DISCONNECTED:9999/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(httpretty.GET,
+                               f"http://INTENTIONALLY_DISCONNECTED:9999/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
         force_authenticate(response, user=self.user_1, token=token)
@@ -368,6 +371,9 @@ class ShipmentAPITests(APITestCase):
         httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
         httpretty.register_uri(httpretty.GET,
                                f"http://INTENTIONALLY_DISCONNECTED:9999/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(httpretty.GET,
+                               f"http://INTENTIONALLY_DISCONNECTED:9999/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
 
         # Authenticated request should succeed using mapbox (if exists)
