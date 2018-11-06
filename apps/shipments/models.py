@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 import pytz
-from dateutil.parser import parse
 
 import geocoder
 from geocoder.keys import mapbox_access_token
@@ -24,7 +23,7 @@ from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, APIException
 from rest_framework.exceptions import ValidationError, Throttled
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
-from geojson import Feature, LineString, Point as Geo_Point
+# from geojson import Feature, LineString, Point as Geo_Point
 from influxdb_metrics.loader import log_metric
 
 from apps.eth.fields import AddressField, HashField
@@ -403,7 +402,6 @@ class TrackingData(models.Model):
     speed = models.IntegerField(validators=[MinValueValidator(0)])
     timestamp = models.DateTimeField()
     version = models.CharField(max_length=36)
-
 
     class Meta:
         ordering = ('created_at',)

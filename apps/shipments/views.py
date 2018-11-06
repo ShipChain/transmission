@@ -39,14 +39,6 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         return serializer.save()
 
-    def data_to_db(self, payload):
-        data = {}
-        data.update(payload['position'])
-        payload.pop('position')
-        data.update(payload)
-
-        return data
-
     def create(self, request, *args, **kwargs):
         """
         Create a Shipment object and make Async Request to Engine
