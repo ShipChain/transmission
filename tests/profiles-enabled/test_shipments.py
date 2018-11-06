@@ -2,6 +2,9 @@ from unittest import mock
 
 import boto3
 import jwt
+import json
+from geocoder.keys import mapbox_access_token
+from dateutil.parser import parse
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient, force_authenticate
@@ -163,7 +166,7 @@ class ShipmentAPITests(APITestCase):
                 'position': {
                     'latitude': 75.0587610,
                     'longitude': -35.628643,
-                    'altitude': 554,
+                    'altitude': 554.585,
                     'source': 'gps',
                     'uncertainty': 92,
                     'speed': 34
@@ -185,7 +188,7 @@ class ShipmentAPITests(APITestCase):
             self.assertTrue(data_from_db.count(), 1)
             self.assertEqual(data_from_db[0].device_id, track_dic['device_id'])
             self.assertTrue(isinstance(data_from_db[0].shipment, Shipment))
-            self.assertEqual(data_from_db[0].geometry.x, track_dic['position']['latitude'])
+            self.assertEqual(data_from_db[0].latitude, track_dic['position']['latitude'])
 
             # Get tracking data
             response = self.client.get(url)
@@ -1201,12 +1204,18 @@ class TrackingDataAPITests(APITestCase):
                                                       owner_id=self.user_1.id))
 
     def create_tracking_data(self):
+        self.create_shipment()
         self.tracking_data = []
         self.tracking_data.append(TrackingData.objects.create(latitude=-81.04825300,
                                                               longitude=34.628643,
                                                               altitude=335,
                                                               source='gps',
-                                                              timestamp="2018-09-18T14:56:23.563847+00:00"))
+                                                              speed=35,
+                                                              shipment=self.shipments[0],
+                                                              uncertainty=10,
+                                                              version='1.0.0',
+                                                              device_id='My-Custom-Device',
+                                                              timestamp=parse("2018-09-18T14:56:23.563847+00:00")))
 
     @mock_iot
     def test_set_device_id(self):
@@ -1250,10 +1259,6 @@ class TrackingDataAPITests(APITestCase):
 
             # Attache shipment to tracking data object
             self.tracking_data[0].shipment = self.shipments[0]
-
-            # Set geometry's field value on the current tracking data
-            self.tracking_data[0].set_geometry()
-            self.assertTrue(isinstance(self.tracking_data[0].geometry, Point))
 
             # Check float data type in db
             self.assertTrue(isinstance(self.tracking_data[0].latitude, float))

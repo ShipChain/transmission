@@ -39,14 +39,6 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         return serializer.save()
 
-    def data_to_db(self, payload):
-        data = {}
-        data.update(payload['position'])
-        payload.pop('position')
-        data.update(payload)
-
-        return data
-
     def create(self, request, *args, **kwargs):
         """
         Create a Shipment object and make Async Request to Engine
@@ -108,10 +100,9 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         tracking_data_update.delay(shipment.id, payload)
 
         # Cache tracking data to db
-        tracking_model_serializer = TrackingDataToDbSerializer(data=self.data_to_db(payload),
-                                                               context={'shipment': shipment})
+        tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment})
 
-        tracking_model_serializer.is_valid()
+        tracking_model_serializer.is_valid(raise_exception=True)
         LOG.debug(f'Added tracking data for Shipment: {shipment.id}')
         tracking_model_serializer.save()
 

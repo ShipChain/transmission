@@ -23,12 +23,12 @@ def build_line_string_feature(shipment, tracking_data):
     tracking_points = []
     for point in tracking_data:
         try:
-            if begin <= point.datetime_timestamp <= end:
+            if begin <= point.timestamp_no_tz <= end:
                 tracking_points.append(point)
         except APIException as err:
             LOG.warning(f'Error parsing tracking data for shipment {shipment.id}: {err}')
 
-    tracking_points.sort(key=lambda dt_point: dt_point.datetime_timestamp)
+    tracking_points.sort(key=lambda dt_point: dt_point.timestamp_no_tz)
 
     return [tracking_points[0].get_linestring_feature(tracking_points)]
 
@@ -47,12 +47,12 @@ def build_point_features(shipment, tracking_data):
     raw_points = []
     for point in tracking_data:
         try:
-            if begin <= point.datetime_timestamp <= end:
+            if begin <= point.timestamp_no_tz <= end:
                 raw_points.append(point)
         except APIException as err:
             LOG.warning(f'Error parsing tracking data for shipment {shipment.id}: {err}')
 
-    raw_points.sort(key=lambda p: p.datetime_timestamp)
+    raw_points.sort(key=lambda p: p.timestamp_no_tz)
 
     return [p.as_point_feature for p in raw_points]
 

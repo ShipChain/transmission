@@ -1,7 +1,9 @@
 from collections import OrderedDict
 
 import json
+import copy
 import boto3
+from dateutil.parser import parse
 from botocore.exceptions import ClientError
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -295,15 +297,37 @@ class TrackingDataToDbSerializer(serializers.ModelSerializer):
     """
     Serializer for tracking data to be cached in db
     """
+    def __init__(self, *args, **kwargs):
+        raw_data = copy.deepcopy(kwargs['data'])
+        data = {}
+        data.update(raw_data['position'])
+        raw_data.pop('position')
+        data.update(raw_data)
+
+        # Ensure that the timestamps is valid
+        try:
+            data['timestamp'] = parse(data['timestamp'])
+        except Exception as exception:
+            raise exceptions.ValidationError(detail=f"Unable to parse tracking data timestamp in to datetime object: \
+                                                    {exception}")
+
+        kwargs.pop('data')
+        kwargs['data'] = data
+        super().__init__(*args, **kwargs)
+
     shipment = ShipmentSerializer(read_only=True)
 
     class Meta:
         model = TrackingData
         fields = '__all__'
 
+    # def validate(self, attrs):
+    #     instance = TrackingData(**attrs)
+    #     instance.clean()
+    #     return attrs
+
     def create(self, validated_data):
         data = TrackingData.objects.create(**validated_data, shipment=self.context['shipment'])
-        data.set_geometry()
         data.save()
 
         return data

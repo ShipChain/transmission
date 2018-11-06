@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime, timedelta
 import pytz
-from dateutil.parser import parse
 
 import geocoder
 from geocoder.keys import mapbox_access_token
+import geojson
 
 import boto3
 
@@ -13,7 +13,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Point
 from django.contrib.postgres.fields import JSONField
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 from enumfields import Enum
 from enumfields import EnumField
@@ -23,7 +23,7 @@ from rest_framework import status
 from rest_framework.exceptions import PermissionDenied, APIException
 from rest_framework.exceptions import ValidationError, Throttled
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
-from geojson import Feature, LineString, Point as Geo_Point
+# from geojson import Feature, LineString, Point as Geo_Point
 from influxdb_metrics.loader import log_metric
 
 from apps.eth.fields import AddressField, HashField
@@ -392,37 +392,27 @@ class LoadShipment(models.Model):
 class TrackingData(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     created_at = models.DateTimeField(auto_now_add=True)
-    device_id = models.CharField(blank=True, null=True, max_length=36)
-    shipment = models.ForeignKey(Shipment, on_delete=models.PROTECT, null=True)
-    latitude = models.FloatField(default=None)
-    longitude = models.FloatField(default=None)
-    altitude = models.FloatField(default=None)
-    source = models.CharField(max_length=10)
-    uncertainty = models.IntegerField(blank=True, null=True)
-    speed = models.IntegerField(blank=True, null=True)
-    timestamp = models.CharField(max_length=50)
-    geometry = GeometryField(null=True)
-    version = models.CharField(max_length=10, null=True, blank=True)
+    device_id = models.CharField(max_length=36)
+    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
+    latitude = models.FloatField(max_length=36)
+    longitude = models.FloatField(max_length=36)
+    altitude = models.FloatField(max_length=36)
+    source = models.CharField(max_length=36)
+    uncertainty = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+    speed = models.IntegerField(validators=[MinValueValidator(0)])
+    timestamp = models.DateTimeField()
+    version = models.CharField(max_length=36)
 
     class Meta:
         ordering = ('created_at',)
 
-    def set_geometry(self):
-        self.geometry = Point(self.latitude, self.longitude)
-
     @property
-    def datetime_timestamp(self):
-        try:
-            return parse(self.timestamp).replace(tzinfo=None)
-        except Exception as exception:
-            LOG.warning(f'Error Encountered while processing tracking data timestamp: \
-            {self.id}. Error message: {exception}')
-
-            raise APIException(detail="Unable to parse tracking data timestamp to datetime object")
+    def timestamp_no_tz(self):
+        return self.timestamp.replace(tzinfo=None)
 
     @property
     def timestamp_str(self):
-        return self.datetime_timestamp.isoformat()
+        return self.timestamp_no_tz.isoformat()
 
     @property
     def has_gps(self):
@@ -434,7 +424,7 @@ class TrackingData(models.Model):
         log_metric('transmission.info', tags={'method': 'as_point', 'module': __name__})
 
         try:
-            return Geo_Point((self.longitude, self.latitude))
+            return geojson.Point((self.longitude, self.latitude))
         except Exception as exception:
             LOG.error(f'Device tracking as_point exception {exception}.')
             log_metric('transmission.error', tags={'method': 'as_point_exception',
@@ -448,7 +438,7 @@ class TrackingData(models.Model):
         log_metric('transmission.info', tags={'method': 'as_point_feature', 'module': __name__})
 
         try:
-            return Feature(geometry=self.as_point, properties={
+            return geojson.Feature(geometry=self.as_point, properties={
                 "time": self.timestamp_str,
                 "uncertainty": self.uncertainty,
                 "has_gps": self.has_gps,
@@ -463,7 +453,7 @@ class TrackingData(models.Model):
 
     @staticmethod
     def get_linestring_list(tracking_points):
-        linestring = LineString([(point.longitude, point.latitude) for point in tracking_points])
+        linestring = geojson.LineString([(point.longitude, point.latitude) for point in tracking_points])
         linestring_timestamps = [point.timestamp_str for point in tracking_points]
 
         return linestring, linestring_timestamps
@@ -475,7 +465,7 @@ class TrackingData(models.Model):
             log_metric('transmission.info', tags={'method': 'get_linestring_list', 'module': __name__})
 
             linestring, linestring_timestamps = TrackingData.get_linestring_list(tracking_points)
-            return Feature(geometry=linestring, properties={"linestringTimestamps": linestring_timestamps})
+            return geojson.Feature(geometry=linestring, properties={"linestringTimestamps": linestring_timestamps})
 
         except Exception as exception:
             LOG.error(f'Device tracking get_linestring_feature exception {exception}.')
