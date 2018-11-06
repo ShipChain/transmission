@@ -167,7 +167,7 @@ class ShipmentAPITests(APITestCase):
                 'position': {
                     'latitude': 75.0587610,
                     'longitude': -35.628643,
-                    'altitude': 554,
+                    'altitude': 554.585,
                     'source': 'gps',
                     'uncertainty': 92,
                     'speed': 34
