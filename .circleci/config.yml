@@ -30,14 +30,9 @@ jobs:
             docker-compose -f compose/circleci.yml exec -T runserver prospector -o pylint
 
       - run:
-          name: Run unit tests
+          name: Run unit tests and coverage report
           command: |
-            docker-compose -f compose/circleci.yml exec -T runserver coverage run manage.py test --noinput tests --settings conf.test_settings
-
-      - run:
-          name: Unit test coverage report
-          command: |
-            docker-compose -f compose/circleci.yml exec -T runserver coverage xml -o test-results/coverage/results.xml
+            docker-compose -f compose/circleci.yml exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report=xml:test-results/coverage.xml
 
       - run:
           name: Copy artifacts from Docker

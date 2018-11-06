@@ -106,6 +106,7 @@ INSTALLED_APPS = [
     'apps.eth',
     'apps.shipments',
     'apps.schema',
+    'channels',
 ]
 
 REST_FRAMEWORK = {
@@ -175,6 +176,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'apps.wsgi.application'
+ASGI_APPLICATION = 'apps.routing.application'
 
 TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
 TEST_OUTPUT_DIR = 'test-results/unittest/results.xml'
@@ -197,6 +199,16 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "apps/schema/static"),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Channels
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.environ.get('REDIS_URL', default='redis://:redis_pass@redis_db:6379/1')],
+        },
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators

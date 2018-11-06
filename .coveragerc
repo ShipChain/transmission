@@ -2,6 +2,7 @@
 include = apps/*
 omit =
     apps/*/migrations/*
+    apps/asgi.py
     apps/wsgi.py
     apps/celery.py
 

@@ -15,11 +15,16 @@ limitations under the License.
 """
 
 from collections import namedtuple
+
+from asgiref import sync
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
+from jwt.exceptions import InvalidTokenError
 from rest_framework import exceptions
+from rest_framework.exceptions import APIException
 from rest_framework.permissions import BasePermission
+from rest_framework_jwt.authentication import JSONWebTokenAuthentication, jwt_decode_handler
 from rest_framework_jwt.settings import api_settings
-from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 
 from .utils import parse_dn
 
@@ -40,16 +45,83 @@ class AuthenticatedUser:
         return False
 
 
+def passive_credentials_auth(payload):
+    if 'sub' not in payload:
+        raise exceptions.AuthenticationFailed('Invalid payload.')
+
+    payload['pk'] = payload['sub']
+    payload = namedtuple("User", payload.keys())(*payload.values())
+    payload = api_settings.JWT_PAYLOAD_HANDLER(payload)
+
+    user = AuthenticatedUser(payload)
+
+    return user
+
+
 class PassiveJSONWebTokenAuthentication(JSONWebTokenAuthentication):
     def authenticate_credentials(self, payload):
-        if 'sub' not in payload:
-            raise exceptions.AuthenticationFailed('Invalid payload.')
+        return passive_credentials_auth(payload)
 
-        payload['pk'] = payload['sub']
-        payload = namedtuple("User", payload.keys())(*payload.values())
-        payload = api_settings.JWT_PAYLOAD_HANDLER(payload)
 
-        user = AuthenticatedUser(payload)
+class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
+    """
+    Consumer that requires user to be present in the scope.
+    """
+    async def connect(self):
+        if await self._authenticate():
+            await self.channel_layer.group_add(self.scope['user'].id, self.channel_name)
+            await self.accept('base64.authentication.jwt')
+
+    async def disconnect(self, code):
+        if self.scope['user']:
+            await self.channel_layer.group_discard(self.scope['user'].id, self.channel_name)
+        await super().disconnect(code)
+
+    async def receive(self, text_data=None, bytes_data=None, **kwargs):
+        if await self._authenticate():
+            if text_data:
+                json = await self.decode_json(text_data)
+                if 'event' in json and 'data' in json and json['event'] == 'refresh_jwt':
+                    self.scope['jwt'] = json['data']
+                else:
+                    await self.receive_json(json, **kwargs)
+            else:
+                raise ValueError("No text section for incoming WebSocket frame!")
+
+    async def send(self, text_data=None, bytes_data=None, close=False):
+        if await self._authenticate():
+            await super().send(text_data, bytes_data, close)
+
+    async def _authenticate(self):
+        if "jwt" not in self.scope:
+            self.scope["jwt"] = await self._get_jwt_from_subprotocols()
+        self.scope["user"] = await self._get_user()
+        if not self.scope['user'] or ('user_id' in self.scope['url_route']['kwargs'] and
+                                      self.scope['url_route']['kwargs']['user_id'] != self.scope['user'].id):
+            await self.close()
+            return False
+        return True
+
+    async def _get_jwt_from_subprotocols(self):
+        jwt = None
+
+        # Initially parse jwt out of subprotocols
+        for protocol in self.scope['subprotocols']:
+            if protocol.startswith('base64.jwt.'):
+                jwt = protocol.split('base64.jwt.')[1]
+
+        return jwt
+
+    async def _get_user(self):
+        user = None
+
+        try:
+            if self.scope['jwt']:
+                payload = await sync.sync_to_async(jwt_decode_handler)(self.scope['jwt'])
+                user = await sync.sync_to_async(passive_credentials_auth)(payload)
+        except (APIException, InvalidTokenError):
+            # Can ignore JWT auth failures, scope['user'] will not be set.
+            pass
 
         return user
 

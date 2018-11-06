@@ -45,6 +45,6 @@ echo $CA_CERT_JSON | jq -r '.CertificateChain' >> /etc/nginx/certs/ca-bundle.crt
 openssl rsa -passin pass:$CERT_PASS -in /etc/nginx/certs/$SUBDOMAIN.encrypted.key -out /etc/nginx/certs/$SUBDOMAIN.key
 
 # Update nginx.conf with app name and environment
-sed -i "s/#{DOMAIN}/$SUBDOMAIN/g" /etc/nginx/conf.d/default.conf
+sed -i "s/#{INTERNAL_DOMAIN}/$SUBDOMAIN/g" /etc/nginx/conf.d/default.conf
 
 exec "$@"

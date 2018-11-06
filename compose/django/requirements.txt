@@ -1,7 +1,14 @@
+aioredis==1.2.0
 amqp==2.2.2
 argh==0.26.2
+asgiref==2.3.2
 asn1crypto==0.24.0
 astroid==1.6.1
+async-timeout==3.0.1
+atomicwrites==1.2.1
+attrs==18.2.0
+autobahn==18.10.1
+Automat==0.7.0
 aws-xray-sdk==0.95
 billiard==3.5.0.3
 blessings==1.7
@@ -14,10 +21,13 @@ celery==4.2.1
 celery-once==2.0.0
 certifi==2018.1.18
 cffi==1.11.5
+channels==2.1.5
+channels-redis==2.3.1
 chardet==3.0.4
 click==6.7
 -e git://github.com/kusha/python-elasticsearch-logger.git@91b458a58e12ab1e9a8fe16a28d225f610e29183#egg=CMRESHandler
 colorama==0.3.7
+constantly==15.1.0
 cookies==2.2.1
 coreapi==2.3.3
 coreschema==0.0.4
@@ -25,6 +35,7 @@ coverage==4.5.1
 cryptography==2.3.1
 curtsies==0.3.0
 cytoolz==0.9.0
+daphne==2.2.2
 decorator==4.3.0
 Django==2.0.9
 django-cors-headers==2.2.0
@@ -35,6 +46,7 @@ django-extensions==2.0.6
 django-filter==1.1.0
 django-gm2m==0.6.1
 -e git://github.com/lwbco/django-influxdb-tagged-metrics.git@add895558ed6ab59c621b19beae026f8933d4848#egg=django_influxdb_metrics
+django-mock-queries==2.1.1
 django-redis==4.9.0
 djangorestframework==3.8.2
 djangorestframework-gis==0.13
@@ -58,8 +70,11 @@ geocoder==1.38.1
 geojson==2.4.0
 greenlet==0.4.15
 gunicorn==19.7.1
+hiredis==0.2.0
 httpretty==0.9.5
+hyperlink==18.0.0
 idna==2.6
+incremental==17.5.0
 inflection==0.3.1
 influxdb==5.0.0
 iso3166==0.9
@@ -77,16 +92,20 @@ Markdown==2.6.11
 MarkupSafe==1.0
 mccabe==0.6.1
 mock==2.0.0
+model-mommy==1.6.0
+more-itertools==4.3.0
 -e git://github.com/ShipChain/moto.git@e7f9d7c6bfb9098e66785d810af726d740e0632d#egg=moto
 msgpack==0.5.6
 openapi-codec==1.3.2
 pathtools==0.1.2
 pbr==4.2.0
 pep8-naming==0.5.0
+pluggy==0.8.0
 polyline==1.3.2
 prospector==0.12.7
 psutil==5.4.5
 psycopg2==2.7.4
+py==1.7.0
 pyaml==17.12.1
 pyasn1==0.4.2
 pycodestyle==2.0.0
@@ -95,6 +114,7 @@ pycryptodome==3.6.6
 pydocstyle==2.1.1
 pyflakes==1.6.0
 Pygments==2.2.0
+PyHamcrest==1.9.0
 PyJWT==1.6.4
 pylint==1.8.2
 pylint-celery==0.3
@@ -104,6 +124,10 @@ pylint-flask==0.5
 pylint-plugin-utils==0.2.6
 pyOpenSSL==17.5.0
 pysha3==1.0.2
+pytest==3.9.3
+pytest-asyncio==0.9.0
+pytest-cov==2.6.0
+pytest-django==3.4.3
 python-dateutil==2.7.2
 python-jose==3.0.1
 python-server-metrics==0.2.1
@@ -126,9 +150,10 @@ snowballstemmer==1.2.1
 termstyle==0.1.11
 tld==0.7.10
 toolz==0.9.0
+Twisted==18.9.0
+txaio==18.8.1
 typing==3.6.6
 Unidecode==1.0.22
-unittest-xml-reporting==2.1.1
 uritemplate==3.0.0
 urllib3==1.22
 uWSGI==2.0.17.1
@@ -140,3 +165,4 @@ Werkzeug==0.14.1
 whitenoise==3.3.1
 wrapt==1.10.11
 xmltodict==0.11.0
+zope.interface==4.6.0

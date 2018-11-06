@@ -51,7 +51,7 @@ class AsyncJob(models.Model):
     @staticmethod
     def rpc_job_for_listener(rpc_method, rpc_parameters, signing_wallet_id, listener, delay=0):
         rpc_module = rpc_method.__module__
-        rpc_class, rpc_method = rpc_method.__qualname__.rsplit('.')
+        rpc_class, rpc_method = rpc_method.__qualname__.rsplit('.')[-2:]
         job = AsyncJob.objects.create(parameters={
             'rpc_class': f'{rpc_module}.{rpc_class}',
             'rpc_method': f'{rpc_method}',
