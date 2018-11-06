@@ -103,7 +103,7 @@ async def test_jwt_refresh():
     await communicator.send_json_to({"event": "refresh_jwt", "data": my_jwt})
     await communicator.send_json_to({"hello": "world"})
     response = await communicator.receive_json_from()
-    assert response['event'] == str(EventTypes.error)
+    assert response['event'] == EventTypes.error.name
     assert response['data'] == "This websocket endpoint is read-only"
 
     await communicator.disconnect()
@@ -137,7 +137,7 @@ async def test_job_notification(communicator):
             await sync_to_async(job.message_set.create)(type=MessageType.ETH_TRANSACTION, body=json.dumps({'foo': 'bar'}))
             assert job.joblistener_set.count() == 1
             response = await communicator.receive_json_from()
-            assert response['event'] == str(EventTypes.asyncjob_update)
+            assert response['event'] == EventTypes.asyncjob_update.name
             assert response['data']['id'] == job.id
 
     await communicator.disconnect()

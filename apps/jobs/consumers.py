@@ -35,11 +35,11 @@ class JobsConsumer(AsyncJsonAuthConsumer):
 
     def render_async_job(self, job_id):
         job = AsyncJob.objects.get(id=job_id)
-        return JSONRenderer().render({'event': str(EventTypes.asyncjob_update),
+        return JSONRenderer().render({'event': EventTypes.asyncjob_update.name,
                                       'data': AsyncJobSerializer(job).data}).decode()
 
     async def receive_json(self, content, **kwargs):
         await self.send_json({
-            "event": str(EventTypes.error),
+            "event": EventTypes.error.name,
             "data": "This websocket endpoint is read-only",
         })
