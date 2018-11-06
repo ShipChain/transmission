@@ -17,6 +17,6 @@ bin/dc up -d
 
 bin/dc exec -T runserver prospector -o pylint
 
-bin/dc exec -T runserver pytest --cov=apps --cov-config=.coveragerc
+bin/dc exec -T runserver pytest -p no:cacheprovider --cov=apps --cov-config=.coveragerc
 
 bin/dc down
