@@ -133,6 +133,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             return Shipment.objects.create(**validated_data, **extra_args)
 
     def validate_shipper_wallet_id(self, shipper_wallet_id):
+        print(settings.PROFILES_URL)
         if settings.PROFILES_URL != 'DISABLED':
             auth = self.context['auth']
             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',

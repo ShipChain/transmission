@@ -17,7 +17,7 @@ import os
 import re
 from unittest.mock import patch
 
-
+from conf import test_settings
 from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus, Device
 from apps.shipments.rpc import ShipmentRPCClient
 from django.contrib.gis.geos import Point
@@ -295,6 +295,19 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
         self.assertIsNotNone(response_data['meta']['async_job_id'])
 
+        test_settings.PROFILES_URL = 'DISABLED'
+
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.post(url, post_data, content_type='application/vnd.api+json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+        test_settings.PROFILES_URL = 'http://INTENTIONALLY_DISCONNECTED:9999'
+
+
+
     @httpretty.activate
     def test_create_with_location(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})
@@ -479,8 +492,18 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_to_location.geometry.coords, (12.0, 23.0))
 
+
+        test_settings.PROFILES_URL = 'DISABLED'
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.post(url, one_location, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+        test_settings.PROFILES_URL = 'http://INTENTIONALLY_DISCONNECTED:9999'
+
     def test_get_device_request_url(self):
-        from conf.test_settings import PROFILES_URL
 
         _shipment_id = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
         _vault_id = '01fc36c4-63e5-4c02-943a-b52cd25b235b'
@@ -489,7 +512,8 @@ class ShipmentAPITests(APITestCase):
         profiles_url = shipment.get_device_request_url()
 
         # http://INTENTIONALLY_DISCONNECTED:9999/api/v1/device/?on_shipment=b715a8ff-9299-4c87-96de-a4b0a4a54509
-        self.assertIn(PROFILES_URL, profiles_url)
+        print(profiles_url)
+        self.assertIn(test_settings.PROFILES_URL, profiles_url)
         self.assertIn(f"?on_shipment={_shipment_id}", profiles_url)
 
     # def test_get_tracking(self):
