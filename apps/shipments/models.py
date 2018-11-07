@@ -17,13 +17,10 @@ from django.core.validators import RegexValidator, MaxValueValidator, MinValueVa
 from django.db import models
 from enumfields import Enum
 from enumfields import EnumField
-from rest_framework.exceptions import ValidationError, Throttled, PermissionDenied
-from rest_framework.status import HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
-from rest_framework import status
+from rest_framework.status import HTTP_200_OK
 from rest_framework.exceptions import PermissionDenied, APIException
 from rest_framework.exceptions import ValidationError, Throttled
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
-# from geojson import Feature, LineString, Point as Geo_Point
 from influxdb_metrics.loader import log_metric
 
 from apps.eth.fields import AddressField, HashField
