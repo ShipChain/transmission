@@ -5,7 +5,7 @@ from celery import shared_task
 from influxdb_metrics.loader import log_metric
 
 from apps.rpc_client import RPCError
-from .rpc import ShipmentRPCClient
+from .rpc import RPCClientFactory
 from .models import Shipment
 
 LOG = logging.getLogger('transmission')
@@ -18,7 +18,7 @@ def tracking_data_update(self, shipment_id, payload):
                                           'module': __name__})
     shipment = Shipment.objects.get(id=shipment_id)
 
-    rpc_client = ShipmentRPCClient()
+    rpc_client = RPCClientFactory.get_client()
     signature = rpc_client.add_tracking_data(shipment.storage_credentials_id,
                                              shipment.shipper_wallet_id,
                                              shipment.vault_id,

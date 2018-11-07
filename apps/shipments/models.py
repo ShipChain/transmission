@@ -23,7 +23,7 @@ from influxdb_metrics.loader import log_metric
 from apps.eth.models import EthListener
 from apps.jobs.models import JobListener, AsyncJob, JobState
 from apps.utils import random_id
-from .rpc import ShipmentRPCClient
+from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')
 
@@ -129,9 +129,9 @@ class Device(models.Model):
 
 
 class FundingType(Enum):
-    SHIP = 0
-    CASH = 1
-    ETH = 2
+    NO_FUNDING = 0
+    SHIP = 1
+    ETHER = 2
 
 
 class EscrowStatus(Enum):
@@ -280,10 +280,11 @@ class Shipment(models.Model):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.load_data and self.load_data.shipment_id:
+            rpc_client = RPCClientFactory.get_client(self.contract_version)
             job_queryset = AsyncJob.objects.filter(
                 joblistener__shipments__id=self.id,
                 state=JobState.PENDING,
-                parameters__rpc_method=ShipmentRPCClient.update_vault_hash_transaction.__name__,
+                parameters__rpc_method=rpc_client.update_vault_hash_transaction.__name__,
                 parameters__signing_wallet_id=self.shipper_wallet_id,
             )
             if job_queryset.count():
@@ -294,7 +295,6 @@ class Shipment(models.Model):
                     async_job.parameters['rpc_parameters'] = [
                         self.shipper_wallet_id,
                         self.load_data.shipment_id,
-                        '',
                         vault_hash
                     ]
                     async_job.save()
@@ -309,10 +309,9 @@ class Shipment(models.Model):
                 LOG.debug(f'No pending vault hash updates for {self.id}, '
                           f'sending one in {settings.VAULT_HASH_RATE_LIMIT} minutes')
                 async_job = AsyncJob.rpc_job_for_listener(
-                    rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
+                    rpc_method=rpc_client.update_vault_hash_transaction,
                     rpc_parameters=[self.shipper_wallet_id,
                                     self.load_data.shipment_id,
-                                    '',
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
                     listener=self,
@@ -320,10 +319,9 @@ class Shipment(models.Model):
             else:
                 LOG.debug(f'Shipment {self.id} requested a vault hash update')
                 async_job = AsyncJob.rpc_job_for_listener(
-                    rpc_method=ShipmentRPCClient.update_vault_hash_transaction,
+                    rpc_method=rpc_client.update_vault_hash_transaction,
                     rpc_parameters=[self.shipper_wallet_id,
                                     self.load_data.shipment_id,
-                                    '',
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
                     listener=self)
@@ -336,6 +334,5 @@ class Shipment(models.Model):
         return async_job
 
     # Defaults
-    VALID_UNTIL = 24
-    FUNDING_TYPE = FundingType.SHIP.value
-    SHIPMENT_AMOUNT = 1
+    FUNDING_TYPE = FundingType.NO_FUNDING.value
+    SHIPMENT_AMOUNT = 0

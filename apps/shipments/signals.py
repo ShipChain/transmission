@@ -8,7 +8,7 @@ from apps.eth.models import TransactionReceipt
 from apps.jobs.models import JobState, MessageType, AsyncJob
 from apps.jobs.signals import job_update
 from .models import Shipment, LoadShipment, Location
-from .rpc import ShipmentRPCClient
+from .rpc import RPCClientFactory
 from .serializers import ShipmentVaultSerializer
 
 
@@ -40,7 +40,7 @@ def shipment_event_update(sender, event, listener, **kwargs):
         listener.load_data.save()
 
         # Add vault data to new Shipment
-        rpc_client = ShipmentRPCClient()
+        rpc_client = RPCClientFactory.get_client()
         signature = rpc_client.add_shipment_data(listener.storage_credentials_id, listener.shipper_wallet_id,
                                                  listener.vault_id, ShipmentVaultSerializer(listener).data)
 
@@ -56,7 +56,7 @@ def shipment_post_save(sender, **kwargs):
 
     if created:
         # Create vault
-        rpc_client = ShipmentRPCClient()
+        rpc_client = RPCClientFactory.get_client()
         vault_id = rpc_client.create_vault(instance.storage_credentials_id, instance.shipper_wallet_id,
                                            instance.carrier_wallet_id)
 
@@ -66,14 +66,14 @@ def shipment_post_save(sender, **kwargs):
         load_shipment = LoadShipment.objects.create(shipment=instance,
                                                     shipper=instance.shipper_wallet_id,
                                                     carrier=instance.carrier_wallet_id,
-                                                    valid_until=Shipment.VALID_UNTIL,
+                                                    valid_until=0,
                                                     funding_type=Shipment.FUNDING_TYPE,
                                                     shipment_amount=Shipment.SHIPMENT_AMOUNT)
         instance.vault_id = vault_id
         Shipment.objects.filter(id=instance.id).update(vault_id=vault_id, load_data=load_shipment)
     else:
         # Update Shipment vault data
-        rpc_client = ShipmentRPCClient()
+        rpc_client = RPCClientFactory.get_client()
         signature = rpc_client.add_shipment_data(instance.storage_credentials_id, instance.shipper_wallet_id,
                                                  instance.vault_id, ShipmentVaultSerializer(instance).data)
         LOG.debug(f'Updating LOAD contract with vault uri/hash {signature["hash"]}.')
@@ -89,10 +89,9 @@ def loadshipment_post_save(sender, **kwargs):
         LOG.debug(f'Creating a shipment on the load contract.')
         # Create shipment on the LOAD contract
         AsyncJob.rpc_job_for_listener(
-            rpc_method=ShipmentRPCClient.create_shipment_transaction,
+            rpc_method=RPCClientFactory.get_client().create_shipment_transaction,
             rpc_parameters=[instance.shipment.shipper_wallet_id,
-                            instance.shipment.carrier_wallet_id,
-                            instance.valid_until,
+                            instance.shipment.id,
                             instance.funding_type.value,
                             instance.shipment_amount],
             signing_wallet_id=instance.shipment.shipper_wallet_id,

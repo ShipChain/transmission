@@ -14,7 +14,7 @@ import re
 from conf import test_settings
 
 from apps.shipments.models import Shipment, Location, Device
-from apps.shipments.rpc import ShipmentRPCClient
+from apps.shipments.rpc import Load110RPCClient
 from apps.authentication import AuthenticatedUser
 from apps.utils import random_id
 from tests.utils import replace_variables_in_string, create_form_content
@@ -243,7 +243,7 @@ class ShipmentAPITests(APITestCase):
         '''
 
         # Mock RPC calls
-        mock_shipment_rpc_client = ShipmentRPCClient
+        mock_shipment_rpc_client = Load110RPCClient
 
         mock_shipment_rpc_client.create_vault = mock.Mock(return_value=parameters['_vault_id'])
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
@@ -313,7 +313,7 @@ class ShipmentAPITests(APITestCase):
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-       
+
         with self.settings(PROFILES_ENABLED=False):
             response = self.client.post(url, post_data, content_type='application/vnd.api+json')
             print(response.content)
@@ -371,7 +371,7 @@ class ShipmentAPITests(APITestCase):
                                                            })
 
         # Mock RPC calls
-        mock_shipment_rpc_client = ShipmentRPCClient
+        mock_shipment_rpc_client = Load110RPCClient
 
         mock_shipment_rpc_client.create_vault = mock.Mock(return_value=parameters['_vault_id'])
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
@@ -730,7 +730,7 @@ class ShipmentAPITests(APITestCase):
                 '''
 
         # Mock RPC calls
-        mock_shipment_rpc_client = ShipmentRPCClient
+        mock_shipment_rpc_client = Load110RPCClient
 
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={"hash": "txHash"})
         mock_shipment_rpc_client.sign_transaction = mock.Mock(return_value=({}, 'txHash'))
@@ -808,7 +808,7 @@ class ShipmentAPITests(APITestCase):
                                                            })
 
         # Mock RPC calls
-        mock_shipment_rpc_client = ShipmentRPCClient
+        mock_shipment_rpc_client = Load110RPCClient
 
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={"hash": "txHash"})
         mock_shipment_rpc_client.sign_transaction = mock.Mock(return_value=({}, 'txHash'))

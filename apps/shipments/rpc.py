@@ -1,5 +1,6 @@
 import logging
 
+from abc import abstractmethod
 from django.core.cache import cache
 from influxdb_metrics.loader import log_metric
 
@@ -14,7 +15,7 @@ class ShipmentRPCClient(RPCClient):
                   f'shipper_wallet_id {shipper_wallet_id}, and carrier_wallet_id {carrier_wallet_id}.')
         log_metric('transmission.info', tags={'method': 'shipment_rpcclient.create_vault', 'module': __name__})
 
-        result = self.call('load.create_vault', {
+        result = self.call('vault.create', {
             "storageCredentials": storage_credentials_id,
             "shipperWallet": shipper_wallet_id,
             "carrierWallet": carrier_wallet_id
@@ -38,7 +39,7 @@ class ShipmentRPCClient(RPCClient):
             log_metric('transmission.info', tags={'method': 'shipment_rpcclient.add_shipment_data',
                                                   'module': __name__})
 
-            result = self.call('load.add_shipment_data', {
+            result = self.call('vault.add_shipment', {
                 "storageCredentials": storage_credentials_id,
                 "vaultWallet": wallet_id,
                 "vault": vault_id,
@@ -61,7 +62,7 @@ class ShipmentRPCClient(RPCClient):
             log_metric('transmission.info', tags={'method': 'shipment_rpcclient.add_tracking_data',
                                                   'module': __name__})
 
-            result = self.call('load.add_tracking_data', {
+            result = self.call('vault.add_tracking', {
                 "storageCredentials": storage_credentials_id,
                 "vaultWallet": wallet_id,
                 "vault": vault_id,
@@ -77,19 +78,18 @@ class ShipmentRPCClient(RPCClient):
             LOG.error('Invalid addition of tracking data.')
             raise RPCError("Invalid response from Engine")
 
-    def create_shipment_transaction(self, shipper_wallet_id, carrier_wallet_id,  # pylint: disable=too-many-arguments
-                                    valid_until, funding_type, shipment_amount):
-        LOG.debug(f'Creating shipment transaction with funding_type {funding_type}, shipment_amount {shipment_amount},'
-                  f'shipper_wallet_id {shipper_wallet_id}, and carrier_wallet_id {carrier_wallet_id}.')
+    def create_shipment_transaction(self, shipper_wallet_id, shipment_id, funding_type, contracted_amount):
+        LOG.debug(
+            f'Creating shipment transaction with funding_type {funding_type}, shipment_amount {contracted_amount},'
+            f'shipper_wallet_id {shipper_wallet_id}, and shipment_id {shipment_id}.')
         log_metric('transmission.info', tags={'method': 'shipment_rpcclient.create_shipment_transaction',
                                               'module': __name__})
 
-        result = self.call('load.create_shipment_transaction', {
-            "shipperWallet": shipper_wallet_id,
-            "carrierWallet": carrier_wallet_id,
-            "validUntil": valid_until,
+        result = self.call('load.create_shipment_tx', {
+            "senderWallet": shipper_wallet_id,
+            "shipmentUuid": shipment_id,
             "fundingType": funding_type,
-            "shipmentAmount": shipment_amount
+            "contractedAmount": contracted_amount
         })
 
         if 'success' in result and result['success']:
@@ -108,7 +108,7 @@ class ShipmentRPCClient(RPCClient):
         log_metric('transmission.info', tags={'method': 'shipment_rpcclient.get_tracking_data',
                                               'module': __name__})
 
-        result = self.call('load.get_tracking_data', {
+        result = self.call('vault.get_tracking', {
             "storageCredentials": storage_credentials_id,
             "vaultWallet": wallet_id,
             "vault": vault_id
@@ -124,17 +124,23 @@ class ShipmentRPCClient(RPCClient):
         LOG.error('Invalid retrieval of tracking data.')
         raise RPCError("Invalid response from Engine")
 
-    def update_vault_hash_transaction(self, wallet_id, current_shipment_id, url, vault_hash):
+    @abstractmethod
+    def update_vault_hash_transaction(self, wallet_id, current_shipment_id, vault_hash):
+        pass
+
+
+class Load110RPCClient(ShipmentRPCClient):
+
+    def update_vault_hash_transaction(self, wallet_id, current_shipment_id, vault_hash):
         LOG.debug(f'Updating vault hash transaction with current_shipment_id {current_shipment_id},'
                   f'vault_hash {vault_hash}, and wallet_id {wallet_id}.')
         log_metric('transmission.info', tags={'method': 'shipment_rpcclient.update_vault_hash_transaction',
                                               'module': __name__})
 
-        result = self.call('load.update_vault_hash_transaction', {
+        result = self.call('load.1.1.0.set_vault_hash_tx', {
             "shipperWallet": wallet_id,
-            "shipmentId": current_shipment_id,
-            "url": url,
-            "hash": vault_hash
+            "shipmentUuid": current_shipment_id,
+            "vaultHash": vault_hash
         })
 
         if 'success' in result and result['success']:
@@ -146,3 +152,19 @@ class ShipmentRPCClient(RPCClient):
                                                'module': __name__, 'code': 'RPCError'})
         LOG.error('Invalid update of vault hash transaction.')
         raise RPCError("Invalid response from Engine")
+
+
+class RPCClientFactory(object):
+    clients = {}
+
+    @staticmethod
+    def get_client(contract_version=None):
+        if contract_version not in RPCClientFactory.clients:
+            if contract_version is None:
+                RPCClientFactory.clients[contract_version] = Load110RPCClient()  # Default version
+            elif contract_version == '1.1.0':
+                RPCClientFactory.clients[contract_version] = Load110RPCClient()
+            else:
+                raise RPCError(f'No such RPCClient for LOAD {contract_version}')
+
+        return RPCClientFactory.clients[contract_version]

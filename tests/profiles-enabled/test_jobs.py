@@ -7,7 +7,7 @@ from moto import mock_iot
 
 from apps.shipments.models import Shipment
 from apps.jobs.models import AsyncJob, Message, MessageType, JobState
-from apps.shipments.rpc import ShipmentRPCClient
+from apps.shipments.rpc import Load110RPCClient
 from apps.authentication import AuthenticatedUser
 
 MESSAGE = [
@@ -98,7 +98,7 @@ class JobsAPITests(APITestCase):
         from apps.rpc_client import requests
         from tests.utils import mocked_rpc_response
 
-        mock_shipment_rpc = ShipmentRPCClient
+        mock_shipment_rpc = Load110RPCClient
 
         mock_shipment_rpc.create_vault = mock.Mock(return_value=VAULT_ID)
 
