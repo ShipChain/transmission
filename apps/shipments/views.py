@@ -1,7 +1,8 @@
 import logging
 
 from django.conf import settings
-from rest_framework import viewsets, permissions, status, exceptions
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, permissions, status, exceptions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
@@ -20,12 +21,21 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     serializer_class = ShipmentSerializer
     permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
+    search_fields = ('mode', 'pickup_estimated', 'delivery_estimated')
+    ordering_fields = ('modified_at', 'created_at', 'pickup_estimated', 'delivery_estimated')
     http_method_names = ['get', 'post', 'delete', 'patch']
 
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
             queryset = queryset.filter(owner_id=self.request.user.id)
+        if 'ship_from_location_not_null' in self.request.query_params:
+            queryset = queryset.exclude(ship_from_location__isnull=True)
+        if 'ship_to_location_not_null' in self.request.query_params:
+            queryset = queryset.exclude(ship_to_location__isnull=True)
+        if 'final_destination_location_not_null' in self.request.query_params:
+            queryset = queryset.exclude(final_destination_location__isnull=True)
         return queryset
 
     def perform_create(self, serializer):
