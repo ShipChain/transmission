@@ -143,7 +143,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
         return shipper_wallet_id
 
     def validate_storage_credentials_id(self, storage_credentials_id):
-        if settings.PROFILES_URL != 'DISABLED':
+        if settings.PROFILES_ENABLED:
             auth = self.context['auth']
             response = settings.REQUESTS_SESSION.get(
                 f'{settings.PROFILES_URL}/api/v1/storage_credentials/{storage_credentials_id}/',
