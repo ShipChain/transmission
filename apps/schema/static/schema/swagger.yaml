@@ -49,6 +49,11 @@ paths:
       parameters:
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/search'
+      - $ref: '#/components/parameters/ordering'
+      - $ref: '#/components/parameters/shipment/ship_from_location_not_null'
+      - $ref: '#/components/parameters/shipment/ship_to_location_not_null'
+      - $ref: '#/components/parameters/shipment/final_destination_location_not_null'
       tags:
       - Shipments
       responses:
@@ -103,8 +108,6 @@ paths:
       summary: Get shipment details
       description: >
         Get additional info about a `Shipment`.
-      parameters:
-      - $ref: '#/components/parameters/shipment/path'
       tags:
       - Shipments
       responses:
@@ -478,6 +481,27 @@ components:
         name: as_line
         in: query
         description: Returns tracking data as line
+        schema:
+          type: string
+
+      ship_from_location_not_null:
+        name: ship_from_location_not_null
+        in: query
+        description: Returns shipments with associated ship_from_location objects.
+        schema:
+          type: string
+
+      ship_to_location_not_null:
+        name: ship_to_location_not_null
+        in: query
+        description: Returns shipments with associated ship_to_location objects.
+        schema:
+          type: string
+
+      final_destination_location_not_null:
+        name: final_destination_location_not_null
+        in: query
+        description: Returns shipments with associated final_destination_location objects.
         schema:
           type: string
 
