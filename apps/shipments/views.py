@@ -20,18 +20,18 @@ LOG = logging.getLogger('transmission')
 class ShipmentViewSet(viewsets.ModelViewSet):
     queryset = Shipment.objects.all()
     serializer_class = ShipmentSerializer
-    permission_classes = (permissions.IsAuthenticated, IsOwner) if settings.PROFILES_URL != 'DISABLED'\
-        else (permissions.AllowAny,)
+    permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
+                          else (permissions.AllowAny,))
     http_method_names = ['get', 'post', 'delete', 'patch']
 
     def get_queryset(self):
         queryset = self.queryset
-        if settings.PROFILES_URL != 'DISABLED':
+        if settings.PROFILES_ENABLED:
             queryset = queryset.filter(owner_id=self.request.user.id)
         return queryset
 
     def perform_create(self, serializer):
-        if settings.PROFILES_URL != 'DISABLED':
+        if settings.PROFILES_ENABLED:
             created = serializer.save(owner_id=self.request.user.id)
         else:
             created = serializer.save()
@@ -143,18 +143,18 @@ class LocationViewSet(viewsets.ModelViewSet):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
     # TODO: Clarify/Solidify the permissions for Locations w/ respect to owner_id
-    permission_classes = (permissions.IsAuthenticated, IsOwner) if settings.PROFILES_URL != 'DISABLED'\
-        else (permissions.AllowAny,)
+    permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
+                          else (permissions.AllowAny,))
     http_method_names = ['get', 'post', 'delete', 'patch']
 
     def get_queryset(self):
         queryset = self.queryset
-        if settings.PROFILES_URL != 'DISABLED':
+        if settings.PROFILES_ENABLED:
             queryset = queryset.filter(owner_id=self.request.user.id)
         return queryset
 
     def perform_create(self, serializer):
-        if settings.PROFILES_URL != 'DISABLED':
+        if settings.PROFILES_ENABLED:
             created = serializer.save(owner_id=self.request.user.id)
         else:
             created = serializer.save()
