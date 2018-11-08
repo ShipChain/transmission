@@ -163,7 +163,7 @@ def invalid_url(request, exception, *args, **kwargs):
     """
     data = {
         "errors": [{
-            "detail": "Error 404, page not foud",
+            "detail": "Error 404, page not found",
             "status": "404"
         }]
     }

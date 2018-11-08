@@ -63,6 +63,7 @@ services:
       - ../:/app
       - ./django/pip.cache:/build/pip.volume
     environment:
+      - PYTHONDONTWRITEBYTECODE=1
       - ENV
       - SECRET_KEY
       - SERVICE=runserver
