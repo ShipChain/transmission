@@ -80,12 +80,13 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
     """
     queryset = EthAction.objects.all()
     serializer_class = EthActionSerializer
-    permission_classes = (permissions.IsAuthenticated, IsOwner) if settings.PROFILES_URL else (permissions.AllowAny,)
+    permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
+                          else (permissions.AllowAny,))
 
     def get_queryset(self):
         log_metric('transmission.info', tags={'method': 'transaction.get_queryset', 'module': __name__})
         LOG.debug('Getting tx details for a transaction hash.')
         queryset = self.queryset
-        if settings.PROFILES_URL:
+        if settings.PROFILES_ENABLED:
             queryset = queryset.filter(ethlistener__shipments__owner_id=self.request.user.id)
         return queryset

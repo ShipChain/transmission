@@ -105,7 +105,7 @@ class Device(models.Model):
     @staticmethod
     def get_or_create_with_permission(jwt, device_id):
         certificate_id = None
-        if settings.PROFILES_URL:
+        if settings.PROFILES_ENABLED:
             # Make a request to Profiles /api/v1/devices/{device_id} with the user's JWT
             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/device/{device_id}/',
                                                      headers={'Authorization': 'JWT {}'.format(jwt.decode())})

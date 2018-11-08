@@ -26,9 +26,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENGINE_RPC_URL = os.environ.get('ENGINE_RPC_URL', "http://engine-rpc:2000/")
 INTERNAL_URL = os.environ.get('INTERNAL_URL', 'http://transmission-runserver:8000')
 PROFILES_URL = os.environ.get('PROFILES_URL')
+PROFILES_ENABLED = PROFILES_URL != 'DISABLED'
 if PROFILES_URL != 'DISABLED':
     PROFILES_URL = ('http://profiles-runserver:8000' if ('runserver' in INTERNAL_URL)
                     else INTERNAL_URL.replace("transmission", "profiles"))
+
 ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL', None)
 
 ENVIRONMENT = os.environ.get('ENV', 'LOCAL')

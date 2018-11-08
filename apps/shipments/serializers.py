@@ -60,7 +60,7 @@ class LocationSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = '__all__'
-        read_only_fields = ('owner_id',) if settings.PROFILES_URL else ()
+        read_only_fields = ('owner_id',) if settings.PROFILES_ENABLED else ()
 
 
 class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -70,7 +70,7 @@ class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        exclude = ('owner_id', 'geometry') if settings.PROFILES_URL else ('geometry')
+        exclude = ('owner_id', 'geometry') if settings.PROFILES_ENABLED else ('geometry')
 
 
 class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -103,7 +103,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     class Meta:
         model = Shipment
         fields = '__all__'
-        read_only_fields = ('owner_id', 'contract_version') if settings.PROFILES_URL else ('contract_version',)
+        read_only_fields = ('owner_id', 'contract_version') if settings.PROFILES_ENABLED else ('contract_version',)
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location',
@@ -132,7 +132,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             return Shipment.objects.create(**validated_data, **extra_args)
 
     def validate_shipper_wallet_id(self, shipper_wallet_id):
-        if settings.PROFILES_URL:
+        if settings.PROFILES_ENABLED:
             auth = self.context['auth']
             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
                                                      headers={'Authorization': 'JWT {}'.format(auth.decode())})
@@ -149,7 +149,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
     class Meta:
         model = Shipment
         fields = '__all__'
-        if settings.PROFILES_URL:
+        if settings.PROFILES_ENABLED:
             read_only_fields = ('owner_id', 'vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
                                 'storage_credentials_id', 'contract_version')
         else:
