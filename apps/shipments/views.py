@@ -22,7 +22,13 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
-    search_fields = ('mode', 'pickup_estimated', 'delivery_estimated')
+    search_fields = ('mode', 'pickup_estimated', 'delivery_estimated', 'ship_from_location__name',
+                     'ship_from_location__city', 'ship_from_location__state', 'ship_from_location__country',
+                     'ship_from_location__postal_code', 'ship_to_location__name',
+                     'ship_to_location__city', 'ship_to_location__state', 'ship_to_location__country',
+                     'ship_to_location__postal_code', 'final_destination_location__name',
+                     'final_destination_location__city', 'final_destination_location__state',
+                     'final_destination_location__country', 'final_destination_location__postal_code',)
     ordering_fields = ('modified_at', 'created_at', 'pickup_estimated', 'delivery_estimated')
     http_method_names = ['get', 'post', 'delete', 'patch']
 
