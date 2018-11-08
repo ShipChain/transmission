@@ -15,6 +15,7 @@ import httpretty
 import json
 import os
 import re
+from conf import test_settings
 from unittest.mock import patch
 
 
@@ -281,10 +282,10 @@ class ShipmentAPITests(APITestCase):
         post_data = replace_variables_in_string(post_data, parameters)
 
         httpretty.register_uri(httpretty.GET,
-                               f"http://INTENTIONALLY_DISCONNECTED:9999/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
         httpretty.register_uri(httpretty.GET,
-                               f"http://INTENTIONALLY_DISCONNECTED:9999/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
@@ -297,6 +298,26 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response_data['attributes']['storage_credentials_id'], parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
         self.assertIsNotNone(response_data['meta']['async_job_id'])
+
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'bad': 'bad'}), status=status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.post(url, post_data, content_type='application/vnd.api+json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'bad': 'bad'}), status=status.HTTP_400_BAD_REQUEST)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+
+        response = self.client.post(url, post_data, content_type='application/vnd.api+json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     @httpretty.activate
     def test_create_with_location(self):
@@ -484,6 +505,27 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.state, parameters['_ship_to_location_state'])
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_to_location.geometry.coords, (12.0, 23.0))
+
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'bad': 'bad'}), status=status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.post(url, one_location, content_type=content_type)
+        print(response.content)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'bad': 'bad'}), status=status.HTTP_400_BAD_REQUEST)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+
+        response = self.client.post(url, one_location, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_device_request_url(self):
         from conf.test_settings import PROFILES_URL
