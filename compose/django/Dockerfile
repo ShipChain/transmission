@@ -11,8 +11,11 @@ WORKDIR /build
 RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync python3-pip
 
 RUN pip3 install --upgrade pip pipenv
-COPY ./Pipfile /build/Pipfile
-RUN pipenv install --skip-lock --system
+
+COPY ./Pipfile* /build/
+COPY pip.cache /build/pip.cache
+ENV PIPENV_CACHE_DIR=/build/pip.cache
+RUN pipenv install --system --dev
 
 RUN mkdir /app
 WORKDIR /app

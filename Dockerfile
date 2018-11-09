@@ -28,7 +28,7 @@ RUN . /opt/aws/bin/activate && pip3 install --upgrade awscli
 
 # Dependencies installation
 RUN pip3 install --upgrade pip pipenv
-COPY ./compose/django/Pipfile /build/Pipfile
+COPY compose/django/Pipfile /build/Pipfile
 RUN pipenv install --skip-lock --system
 
 RUN mkdir /app
