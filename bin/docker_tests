@@ -9,8 +9,6 @@ cd "${0%/*}/.."
 
 echo "Running tests"
 
-find -name "*.pyc" -delete
-
 bin/dc build
 
 bin/dc up -d

@@ -123,8 +123,10 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                 if location_field in validated_data:
                     data = validated_data.pop(location_field)
 
-                    extra_args[location_field], _ = Location.objects.get_or_create(**data, owner_id=validated_data[
-                        'owner_id'])
+                    if 'owner_id' not in data:
+                        data['owner_id'] = validated_data['owner_id']
+
+                    extra_args[location_field], _ = Location.objects.get_or_create(**data)
 
             if 'device_id' in validated_data:
                 extra_args['device'] = Device.get_or_create_with_permission(auth, validated_data.pop('device_id'))
