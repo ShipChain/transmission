@@ -10,12 +10,18 @@ WORKDIR /build
 
 RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync python3-pip
 
-RUN pip3 install --upgrade pip pipenv
+# Virtualenv required for modifying Pipfile.lock #
+RUN pip3 install --upgrade pip pipenv virtualenv
+RUN virtualenv /opt/pipenv-venv
+ENV PATH=/opt/pipenv-venv/bin:$PATH
 
+# Copy Pipfiles and cache to image #
+ENV PIPENV_CACHE_DIR=/build/pip.cache
 COPY ./Pipfile* /build/
 COPY pip.cache /build/pip.cache
-ENV PIPENV_CACHE_DIR=/build/pip.cache
-RUN pipenv install --system --dev
+
+# Install dependencies from Pipfile (regenerate lock if necessary) #
+RUN . /opt/pipenv-venv/bin/activate && pipenv install --dev
 
 RUN mkdir /app
 WORKDIR /app

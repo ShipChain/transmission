@@ -26,10 +26,15 @@ RUN pip3 install virtualenv
 RUN virtualenv /opt/aws
 RUN . /opt/aws/bin/activate && pip3 install --upgrade awscli
 
-# Dependencies installation
+# Dependencies installation from Pipfile.lock
 RUN pip3 install --upgrade pip pipenv
-COPY compose/django/Pipfile /build/Pipfile
-RUN pipenv install --skip-lock --system
+
+# Use pip caching
+ENV PIPENV_CACHE_DIR=/build/pip.cache
+COPY compose/django/Pipfile* /build/
+COPY compose/django/pip.cache /build/pip.cache
+
+RUN pipenv install --deploy --system
 
 RUN mkdir /app
 WORKDIR /app

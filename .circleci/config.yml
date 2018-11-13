@@ -46,7 +46,8 @@ jobs:
           name: Copy pip cache from Docker
           command: |
             docker cp $(docker-compose -f compose/circleci.yml ps -q runserver):/build/pip.cache compose/django/pip.cache
-       - save_cache:
+
+      - save_cache:
           key: pip-cache
           paths:
             - compose/django/pip.cache
