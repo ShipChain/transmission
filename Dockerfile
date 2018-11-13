@@ -34,7 +34,7 @@ ENV PIPENV_CACHE_DIR=/build/pip.cache
 COPY compose/django/Pipfile* /build/
 COPY compose/django/pip.cache /build/pip.cache
 
-RUN pipenv install --deploy --system
+RUN pipenv install --dev --deploy --system
 
 RUN mkdir /app
 WORKDIR /app
