@@ -30,6 +30,11 @@ jobs:
             docker-compose -f compose/circleci.yml exec -T runserver prospector -o pylint
 
       - run:
+          name: Bandit SAST tool
+          command: |
+            docker-compose -f compose/circleci.yml exec -T runserver bandit -r apps
+
+      - run:
           name: Run unit tests and coverage report
           command: |
             docker-compose -f compose/circleci.yml exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report=xml:test-results/coverage.xml

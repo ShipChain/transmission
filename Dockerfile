@@ -35,6 +35,7 @@ COPY compose/django/Pipfile* /build/
 COPY compose/django/pip.cache /build/pip.cache
 
 RUN pipenv install --dev --deploy --system
+RUN pipenv check --system
 
 RUN mkdir /app
 WORKDIR /app

@@ -22,6 +22,7 @@ COPY pip.cache /build/pip.cache
 
 # Install dependencies from Pipfile (regenerate lock if necessary) #
 RUN . /opt/pipenv-venv/bin/activate && pipenv install --dev
+RUN . /opt/pipenv-venv/bin/activate && pipenv check
 
 RUN mkdir /app
 WORKDIR /app

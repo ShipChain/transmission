@@ -137,7 +137,7 @@ def async_job_fire(self):
 
                 countdown = (settings.CELERY_TXHASH_RETRY if isinstance(exc, TransactionCollisionException)
                              else settings.CELERY_WALLET_RETRY)
-                raise self.retry(exc=exc, countdown=countdown * random.uniform(0.5, 1.5))
+                raise self.retry(exc=exc, countdown=countdown * random.uniform(0.5, 1.5))  # nosec #B311
             except RPCError as rpc_error:
                 log_metric('transmission.error', tags={'method': 'async_job_fire', 'module': __name__,
                                                        'code': 'RPCError'})
