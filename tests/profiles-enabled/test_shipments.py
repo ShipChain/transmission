@@ -162,7 +162,7 @@ class ShipmentAPITests(APITestCase):
             # Sign tracking data using cert
             # track_dic = {'position': {'latitude': -81.048253, 'longitude': 34.628643, 'altitude': 924, 'source': 'gps',
             #                           'certainty': 95, 'speed': 34}, 'version': '1.0.0',
-            #              'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'}
+            #              'device': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'}
             track_dic = {
                 'position': {
                     'latitude': 75.0587610,
@@ -175,13 +175,14 @@ class ShipmentAPITests(APITestCase):
                 'version': '1.0.0',
                 'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75',
                 'timestamp': '2018-09-18T15:02:30.563847+00:00'
-            }
+           }
             with open('tests/data/eckey.pem', 'r') as key_file:
                 key_pem = key_file.read()
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
 
             # Send tracking update
             response = self.client.post(url, {'payload': signed_data}, format='json')
+            print(response.content)
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
             # Tracking data in db
