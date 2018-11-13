@@ -15,6 +15,7 @@ from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions
 from rest_framework import status
+from rest_framework import serializers as rest_serializers
 from rest_framework.utils import model_meta
 from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
@@ -293,7 +294,7 @@ class UnvalidatedTrackingDataSerializer(serializers.Serializer):
         return attrs
 
 
-class TrackingDataToDbSerializer(serializers.ModelSerializer):
+class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
     """
     Serializer for tracking data to be cached in db
     """
