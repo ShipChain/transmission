@@ -9,9 +9,9 @@ RUN mkdir /build
 WORKDIR /build
 
 # SUPPORT SSH FOR IAM USERS #
-RUN apt-get update && apt-get -y install openssh-server
+RUN apt-get update && apt-get -y install openssh-server python3-pip
 RUN mkdir /var/run/sshd /etc/cron.d
-RUN pip install keymaker
+RUN pip3 install keymaker
 RUN keymaker install
 
 # Configure public key SSH
@@ -22,13 +22,20 @@ RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
 RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync jq
 
 # Virtualenv for awscli #
-RUN pip install virtualenv
+RUN pip3 install virtualenv
 RUN virtualenv /opt/aws
-RUN . /opt/aws/bin/activate && pip install --upgrade awscli
+RUN . /opt/aws/bin/activate && pip3 install --upgrade awscli
 
-COPY ./compose/django/requirements.txt /build/
-COPY ./compose/django/pip.cache /build/pip.cache
-RUN pip install -r /build/requirements.txt --cache-dir=/build/pip.cache
+# Dependencies installation from Pipfile.lock
+RUN pip3 install --upgrade pip pipenv
+
+# Use pip caching
+ENV PIPENV_CACHE_DIR=/build/pip.cache
+COPY compose/django/Pipfile* /build/
+COPY compose/django/pip.cache /build/pip.cache
+
+RUN pipenv install --dev --deploy --system
+RUN pipenv check --system
 
 RUN mkdir /app
 WORKDIR /app

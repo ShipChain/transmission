@@ -13,7 +13,8 @@ then
     deactivate
 else
     echo "Copying pip cache to volume"
-    rsync -rc --chmod 777 /build/pip.cache/ /build/pip.volume
+    rsync --exclude=selfcheck.json -r --ignore-existing --chmod 777 /build/pip.cache/ /build/pip.volume
+    rsync -c /build/Pipfile.lock /app/compose/django/
 
     echo "Waiting for dependencies to come up in the stack"
     /wait-for-it.sh ${REDIS_NAME:-redis_db}:6379

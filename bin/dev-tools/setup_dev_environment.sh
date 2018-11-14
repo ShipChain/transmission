@@ -16,9 +16,6 @@ bin/dc build
 color_header "Starting services"
 bin/dc up -d
 
-color_header "Caching build files"
-bin/dev-tools/cache_pip_wheels.sh
-
 color_header "Five second pause to warm up" $COLOR_YELLOW
 sleep 5
 

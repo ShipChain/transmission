@@ -8,11 +8,21 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /build
 WORKDIR /build
 
-RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync
+RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync python3-pip
 
-COPY ./requirements.txt /build/
+# Virtualenv required for modifying Pipfile.lock #
+RUN pip3 install --upgrade pip pipenv virtualenv
+RUN virtualenv /opt/pipenv-venv
+ENV PATH=/opt/pipenv-venv/bin:$PATH
+
+# Copy Pipfiles and cache to image #
+ENV PIPENV_CACHE_DIR=/build/pip.cache
+COPY ./Pipfile* /build/
 COPY pip.cache /build/pip.cache
-RUN pip install -r /build/requirements.txt --cache-dir=/build/pip.cache
+
+# Install dependencies from Pipfile (regenerate lock if necessary) #
+RUN . /opt/pipenv-venv/bin/activate && pipenv install --dev
+RUN . /opt/pipenv-venv/bin/activate && pipenv check
 
 RUN mkdir /app
 WORKDIR /app

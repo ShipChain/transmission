@@ -79,6 +79,16 @@ The scripts provided in the [bin](bin) directory allow for easier interaction wi
   the `ROLE` environment variable.  For example if you want to use `my_settings.yml` with the scripts provided, 
   you would only need to set `ROLE=my_settings` in your environment.
 
+### Dependencies
+
+Transmission uses [Pipenv](https://pipenv.readthedocs.io/en/latest/) for dependency management. Hard dependencies are specified
+in the [Pipfile](compose/django/Pipfile) and then resolved at build-time into [Pipfile.lock](compose/django/Pipfile.lock). The
+Pipfile.lock file enumerates every version of every dependency used in a build; this file is checked-in and versioned.
+
+When using the `bin/dc build` command to build your local environment, `pipenv install --dev` will be run as part of the 
+[Dockerfile](compose/django/Dockerfile). **NOTE**: The generated Pipfile.lock will not be copied over to the local working 
+directory until the next time the entrypoint script is run, e.g. during the execution of `bin/dc up` or `bin/docker_tests`.
+
 ### Configuration
 
 Before you can begin using Transmission, you may need to do some configuration depending on your specific requirements.
