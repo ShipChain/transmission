@@ -70,7 +70,7 @@ class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        exclude = ('owner_id', 'geometry') if settings.PROFILES_ENABLED else ('geometry')
+        exclude = ('owner_id', 'geometry')
 
 
 class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -122,10 +122,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             for location_field in ['ship_from_location', 'ship_to_location']:
                 if location_field in validated_data:
                     data = validated_data.pop(location_field)
-
                     if 'owner_id' not in data:
                         data['owner_id'] = validated_data['owner_id']
-
                     extra_args[location_field], _ = Location.objects.get_or_create(**data)
 
             if 'device_id' in validated_data:
