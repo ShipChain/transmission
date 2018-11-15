@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('speed', models.IntegerField(validators=[django.core.validators.MinValueValidator(0)])),
                 ('timestamp', models.DateTimeField()),
                 ('version', models.CharField(max_length=36)),
-                ('device', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='shipments.Device')),
+                ('device_id', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='shipments.Device')),
                 ('shipment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shipments.Shipment')),
             ],
             options={
