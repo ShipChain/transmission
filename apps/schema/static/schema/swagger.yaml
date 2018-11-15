@@ -54,6 +54,18 @@ paths:
       - $ref: '#/components/parameters/shipment/ship_from_location_not_null'
       - $ref: '#/components/parameters/shipment/ship_to_location_not_null'
       - $ref: '#/components/parameters/shipment/final_destination_location_not_null'
+      - $ref: '#/components/parameters/shipment/ship_from_location__city'
+      - $ref: '#/components/parameters/shipment/ship_from_location__state'
+      - $ref: '#/components/parameters/shipment/ship_from_location__postal_code'
+      - $ref: '#/components/parameters/shipment/ship_from_location__country'
+      - $ref: '#/components/parameters/shipment/ship_to_location__city'
+      - $ref: '#/components/parameters/shipment/ship_to_location__state'
+      - $ref: '#/components/parameters/shipment/ship_to_location__postal_code'
+      - $ref: '#/components/parameters/shipment/ship_to_location__country'
+      - $ref: '#/components/parameters/shipment/final_destination_location__city'
+      - $ref: '#/components/parameters/shipment/final_destination_location__state'
+      - $ref: '#/components/parameters/shipment/final_destination_location__postal_code'
+      - $ref: '#/components/parameters/shipment/final_destination_location__country'
       tags:
       - Shipments
       responses:
@@ -502,6 +514,90 @@ components:
         name: final_destination_location_not_null
         in: query
         description: Returns shipments with associated final_destination_location objects.
+        schema:
+          type: string
+
+      ship_to_location__city:
+        name: ship_to_location__city
+        in: query
+        description: Returns shipments with associated ship_to_location city.
+        schema:
+          type: string
+
+      ship_to_location__state:
+        name: ship_to_location__state
+        in: query
+        description: Returns shipments with associated ship_to_location state.
+        schema:
+          type: string
+
+      ship_to_location__postal_code:
+        name: ship_to_location__postal_code
+        in: query
+        description: Returns shipments with associated ship_to_location postal code.
+        schema:
+          type: string
+
+      ship_to_location__country:
+        name: ship_to_location__state
+        in: query
+        description: Returns shipments with associated ship_to_location state.
+        schema:
+          type: string
+
+      ship_from_location__city:
+        name: ship_from_location__city
+        in: query
+        description: Returns shipments with associated ship_from_location city.
+        schema:
+          type: string
+
+      ship_from_location__state:
+        name: ship_from_location__state
+        in: query
+        description: Returns shipments with associated ship_from_location state.
+        schema:
+          type: string
+
+      ship_from_location__postal_code:
+        name: ship_from_location__postal_code
+        in: query
+        description: Returns shipments with associated ship_from_location postal code.
+        schema:
+          type: string
+
+      ship_from_location__country:
+        name: ship_from_location__state
+        in: query
+        description: Returns shipments with associated ship_from_location state.
+        schema:
+          type: string
+
+      final_destination_location__city:
+        name: final_destination_location__city
+        in: query
+        description: Returns shipments with associated final_destination_location city.
+        schema:
+          type: string
+
+      final_destination_location__state:
+        name: final_destination_location__state
+        in: query
+        description: Returns shipments with associated final_destination_location state.
+        schema:
+          type: string
+
+      final_destination_location__postal_code:
+        name: final_destination_location__postal_code
+        in: query
+        description: Returns shipments with associated final_destination_location postal code.
+        schema:
+          type: string
+
+      final_destination_location__country:
+        name: final_destination_location__state
+        in: query
+        description: Returns shipments with associated final_destination_location state.
         schema:
           type: string
 
