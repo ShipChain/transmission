@@ -431,19 +431,19 @@ components:
         type: integer
         format: int32
 
-    page_size:
-      name: page
-      in: query
-      description: Quantity of objects per page
-      required: false
-      schema:
-        type: integer
-        format: int32
-
-    ordering:
+    search:
       name: search
       in: query
-      description: Ordering of the objects
+      description: Shipment info to search for.
+      required: false
+      schema:
+        type: string
+        format: format
+
+    ordering:
+      name: ordering
+      in: query
+      description: Ordering of the objects. Default is descending order, add a `-` symbol before the variable to make it ascending.
       required: false
       schema:
         type: string

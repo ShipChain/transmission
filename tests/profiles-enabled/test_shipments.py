@@ -1,11 +1,7 @@
-import copy
 from unittest import mock
 
-import requests
 import boto3
 import jwt
-import json
-from geocoder.keys import mapbox_access_token
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient, force_authenticate
@@ -15,12 +11,10 @@ import httpretty
 import json
 import os
 import re
-from unittest.mock import patch
-
 from conf import test_settings
-from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus, Device
+
+from apps.shipments.models import Shipment, Location, Device
 from apps.shipments.rpc import ShipmentRPCClient
-from django.contrib.gis.geos import Point
 from apps.authentication import AuthenticatedUser
 from apps.utils import random_id
 from tests.utils import replace_variables_in_string, create_form_content
@@ -30,11 +24,12 @@ CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
 STORAGE_CRED_ID = '77b72202-5bcd-49f4-9860-bc4ec4fee07b'
 DEVICE_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
+OWNER_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
 LOCATION_NAME = "Test Location Name"
 LOCATION_NAME_2 = "Second Test Location Name"
 LOCATION_CITY = 'City'
 LOCATION_STATE = 'State'
-LOCATION_NUMBER = "555-555-5555"
+LOCATION_NUMBER = '555-555-5555'
 
 mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
 google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
@@ -283,6 +278,10 @@ class ShipmentAPITests(APITestCase):
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
         force_authenticate(response, user=self.user_1, token=token)
@@ -295,19 +294,30 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
         self.assertIsNotNone(response_data['meta']['async_job_id'])
 
-        previous_profiles_url = test_settings.PROFILES_URL
-        test_settings.PROFILES_URL = 'DISABLED'
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'bad': 'bad'}), status=status.HTTP_400_BAD_REQUEST)
+
+        response = self.client.post(url, post_data, content_type='application/vnd.api+json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
-                               body=json.dumps({'good': 'good'}), status=status.HTTP_400_BAD_REQUEST)
+                               body=json.dumps({'bad': 'bad'}), status=status.HTTP_400_BAD_REQUEST)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-
-        test_settings.PROFILES_URL = previous_profiles_url
-
-
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+       
+        with self.settings(PROFILES_ENABLED=False):
+            response = self.client.post(url, post_data, content_type='application/vnd.api+json')
+            print(response.content)
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
     @httpretty.activate
     def test_create_with_location(self):
@@ -338,6 +348,16 @@ class ShipmentAPITests(APITestCase):
                                                           'shipper_wallet_id': SHIPPER_WALLET_ID,
                                                           'storage_credentials_id': STORAGE_CRED_ID
                                                           })
+
+        one_location_profiles_disabled, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
+                                                                            'ship_from_location.city': LOCATION_CITY,
+                                                                            'ship_from_location.state': LOCATION_STATE,
+                                                                            'ship_from_location.owner_id': OWNER_ID,
+                                                                            'carrier_wallet_id': CARRIER_WALLET_ID,
+                                                                            'shipper_wallet_id': SHIPPER_WALLET_ID,
+                                                                            'storage_credentials_id': STORAGE_CRED_ID,
+                                                                            'owner_id': OWNER_ID
+                                                                           })
 
         two_locations, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
                                                            'ship_from_location.city': LOCATION_CITY,
@@ -383,12 +403,12 @@ class ShipmentAPITests(APITestCase):
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
 
         # Authenticated request should succeed using mapbox (if exists)
         token = jwt.encode({'email': 'a@domain.com', 'username': 'a@domain.com', 'aud': '11111'},
-                           private_key, algorithm='RS256',
-                           headers={'kid': '230498151c214b788dd97f22b85410a5', 'aud': '11111'})
-        token2 = jwt.encode({'email': 'a@domain.com', 'username': 'a@domain.com', 'aud': '11111'},
                            private_key, algorithm='RS256',
                            headers={'kid': '230498151c214b788dd97f22b85410a5', 'aud': '11111'})
         self.set_user(self.user_1, token)
@@ -493,16 +513,26 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_to_location.geometry.coords, (12.0, 23.0))
 
-        previous_profiles_url = test_settings.PROFILES_URL
-        test_settings.PROFILES_URL = 'DISABLED'
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
-                               body=json.dumps({'good': 'good'}), status=status.HTTP_400_BAD_REQUEST)
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'bad': 'bad'}), status=status.HTTP_400_BAD_REQUEST)
 
         response = self.client.post(url, one_location, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        test_settings.PROFILES_URL = previous_profiles_url
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'bad': 'bad'}), status=status.HTTP_400_BAD_REQUEST)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+
+        response = self.client.post(url, one_location, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
     def test_get_device_request_url(self):
 
@@ -960,6 +990,10 @@ class LocationAPITests(APITestCase):
         valid_data, content_type = create_form_content({'name': LOCATION_NAME, 'city': LOCATION_CITY,
                                                         'state': LOCATION_STATE})
 
+        valid_data_profiles_disabled, content_type = create_form_content({'name': LOCATION_NAME, 'city': LOCATION_CITY,
+                                                                          'state': LOCATION_STATE,
+                                                                          'owner_id': OWNER_ID})
+
         google_obj = {'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
         mapbox_obj = {'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [23, 12]}}]}
 
@@ -991,6 +1025,11 @@ class LocationAPITests(APITestCase):
         response_data = response.json()
         self.assertEqual(response_data['data']['attributes']['name'], LOCATION_NAME)
         self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [12.0, 23.0])
+
+        with self.settings(PROFILES_ENABLED=False, PROFILES_URL='DISABLED'):
+            response = self.client.post(url, valid_data_profiles_disabled, content_type=content_type)
+            print(response.content)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     @httpretty.activate
     def test_update_existing_location(self):

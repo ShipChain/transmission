@@ -70,7 +70,7 @@ class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        exclude = ('owner_id', 'geometry') if settings.PROFILES_ENABLED else ('geometry')
+        exclude = ('owner_id', 'geometry')
 
 
 class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -122,9 +122,9 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             for location_field in ['ship_from_location', 'ship_to_location']:
                 if location_field in validated_data:
                     data = validated_data.pop(location_field)
-
-                    extra_args[location_field], _ = Location.objects.get_or_create(**data, owner_id=validated_data[
-                        'owner_id'])
+                    if 'owner_id' not in data:
+                        data['owner_id'] = validated_data['owner_id']
+                    extra_args[location_field], _ = Location.objects.get_or_create(**data)
 
             if 'device_id' in validated_data:
                 extra_args['device'] = Device.get_or_create_with_permission(auth, validated_data.pop('device_id'))
@@ -141,6 +141,19 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                 raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
 
         return shipper_wallet_id
+
+    def validate_storage_credentials_id(self, storage_credentials_id):
+        if settings.PROFILES_ENABLED:
+            auth = self.context['auth']
+            response = settings.REQUESTS_SESSION.get(
+                f'{settings.PROFILES_URL}/api/v1/storage_credentials/{storage_credentials_id}/',
+                headers={'Authorization': 'JWT {}'.format(auth.decode())})
+
+            if response.status_code != status.HTTP_200_OK:
+                raise serializers.ValidationError(
+                    'User does not have access to this storage credential in ShipChain Profiles')
+
+        return storage_credentials_id
 
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
