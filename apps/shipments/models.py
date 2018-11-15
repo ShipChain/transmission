@@ -389,7 +389,7 @@ class LoadShipment(models.Model):
 class TrackingData(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     created_at = models.DateTimeField(auto_now_add=True)
-    device = models.ForeignKey(Device, on_delete=models.DO_NOTHING)
+    device_id = models.ForeignKey(Device, on_delete=models.DO_NOTHING)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
     latitude = models.FloatField(max_length=36)
     longitude = models.FloatField(max_length=36)
