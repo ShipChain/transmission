@@ -32,7 +32,8 @@ jobs:
       - run:
           name: Run unit tests and coverage report
           command: |
-            docker-compose -f compose/circleci.yml exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report=xml:test-results/coverage.xml
+            docker-compose -f compose/circleci.yml exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled
+            docker-compose -f compose/circleci.yml exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report=xml:test-results/coverage.xml --cov-append --ds=conf/test_settings_profiles_disabled tests/profiles-disabled
 
       - run:
           name: Copy artifacts from Docker
