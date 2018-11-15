@@ -154,7 +154,7 @@ class Load110RPCClient(ShipmentRPCClient):
         raise RPCError("Invalid response from Engine")
 
 
-class RPCClientFactory(object):
+class RPCClientFactory:
     clients = {}
 
     @staticmethod
