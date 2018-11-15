@@ -69,7 +69,7 @@ def build_feature_collection(features):
     return FeatureCollection(feature_list)
 
 
-class DeviceTrackingPoint(object):
+class DeviceTrackingPoint:
     """
     Serialize the returned tracking data in to this class to catch formatting errors and assist in
     generating the appropriate GeoJSON Features correctly

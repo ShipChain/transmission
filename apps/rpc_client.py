@@ -26,7 +26,7 @@ class RPCError(APIException):
             self.status_code = status_code
 
 
-class RPCClient(object):
+class RPCClient:
     def __init__(self):
         self.url = settings.ENGINE_RPC_URL
         self.payload = {"jsonrpc": "2.0", "id": 0, "params": {}}

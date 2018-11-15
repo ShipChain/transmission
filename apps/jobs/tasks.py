@@ -46,10 +46,10 @@ class AsyncTask:
                     LOG.debug(f'Lock on {wallet_id} acquired, attempting to send transaction')
                     self.async_job.wallet_lock_token = wallet_lock.local.token.decode()
                     self._send_transaction(*self._sign_transaction(self._get_transaction()))
-                except Exception as e:
+                except Exception as exc:
                     # If there was an exception, release the lock and re-raise
                     wallet_lock.release()
-                    raise e
+                    raise exc
                 LOG.debug(f'Transaction submitted via AsyncJob {self.async_job.id}')
                 log_metric('transmission.info', tags={'method': 'async_job_fire', 'module': __name__})
             else:  # Could not lock on wallet, transaction already in progress
@@ -132,30 +132,30 @@ def async_job_fire(self):
             try:
                 task = AsyncTask(async_job_id)
                 task.run()
-            except (WalletInUseException, TransactionCollisionException) as ex:
-                LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {ex}")
+            except (WalletInUseException, TransactionCollisionException) as exc:
+                LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {exc}")
 
-                countdown = (settings.CELERY_TXHASH_RETRY if isinstance(ex, TransactionCollisionException)
+                countdown = (settings.CELERY_TXHASH_RETRY if isinstance(exc, TransactionCollisionException)
                              else settings.CELERY_WALLET_RETRY)
-                raise self.retry(exc=ex, countdown=countdown * random.uniform(0.5, 1.5))
+                raise self.retry(exc=exc, countdown=countdown * random.uniform(0.5, 1.5))  # nosec #B311
             except RPCError as rpc_error:
                 log_metric('transmission.error', tags={'method': 'async_job_fire', 'module': __name__,
                                                        'code': 'RPCError'})
                 LOG.error(f"AsyncJob Exception ({async_job_id}): {rpc_error}")
                 raise rpc_error
-            except ObjectDoesNotExist as ex:
-                LOG.error(f'Could not find AsyncTask ({async_job_id}): {ex}')
-                raise ex
-            except Exception as ex:
-                LOG.error(f'Unhandled AsyncJob exception ({async_job_id}): {ex}')
-                raise ex
-        except Exception as ex:
+            except ObjectDoesNotExist as exc:
+                LOG.error(f'Could not find AsyncTask ({async_job_id}): {exc}')
+                raise exc
+            except Exception as exc:
+                LOG.error(f'Unhandled AsyncJob exception ({async_job_id}): {exc}')
+                raise exc
+        except Exception as exc:
             if self.request.retries >= self.max_retries and task:
                 from .models import JobState
-                LOG.error(f"AsyncJob ({async_job_id}) failed after max retries: {ex}")
+                LOG.error(f"AsyncJob ({async_job_id}) failed after max retries: {exc}")
                 task.async_job.state = JobState.FAILED
                 task.async_job.save()
-            raise ex
+            raise exc
         finally:
             task_lock.release()
     else:

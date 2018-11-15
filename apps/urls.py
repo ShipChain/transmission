@@ -1,4 +1,3 @@
-# pylint: disable=C0103
 """transmission URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -24,6 +23,8 @@ from apps.eth import views as eth
 
 
 API_PREFIX = r'^api/(?P<version>(v1|v2))'
+
+# pylint: disable=invalid-name
 
 router = routers.SimpleRouter()
 router.register(f'{API_PREFIX[1:]}/shipments', shipments.ShipmentViewSet)

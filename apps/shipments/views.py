@@ -111,10 +111,9 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     def tracking(self, request, version, pk):
         if request.method == 'GET':
             return self.get_tracking_data(request, version, pk)
-        elif request.method == 'POST':
+        if request.method == 'POST':
             return self.add_tracking_data(request, version, pk)
-        else:
-            raise exceptions.MethodNotAllowed(request.method)
+        raise exceptions.MethodNotAllowed(request.method)
 
     def update(self, request, *args, **kwargs):
         """
