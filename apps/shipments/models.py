@@ -401,9 +401,6 @@ class TrackingData(models.Model):
     class Meta:
         ordering = ('created_at',)
 
-    def set_geometry(self):
-        self.geometry = Point(self.latitude, self.longitude)
-
     @property
     def timestamp_no_tz(self):
         return self.timestamp.replace(tzinfo=None)
