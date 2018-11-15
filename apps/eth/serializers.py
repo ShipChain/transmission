@@ -1,6 +1,7 @@
 from rest_framework_json_api import serializers
 
-from apps.eth.models import Event, EthAction, Transaction, TransactionReceipt, HASH_REGEX
+from apps.eth.fields import HASH_REGEX
+from apps.eth.models import Event, EthAction, Transaction, TransactionReceipt
 from apps.jobs.serializers import AsyncJobSerializer
 
 

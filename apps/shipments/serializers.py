@@ -18,7 +18,7 @@ from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
 
 
-from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus
+from apps.shipments.models import Shipment, Device, Location, LoadShipmentTxm, FundingType, EscrowState, ShipmentState
 
 
 class NullableFieldsMixin:
@@ -78,11 +78,11 @@ class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     Serializer for a location, used nested in a Shipment
     """
     funding_type = EnumField(FundingType, ints_as_names=True)
-    escrow_status = EnumField(EscrowStatus, ints_as_names=True)
-    shipment_status = EnumField(ShipmentStatus, ints_as_names=True)
+    escrow_status = EnumField(EscrowState, ints_as_names=True)
+    shipment_state = EnumField(ShipmentState, ints_as_names=True)
 
     class Meta:
-        model = LoadShipment
+        model = LoadShipmentTxm
         fields = '__all__'
 
 

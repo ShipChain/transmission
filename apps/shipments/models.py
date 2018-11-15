@@ -20,6 +20,7 @@ from rest_framework.exceptions import ValidationError, Throttled, PermissionDeni
 from rest_framework.status import HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 
+from apps.eth.fields import AddressField, HashField
 from apps.eth.models import EthListener
 from apps.jobs.models import JobListener, AsyncJob, JobState
 from apps.utils import random_id
@@ -134,61 +135,26 @@ class FundingType(Enum):
     ETHER = 2
 
 
-class EscrowStatus(Enum):
-    CONTRACT_INITIATED = 1
-    CONTRACT_SETUP = 2
-    CONTRACT_COMMITTED = 3
-    CONTRACT_COMPLETED = 4
-    CONTRACT_ACCEPTED = 5
-    CONTRACT_CANCELED = 6
+class ShipmentState(Enum):
+    NOT_CREATED = 0
+    CREATED = 1
+    IN_PROGRESS = 2
+    COMPLETE = 3
+    CANCELED = 4
 
 
-class ShipmentStatus(Enum):
-    PENDING = 0
-    INITIATED = 1
-    COMPLETED = 2
-    CANCELED = 3
-
-
-class LoadShipment(models.Model):
-    id = models.CharField(primary_key=True, default=random_id, max_length=36)
-
-    shipment_id = models.IntegerField(blank=True, null=True)
-    funding_type = EnumField(enum=FundingType)
-
-    shipment_amount = models.IntegerField()
-    paid_amount = models.IntegerField(default=0)
-    paid_tokens = models.DecimalField(max_digits=40, decimal_places=18, default=0)
-
-    shipper = models.CharField(max_length=42)
-    carrier = models.CharField(max_length=42)
-    moderator = models.CharField(max_length=42, blank=True, null=True)
-
-    escrow_status = EnumField(enum=EscrowStatus, default=EscrowStatus.CONTRACT_INITIATED)
-    shipment_status = EnumField(enum=ShipmentStatus, default=ShipmentStatus.PENDING)
-
-    contract_funded = models.BooleanField(default=False)
-    shipment_created = models.BooleanField(default=False)
-    valid_until = models.IntegerField()
-    start_block = models.IntegerField(blank=True, null=True)
-    end_block = models.IntegerField(blank=True, null=True)
-
-    escrow_funded = models.BooleanField(default=False)
-    shipment_committed_by_carrier = models.BooleanField(default=False)
-    commitment_confirmed_date = models.IntegerField(blank=True, null=True)
-
-    shipment_completed_by_carrier = models.BooleanField(default=False)
-    shipment_accepted_by_shipper = models.BooleanField(default=False)
-    shipment_canceled_by_shipper = models.BooleanField(default=False)
-    escrow_paid = models.BooleanField(default=False)
-
-    vault_hash = models.CharField(max_length=66, blank=False, null=True)
+class EscrowState(Enum):
+    NOT_CREATED = 0
+    CREATED = 1
+    FUNDED = 2
+    RELEASED = 3
+    REFUNDED = 4
+    WITHDRAWN = 5
 
 
 class Shipment(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     owner_id = models.CharField(null=False, max_length=36)
-    load_data = models.OneToOneField(LoadShipment, on_delete=models.PROTECT, null=True)
 
     storage_credentials_id = models.CharField(null=False, max_length=36)
     vault_id = models.CharField(null=True, max_length=36)
@@ -336,3 +302,36 @@ class Shipment(models.Model):
     # Defaults
     FUNDING_TYPE = FundingType.NO_FUNDING.value
     SHIPMENT_AMOUNT = 0
+
+
+class LoadShipment(models.Model):
+    shipment = models.OneToOneField(Shipment, primary_key=True, on_delete=models.CASCADE)
+
+    # Shipment.Data
+    shipper = AddressField()
+    carrier = AddressField()
+    moderator = AddressField()
+    shipment_state = EnumField(enum=ShipmentState, default=ShipmentState.NOT_CREATED)
+
+    # Escrow.Data
+    contracted_amount = models.IntegerField(default=0)
+    funded_amount = models.IntegerField(default=0)
+    created_at = models.IntegerField(default=0)
+    funding_type = EnumField(enum=FundingType, default=FundingType.NO_FUNDING)
+    escrow_state = EnumField(enum=EscrowState, default=EscrowState.NOT_CREATED)
+    refund_address = AddressField()
+
+    # Vault.Data
+    vault_hash = HashField()
+    vault_uri = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        abstract = True
+
+
+class LoadShipmentTxm(LoadShipment):
+    pass
+
+
+class LoadShipmentEth(LoadShipment):
+    pass
