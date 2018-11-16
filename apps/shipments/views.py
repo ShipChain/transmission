@@ -22,7 +22,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
-    filtering_fields = ['ship_from_location', 'ship_to_location', 'final_destination_location']
+    filtering_fields = ['mode']
     searchable_fields = ['mode', 'pickup_estimated', 'delivery_estimated']
     for location_field in ['ship_from_location', 'ship_to_location', 'final_destination_location']:
         for field in ['name', 'address_1', 'city', 'state', 'postal_code', 'country']:
