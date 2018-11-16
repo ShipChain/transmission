@@ -90,14 +90,14 @@ class TransactionReceipt(models.Model):
 
     block_hash = HashField()
     block_number = models.BigIntegerField()
-    contract_address = AddressField()
+    contract_address = AddressField(null=True)
     cumulative_gas_used = models.IntegerField()
     from_address = AddressField()
     gas_used = models.IntegerField()
     logs = JSONField()
     logs_bloom = models.CharField(max_length=514)
     status = models.BooleanField()
-    to_address = AddressField()
+    to_address = AddressField(null=True)
     eth_action = models.OneToOneField(EthAction, db_column="transaction_hash",
                                       primary_key=True, on_delete=models.CASCADE)
     transaction_index = models.IntegerField(null=True)

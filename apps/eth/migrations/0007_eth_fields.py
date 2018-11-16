@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactionreceipt',
             name='contract_address',
-            field=apps.eth.fields.AddressField(default='0x0', max_length=42, validators=[django.core.validators.RegexValidator(message='Invalid address.', regex='^0x([A-Fa-f0-9]{40})$')]),
+            field=apps.eth.fields.AddressField(default='0x0', max_length=42, null=True, validators=[django.core.validators.RegexValidator(message='Invalid address.', regex='^0x([A-Fa-f0-9]{40})$')]),
         ),
         migrations.AlterField(
             model_name='transactionreceipt',
@@ -60,6 +60,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactionreceipt',
             name='to_address',
-            field=apps.eth.fields.AddressField(default='0x0', max_length=42, validators=[django.core.validators.RegexValidator(message='Invalid address.', regex='^0x([A-Fa-f0-9]{40})$')]),
+            field=apps.eth.fields.AddressField(default='0x0', max_length=42, null=True, validators=[django.core.validators.RegexValidator(message='Invalid address.', regex='^0x([A-Fa-f0-9]{40})$')]),
         ),
     ]
