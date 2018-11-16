@@ -1,9 +1,14 @@
 import decimal
 import json
 import re
+import string
+import random
+import boto3
 
+from botocore.client import Config
 from drf_enum_field.fields import EnumField
 
+from django.conf import settings
 
 def random_id():
     """
@@ -77,3 +82,44 @@ class DecimalEncoder(json.JSONEncoder):
         if isinstance(o, decimal.Decimal):
             return float(o)
         return super(DecimalEncoder, self).default(o)
+
+
+def random_string(length=10):
+    """
+    :param length: length of the string to generate, default = 10
+    :return: chars type: XdkjNr3Kgl4
+    """
+    chars = string.ascii_uppercase + string.digits + string.ascii_lowercase
+    return ''.join(random.choice(chars) for _ in range(length))
+
+
+def get_s3_client():
+    if settings.ENVIRONMENT in ['LOCAL', 'TEST']:
+        s3 = boto3.client(
+            's3',
+            endpoint_url=settings.SCHEMA + settings.S3_HOST,
+            aws_access_key_id=settings.AWS_SERVER_KEY,
+            aws_secret_access_key=settings.AWS_SERVER_SECRET_KEY,
+            config=Config(signature_version='s3v4'),
+            region_name='us-east-1'
+        )
+
+        s3_resource = boto3.resource(
+            's3',
+            endpoint_url=settings.SCHEMA + settings.S3_HOST,
+            aws_access_key_id=settings.AWS_SERVER_KEY,
+            aws_secret_access_key=settings.AWS_SERVER_SECRET_KEY,
+            config=Config(signature_version='s3v4'),
+            region_name='us-east-1'
+        )
+    else:
+        session = boto3.Session(
+            aws_access_key_id=settings.AWS_SERVER_KEY,
+            aws_secret_access_key=settings.AWS_SERVER_SECRET_KEY,
+        )
+
+        s3 = session.client('s3')
+
+        s3_resource = None
+
+    return s3, s3_resource

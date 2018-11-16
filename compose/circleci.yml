@@ -1,6 +1,18 @@
 version: '2.1'
 services:
 
+  minio:
+    image: minio/minio
+    expose:
+      - '9000'
+    networks:
+      - portal
+    environment:
+    - MINIO_ACCESS_KEY=TEST-DEV-KEY
+    - MINIO_SECRET_KEY=NON-TRIVIAL-SECRETKEY
+    - MINIO_DOMAIN=minio
+    command: server /data --address minio:9000
+
   redis_db:
     image: circleci/redis
     expose:
@@ -35,6 +47,7 @@ services:
     links:
       - psql
       - redis_db
+      - minio
     environment:
       - ENV
       - SECRET_KEY
