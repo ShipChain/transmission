@@ -31,9 +31,9 @@ class LoadEventHandler:
 
     @staticmethod
     def shipment_created(event, shipment):
-        shipment.loadshipmenteth.shipper = event.return_values['msgSender']
-        shipment.loadshipmenteth.shipment_state = ShipmentState.CREATED
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.shipper = event.return_values['msgSender']
+        shipment.loadshipment.shipment_state = ShipmentState.CREATED
+        shipment.loadshipment.save()
 
         # Add vault data to new Shipment
         rpc_client = RPCClientFactory.get_client()
@@ -46,69 +46,69 @@ class LoadEventHandler:
 
     @staticmethod
     def shipment_carrier_set(event, shipment):
-        shipment.loadshipmenteth.carrier = event.return_values['carrier']
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.carrier = event.return_values['carrier']
+        shipment.loadshipment.save()
 
     @staticmethod
     def shipment_moderator_set(event, shipment):
-        shipment.loadshipmenteth.moderator = event.return_values['moderator']
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.moderator = event.return_values['moderator']
+        shipment.loadshipment.save()
 
     @staticmethod
     def shipment_in_progress(event, shipment):
-        shipment.loadshipmenteth.shipment_state = ShipmentState.IN_PROGRESS
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.shipment_state = ShipmentState.IN_PROGRESS
+        shipment.loadshipment.save()
 
     @staticmethod
     def shipment_complete(event, shipment):
-        shipment.loadshipmenteth.shipment_state = ShipmentState.COMPLETE
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.shipment_state = ShipmentState.COMPLETE
+        shipment.loadshipment.save()
 
     @staticmethod
     def shipment_canceled(event, shipment):
-        shipment.loadshipmenteth.shipment_state = ShipmentState.CANCELED
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.shipment_state = ShipmentState.CANCELED
+        shipment.loadshipment.save()
 
     @staticmethod
     def vault_uri(event, shipment):
-        shipment.loadshipmenteth.vault_uri = event.return_values['vaultUri']
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.vault_uri = event.return_values['vaultUri']
+        shipment.loadshipment.save()
 
     @staticmethod
     def vault_hash(event, shipment):
-        shipment.loadshipmenteth.vault_hash = event.return_values['vaultHash']
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.vault_hash = event.return_values['vaultHash']
+        shipment.loadshipment.save()
 
     @staticmethod
     def escrow_deposited(event, shipment):
-        shipment.loadshipmenteth.funded_amount += event.return_values['amount']
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.funded_amount += event.return_values['amount']
+        shipment.loadshipment.save()
 
     @staticmethod
     def escrow_funded(event, shipment):
-        shipment.loadshipmenteth.escrow_state = EscrowState.FUNDED
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.escrow_state = EscrowState.FUNDED
+        shipment.loadshipment.save()
 
     @staticmethod
     def escrow_released(event, shipment):
-        shipment.loadshipmenteth.escrow_state = EscrowState.RELEASED
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.escrow_state = EscrowState.RELEASED
+        shipment.loadshipment.save()
 
     @staticmethod
     def escrow_refunded(event, shipment):
-        shipment.loadshipmenteth.escrow_state = EscrowState.REFUNDED
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.escrow_state = EscrowState.REFUNDED
+        shipment.loadshipment.save()
 
     @staticmethod
     def escrow_withdrawn(event, shipment):
-        shipment.loadshipmenteth.escrow_state = EscrowState.WITHDRAWN
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.escrow_state = EscrowState.WITHDRAWN
+        shipment.loadshipment.save()
 
     @staticmethod
     def escrow_created(event, shipment):
-        shipment.loadshipmenteth.funding_type = event.return_values['fundingType']
-        shipment.loadshipmenteth.contracted_amount = event.return_values['contractedAmount']
-        shipment.loadshipmenteth.created_at = event.return_values['createdAt']
-        shipment.loadshipmenteth.refund_address = event.return_values['msgSender']
-        shipment.loadshipmenteth.shipment_state = EscrowState.CREATED
-        shipment.loadshipmenteth.save()
+        shipment.loadshipment.funding_type = event.return_values['fundingType']
+        shipment.loadshipment.contracted_amount = event.return_values['contractedAmount']
+        shipment.loadshipment.created_at = event.return_values['createdAt']
+        shipment.loadshipment.refund_address = event.return_values['msgSender']
+        shipment.loadshipment.shipment_state = EscrowState.CREATED
+        shipment.loadshipment.save()

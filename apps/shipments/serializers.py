@@ -18,7 +18,7 @@ from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
 
 
-from apps.shipments.models import Shipment, Device, Location, LoadShipmentTxm, FundingType, EscrowState, ShipmentState
+from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState
 
 
 class NullableFieldsMixin:
@@ -82,7 +82,7 @@ class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     shipment_state = EnumField(ShipmentState, ints_as_names=True)
 
     class Meta:
-        model = LoadShipmentTxm
+        model = LoadShipment
         fields = '__all__'
 
 
@@ -90,7 +90,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     """
     Serializer for a shipment object
     """
-    load_data = LoadShipmentSerializer(source='loadshipmenteth', required=False)
+    load_data = LoadShipmentSerializer(source='loadshipment', required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
@@ -204,7 +204,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 class ShipmentTxSerializer(serializers.ModelSerializer):
     async_job_id = serializers.CharField(max_length=36)
 
-    load_data = LoadShipmentSerializer(source='loadshipmenttxm', required=False)
+    load_data = LoadShipmentSerializer(source='loadshipment', required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)

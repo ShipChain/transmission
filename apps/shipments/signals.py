@@ -8,7 +8,7 @@ from apps.eth.models import TransactionReceipt
 from apps.jobs.models import JobState, MessageType, AsyncJob
 from apps.jobs.signals import job_update
 from .events import LoadEventHandler
-from .models import Shipment, LoadShipmentTxm, LoadShipmentEth, Location
+from .models import Shipment, LoadShipment, Location
 from .rpc import RPCClientFactory
 from .serializers import ShipmentVaultSerializer
 
@@ -50,11 +50,9 @@ def shipment_post_save(sender, **kwargs):
 
         # Create LoadShipment entities
         # TODO: Get FundingType,ShipmentAmount for use in LOAD Contract/LoadShipment
-        LoadShipmentTxm.objects.create(shipment=instance,
-                                       funding_type=Shipment.FUNDING_TYPE,
-                                       contracted_amount=Shipment.SHIPMENT_AMOUNT)
-
-        LoadShipmentEth.objects.create(shipment=instance)
+        LoadShipment.objects.create(shipment=instance,
+                                    funding_type=Shipment.FUNDING_TYPE,
+                                    contracted_amount=Shipment.SHIPMENT_AMOUNT)
 
         instance.vault_id = vault_id
         Shipment.objects.filter(id=instance.id).update(vault_id=vault_id)
@@ -68,10 +66,10 @@ def shipment_post_save(sender, **kwargs):
         instance.update_vault_hash(signature['hash'])
 
 
-@receiver(post_save, sender=LoadShipmentTxm, dispatch_uid='loadshipmenttxm_post_save')
-def loadshipmenttxm_post_save(sender, **kwargs):
+@receiver(post_save, sender=LoadShipment, dispatch_uid='loadshipment_post_save')
+def loadshipment_post_save(sender, **kwargs):
     instance, created = kwargs["instance"], kwargs["created"]
-    LOG.debug(f'LoadShipmentTxm post save for Shipment: {instance.shipment.id}')
+    LOG.debug(f'LoadShipment post save for Shipment: {instance.shipment.id}')
     if created:
         LOG.debug(f'Creating a shipment on the load contract.')
         # Create shipment on the LOAD contract
@@ -84,9 +82,6 @@ def loadshipmenttxm_post_save(sender, **kwargs):
             signing_wallet_id=instance.shipment.shipper_wallet_id,
             listener=instance.shipment
         )
-    else:
-        # TODO: Update loadshipmenteth with new values
-        pass
 
 
 @receiver(pre_save, sender=Location, dispatch_uid='location_pre_save')

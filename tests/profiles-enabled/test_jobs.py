@@ -120,7 +120,7 @@ class JobsAPITests(APITestCase):
                                                           shipper_wallet_id=SHIPPER_WALLET_ID,
                                                           storage_credentials_id=STORAGE_CRED_ID))
 
-            self.load_shipments.append(self.shipments[0].loadshipmenttxm)
+            self.load_shipments.append(self.shipments[0].loadshipment)
 
     def test_jobs_populated(self):
         """

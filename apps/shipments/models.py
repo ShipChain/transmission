@@ -245,7 +245,7 @@ class Shipment(models.Model):
     def update_vault_hash(self, vault_hash, rate_limit=False):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
-        if self.loadshipmenteth and self.loadshipmenteth.shipment_state is not ShipmentState.NOT_CREATED:
+        if self.loadshipment and self.loadshipment.shipment_state is not ShipmentState.NOT_CREATED:
             rpc_client = RPCClientFactory.get_client(self.contract_version)
             job_queryset = AsyncJob.objects.filter(
                 joblistener__shipments__id=self.id,
@@ -291,10 +291,10 @@ class Shipment(models.Model):
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
                     listener=self)
-            self.loadshipmenttxm.vault_hash = vault_hash
-            self.loadshipmenttxm.save()
+            self.loadshipment.vault_hash = vault_hash
+            self.loadshipment.save()
         else:
-            LOG.info(f'Shipment {self.id} tried to update_vault_hash before load_data.shipment_id was set.')
+            LOG.info(f'Shipment {self.id} tried to update_vault_hash before contract shipment was created.')
             log_metric('transmission.error', tags={'method': 'shipment.update_vault_hash', 'code': 'call_too_early',
                                                    'module': __name__})
         return async_job
@@ -324,14 +324,3 @@ class LoadShipment(models.Model):
     # Vault.Data
     vault_hash = HashField()
     vault_uri = models.CharField(max_length=255, blank=True)
-
-    class Meta:
-        abstract = True
-
-
-class LoadShipmentTxm(LoadShipment):
-    pass
-
-
-class LoadShipmentEth(LoadShipment):
-    pass
