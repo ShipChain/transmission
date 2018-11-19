@@ -242,7 +242,9 @@ class Shipment(models.Model):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
         return f"{settings.PROFILES_URL}/api/v1/device/?on_shipment={self.vault_id}"
 
-    def update_vault_hash(self, vault_hash, rate_limit=False):
+    # def update_vault_uri
+
+    def set_vault_hash(self, vault_hash, rate_limit=False):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.loadshipment and self.loadshipment.shipment_state is not ShipmentState.NOT_CREATED:
@@ -250,7 +252,7 @@ class Shipment(models.Model):
             job_queryset = AsyncJob.objects.filter(
                 joblistener__shipments__id=self.id,
                 state=JobState.PENDING,
-                parameters__rpc_method=rpc_client.update_vault_hash_transaction.__name__,
+                parameters__rpc_method=rpc_client.set_vault_hash_tx.__name__,
                 parameters__signing_wallet_id=self.shipper_wallet_id,
             )
             if job_queryset.count():
@@ -275,7 +277,7 @@ class Shipment(models.Model):
                 LOG.debug(f'No pending vault hash updates for {self.id}, '
                           f'sending one in {settings.VAULT_HASH_RATE_LIMIT} minutes')
                 async_job = AsyncJob.rpc_job_for_listener(
-                    rpc_method=rpc_client.update_vault_hash_transaction,
+                    rpc_method=rpc_client.set_vault_hash_tx,
                     rpc_parameters=[self.shipper_wallet_id,
                                     self.id,
                                     vault_hash],
@@ -285,7 +287,7 @@ class Shipment(models.Model):
             else:
                 LOG.debug(f'Shipment {self.id} requested a vault hash update')
                 async_job = AsyncJob.rpc_job_for_listener(
-                    rpc_method=rpc_client.update_vault_hash_transaction,
+                    rpc_method=rpc_client.set_vault_hash_tx,
                     rpc_parameters=[self.shipper_wallet_id,
                                     self.id,
                                     vault_hash],
@@ -294,8 +296,8 @@ class Shipment(models.Model):
             self.loadshipment.vault_hash = vault_hash
             self.loadshipment.save()
         else:
-            LOG.info(f'Shipment {self.id} tried to update_vault_hash before contract shipment was created.')
-            log_metric('transmission.error', tags={'method': 'shipment.update_vault_hash', 'code': 'call_too_early',
+            LOG.info(f'Shipment {self.id} tried to set_vault_hash before contract shipment was created.')
+            log_metric('transmission.error', tags={'method': 'shipment.set_vault_hash', 'code': 'call_too_early',
                                                    'module': __name__})
         return async_job
 

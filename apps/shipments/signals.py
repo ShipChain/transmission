@@ -63,7 +63,7 @@ def shipment_post_save(sender, **kwargs):
                                                  instance.vault_id, ShipmentVaultSerializer(instance).data)
         LOG.debug(f'Updating LOAD contract with vault uri/hash {signature["hash"]}.')
         # Update LOAD contract with vault uri/hash
-        instance.update_vault_hash(signature['hash'])
+        instance.set_vault_hash(signature['hash'])
 
 
 @receiver(post_save, sender=LoadShipment, dispatch_uid='loadshipment_post_save')

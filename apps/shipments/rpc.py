@@ -125,16 +125,16 @@ class ShipmentRPCClient(RPCClient):
         raise RPCError("Invalid response from Engine")
 
     @abstractmethod
-    def update_vault_hash_transaction(self, wallet_id, current_shipment_id, vault_hash):
+    def set_vault_hash_tx(self, wallet_id, current_shipment_id, vault_hash):
         pass
 
 
 class Load110RPCClient(ShipmentRPCClient):
 
-    def update_vault_hash_transaction(self, wallet_id, current_shipment_id, vault_hash):
+    def set_vault_hash_tx(self, wallet_id, current_shipment_id, vault_hash):
         LOG.debug(f'Updating vault hash transaction with current_shipment_id {current_shipment_id},'
                   f'vault_hash {vault_hash}, and wallet_id {wallet_id}.')
-        log_metric('transmission.info', tags={'method': 'shipment_rpcclient.update_vault_hash_transaction',
+        log_metric('transmission.info', tags={'method': 'shipment_rpcclient.set_vault_hash_tx',
                                               'module': __name__})
 
         result = self.call('load.1.1.0.set_vault_hash_tx', {
@@ -148,7 +148,7 @@ class Load110RPCClient(ShipmentRPCClient):
                 LOG.debug('Successful update of vault hash transaction.')
                 return result['transaction']
 
-        log_metric('transmission.error', tags={'method': 'shipment_rpcclient.update_vault_hash_transaction',
+        log_metric('transmission.error', tags={'method': 'shipment_rpcclient.set_vault_hash_tx',
                                                'module': __name__, 'code': 'RPCError'})
         LOG.error('Invalid update of vault hash transaction.')
         raise RPCError("Invalid response from Engine")
