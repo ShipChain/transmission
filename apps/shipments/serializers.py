@@ -90,7 +90,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     """
     Serializer for a shipment object
     """
-    load_data = LoadShipmentSerializer(source='loadshipmenttxm', required=False)
+    load_data = LoadShipmentSerializer(source='loadshipmenteth', required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)

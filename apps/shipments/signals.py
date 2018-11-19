@@ -7,7 +7,8 @@ from apps.eth.signals import event_update
 from apps.eth.models import TransactionReceipt
 from apps.jobs.models import JobState, MessageType, AsyncJob
 from apps.jobs.signals import job_update
-from .models import Shipment, LoadShipmentTxm, LoadShipmentEth, Location, EscrowState, ShipmentState
+from .events import LoadEventHandler
+from .models import Shipment, LoadShipmentTxm, LoadShipmentEth, Location
 from .rpc import RPCClientFactory
 from .serializers import ShipmentVaultSerializer
 
@@ -30,31 +31,8 @@ def shipment_job_update(sender, message, listener, **kwargs):
 
 @receiver(event_update, sender=Shipment, dispatch_uid='shipment_event_update')
 def shipment_event_update(sender, event, listener, **kwargs):
-    LOG.debug(f'Shipment event update with listener {listener.id}.')
-
-    if event.event_name == "ShipmentCreated":
-        LOG.debug(f'Handling ShipmentCreated Event.')
-        listener.loaddataeth.shipper = event.return_values['msgSender']
-        listener.loaddataeth.shipment_state = ShipmentState.CREATED
-        listener.loaddataeth.save()
-
-        # Add vault data to new Shipment
-        rpc_client = RPCClientFactory.get_client()
-        signature = rpc_client.add_shipment_data(listener.storage_credentials_id, listener.shipper_wallet_id,
-                                                 listener.vault_id, ShipmentVaultSerializer(listener).data)
-
-        # Update LOAD contract with vault uri/hash
-        LOG.debug(f'Updating load contract with hash {signature["hash"]}.')
-        listener.update_vault_hash(signature['hash'])
-
-    elif event.event_name == "EscrowCreated":
-        LOG.debug(f'Handling EscrowCreated Event.')
-        listener.loaddataeth.funding_type = event.return_values['fundingType']
-        listener.loaddataeth.contracted_amount = event.return_values['contractedAmount']
-        listener.loaddataeth.created_at = event.return_values['createdAt']
-        listener.loaddataeth.refund_address = event.return_values['msgSender']
-        listener.loaddataeth.shipment_state = EscrowState.CREATED
-        listener.loaddataeth.save()
+    LOG.debug(f'Shipment event update ({event.event_name}) with listener {listener.id}.')
+    LoadEventHandler.handle(event, listener)
 
 
 @receiver(post_save, sender=Shipment, dispatch_uid='shipment_post_save')

@@ -138,9 +138,9 @@ class Load110RPCClient(ShipmentRPCClient):
                                               'module': __name__})
 
         result = self.call('load.1.1.0.set_vault_hash_tx', {
-            "shipperWallet": wallet_id,
+            "senderWallet": wallet_id,
             "shipmentUuid": current_shipment_id,
-            "vaultHash": vault_hash
+            "hash": vault_hash
         })
 
         if 'success' in result and result['success']:
