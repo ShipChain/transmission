@@ -43,9 +43,9 @@ def shipment_post_save(sender, **kwargs):
     if created:
         # Create vault
         rpc_client = RPCClientFactory.get_client()
-        vault_id = rpc_client.create_vault(instance.storage_credentials_id, instance.shipper_wallet_id,
-                                           instance.carrier_wallet_id)
-
+        vault_id, vault_uri = rpc_client.create_vault(instance.storage_credentials_id, instance.shipper_wallet_id,
+                                                      instance.carrier_wallet_id)
+        instance.vault_id = vault_id
         LOG.debug(f'Created vault with vault_id {instance.vault_id}.')
 
         # Create LoadShipment entities
@@ -54,8 +54,7 @@ def shipment_post_save(sender, **kwargs):
                                     funding_type=Shipment.FUNDING_TYPE,
                                     contracted_amount=Shipment.SHIPMENT_AMOUNT)
 
-        instance.vault_id = vault_id
-        Shipment.objects.filter(id=instance.id).update(vault_id=vault_id)
+        Shipment.objects.filter(id=instance.id).update(vault_id=vault_id, vault_uri=vault_uri)
     else:
         # Update Shipment vault data
         rpc_client = RPCClientFactory.get_client()

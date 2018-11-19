@@ -163,10 +163,10 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         model = Shipment
         fields = '__all__'
         if settings.PROFILES_ENABLED:
-            read_only_fields = ('owner_id', 'vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
+            read_only_fields = ('owner_id', 'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                                 'storage_credentials_id', 'contract_version')
         else:
-            read_only_fields = ('vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
+            read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                                 'storage_credentials_id', 'contract_version')
 
     def update(self, instance, validated_data):
@@ -231,7 +231,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Shipment
         exclude = ('owner_id', 'storage_credentials_id',
-                   'vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
+                   'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                    'contract_version', 'device')
 
 

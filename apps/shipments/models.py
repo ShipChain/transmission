@@ -158,9 +158,11 @@ class Shipment(models.Model):
 
     storage_credentials_id = models.CharField(null=False, max_length=36)
     vault_id = models.CharField(null=True, max_length=36)
+    vault_uri = models.CharField(null=True, max_length=255)
     device = models.ForeignKey(Device, on_delete=models.PROTECT, null=True)
     shipper_wallet_id = models.CharField(null=False, max_length=36)
     carrier_wallet_id = models.CharField(null=False, max_length=36)
+    moderator_wallet_id = models.CharField(null=True, max_length=36)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -242,7 +244,62 @@ class Shipment(models.Model):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
         return f"{settings.PROFILES_URL}/api/v1/device/?on_shipment={self.vault_id}"
 
-    # def update_vault_uri
+    def set_carrier(self):
+        LOG.debug(f'Updating carrier {self.carrier_wallet_id}')
+        async_job = None
+        if self.loadshipment and self.loadshipment.shipment_state is not ShipmentState.NOT_CREATED:
+            rpc_client = RPCClientFactory.get_client(self.contract_version)
+            LOG.debug(f'Shipment {self.id} requested a carrier update')
+            async_job = AsyncJob.rpc_job_for_listener(
+                rpc_method=rpc_client.set_carrier_tx,
+                rpc_parameters=[self.shipper_wallet_id,
+                                self.id,
+                                self.carrier_wallet_id],
+                signing_wallet_id=self.shipper_wallet_id,
+                listener=self)
+        else:
+            LOG.info(f'Shipment {self.id} tried to set_carrier before contract shipment was created.')
+            log_metric('transmission.error', tags={'method': 'shipment.set_carrier', 'code': 'call_too_early',
+                                                   'module': __name__})
+        return async_job
+
+    def set_moderator(self):
+        LOG.debug(f'Updating moderator {self.moderator_wallet_id}')
+        async_job = None
+        if self.loadshipment and self.loadshipment.shipment_state is not ShipmentState.NOT_CREATED:
+            rpc_client = RPCClientFactory.get_client(self.contract_version)
+            LOG.debug(f'Shipment {self.id} requested a carrier update')
+            async_job = AsyncJob.rpc_job_for_listener(
+                rpc_method=rpc_client.set_moderator_tx,
+                rpc_parameters=[self.shipper_wallet_id,
+                                self.id,
+                                self.moderator_wallet_id],
+                signing_wallet_id=self.shipper_wallet_id,
+                listener=self)
+        else:
+            LOG.info(f'Shipment {self.id} tried to set_moderator before contract shipment was created.')
+            log_metric('transmission.error', tags={'method': 'shipment.set_moderator', 'code': 'call_too_early',
+                                                   'module': __name__})
+        return async_job
+
+    def set_vault_uri(self, vault_uri):
+        LOG.debug(f'Updating vault uri {vault_uri}')
+        async_job = None
+        if self.loadshipment and self.loadshipment.shipment_state is not ShipmentState.NOT_CREATED:
+            rpc_client = RPCClientFactory.get_client(self.contract_version)
+            LOG.debug(f'Shipment {self.id} requested a vault uri update')
+            async_job = AsyncJob.rpc_job_for_listener(
+                rpc_method=rpc_client.set_vault_uri_tx,
+                rpc_parameters=[self.shipper_wallet_id,
+                                self.id,
+                                vault_uri],
+                signing_wallet_id=self.shipper_wallet_id,
+                listener=self)
+        else:
+            LOG.info(f'Shipment {self.id} tried to set_vault_uri before contract shipment was created.')
+            log_metric('transmission.error', tags={'method': 'shipment.set_vault_uri', 'code': 'call_too_early',
+                                                   'module': __name__})
+        return async_job
 
     def set_vault_hash(self, vault_hash, rate_limit=False):
         LOG.debug(f'Updating vault hash {vault_hash}')
@@ -293,8 +350,6 @@ class Shipment(models.Model):
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
                     listener=self)
-            self.loadshipment.vault_hash = vault_hash
-            self.loadshipment.save()
         else:
             LOG.info(f'Shipment {self.id} tried to set_vault_hash before contract shipment was created.')
             log_metric('transmission.error', tags={'method': 'shipment.set_vault_hash', 'code': 'call_too_early',

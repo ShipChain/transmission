@@ -25,7 +25,7 @@ class ShipmentRPCClient(RPCClient):
             if 'vault_id' in result:
                 LOG.debug(f'Succesful creation of vault with id {result["vault_id"]}.')
 
-                return result['vault_id']
+                return result['vault_id'], result['vault_uri']
 
         LOG.error('Invalid creation of vault.')
         log_metric('transmission.error', tags={'method': 'shipment_rpcclient.create_vault', 'module': __name__,
@@ -151,6 +151,72 @@ class Load110RPCClient(ShipmentRPCClient):
         log_metric('transmission.error', tags={'method': 'shipment_rpcclient.set_vault_hash_tx',
                                                'module': __name__, 'code': 'RPCError'})
         LOG.error('Invalid update of vault hash transaction.')
+        raise RPCError("Invalid response from Engine")
+
+    def set_vault_uri_tx(self, wallet_id, current_shipment_id, vault_uri):
+        LOG.debug(f'Updating vault URI for current_shipment_id {current_shipment_id},'
+                  f'vault_uri {vault_uri}, and wallet_id {wallet_id}.')
+        log_metric('transmission.info', tags={'method': 'shipment_rpcclient.set_vault_uri_tx',
+                                              'module': __name__})
+
+        result = self.call('load.1.1.0.set_vault_uri_tx', {
+            "senderWallet": wallet_id,
+            "shipmentUuid": current_shipment_id,
+            "uri": vault_uri
+        })
+
+        if 'success' in result and result['success']:
+            if 'transaction' in result:
+                LOG.debug('Successful update of vault uri transaction.')
+                return result['transaction']
+
+        log_metric('transmission.error', tags={'method': 'shipment_rpcclient.set_vault_uri_tx',
+                                               'module': __name__, 'code': 'RPCError'})
+        LOG.error('Invalid update of vault uri transaction.')
+        raise RPCError("Invalid response from Engine")
+
+    def set_carrier_tx(self, wallet_id, current_shipment_id, carrier_wallet):
+        LOG.debug(f'Updating carrier for current_shipment_id {current_shipment_id},'
+                  f'carrier {carrier_wallet}, and wallet_id {wallet_id}.')
+        log_metric('transmission.info', tags={'method': 'shipment_rpcclient.set_carrier_tx',
+                                              'module': __name__})
+
+        result = self.call('load.1.1.0.set_carrier_tx', {
+            "senderWallet": wallet_id,
+            "shipmentUuid": current_shipment_id,
+            "carrierWallet": carrier_wallet
+        })
+
+        if 'success' in result and result['success']:
+            if 'transaction' in result:
+                LOG.debug('Successful update of carrier wallet transaction.')
+                return result['transaction']
+
+        log_metric('transmission.error', tags={'method': 'shipment_rpcclient.set_carrier_tx',
+                                               'module': __name__, 'code': 'RPCError'})
+        LOG.error('Invalid update of carrier wallet transaction.')
+        raise RPCError("Invalid response from Engine")
+
+    def set_moderator_tx(self, wallet_id, current_shipment_id, moderator_wallet):
+        LOG.debug(f'Updating moderator for current_shipment_id {current_shipment_id},'
+                  f'carrier {moderator_wallet}, and wallet_id {wallet_id}.')
+        log_metric('transmission.info', tags={'method': 'shipment_rpcclient.set_moderator_tx',
+                                              'module': __name__})
+
+        result = self.call('load.1.1.0.set_moderator_tx', {
+            "senderWallet": wallet_id,
+            "shipmentUuid": current_shipment_id,
+            "moderatorWallet": moderator_wallet
+        })
+
+        if 'success' in result and result['success']:
+            if 'transaction' in result:
+                LOG.debug('Successful update of moderator wallet transaction.')
+                return result['transaction']
+
+        log_metric('transmission.error', tags={'method': 'shipment_rpcclient.set_moderator_tx',
+                                               'module': __name__, 'code': 'RPCError'})
+        LOG.error('Invalid update of moderator wallet transaction.')
         raise RPCError("Invalid response from Engine")
 
 

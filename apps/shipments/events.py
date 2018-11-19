@@ -40,9 +40,12 @@ class LoadEventHandler:
         signature = rpc_client.add_shipment_data(shipment.storage_credentials_id, shipment.shipper_wallet_id,
                                                  shipment.vault_id, ShipmentVaultSerializer(shipment).data)
 
-        # Update LOAD contract with vault uri/hash
-        LOG.debug(f'Updating load contract with hash {signature["hash"]}.')
-        shipment.update_vault_hash(signature['hash'])
+        # Update LOAD contract with initial shipment data
+        shipment.set_carrier()
+        if shipment.moderator_wallet_id:
+            shipment.set_moderator()
+        shipment.set_vault_uri(shipment.vault_uri)
+        shipment.set_vault_hash(signature['hash'])
 
     @staticmethod
     def shipment_carrier_set(event, shipment):

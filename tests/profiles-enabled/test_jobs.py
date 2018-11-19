@@ -100,7 +100,7 @@ class JobsAPITests(APITestCase):
 
         mock_shipment_rpc = Load110RPCClient
 
-        mock_shipment_rpc.create_vault = mock.Mock(return_value=VAULT_ID)
+        mock_shipment_rpc.create_vault = mock.Mock(return_value=(VAULT_ID, 's3://bucket/' + VAULT_ID))
 
         with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({

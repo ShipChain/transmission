@@ -223,6 +223,7 @@ class ShipmentAPITests(APITestCase):
 
         parameters = {
             '_vault_id': VAULT_ID,
+            '_vault_uri': 's3://bucket/' + VAULT_ID,
             '_carrier_wallet_id': CARRIER_WALLET_ID,
             '_shipper_wallet_id': SHIPPER_WALLET_ID,
             '_storage_credentials_id': STORAGE_CRED_ID,
@@ -245,7 +246,7 @@ class ShipmentAPITests(APITestCase):
         # Mock RPC calls
         mock_shipment_rpc_client = Load110RPCClient
 
-        mock_shipment_rpc_client.create_vault = mock.Mock(return_value=parameters['_vault_id'])
+        mock_shipment_rpc_client.create_vault = mock.Mock(return_value=(parameters['_vault_id'], parameters['_vault_uri']))
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
         mock_shipment_rpc_client.create_shipment_transaction = mock.Mock(return_value=('version', {}))
         mock_shipment_rpc_client.create_shipment_transaction.__qualname__ = 'ShipmentRPCClient.create_shipment_transaction'
@@ -329,6 +330,7 @@ class ShipmentAPITests(APITestCase):
 
         parameters = {
             '_vault_id': VAULT_ID,
+            '_vault_uri': 's3://bucket/' + VAULT_ID,
             '_carrier_wallet_id': CARRIER_WALLET_ID,
             '_shipper_wallet_id': SHIPPER_WALLET_ID,
             '_storage_credentials_id': STORAGE_CRED_ID,
@@ -373,7 +375,7 @@ class ShipmentAPITests(APITestCase):
         # Mock RPC calls
         mock_shipment_rpc_client = Load110RPCClient
 
-        mock_shipment_rpc_client.create_vault = mock.Mock(return_value=parameters['_vault_id'])
+        mock_shipment_rpc_client.create_vault = mock.Mock(return_value=(parameters['_vault_id'], parameters['_vault_uri']))
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
         mock_shipment_rpc_client.create_shipment_transaction = mock.Mock(return_value=('version', {}))
         mock_shipment_rpc_client.create_shipment_transaction.__qualname__ = 'ShipmentRPCClient.create_shipment_transaction'
