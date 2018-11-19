@@ -1209,11 +1209,7 @@ class TrackingDataAPITests(APITestCase):
                                                               uncertainty=10,
                                                               version='1.0.0',
                                                               device_id=Device.objects.create(certificate_id='My-Custom-Device'),
-<<<<<<< HEAD
                                                               timestamp="2018-09-18T14:56:23.563847+00:00"))
-=======
-                                                              timestamp=parse("2018-09-18T14:56:23.563847+00:00")))
->>>>>>> Change device to be device_id on model
 
     @mock_iot
     def test_set_device_id(self):
