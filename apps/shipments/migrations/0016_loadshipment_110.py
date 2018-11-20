@@ -8,13 +8,38 @@ import django.db.models.deletion
 import enumfields.fields
 
 
+def delete_all_loadshipments(apps, schema_editor):
+    LoadShipment = apps.get_model('shipments', 'LoadShipment')
+    LoadShipment.objects.all().delete()
+
+
+def create_default_loadshipments(apps, schema_editor):
+    Shipment = apps.get_model('shipments', 'Shipment')
+
+    from django.db.models.signals import post_save
+    from apps.shipments.models import LoadShipment
+    from apps.shipments.signals import loadshipment_post_save
+    post_save.disconnect(loadshipment_post_save, sender=LoadShipment, dispatch_uid='loadshipment_post_save')
+    for shipment in Shipment.objects.all().iterator():
+        LoadShipment.objects.create(shipment_id=shipment.id)
+    post_save.connect(loadshipment_post_save, sender=LoadShipment, dispatch_uid='loadshipment_post_save')
+
+
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('shipments', '0015_loadshipment_vault_hash'),
     ]
 
     operations = [
+        migrations.RunSQL('SET CONSTRAINTS ALL IMMEDIATE',
+                          reverse_sql=migrations.RunSQL.noop),
+        migrations.RemoveField(
+            model_name='shipment',
+            name='load_data',
+        ),
+        migrations.RunPython(delete_all_loadshipments, migrations.RunPython.noop),
         migrations.RenameField(
             model_name='loadshipment',
             old_name='paid_amount',
@@ -93,10 +118,6 @@ class Migration(migrations.Migration):
             model_name='loadshipment',
             name='valid_until',
         ),
-        migrations.RemoveField(
-            model_name='shipment',
-            name='load_data',
-        ),
         migrations.AddField(
             model_name='loadshipment',
             name='contracted_amount',
@@ -116,12 +137,6 @@ class Migration(migrations.Migration):
             model_name='loadshipment',
             name='refund_address',
             field=apps.eth.fields.AddressField(default='0x0', max_length=42, validators=[django.core.validators.RegexValidator(message='Invalid address.', regex='^0x([A-Fa-f0-9]{40})$')]),
-        ),
-        migrations.AddField(
-            model_name='loadshipment',
-            name='shipment',
-            field=models.OneToOneField(default=0, on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='shipments.Shipment'),
-            preserve_default=False,
         ),
         migrations.AddField(
             model_name='loadshipment',
@@ -153,4 +168,21 @@ class Migration(migrations.Migration):
             name='vault_hash',
             field=apps.eth.fields.HashField(default='', max_length=66, validators=[django.core.validators.RegexValidator(message='Invalid hash.', regex='^0x([A-Fa-f0-9]{64})$')]),
         ),
+        migrations.AddField(
+            model_name='loadshipment',
+            name='shipment',
+            field=models.OneToOneField(null=True, blank=True, on_delete=django.db.models.deletion.CASCADE,
+                                       serialize=False, to='shipments.Shipment'),
+            preserve_default=False,
+        ),
+        migrations.RunPython(create_default_loadshipments, migrations.RunPython.noop, atomic=False),
+        migrations.AlterField(
+            model_name='loadshipment',
+            name='shipment',
+            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True,
+                                       serialize=False, to='shipments.Shipment'),
+            preserve_default=False,
+        ),
+        migrations.RunSQL(migrations.RunSQL.noop,
+                          reverse_sql='SET CONSTRAINTS ALL IMMEDIATE'),
     ]
