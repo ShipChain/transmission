@@ -18,7 +18,7 @@ from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
 
 
-from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus
+from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState
 
 
 class NullableFieldsMixin:
@@ -78,8 +78,8 @@ class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     Serializer for a location, used nested in a Shipment
     """
     funding_type = EnumField(FundingType, ints_as_names=True)
-    escrow_status = EnumField(EscrowStatus, ints_as_names=True)
-    shipment_status = EnumField(ShipmentStatus, ints_as_names=True)
+    escrow_state = EnumField(EscrowState, ints_as_names=True)
+    shipment_state = EnumField(ShipmentState, ints_as_names=True)
 
     class Meta:
         model = LoadShipment
@@ -90,7 +90,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     """
     Serializer for a shipment object
     """
-    load_data = LoadShipmentSerializer(required=False)
+    load_data = LoadShipmentSerializer(source='loadshipment', required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
@@ -163,10 +163,10 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         model = Shipment
         fields = '__all__'
         if settings.PROFILES_ENABLED:
-            read_only_fields = ('owner_id', 'vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
+            read_only_fields = ('owner_id', 'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                                 'storage_credentials_id', 'contract_version')
         else:
-            read_only_fields = ('vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
+            read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                                 'storage_credentials_id', 'contract_version')
 
     def update(self, instance, validated_data):
@@ -204,7 +204,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 class ShipmentTxSerializer(serializers.ModelSerializer):
     async_job_id = serializers.CharField(max_length=36)
 
-    load_data = LoadShipmentSerializer(required=False)
+    load_data = LoadShipmentSerializer(source='loadshipment', required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
@@ -230,8 +230,8 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Shipment
-        exclude = ('owner_id', 'load_data', 'storage_credentials_id',
-                   'vault_id', 'shipper_wallet_id', 'carrier_wallet_id',
+        exclude = ('owner_id', 'storage_credentials_id',
+                   'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                    'contract_version', 'device')
 
 

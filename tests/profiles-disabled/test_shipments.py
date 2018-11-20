@@ -38,6 +38,7 @@ class ShipmentAPITests(APITestCase):
 
         parameters = {
             '_vault_id': VAULT_ID,
+            '_vault_uri': 's3://bucket/' + VAULT_ID,
             '_carrier_wallet_id': CARRIER_WALLET_ID,
             '_shipper_wallet_id': SHIPPER_WALLET_ID,
             '_owner_id': OWNER_ID,
@@ -62,13 +63,13 @@ class ShipmentAPITests(APITestCase):
         # Mock RPC calls
         mock_shipment_rpc_client = ShipmentRPCClient
 
-        mock_shipment_rpc_client.create_vault = mock.Mock(return_value=parameters['_vault_id'])
+        mock_shipment_rpc_client.create_vault = mock.Mock(return_value=(parameters['_vault_id'], parameters['_vault_uri']))
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
         mock_shipment_rpc_client.create_shipment_transaction = mock.Mock(return_value=('version', {}))
         mock_shipment_rpc_client.create_shipment_transaction.__qualname__ = 'ShipmentRPCClient.create_shipment_transaction'
         mock_shipment_rpc_client.sign_transaction = mock.Mock(return_value=({}, 'txHash'))
         mock_shipment_rpc_client.update_vault_hash_transaction = mock.Mock(return_value=({}))
-        mock_shipment_rpc_client.update_vault_hash_transaction.__qualname__ = 'ShipmentRPCClient.update_vault_hash_transaction'
+        mock_shipment_rpc_client.update_vault_hash_transaction.__qualname__ = 'ShipmentRPCClient.set_vault_hash_tx'
         mock_shipment_rpc_client.send_transaction = mock.Mock(return_value={
             "blockHash": "0xccb595947a121e37df8bf689c3f88c6d9c7fb56070c9afda38551540f9e231f7",
             "blockNumber": 15,
@@ -90,6 +91,7 @@ class ShipmentAPITests(APITestCase):
     def test_shipment_create_with_location(self):
         parameters = {
             '_vault_id': VAULT_ID,
+            '_vault_uri': 's3://bucket/' + VAULT_ID,
             '_carrier_wallet_id': CARRIER_WALLET_ID,
             '_shipper_wallet_id': SHIPPER_WALLET_ID,
             '_storage_credentials_id': STORAGE_CRED_ID,
@@ -100,13 +102,13 @@ class ShipmentAPITests(APITestCase):
         # Mock RPC calls
         mock_shipment_rpc_client = ShipmentRPCClient
 
-        mock_shipment_rpc_client.create_vault = mock.Mock(return_value=parameters['_vault_id'])
+        mock_shipment_rpc_client.create_vault = mock.Mock(return_value=(parameters['_vault_id'], parameters['_vault_uri']))
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
         mock_shipment_rpc_client.create_shipment_transaction = mock.Mock(return_value=('version', {}))
         mock_shipment_rpc_client.create_shipment_transaction.__qualname__ = 'ShipmentRPCClient.create_shipment_transaction'
         mock_shipment_rpc_client.sign_transaction = mock.Mock(return_value=({}, 'txHash'))
         mock_shipment_rpc_client.update_vault_hash_transaction = mock.Mock(return_value=({}))
-        mock_shipment_rpc_client.update_vault_hash_transaction.__qualname__ = 'ShipmentRPCClient.update_vault_hash_transaction'
+        mock_shipment_rpc_client.update_vault_hash_transaction.__qualname__ = 'ShipmentRPCClient.set_vault_hash_tx'
         mock_shipment_rpc_client.send_transaction = mock.Mock(return_value={
             "blockHash": "0xccb595947a121e37df8bf689c3f88c6d9c7fb56070c9afda38551540f9e231f7",
             "blockNumber": 15,

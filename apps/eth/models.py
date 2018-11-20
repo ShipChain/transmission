@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.core.validators import RegexValidator
 from django_extensions.db.fields.json import JSONField
 from rest_framework.reverse import reverse
 
@@ -10,13 +9,11 @@ from gm2m import GM2MField
 
 from apps.utils import random_id
 from apps.jobs.models import AsyncJob
-
-HASH_REGEX = RegexValidator(regex=r'^0x([A-Fa-f0-9]{64})$', message="Invalid hash.")
-ADDRESS_REGEX = RegexValidator(regex=r'^0x([A-Fa-f0-9]{40})$', message="Invalid address.")
+from .fields import AddressField, HashField
 
 
 class EthAction(models.Model):
-    transaction_hash = models.CharField(validators=[HASH_REGEX], max_length=66, primary_key=True)
+    transaction_hash = HashField(primary_key=True)
 
     async_job = models.ForeignKey(AsyncJob, on_delete=models.CASCADE)
 
@@ -41,7 +38,7 @@ class Transaction(models.Model):
 
     nonce = models.CharField(max_length=32)
     chain_id = models.IntegerField()
-    to_address = models.CharField(validators=[ADDRESS_REGEX], max_length=42)
+    to_address = AddressField()
     value = models.CharField(max_length=32)
     gas_limit = models.CharField(max_length=32)
     gas_price = models.CharField(max_length=32)
@@ -91,16 +88,16 @@ class TransactionReceipt(models.Model):
     "transactionIndex": 0
     """
 
-    block_hash = models.CharField(validators=[HASH_REGEX], max_length=66)
+    block_hash = HashField()
     block_number = models.BigIntegerField()
-    contract_address = models.CharField(validators=[ADDRESS_REGEX], max_length=42, null=True, blank=True)
+    contract_address = AddressField(null=True)
     cumulative_gas_used = models.IntegerField()
-    from_address = models.CharField(validators=[ADDRESS_REGEX], max_length=42, null=True, blank=True)
+    from_address = AddressField()
     gas_used = models.IntegerField()
     logs = JSONField()
     logs_bloom = models.CharField(max_length=514)
     status = models.BooleanField()
-    to_address = models.CharField(validators=[ADDRESS_REGEX], max_length=42, null=True, blank=True)
+    to_address = AddressField(null=True)
     eth_action = models.OneToOneField(EthAction, db_column="transaction_hash",
                                       primary_key=True, on_delete=models.CASCADE)
     transaction_index = models.IntegerField(null=True)
@@ -170,17 +167,17 @@ class Event(models.Model):
     eth_action = models.ForeignKey(EthAction, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    address = models.CharField(validators=[ADDRESS_REGEX], max_length=42, null=True, blank=True)
+    address = AddressField()
     block_number = models.BigIntegerField()
-    transaction_hash = models.CharField(validators=[HASH_REGEX], max_length=66)
+    transaction_hash = HashField()
     transaction_index = models.IntegerField()
-    block_hash = models.CharField(validators=[HASH_REGEX], max_length=66)
+    block_hash = HashField()
     log_index = models.IntegerField()
     removed = models.BooleanField()
     event_id = models.CharField(max_length=514)
     return_values = JSONField()
     event_name = models.CharField(max_length=514)
-    signature = models.CharField(validators=[HASH_REGEX], max_length=66)
+    signature = HashField()
     raw = JSONField()
 
     @staticmethod

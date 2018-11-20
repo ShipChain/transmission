@@ -43,7 +43,6 @@ class EventViewSet(mixins.CreateModelMixin,
                 action = EthAction.objects.get(transaction_hash=serializer.data['transaction_hash'])
             except ObjectDoesNotExist:
                 action = None
-                # TODO: Events without Receipt metric reporting
                 log_metric('transmission.error', tags={'method': 'events.create', 'code': 'object_does_not_exist',
                                                        'module': __name__, 'detail': 'events.is_many is false'})
                 LOG.info(f"Non-EthAction Event processed "
@@ -64,7 +63,6 @@ class EventViewSet(mixins.CreateModelMixin,
                     action = None
                     log_metric('transmission.error', tags={'method': 'events.create', 'code': 'object_does_not_exist',
                                                            'module': __name__, 'detail': 'events.is_many is true'})
-                    # TODO: Events without Receipt metric reporting
                     LOG.info(f"Non-EthAction Event processed "
                              f"Tx: {event['transaction_hash']}")
 

@@ -9,7 +9,7 @@ from influxdb_metrics.loader import log_metric
 from .geojson import build_line_string_feature, build_point_features, build_feature_collection
 from .models import Shipment, Location
 from .permissions import IsOwner, IsUserOrDevice
-from .rpc import ShipmentRPCClient
+from .rpc import RPCClientFactory
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer,\
     LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer
 
@@ -71,7 +71,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         # TODO: re-implement device/shipment authorization for tracking data
         # GET Profiles /api/v1/devices/{id}
 
-        rpc_client = ShipmentRPCClient()
+        rpc_client = RPCClientFactory.get_client()
         tracking_data = rpc_client.get_tracking_data(shipment.storage_credentials_id,
                                                      shipment.shipper_wallet_id,
                                                      shipment.vault_id)

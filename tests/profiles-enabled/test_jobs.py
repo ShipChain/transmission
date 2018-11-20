@@ -7,7 +7,7 @@ from moto import mock_iot
 
 from apps.shipments.models import Shipment
 from apps.jobs.models import AsyncJob, Message, MessageType, JobState
-from apps.shipments.rpc import ShipmentRPCClient
+from apps.shipments.rpc import Load110RPCClient
 from apps.authentication import AuthenticatedUser
 
 MESSAGE = [
@@ -98,9 +98,9 @@ class JobsAPITests(APITestCase):
         from apps.rpc_client import requests
         from tests.utils import mocked_rpc_response
 
-        mock_shipment_rpc = ShipmentRPCClient
+        mock_shipment_rpc = Load110RPCClient
 
-        mock_shipment_rpc.create_vault = mock.Mock(return_value=VAULT_ID)
+        mock_shipment_rpc.create_vault = mock.Mock(return_value=(VAULT_ID, 's3://bucket/' + VAULT_ID))
 
         with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
@@ -120,7 +120,7 @@ class JobsAPITests(APITestCase):
                                                           shipper_wallet_id=SHIPPER_WALLET_ID,
                                                           storage_credentials_id=STORAGE_CRED_ID))
 
-            self.load_shipments.append(self.shipments[0].load_data)
+            self.load_shipments.append(self.shipments[0].loadshipment)
 
     def test_jobs_populated(self):
         """

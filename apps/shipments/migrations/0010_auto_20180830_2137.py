@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='loadshipment',
             name='escrow_status',
-            field=enumfields.fields.EnumField(default=1, enum=apps.shipments.models.EscrowStatus, max_length=10),
+            field=enumfields.fields.EnumField(default=1, enum=apps.shipments.models.EscrowState, max_length=10),
         ),
         migrations.AddField(
             model_name='loadshipment',
@@ -26,6 +26,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='loadshipment',
             name='shipment_status',
-            field=enumfields.fields.EnumField(default=0, enum=apps.shipments.models.ShipmentStatus, max_length=10),
+            field=enumfields.fields.EnumField(default=0, enum=apps.shipments.models.ShipmentState, max_length=10),
         ),
     ]
