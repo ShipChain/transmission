@@ -91,6 +91,7 @@ class ShipmentAPITests(APITestCase):
     def test_shipment_create_with_location(self):
         parameters = {
             '_vault_id': VAULT_ID,
+            '_vault_uri': 's3://bucket/' + VAULT_ID,
             '_carrier_wallet_id': CARRIER_WALLET_ID,
             '_shipper_wallet_id': SHIPPER_WALLET_ID,
             '_storage_credentials_id': STORAGE_CRED_ID,
