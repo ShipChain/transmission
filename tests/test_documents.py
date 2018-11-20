@@ -66,12 +66,14 @@ class DocumentViewSetAPITests(APITestCase):
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
-    def make_pdf_file(self, file_path):
+    def make_pdf_file(self, file_path, message=None):
+        default_message = 'Hey There Welcome to Shipchain Transmission.'
+        text = message if message else default_message
         date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font('Arial', 'B', 20)
-        pdf.cell(40, 10, f"Hey There Welcome to Shipchain Transmission.")
+        pdf.cell(40, 10, text)
         pdf.cell(40, 60, f"{date}")
         pdf.output(file_path, 'F')
 
@@ -104,16 +106,15 @@ class DocumentViewSetAPITests(APITestCase):
         document = Document.objects.all()
         self.assertEqual(document.count(), 1)
         print(f">>> s3_path: {document[0].s3_path}")
-        print(f'>>>> Data: {response.data}')
-        # print(f">>> Shipment_id: {document[0].shipment.id}")
+        print(f'>>>> Data: {response.json()}')
         self.assertEqual(self.shipment.id, document[0].shipment_id)
 
         # Check s3 path integrity in db
         s3_path = f"{settings.S3_BUCKET}/{document[0].shipment.id}/{document[0].id}.pdf"
         self.assertEqual(document[0].s3_path, s3_path)
 
-        data = json.loads(response.json()['data'])['data']['fields']
-        print(data)
+        data = response.json()['data']['data']
+        fields = data['fields']
         _, s3_resource = get_s3_client()
 
         for bucket in s3_resource.buckets.all():
@@ -125,12 +126,13 @@ class DocumentViewSetAPITests(APITestCase):
         s3_resource.create_bucket(Bucket=settings.S3_BUCKET)
 
         # File upload
-        put_url = f"{settings.SCHEMA}{settings.S3_HOST}/{settings.S3_BUCKET}"
+        put_url = data['url']
+        print(f"PUT URL: {put_url}")
         with open(f_path, 'rb') as pdf:
-            res = requests.post(put_url, data=data, files={'file': pdf})
+            res = requests.post(put_url, data=fields, files={'file': pdf})
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-        s3_resource.Bucket(settings.S3_BUCKET).download_file(data['key'], './downloaded.pdf')
+        s3_resource.Bucket(settings.S3_BUCKET).download_file(fields['key'], './downloaded.pdf')
 
         # We verify the integrity of the uploaded file
         downloaded_file = Path('./downloaded.pdf')
@@ -140,25 +142,13 @@ class DocumentViewSetAPITests(APITestCase):
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         file_data, content_type = create_form_content({
             'upload_status': 1,
-            'shipment_id': self.shipment.id
         })
-
         response = self.client.put(url, file_data, content_type=content_type)
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(document[0].upload_status, UploadStatus.COMPLETED)
 
-        # Update of document upload failed
-        file_data, content_type = create_form_content({
-            'upload_status': 2,
-            'shipment_id': self.shipment.id
-        })
-        response = self.client.put(url, file_data, content_type=content_type)
-        print(response.data)
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(document[0].upload_status, UploadStatus.FAILED)
-
-        # Tentative to update a fields than upload_status should fail
+        # Tentative to update a fields other than upload_status should fail
         file_data, content_type = create_form_content({
             'document_type': 1,
             'shipment_id': self.shipment.id,
@@ -166,24 +156,56 @@ class DocumentViewSetAPITests(APITestCase):
         })
         response = self.client.put(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(document[0].upload_status, UploadStatus.FAILED)
+        self.assertEqual(document[0].upload_status, UploadStatus.COMPLETED)
 
         # Get a document
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         response = self.client.get(url)
-        print(response.data)
+        print(f">>>> Get Document <<<< {response.json()['data']}")
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
         # Download document from pre-signed s3 generated url
         s3_url = response.data['s3_url']
         res = requests.get(s3_url)
-        print(res.url)
         with open('./from_presigned_s3_url.pdf', 'wb') as f:
             f.write(res.content)
+
+        # Second pdf document
+        f_path = './second_test_upload.pdf'
+        message = "Second upload pdf test. This should be larger in size!"
+        self.make_pdf_file(f_path, message=message)
+        file_data, content_type = create_form_content({
+            'document_type': 0,
+            'file_type': 0,
+            'size': os.path.getsize(f_path),
+            'upload_status': 0,
+            'shipment_id': self.shipment.id
+        })
+        url = reverse('document-list', kwargs={'version': 'v1'})
+        response = self.client.post(url, file_data, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        document = Document.objects.all()
+        self.assertEqual(document.count(), 2)
+
+        # Get the second uploaded document should fail, its upload status is not set to complete
+        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[1].id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Update second uploaded document status to completed
+        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[1].id})
+        file_data, content_type = create_form_content({
+            'upload_status': 1,
+        })
+        response = self.client.put(url, file_data, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(document[1].upload_status, UploadStatus.COMPLETED)
 
         # Get list of documents
         url = reverse('document-list', kwargs={'version': 'v1'})
         response = self.client.get(url)
+        data = response.json()['data']
+        print(f">>>> Get list of Documents <<<< {data}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # #### Disable Shipment post save signal for unit testing purposes ####
@@ -196,10 +218,9 @@ class DocumentViewSetAPITests(APITestCase):
         # #### Re-enable Shipment post save signal ####
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
-        print(self.shipment.delivery_actual)
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         response = self.client.get(url)
-        print(response.data)
+        # Trying to access a document after delivery should fail
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Thus should fail

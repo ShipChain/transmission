@@ -4,6 +4,7 @@ import json
 from django.conf import settings
 from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.decorators import action, api_view
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
@@ -19,10 +20,24 @@ from .models import Document
 LOG = logging.getLogger('transmission')
 
 
+class DocumentsPagination(PageNumberPagination):
+
+    def get_paginated_response(self, data):
+        return Response({
+            'links': {
+                'next': self.get_next_link(),
+                'previous': self.get_previous_link()
+            },
+            'count': len(data),
+            'documents': data
+        })
+
+
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
     permission_classes = (permissions.IsAuthenticated, IsOwner, PeriodPermission)
+    pagination_class = DocumentsPagination
     http_method_names = ['get', 'post', 'put']
 
     def get_queryset(self):
@@ -56,7 +71,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         presigned_data = serializer.s3_sign(document=document)
 
         # Assign s3 path
-        document.assign_s3_path(path=json.loads(presigned_data)['path'])
+        document.assign_s3_path(path=presigned_data['path'])
 
         return Response(presigned_data, status=status.HTTP_201_CREATED)
 
@@ -82,9 +97,18 @@ class DocumentViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = DocumentRetrieveSerializer(instance)
+        serializer.validate_upload_status()
 
-        s3_url = serializer.get_presigned_url(instance)
-        data = serializer.data
-        data.update({'s3_url': s3_url})
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
-        return Response(data, status=status.HTTP_202_ACCEPTED)
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = DocumentRetrieveSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = DocumentRetrieveSerializer(queryset, many=True)
+
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)

@@ -17,6 +17,7 @@ from rest_framework import status
 from rest_framework.utils import model_meta
 from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
+from rest_framework.utils.serializer_helpers import ReturnList
 
 from .models import Document, DocumentType, FileType, UploadStatus
 from apps.utils import get_s3_client
@@ -55,18 +56,16 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
             ExpiresIn=1800
         )
 
-        return json.dumps({
+        return {
             'data': pre_signed_post,
-            'url': f"{settings.SCHEMA}{bucket}.{settings.S3_HOST}/{file_s3_path}",
             'path': f"{bucket}/{file_s3_path}"
-        })
+        }
 
 
 class DocumentSerializer(serializers.ModelSerializer):
     document_type = EnumField(DocumentType, ints_as_names=True)
     file_type = EnumField(FileType, ints_as_names=True)
     upload_status = EnumField(UploadStatus, ints_as_names=True)
-    # shipment = ShipmentSerializer(required=True)
 
     class Meta:
         model = Document
@@ -76,11 +75,6 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     class JSONAPIMeta:
         included_resources = ['shipment']
-
-    # def update(self, instance, validated_data):
-    #     instance.upload_status = validated_data['upload_status']
-    #     instance.save()
-    #     return instance
 
 
 class DocumentUpdateSerializer(serializers.ModelSerializer):
@@ -92,27 +86,66 @@ class DocumentUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ('owner_id', 'shipment', 'document_type', 'file_type', 'size', 's3_path')
 
 
+class DocumentListSerializer(serializers.ListSerializer):
+    """
+    This custom class allows us to add to the returned documents the one time s3 generated url
+    """
+    @property
+    def data(self):
+        # pass
+        data = super(DocumentListSerializer, self).data
+        super(DocumentListSerializer, self).data
+
+        for d in data:
+            # We clean the list of documents form the one not uploaded to s3
+            if d['upload_status'] != 'completed':
+                data.pop(data.index(d))
+            else:
+                doc = Document.objects.get(id=d['id'])
+                d.update({'s3_url': doc.generate_presigned_url})
+
+        return ReturnList(data, serializer=self)
+
+
 class DocumentRetrieveSerializer(serializers.ModelSerializer):
     document_type = EnumField(DocumentType, ints_as_names=True)
     file_type = EnumField(FileType, ints_as_names=True)
-    upload_status = EnumField(UploadStatus, ints_as_names=True)
+    upload_status = EnumField(UploadStatus, default=UploadStatus.COMPLETED, ints_as_names=True)
 
     class Meta:
         model = Document
-        exclude = ['shipment', 's3_path']
+        exclude = ['s3_path', 'shipment']
         read_only_fields = ('owner_id', 'shipment', 'document_type', 'file_type', 'size')
 
-    def get_presigned_url(self, document):
-        s3, _ = get_s3_client()
-        key = '/'.join(document.s3_path.split('/')[1:])
-        url = s3.generate_presigned_url('get_object', Params={
-                'Bucket': f"{settings.S3_BUCKET}",
-                'Key': key
-            }, ExpiresIn=360
-        )
+    @classmethod
+    def many_init(cls, *args, **kwargs):
+        kwargs['child'] = cls()
+        return DocumentListSerializer(*args, **kwargs)
 
-        return url
+    def validate_upload_status(self):
+        instance = self.instance
+        if instance.upload_status != UploadStatus.COMPLETED:
+            raise serializers.ValidationError('This document does not exist!')
+        return True
 
+    @property
+    def data(self):
+        """
+        We override the returned data to include the one time s3 generated url
+        """
+        if not hasattr(self, '_data'):
+            if self.instance is not None and not getattr(self, '_errors', None):
+                self._data = self.to_representation(self.instance)
+            elif hasattr(self, '_validated_data') and not getattr(self, '_errors', None):
+                self._data = self.to_representation(self.validated_data)
+            else:
+                self._data = self.get_initial()
+
+        self._data.update({'s3_url': self.instance.generate_presigned_url})
+
+        super(DocumentRetrieveSerializer, self).data
+
+        return self._data
 # class DocumentCreateSerializer(DocumentSerializer):
 #
 #     def __init__(self, *args, **kwargs):

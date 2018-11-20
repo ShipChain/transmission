@@ -12,7 +12,7 @@ from enumfields import Enum
 from enumfields import EnumField
 
 from apps.shipments.models import Shipment
-from apps.utils import random_id
+from apps.utils import random_id, get_s3_client
 
 LOG = logging.getLogger('transmission')
 
@@ -50,3 +50,15 @@ class Document(models.Model):
     def assign_s3_path(self, path=None):
         self.s3_path = path
         self.save()
+
+    @property
+    def generate_presigned_url(self):
+        s3, _ = get_s3_client()
+        key = '/'.join(self.s3_path.split('/')[1:])
+        url = s3.generate_presigned_url('get_object', Params={
+                'Bucket': f"{settings.S3_BUCKET}",
+                'Key': key
+            }, ExpiresIn=settings.S3_URL_LIFE
+        )
+
+        return url

@@ -97,6 +97,8 @@ else:
 S3_BUCKET = os.environ.get('S3_BUCKET', 'test-bucket')
 AWS_SERVER_KEY = os.environ.get('AWS_SERVER_KEY', 'TEST-DEV-KEY')
 AWS_SERVER_SECRET_KEY = os.environ.get('AWS_SERVER_SECRET_KEY', 'NON-TRIVIAL-SECRETKEY')
+# s3 random generated url expiration time in seconds
+S3_URL_LIFE = 900
 
 # Application definition
 
