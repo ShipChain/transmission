@@ -431,6 +431,15 @@ components:
         type: integer
         format: int32
 
+    page_size:
+      name: page_size
+      in: query
+      description: Number of objects displayed per page
+      required: false
+      schema:
+        type: integer
+        format: int32
+
     search:
       name: search
       in: query
