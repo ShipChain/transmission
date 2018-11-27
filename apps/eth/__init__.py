@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 from django.conf import settings
-from .tasks import engine_subscribe
+from .tasks import engine_subscribe_load, engine_subscribe_token
 
 
 class EthConfig(AppConfig):
@@ -13,7 +13,8 @@ class EthConfig(AppConfig):
         import apps.eth.signals
 
         if settings.SUBSCRIBE_EVENTS:
-            engine_subscribe.delay()  # Handle subscription via Celery task
+            engine_subscribe_load.delay()  # Handle subscription via Celery task
+            engine_subscribe_token.delay()  # Handle subscription via Celery task
 
 
 # pylint:disable=invalid-name
