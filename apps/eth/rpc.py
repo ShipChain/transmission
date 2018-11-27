@@ -10,7 +10,7 @@ LOG = logging.getLogger('transmission')
 
 class EventRPCClient(RPCClient):
 
-    def subscribe(self, url=Event.get_event_subscription_url(), project="LOAD", interval=5000, events=None):
+    def subscribe(self, project, url=Event.get_event_subscription_url(), interval=5000, events=None):
         LOG.debug(f'Event subscription with url {url}.')
         log_metric('transmission.info', tags={'method': 'event_rpcclient.subscribe',
                                               'module': __name__})
