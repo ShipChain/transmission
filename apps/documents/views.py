@@ -1,43 +1,31 @@
 import logging
-import json
 
 from django.conf import settings
-from rest_framework import viewsets, permissions, status, exceptions
-from rest_framework.decorators import action, api_view
-from rest_framework.pagination import PageNumberPagination
+from django_filters import rest_framework as filters
+from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
-from .permissions import IsOwner, PeriodPermission
+from .permissions import IsOwner
 
 from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
                           DocumentUpdateSerializer,
                           DocumentRetrieveSerializer,)
 from .models import Document
+from .utils import DocumentsPagination, DocumentFilterSet
 
 
 LOG = logging.getLogger('transmission')
 
 
-class DocumentsPagination(PageNumberPagination):
-
-    def get_paginated_response(self, data):
-        return Response({
-            'links': {
-                'next': self.get_next_link(),
-                'previous': self.get_previous_link()
-            },
-            'count': len(data),
-            'documents': data
-        })
-
-
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
-    permission_classes = (permissions.IsAuthenticated, IsOwner, PeriodPermission)
+    permission_classes = (permissions.IsAuthenticated, IsOwner,)
     pagination_class = DocumentsPagination
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_class = DocumentFilterSet
     http_method_names = ['get', 'post', 'put']
 
     def get_queryset(self):

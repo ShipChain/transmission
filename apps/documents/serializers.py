@@ -27,7 +27,7 @@ from apps.shipments.models import Shipment
 
 class DocumentCreateSerializer(serializers.ModelSerializer):
     """
-    Model serializer for pdf documents validation for s3 signing
+    Model serializer for documents validation for s3 signing
     """
     document_type = EnumField(DocumentType, ints_as_names=True)
     file_type = EnumField(FileType, ints_as_names=True)
@@ -36,24 +36,35 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        fields = ['document_type', 'file_type', 'size', 'upload_status', 'shipment_id']
+        fields = ['name', 'description', 'document_type', 'file_type', 'size', 'upload_status', 'shipment_id']
 
     def s3_sign(self, document=None):
         data = self.validated_data
         s3, _ = get_s3_client()
         bucket = settings.S3_BUCKET
         file_type = data['file_type']
-        file_s3_path = f"{document.shipment.id}/{document.id}.pdf"
+        file_type_name = file_type.name.lower()
+
+        # Allowed files type list
+        img_types_list = [enum.name.lower() for enum in FileType]
+        img_types_list.pop(img_types_list.index('pdf'))
+
+        if file_type_name in img_types_list:
+            content_type = f"image/{file_type_name}"
+        else:
+            content_type = f"application/{file_type_name}"
+
+        file_s3_path = f"{document.shipment.id}/{document.id}.{file_type_name}"
 
         pre_signed_post = s3.generate_presigned_post(
             Bucket=bucket,
             Key=file_s3_path,
-            Fields={"acl": "public-read", "Content-Type": f'application/{file_type.name.lower()}'},
+            Fields={"acl": "public-read", "Content-Type": content_type},
             Conditions=[
                 {"acl": "public-read"},
-                {"Content-Type": f'application/{file_type.name.lower()}'}
+                {"Content-Type": content_type}
             ],
-            ExpiresIn=1800
+            ExpiresIn=settings.S3_URL_LIFE
         )
 
         return {
@@ -69,7 +80,6 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        # fields = '__all__'
         exclude = ['shipment']
         read_only_fields = ('owner_id', 'shipment', 'document_type', 'file_type', 'size', 's3_path')
 
@@ -146,23 +156,3 @@ class DocumentRetrieveSerializer(serializers.ModelSerializer):
         super(DocumentRetrieveSerializer, self).data
 
         return self._data
-# class DocumentCreateSerializer(DocumentSerializer):
-#
-#     def __init__(self, *args, **kwargs):
-#         try:
-#             # print(kwargs)
-#             shipment_id = kwargs['data'].get('shipment_id', None)
-#             kwargs['data']['shipment'] = Shipment.objects.get(pk=shipment_id)
-#         except Shipment.DoesNotExist:
-#             raise exceptions.NotFound(f'Shipment: {shipment_id}')
-#         except Shipment.MultipleObjectsReturned:
-#             raise exceptions.APIException(f'Multiple values returned for:{shipment_id}')
-#         # kwargs.pop('shipment_id')
-#         super().__init__(self, *args, **kwargs)
-
-    # def validate(self, data):
-    #     print(data)
-    #     super().validate(self, data)
-
-    # def create(self, validated_data):
-    #     return Document.objects.create(** validated_data)
