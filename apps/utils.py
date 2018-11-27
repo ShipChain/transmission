@@ -10,6 +10,7 @@ from drf_enum_field.fields import EnumField
 
 from django.conf import settings
 
+
 def random_id():
     """
     Cast the UUID to a string
@@ -95,7 +96,7 @@ def random_string(length=10):
 
 def get_s3_client():
     if settings.ENVIRONMENT in ['LOCAL', 'TEST']:
-        s3 = boto3.client(
+        s_3 = boto3.client(
             's3',
             endpoint_url=settings.SCHEMA + settings.S3_HOST,
             aws_access_key_id=settings.AWS_SERVER_KEY,
@@ -118,8 +119,8 @@ def get_s3_client():
             aws_secret_access_key=settings.AWS_SERVER_SECRET_KEY,
         )
 
-        s3 = session.client('s3')
+        s_3 = session.client('s3')
 
         s3_resource = None
 
-    return s3, s3_resource
+    return s_3, s3_resource

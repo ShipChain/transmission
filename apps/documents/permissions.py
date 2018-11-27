@@ -12,7 +12,7 @@ class IsOwner(permissions.BasePermission):
         return obj.owner_id == request.user.id
 
 
-class PeriodPermission(permissions.BasePermission):
+class AccessPeriodPermission(permissions.BasePermission):
     """
     Custom permission for creating and accessing documents after delivery date
     """
@@ -23,5 +23,29 @@ class PeriodPermission(permissions.BasePermission):
 
         if delivery_actual:
             return date_now < delivery_actual.replace(tzinfo=None) + datetime.timedelta(days=10)
+
+        return True
+
+
+class IsCarrier(permissions.BasePermission):
+    """
+    Custom permission for carrier documents management access
+    """
+
+    def has_object_permission(self, request, view, obj):
+
+        return obj.shipment.load_data.carrier == request.user.id
+
+
+class IsModerator(permissions.BasePermission):
+    """
+    Custom permission for moderator documents management access
+    """
+
+    def has_object_permission(self, request, view, obj):
+
+        moderator = obj.shipment.load_data.moderator
+        if moderator:
+            return obj.shipment.load_data.moderator == request.user.id
 
         return True

@@ -1,28 +1,11 @@
-from collections import OrderedDict
-
-import json
-import boto3
-from botocore.client import Config
-from botocore.exceptions import ClientError
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from django.conf import settings
-from django.db import transaction
+
 from enumfields.drf import EnumField
-from enumfields.drf.serializers import EnumSupportSerializerMixin
-from jose import jws, JWSError
-from rest_framework import exceptions
-from rest_framework import status
-from rest_framework.utils import model_meta
-from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
 from rest_framework.utils.serializer_helpers import ReturnList
 
-from .models import Document, DocumentType, FileType, UploadStatus
 from apps.utils import get_s3_client
-from apps.shipments.serializers import ShipmentSerializer
-from apps.shipments.models import Shipment
+from .models import Document, DocumentType, FileType, UploadStatus
 
 
 class DocumentCreateSerializer(serializers.ModelSerializer):
@@ -40,7 +23,7 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
 
     def s3_sign(self, document=None):
         data = self.validated_data
-        s3, _ = get_s3_client()
+        s3, _ = get_s3_client()     # pylint: disable=invalid-name
         bucket = settings.S3_BUCKET
         file_type = data['file_type']
         file_type_name = file_type.name.lower()
@@ -104,15 +87,15 @@ class DocumentListSerializer(serializers.ListSerializer):
     def data(self):
         # pass
         data = super(DocumentListSerializer, self).data
-        super(DocumentListSerializer, self).data
+        super(DocumentListSerializer, self).data        # pylint: disable=expression-not-assigned
 
-        for d in data:
+        for item in data:
             # We clean the list of documents form the one not uploaded to s3
-            if d['upload_status'] != 'completed':
-                data.pop(data.index(d))
+            if item['upload_status'] != 'completed':
+                data.pop(data.index(item))
             else:
-                doc = Document.objects.get(id=d['id'])
-                d.update({'s3_url': doc.generate_presigned_url})
+                doc = Document.objects.get(id=item['id'])
+                item.update({'s3_url': doc.generate_presigned_url})
 
         return ReturnList(data, serializer=self)
 
@@ -145,14 +128,16 @@ class DocumentRetrieveSerializer(serializers.ModelSerializer):
         """
         if not hasattr(self, '_data'):
             if self.instance is not None and not getattr(self, '_errors', None):
-                self._data = self.to_representation(self.instance)
+                self._data = self.to_representation(self.instance)  # pylint: disable=attribute-defined-outside-init
             elif hasattr(self, '_validated_data') and not getattr(self, '_errors', None):
-                self._data = self.to_representation(self.validated_data)
+                to_representation = self.to_representation(self.validated_data)
+                self._data = to_representation      # pylint: disable=attribute-defined-outside-init
             else:
-                self._data = self.get_initial()
+                self._data = self.get_initial()     # pylint: disable=attribute-defined-outside-init
 
-        self._data.update({'s3_url': self.instance.generate_presigned_url})
+        update_dict = {'s3_url': self.instance.generate_presigned_url}
+        self._data.update(update_dict)      # pylint: disable=attribute-defined-outside-init
 
-        super(DocumentRetrieveSerializer, self).data
+        super(DocumentRetrieveSerializer, self).data    # pylint: disable=expression-not-assigned
 
         return self._data
