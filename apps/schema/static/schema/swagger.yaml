@@ -51,9 +51,9 @@ paths:
       - $ref: '#/components/parameters/page_size'
       - $ref: '#/components/parameters/search'
       - $ref: '#/components/parameters/ordering'
-      - $ref: '#/components/parameters/shipment/ship_from_location_not_null'
-      - $ref: '#/components/parameters/shipment/ship_to_location_not_null'
-      - $ref: '#/components/parameters/shipment/final_destination_location_not_null'
+      - $ref: '#/components/parameters/shipment/has_ship_from_location'
+      - $ref: '#/components/parameters/shipment/has_ship_to_location'
+      - $ref: '#/components/parameters/shipment/has_final_destination_location'
       - $ref: '#/components/parameters/shipment/ship_from_location__city'
       - $ref: '#/components/parameters/shipment/ship_from_location__state'
       - $ref: '#/components/parameters/shipment/ship_from_location__postal_code'
@@ -496,22 +496,22 @@ components:
         schema:
           type: string
 
-      ship_from_location_not_null:
-        name: ship_from_location_not_null
+      has_ship_from_location:
+        name: has_ship_from_location
         in: query
         description: Returns shipments with associated ship_from_location objects.
         schema:
-          type: string
+          type: boolean
 
-      ship_to_location_not_null:
-        name: ship_to_location_not_null
+      has_ship_to_location:
+        name: has_ship_to_location
         in: query
         description: Returns shipments with associated ship_to_location objects.
         schema:
-          type: string
+          type: boolean
 
-      final_destination_location_not_null:
-        name: final_destination_location_not_null
+      has_final_destination_location:
+        name: has_final_destination_location
         in: query
         description: Returns shipments with associated final_destination_location objects.
         schema:
@@ -522,7 +522,7 @@ components:
         in: query
         description: Returns shipments with associated ship_to_location city.
         schema:
-          type: string
+          type: boolean
 
       ship_to_location__state:
         name: ship_to_location__state

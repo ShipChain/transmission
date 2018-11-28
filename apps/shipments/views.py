@@ -12,6 +12,8 @@ from .models import Shipment, Location, TrackingData
 from .permissions import IsOwner, IsUserOrDevice
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer,\
     LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer
+from .filters import ShipmentFilter
+
 
 LOG = logging.getLogger('transmission')
 
@@ -22,16 +24,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
-    filtering_fields = ['mode']
-    searchable_fields = ['mode', 'pickup_estimated', 'delivery_estimated']
-    for location_field in ['ship_from_location', 'ship_to_location', 'final_destination_location']:
-        for field in ['name', 'address_1', 'city', 'state', 'postal_code', 'country']:
-            searchable_fields.append(f'{location_field}__{field}')
-        for field in ['city', 'state', 'postal_code', 'country']:
-            filtering_fields.append(f'{location_field}__{field}')
-
-    filter_fields = tuple(filtering_fields)
-    search_fields = tuple(searchable_fields)
+    filterset_class = ShipmentFilter
+    search_fields = ('shipper_reference', 'forwarder_reference')
     ordering_fields = ('modified_at', 'created_at', 'pickup_estimated', 'delivery_estimated')
     http_method_names = ['get', 'post', 'delete', 'patch']
 
@@ -39,12 +33,6 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
             queryset = queryset.filter(owner_id=self.request.user.id)
-        if 'ship_from_location_not_null' in self.request.query_params:
-            queryset = queryset.exclude(ship_from_location__isnull=True)
-        if 'ship_to_location_not_null' in self.request.query_params:
-            queryset = queryset.exclude(ship_to_location__isnull=True)
-        if 'final_destination_location_not_null' in self.request.query_params:
-            queryset = queryset.exclude(final_destination_location__isnull=True)
         return queryset
 
     def perform_create(self, serializer):
