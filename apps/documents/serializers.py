@@ -37,7 +37,11 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
         else:
             content_type = f"application/{file_type_name}"
 
-        file_s3_path = f"{document.shipment.id}/{document.id}.{file_type_name}"
+        shipment = document.shipment
+        wallet_id = shipment.shipper_wallet_id
+        storage_credentials_id = shipment.storage_credentials_id
+        vault_id = shipment.vault_id
+        file_s3_path = f"{storage_credentials_id}/{wallet_id}/{vault_id}/{document.id}.{file_type_name}"
 
         pre_signed_post = s3.generate_presigned_post(
             Bucket=bucket,
@@ -52,7 +56,7 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
 
         return {
             'data': pre_signed_post,
-            'path': f"{bucket}/{file_s3_path}"
+            'uri': f"s3://{bucket}/{file_s3_path}"
         }
 
 

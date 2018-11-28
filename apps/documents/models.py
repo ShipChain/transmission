@@ -44,7 +44,7 @@ class Document(models.Model):
     file_type = EnumIntegerField(enum=FileType, default=FileType.PDF)
     upload_status = EnumIntegerField(enum=UploadStatus, default=UploadStatus.PENDING)
     size = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(1250000)])
-    s3_path = models.CharField(max_length=144, blank=True, null=True)
+    s3_path = models.CharField(max_length=252, blank=True, null=True)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
 
     def assign_s3_path(self, path=None):
@@ -54,7 +54,7 @@ class Document(models.Model):
     @property
     def generate_presigned_url(self):
         s3, _ = get_s3_client()     # pylint: disable=invalid-name
-        key = '/'.join(self.s3_path.split('/')[1:])
+        key = '/'.join(self.s3_path.split('/')[3:])
         url = s3.generate_presigned_url(
             'get_object',
             Params={

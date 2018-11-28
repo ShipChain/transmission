@@ -83,15 +83,6 @@ class DecimalEncoder(json.JSONEncoder):
         return super(DecimalEncoder, self).default(o)
 
 
-# def random_string(length=10):
-#     """
-#     :param length: length of the string to generate, default = 10
-#     :return: chars type: XdkjNr3Kgl4
-#     """
-#     chars = string.ascii_uppercase + string.digits + string.ascii_lowercase
-#     return ''.join(random.choice(chars) for _ in range(length))
-
-
 def get_s3_client():
     if settings.ENVIRONMENT in ['LOCAL', 'TEST']:
         s_3 = boto3.client(

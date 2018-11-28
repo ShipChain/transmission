@@ -106,7 +106,12 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.assertEqual(self.shipment.id, document[0].shipment_id)
 
         # Check s3 path integrity in db
-        s3_path = f"{settings.S3_BUCKET}/{document[0].shipment.id}/{document[0].id}.pdf"
+        shipment = document[0].shipment
+        doc_id = document[0].id
+        wallet_id = shipment.shipper_wallet_id
+        storage_credentials_id = shipment.storage_credentials_id
+        vault_id = shipment.vault_id
+        s3_path = f"s3://{settings.S3_BUCKET}/{storage_credentials_id}/{wallet_id}/{vault_id}/{doc_id}.pdf"
         self.assertEqual(document[0].s3_path, s3_path)
 
         data = response.json()['data']['data']

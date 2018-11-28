@@ -94,7 +94,7 @@ else:
     S3_HOST = 'minio:9000'
 
 # Aws s3 credentials
-S3_BUCKET = os.environ.get('S3_BUCKET', 'test-bucket')
+S3_BUCKET = f"document-management-s3-{ENVIRONMENT.lower()}"
 AWS_SERVER_KEY = os.environ.get('AWS_SERVER_KEY', 'TEST-DEV-KEY')
 AWS_SERVER_SECRET_KEY = os.environ.get('AWS_SERVER_SECRET_KEY', 'NON-TRIVIAL-SECRETKEY')
 # s3 random generated url expiration time in seconds

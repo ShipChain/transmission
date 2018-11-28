@@ -59,7 +59,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         presigned_data = serializer.s3_sign(document=document)
 
         # Assign s3 path
-        document.assign_s3_path(path=presigned_data['path'])
+        document.assign_s3_path(path=presigned_data['uri'])
 
         return Response(presigned_data, status=status.HTTP_201_CREATED)
 
