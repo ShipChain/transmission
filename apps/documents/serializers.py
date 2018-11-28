@@ -21,7 +21,7 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
         model = Document
         fields = ['name', 'description', 'document_type', 'file_type', 'size', 'upload_status', 'shipment_id']
 
-    def s3_sign(self, document=None):
+    def s3_sign(self, document=None):   # pylint: disable=too-many-locals
         data = self.validated_data
         s3, _ = get_s3_client()     # pylint: disable=invalid-name
         bucket = settings.S3_BUCKET
@@ -99,7 +99,7 @@ class DocumentListSerializer(serializers.ListSerializer):
                 data.pop(data.index(item))
             else:
                 doc = Document.objects.get(id=item['id'])
-                item.update({'s3_url': doc.generate_presigned_url})
+                item.update({'url': doc.generate_presigned_url})
 
         return ReturnList(data, serializer=self)
 
@@ -139,7 +139,7 @@ class DocumentRetrieveSerializer(serializers.ModelSerializer):
             else:
                 self._data = self.get_initial()     # pylint: disable=attribute-defined-outside-init
 
-        update_dict = {'s3_url': self.instance.generate_presigned_url}
+        update_dict = {'url': self.instance.generate_presigned_url}
         self._data.update(update_dict)      # pylint: disable=attribute-defined-outside-init
 
         super(DocumentRetrieveSerializer, self).data    # pylint: disable=expression-not-assigned

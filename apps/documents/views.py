@@ -6,7 +6,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
-from .permissions import IsOwner
+from .permissions import UserHasPermission
 
 from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
@@ -22,7 +22,7 @@ LOG = logging.getLogger('transmission')
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
-    permission_classes = (permissions.IsAuthenticated, IsOwner,)
+    permission_classes = (permissions.IsAuthenticated, UserHasPermission,)
     pagination_class = DocumentsPagination
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet

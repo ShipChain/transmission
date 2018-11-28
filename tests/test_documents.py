@@ -58,6 +58,11 @@ class PdfDocumentViewSetAPITests(APITestCase):
 
         _, s3_resource = get_s3_client()
 
+        for bucket in s3_resource.buckets.all():
+            for key in bucket.objects.all():
+                key.delete()
+            bucket.delete()
+
         try:
             s3_resource.create_bucket(Bucket=settings.S3_BUCKET)
         except Exception as exc:
@@ -155,7 +160,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
         # Download document from pre-signed s3 generated url
-        s3_url = response.data['s3_url']
+        s3_url = response.data['url']
         res = requests.get(s3_url)
         with open('./from_presigned_s3_url.pdf', 'wb') as f:
             f.write(res.content)
@@ -216,6 +221,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         url += f'?file_type=Pdf'
         response = self.client.get(url)
         data = response.json()['data']['documents']
+        print(f"List of pdf documents via query params: {data}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 2)
 
@@ -299,10 +305,10 @@ class ImageDocumentViewSetAPITests(APITestCase):
         # Upload bucket creation
         _, s3_resource = get_s3_client()
 
-        for bucket in s3_resource.buckets.all():
-            for key in bucket.objects.all():
-                key.delete()
-            bucket.delete()
+        # for bucket in s3_resource.buckets.all():
+        #     for key in bucket.objects.all():
+        #         key.delete()
+        #     bucket.delete()
 
         try:
             s3_resource.create_bucket(Bucket=settings.S3_BUCKET)
@@ -374,10 +380,10 @@ class ImageDocumentViewSetAPITests(APITestCase):
         response = self.client.get(url)
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertTrue('s3_url' in data.keys())
+        self.assertTrue('url' in data.keys())
 
         # Download document from pre-signed s3 generated url
-        s3_url = data['s3_url']
+        s3_url = data['url']
         res = requests.get(s3_url)
         with open('./png_img_from_presigned_s3_url.png', 'wb') as f:
             f.write(res.content)
