@@ -9,7 +9,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0015_loadshipment_vault_hash'),
+        ('shipments', '0018_shipment_vault_uri'),
     ]
 
     operations = [

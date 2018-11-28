@@ -20,9 +20,7 @@ from conf import test_settings
 from unittest.mock import patch
 
 from apps.shipments.rpc import Load110RPCClient
-from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, EscrowStatus, ShipmentStatus, Device, \
-    TrackingData
-from apps.shipments.rpc import ShipmentRPCClient
+from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, Device, TrackingData
 from apps.authentication import AuthenticatedUser
 from apps.utils import random_id
 from tests.utils import replace_variables_in_string, create_form_content
