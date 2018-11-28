@@ -1,4 +1,3 @@
-import copy
 from pathlib import Path
 import datetime
 
@@ -18,7 +17,7 @@ from apps.shipments.models import Shipment
 from apps.shipments.signals import shipment_post_save
 from apps.documents.models import Document, UploadStatus
 from apps.authentication import AuthenticatedUser
-from apps.utils import random_id, get_s3_client
+from apps.utils import get_s3_client
 from tests.utils import create_form_content
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'

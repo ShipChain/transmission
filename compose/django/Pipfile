@@ -47,6 +47,9 @@ Django = "==2.0.9"
 PyJWT = "==1.6.4"
 pyOpenSSL = "==17.5.0"
 uWSGI = "==2.0.17.1"
+fpdf = "==1.7.2"
+pillow = "~=5.2"
+minio = "==4.0.6"
 
 [dev-packages]
 bandit = "~=1.5"
