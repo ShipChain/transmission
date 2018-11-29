@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import json
 import boto3
+from dateutil.parser import parse
 from botocore.exceptions import ClientError
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -11,14 +12,14 @@ from django.db import transaction
 from enumfields.drf import EnumField
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
-from rest_framework import exceptions
-from rest_framework import status
+from rest_framework import exceptions, status, serializers as rest_serializers
 from rest_framework.utils import model_meta
 from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
 
 
-from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState
+from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
+    TrackingData
 
 
 class NullableFieldsMixin:
@@ -288,3 +289,33 @@ class UnvalidatedTrackingDataSerializer(serializers.Serializer):
             raise exceptions.PermissionDenied(f"No device for shipment {shipment.id}")
 
         return attrs
+
+
+class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
+    """
+    Serializer for tracking data to be cached in db
+    """
+    def __init__(self, *args, **kwargs):
+        # Flatten 'position' fields to the parent tracking data payload
+        kwargs['data'].update(kwargs['data'].pop('position'))
+
+        # Ensure that the timestamps is valid
+        try:
+            kwargs['data']['timestamp'] = parse(kwargs['data']['timestamp'])
+        except Exception as exception:
+            raise exceptions.ValidationError(detail=f"Unable to parse tracking data timestamp in to datetime object: \
+                                                    {exception}")
+
+        super().__init__(*args, **kwargs)
+
+    shipment = ShipmentSerializer(read_only=True)
+
+    class Meta:
+        model = TrackingData
+        fields = '__all__'
+
+    def create(self, validated_data):
+        data = TrackingData.objects.create(**validated_data, shipment=self.context['shipment'])
+        data.save()
+
+        return data

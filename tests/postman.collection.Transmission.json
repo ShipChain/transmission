@@ -1104,6 +1104,34 @@
                   }
                 },
                 "response": []
+              },
+              {
+                "name": "Get Tracking Data",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/tracking/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "shipments",
+                      "{{shipment_id}}",
+                      "tracking",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
               }
             ]
           },
