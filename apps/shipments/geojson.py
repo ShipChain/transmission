@@ -5,6 +5,7 @@ from rest_framework.exceptions import APIException
 from geojson import FeatureCollection
 from influxdb_metrics.loader import log_metric
 
+from apps.shipments.models import TrackingData
 
 LOG = logging.getLogger('transmission')
 
@@ -30,7 +31,7 @@ def build_line_string_feature(shipment, tracking_data):
 
     tracking_points.sort(key=lambda dt_point: dt_point.timestamp_no_tz)
 
-    return [tracking_points[0].get_linestring_feature(tracking_points)]
+    return [TrackingData.get_linestring_feature(tracking_points)]
 
 
 def build_point_features(shipment, tracking_data):
