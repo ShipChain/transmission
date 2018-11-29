@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('document_type', enumfields.fields.EnumField(default=0, enum=apps.documents.models.DocumentType, max_length=10)),
                 ('file_type', enumfields.fields.EnumField(default=0, enum=apps.documents.models.FileType, max_length=10)),
                 ('upload_status', enumfields.fields.EnumField(default=0, enum=apps.documents.models.UploadStatus, max_length=10)),
-                ('size', models.IntegerField(validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(1250000)])),
+                ('size', models.IntegerField(validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(12500000)])),
                 ('s3_path', models.CharField(blank=True, max_length=144, null=True)),
                 ('shipment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shipments.Shipment')),
             ],

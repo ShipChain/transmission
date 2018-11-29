@@ -221,7 +221,6 @@ class PdfDocumentViewSetAPITests(APITestCase):
         url += f'?file_type=Pdf'
         response = self.client.get(url)
         data = response.json()['data']['documents']
-        print(f"List of pdf documents via query params: {data}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 2)
 
@@ -305,11 +304,6 @@ class ImageDocumentViewSetAPITests(APITestCase):
         # Upload bucket creation
         _, s3_resource = get_s3_client()
 
-        # for bucket in s3_resource.buckets.all():
-        #     for key in bucket.objects.all():
-        #         key.delete()
-        #     bucket.delete()
-
         try:
             s3_resource.create_bucket(Bucket=settings.S3_BUCKET)
         except Exception as exc:
@@ -348,8 +342,6 @@ class ImageDocumentViewSetAPITests(APITestCase):
         # png image object creation
         self.set_user(self.user_1)
         response = self.client.post(url, file_data, content_type=content_type)
-        data = response.json()['data']
-        print(data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         document = Document.objects.all()
@@ -393,7 +385,6 @@ class ImageDocumentViewSetAPITests(APITestCase):
         url += '?file_type=Png'
         response = self.client.get(url)
         data = response.json()['data']['documents']
-        print(f'----> List of images: {data}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
 

@@ -78,7 +78,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         document = self.perform_update(serializer)
 
-        response = DocumentSerializer(document)
+        response = DocumentRetrieveSerializer(document)
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
 

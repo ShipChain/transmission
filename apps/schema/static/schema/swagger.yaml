@@ -187,6 +187,119 @@ paths:
               allOf:
               - $ref: '#/components/requestBodies/shipment/createAttributes'
 
+  /api/v1/documents/:
+    get:
+      summary: List documents
+      description: >
+        Retrieve an array of `Document` objects associated with the current user
+      parameters:
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/page_size'
+      tags:
+      - Documents
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/document/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+    post:
+      summary: Create Document
+      description: >
+        Create a new `Document` owned by the current user.
+      tags:
+      - Documents
+      responses:
+        '202':
+          description: *response_202
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/document/createResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/document/createRequest'
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/document/createAttributes'
+          multipart/form-data:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/document/createAttributes'
+
+  /api/v1/documents/{document_id}/:
+    get:
+      summary: Get document details
+      description: >
+        Get additional info about a `Document`.
+      parameters:
+      - $ref: '#/components/parameters/document/path'
+      tags:
+      - Documents
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/document/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+  patch:
+    summary: Update a Document
+    description: >
+      Update a `Document` object with the provided parameters.
+    tags:
+    - Documents
+    responses:
+      '202':
+        description: *response_202
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/document/createResponse'
+      '401':
+        description: *response_401
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/document/createRequest'
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/document/createAttributes'
+          multipart/form-data:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/document/createAttributes'
+
   /api/v1/shipments/{shipment_id}/tracking/:
     post:
       summary: Add tracking data
@@ -649,6 +762,15 @@ components:
         schema:
           $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
 
+    document:
+      path:
+        required: true
+        name: document_id
+        in: path
+        description: ID of the Document
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
+
   schemas:
     dataTypes:
       # General resource parameters
@@ -671,6 +793,13 @@ components:
             <<: *uuid
             title: shipment_id
             description: Shipment's UUID
+
+      documentId:
+        properties:
+          document_id:
+            <<: *uuid
+            title: document_id
+            description: Document's UUID
 
       asyncJobId:
         properties:
@@ -1050,6 +1179,78 @@ components:
                   type: string
                 coordinates:
                   $ref: '#/components/schemas/dataTypes/tracking/lineCoordinates'
+
+      # General Document Parameters
+      document:
+        name:
+          properties:
+            name:
+              title: name
+              description: Optional name assigned to a Document
+              type: string
+              example: 'Bol'
+
+        description:
+          properties:
+            description:
+              title: description
+              description: Optional description for a Document
+              type: string
+              example: 'Image for record'
+
+        documentType:
+          properties:
+            document_type:
+              title: document_type
+              description: Type of Document to Upload. 0 for BOL, 1 for IMAGE and 2 for OTHER
+              type: integer
+              enum: [{0: BOL}, {1: IMAGE}, {2: OTHER}]
+              example: 0
+
+        fileType:
+          properties:
+            file_type:
+              title: file_type
+              description: File MIME type to upload. 0 for PDF, 1 for JPEG and 2 for PNG
+              type: integer
+              enum: [{0: PDF}, {1: JPEG}, {2: PNG}]
+              example: 1
+
+        uploadStatus:
+          properties:
+            upload_status:
+              title: upload_status
+              description: Status of the file in upload. 0 for PENDING, 1 for COMPLETED and 2 for FAILED
+              type: integer
+              enum: [{0: PENDIND}, {1: COMPLETED}, {2: FAILED}]
+              example: 0
+
+        size:
+          properties:
+            size:
+              title: size
+              description: file size of the Document to upload
+              type: integer
+              example: 1234567
+
+        url:
+          properties:
+            url:
+              title: url
+              description: s3 bucket url
+              type: string
+              example: 'https://s3.amazonaws.com/document-management-s3-local'
+
+        acl:
+          properties:
+            acl:
+              title: acl
+              description: Aws read policy type
+              type: string
+              example: 'public-read'
+
+        fields:
+
 
       shipment:
         storageCredentialsId:
@@ -2554,6 +2755,73 @@ components:
             included:
               $ref: '#/components/schemas/shipment/included'
 
+    document:
+      resource:
+        properties:
+          type:
+            example: Document
+
+      attributes:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/document/name'
+          - $ref: '#/components/schemas/dataTypes/ownerId'
+          - $ref: '#/components/schemas/dataTypes/document/description'
+          - $ref: '#/components/schemas/dataTypes/document/documentType'
+          - $ref: '#/components/schemas/dataTypes/document/fileType'
+          - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
+#          - $ref: '#/components/schemas/dataTypes/document/s3Path'
+#          - $ref: '#/components/schemas/dataTypes/document/uploadedAt'
+
+      createAttributes:
+        allOf:
+#          - $ref: '#/components/schemas/dataTypes/document/url'
+
+      fields:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/document/acl'
+          - $ref: '#/components/schemas/dataTypes/document/url'
+
+      getResource:
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/resourceId'
+        - $ref: '#/components/schemas/document/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/document/attributes'
+
+      getResponse:
+        allOf:
+        - properties:
+            data:
+              $ref: '#/components/schemas/document/response'
+        - $ref: '#/components/schemas/document/fields'
+
+      response:
+        allOf:
+        - $ref: '#/components/schemas/document/fields'
+
+      listResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/dataArray'
+        - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+        - properties:
+            data:
+              items:
+                $ref: '#/components/schemas/document/getResource'
+
+
+      createResource:
+        allOf:
+        - $ref: '#/components/schemas/document/resource'
+        - properties:
+            attributes:
+              $ref: '#/components/schemas/document/createAttributes'
+
+      createResponse:
+        allOf:
+        - $ref: '#/components/schemas/document/getResponse'
+#        - $ref: '#/components/schemas/document/fields'
+
     tracking:
       collectionResource:
         properties:
@@ -2934,6 +3202,35 @@ components:
             type: object
             $ref: '#/components/requestBodies/jsonApi/createResource'
 
+    document:
+      createResource:
+        allOf:
+          - $ref: '#/components/schemas/document/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/requestBodies/document/createAttributes'
+
+      createAttributes:
+        required:
+          - owner_id
+          - shipment
+          - size
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/document/name'
+          - $ref: '#/components/schemas/dataTypes/document/description'
+          - $ref: '#/components/schemas/dataTypes/document/documentType'
+          - $ref: '#/components/schemas/dataTypes/document/fileType'
+          - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
+          - $ref: '#/components/schemas/dataTypes/document/size'
+          - $ref: '#/components/schemas/dataTypes/shipmentId'
+
+      createRequest:
+        allOf:
+          - $ref: '#/components/requestBodies/jsonApi/createData'
+          - properties:
+              data:
+                $ref: '#/components/requestBodies/document/createResource'
+
     shipment:
       createResource:
         allOf:
@@ -3079,3 +3376,6 @@ tags:
 - name: Transactions
   description: >
     Transaction entities contain read-only data about Ethereum Transactions and Transaction Receipts.
+- name: Documents
+  description: >
+    Documents are entities that allow documents and media objects management within ShipChain Transmission service.

@@ -56,7 +56,8 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
 
         return {
             'data': pre_signed_post,
-            'uri': f"s3://{bucket}/{file_s3_path}"
+            'uri': f"s3://{bucket}/{file_s3_path}",
+            'document_id': document.id
         }
 
 

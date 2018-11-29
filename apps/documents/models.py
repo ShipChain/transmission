@@ -43,7 +43,7 @@ class Document(models.Model):
     document_type = EnumIntegerField(enum=DocumentType, default=DocumentType.BOL)
     file_type = EnumIntegerField(enum=FileType, default=FileType.PDF)
     upload_status = EnumIntegerField(enum=UploadStatus, default=UploadStatus.PENDING)
-    size = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(1250000)])
+    size = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12500000)])
     s3_path = models.CharField(max_length=252, blank=True, null=True)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
 
