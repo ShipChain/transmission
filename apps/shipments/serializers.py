@@ -320,11 +320,6 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
         model = TrackingData
         fields = '__all__'
 
-    # def validate(self, attrs):
-    #     instance = TrackingData(**attrs)
-    #     instance.clean()
-    #     return attrs
-
     def create(self, validated_data):
         data = TrackingData.objects.create(**validated_data, shipment=self.context['shipment'])
         data.save()
