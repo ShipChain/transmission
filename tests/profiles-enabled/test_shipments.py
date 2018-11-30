@@ -80,11 +80,14 @@ class ShipmentAPITests(APITestCase):
                                                       carrier_wallet_id=CARRIER_WALLET_ID,
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
+                                                      pickup_estimated="2018-11-10T17:57:05.070419Z",
                                                       owner_id=self.user_1.id))
         self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
                                                       carrier_wallet_id=CARRIER_WALLET_ID,
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
+                                                      pickup_estimated="2018-11-05T17:57:05.070419Z",
+                                                      mode='mode',
                                                       owner_id=self.user_1.id))
 
     def test_list_empty(self):
@@ -106,8 +109,87 @@ class ShipmentAPITests(APITestCase):
 
         response_data = response.json()
 
-        # No devices created should return empty array
+        # No shipments created should return empty array
         self.assertEqual(len(response_data['data']), 0)
+
+    def test_list_populated(self):
+        """
+        Test listing requires authentication
+        """
+
+        # Unauthenticated request should fail with 403
+        url = reverse('shipment-list', kwargs={'version': 'v1'})
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.create_shipment()
+
+        # Authenticated request should succeed
+        self.set_user(self.user_1)
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 2)
+
+    def test_filter(self):
+        """
+        Test filtering for objects
+        """
+        # Unauthenticated request should fail with 403
+        url = reverse('shipment-list', kwargs={'version': 'v1'})
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.create_shipment()
+
+        # Authenticated request should succeed
+        self.set_user(self.user_1)
+
+        response = self.client.get(f'{url}?mode=mode')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 1)
+
+        setattr(self.shipments[1], 'ship_to_location', Location.objects.create(name="locat"))
+        self.shipments[1].save()
+
+        response = self.client.get(f'{url}?ship_to_location__name=locat')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 1)
+
+        response = self.client.get(f'{url}?has_ship_to_location=true')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 1)
+
+    def test_ordering(self):
+        """
+        Test filtering for objects
+        """
+        # Unauthenticated request should fail with 403
+        url = reverse('shipment-list', kwargs={'version': 'v1'})
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.create_shipment()
+
+        # Authenticated request should succeed
+        self.set_user(self.user_1)
+
+        response = self.client.get(f'{url}?ordering=pickup_estimated')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(response_data['data'][0]['id'], self.shipments[1].id)
+
+        response = self.client.get(f'{url}?ordering=-pickup_estimated')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(response_data['data'][0]['id'], self.shipments[0].id)
 
     @mock_iot
     def test_add_tracking_data(self):

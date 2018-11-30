@@ -1,7 +1,8 @@
 import logging
 
 from django.conf import settings
-from rest_framework import viewsets, permissions, status, exceptions
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, permissions, status, exceptions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
@@ -11,6 +12,8 @@ from .models import Shipment, Location, TrackingData
 from .permissions import IsOwner, IsUserOrDevice
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer,\
     LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer
+from .filters import ShipmentFilter
+
 
 LOG = logging.getLogger('transmission')
 
@@ -20,6 +23,10 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     serializer_class = ShipmentSerializer
     permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
+    filterset_class = ShipmentFilter
+    search_fields = ('shipper_reference', 'forwarder_reference')
+    ordering_fields = ('modified_at', 'created_at', 'pickup_estimated', 'delivery_estimated')
     http_method_names = ['get', 'post', 'delete', 'patch']
 
     def get_queryset(self):
