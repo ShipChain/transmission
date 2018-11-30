@@ -26,7 +26,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
     pagination_class = DocumentsPagination
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet
-    http_method_names = ['get', 'post', 'put']
+    http_method_names = ['get', 'post', 'patch']
 
     def get_queryset(self):
         queryset = self.queryset
@@ -69,7 +69,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        LOG.debug(f'Updating document {instance} with new details.')
+        LOG.debug(f'Updating document {instance.id} with new details.')
         log_metric('transmission.info', tags={'method': 'documents.update', 'module': __name__})
 
         serializer = DocumentUpdateSerializer(instance, data=request.data, partial=partial,
