@@ -1233,6 +1233,14 @@ components:
               type: integer
               example: 1234567
 
+        count:
+          properties:
+            count:
+              title: count
+              description: Amount of document objects returned
+              type: integer
+              example: 1
+
         url:
           properties:
             url:
@@ -1241,6 +1249,21 @@ components:
               type: string
               example: 'https://s3.amazonaws.com/document-management-s3-local'
 
+        next:
+          properties:
+            next:
+              title: next
+              description: link to the next page of documents
+              type: string
+              example: 'https://s3.amazonaws.com/document-management-s3-local'
+
+        previous:
+          properties:
+            previous:
+              title: previous
+              description: link to the previous page of documents
+              type: string
+              example: 'https://s3.amazonaws.com/document-management-s3-local'
         acl:
           properties:
             acl:
@@ -1249,8 +1272,85 @@ components:
               type: string
               example: 'public-read'
 
-        fields:
+        contentType:
+          properties:
+            Content-Type:
+              title: Content-Type
+              description: Content type of the document
+              type: string
+              example: 'image/png'
 
+        uploadedAt:
+          properties:
+            uploaded_at:
+              title: uploaded_at
+              description: Upload date of the document
+              type: string
+              example: '2018-11-30T15:28:58.018858Z'
+
+        key:
+          properties:
+            key:
+              title: key
+              description: Key
+              type: string
+              example: 'image/png'
+
+        x-amz-algorithm:
+          properties:
+            x-amz-algorithm:
+              title: x-amz-algorithm
+              description: Algorithm used to encode the document
+              type: string
+              example: 'AWS4-HMAC-SHA256'
+
+        x-amz-credential:
+          properties:
+            x-amz-credential:
+              title: x-amz-credential
+              description: Key
+              type: string
+              example: 'TEST-DEV-KEY/20181129/us-east-1/s3/aws4_request'
+
+        x-amz-date:
+          properties:
+            x-amz-date:
+              title: x-amz-date
+              description: Date when it was posted to the AWS server
+              type: string
+              example: '20181129T203522Z'
+
+        policy:
+          properties:
+            policy:
+              title: policy
+              description: AWS Policy
+              type: string
+              example: 'eyJleHBpcmF0aW9uIjogIjIwMTgtMTEtMjlUMjA6NTA6MjJaIiwgImNvbmRpdGlvbnMiOiBbeyJhY2wiOiAicHVibGljLXJlYWQifSwgeyJDb250ZW50LVR5cGUiOiAiaW1hZ2UvcG5nIn0sIHsiYnVja2V0IjogImRvY3VtZW50LW1hbmFnZW1lbnQtczMtbG9jYWwifSwgeyJrZXkiOiAiMjFmMjA2ZjUtZDY1MC00ZDVjLWEzNmEtODk0MTlhYWIxZTZkLzNiMGQ2YzMzLTMxZmQtNGVjNy1iNjlkLWQ1MzY0MzNkNjE1ZC8xZDRkZTZmZS1jMzYyLTRjNTYtOWFkZC0zNDcyYmFlNGY5M2EvZmU4NzllNGUtMzk2NS00NTczLTg0M2ItMGU5MTI2ODZkM2ZjLnBuZyJ9LCB7IngtYW16LWFsZ29yaXRobSI6ICJBV1M0LUhNQUMtU0hBMjU2In0sIHsieC1hbXotY3JlZGVudGlhbCI6ICJURVNULURFVi1LRVkvMjAxODExMjkvdXMtZWFzdC0xL3MzL2F3czRfcmVxdWVzdCJ9LCB7IngtYW16LWRhdGUiOiAiMjAxODExMjlUMjAzNTIyWiJ9XX0='
+
+        x-amz-signature:
+          properties:
+            x-amz-signature:
+              title: x-amz-signature
+              description: Signature of the AWS server
+              type: string
+              example: 'c660f43cdbea52ada8b9bc128286728aaaf24c3de96c009a9661b56c95cc7b2e'
+
+        uri:
+          properties:
+            uri:
+              title: uri
+              description: uri to the s3 bucket
+              type: string
+              example: 's3://document-management-s3-local/21f206f5-d650-4d5c-a36a-89419aab1e6d/3b0d6c33-31fd-4ec7-b69d-d536433d615d/1d4de6fe-c362-4c56-9add-3472bae4f93a/fe879e4e-3965-4573-843b-0e912686d3fc.png'
+
+        document_id:
+          properties:
+            document_id:
+              title: document_id
+              description: uuid of the document
+              type: string
+              example: '1243d23b-e2fc-475a-8290-0e4f53479553'
 
       shipment:
         storageCredentialsId:
@@ -2770,16 +2870,47 @@ components:
           - $ref: '#/components/schemas/dataTypes/document/fileType'
           - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
 #          - $ref: '#/components/schemas/dataTypes/document/s3Path'
-#          - $ref: '#/components/schemas/dataTypes/document/uploadedAt'
-
-      createAttributes:
-        allOf:
-#          - $ref: '#/components/schemas/dataTypes/document/url'
+          - $ref: '#/components/schemas/dataTypes/document/uploadedAt'
 
       fields:
+        properties:
+          data:
+            allOf:
+            - $ref: '#/components/schemas/dataTypes/document/acl'
+            - $ref: '#/components/schemas/dataTypes/document/contentType'
+            - $ref: '#/components/schemas/dataTypes/document/key'
+            - $ref: '#/components/schemas/dataTypes/document/x-amz-algorithm'
+            - $ref: '#/components/schemas/dataTypes/document/x-amz-credential'
+            - $ref: '#/components/schemas/dataTypes/document/x-amz-date'
+            - $ref: '#/components/schemas/dataTypes/document/policy'
+            - $ref: '#/components/schemas/dataTypes/document/x-amz-signature'
+
+      documents:
+        properties:
+          documents:
+            type: array
+            items:
+              $ref: '#/components/schemas/document/document'
+
+      links:
+        properties:
+          links:
+            allOf:
+            - $ref: '#/components/schemas/dataTypes/document/next'
+            - $ref: '#/components/schemas/dataTypes/document/previous'
+
+      document:
         allOf:
-          - $ref: '#/components/schemas/dataTypes/document/acl'
-          - $ref: '#/components/schemas/dataTypes/document/url'
+        - $ref: '#/components/schemas/dataTypes/resourceId'
+        - $ref: '#/components/schemas/dataTypes/document/documentType'
+        - $ref: '#/components/schemas/dataTypes/document/fileType'
+        - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
+        - $ref: '#/components/schemas/dataTypes/document/name'
+        - $ref: '#/components/schemas/dataTypes/document/description'
+        - $ref: '#/components/schemas/dataTypes/document/uploadedAt'
+        - $ref: '#/components/schemas/dataTypes/ownerId'
+        - $ref: '#/components/schemas/dataTypes/document/size'
+        - $ref: '#/components/schemas/dataTypes/document/url'
 
       getResource:
         allOf:
@@ -2793,34 +2924,28 @@ components:
         allOf:
         - properties:
             data:
-              $ref: '#/components/schemas/document/response'
-        - $ref: '#/components/schemas/document/fields'
-
-      response:
-        allOf:
-        - $ref: '#/components/schemas/document/fields'
+              allOf:
+              - $ref: '#/components/schemas/document/links'
+              - $ref: '#/components/schemas/dataTypes/document/count'
+              - $ref: '#/components/schemas/document/documents'
 
       listResponse:
         allOf:
-        - $ref: '#/components/schemas/jsonApi/dataArray'
-        - $ref: '#/components/schemas/jsonApi/linksAndMeta'
-        - properties:
-            data:
-              items:
-                $ref: '#/components/schemas/document/getResource'
-
+        - $ref: '#/components/schemas/document/links'
+        - $ref: '#/components/schemas/document/getResponse'
 
       createResource:
         allOf:
-        - $ref: '#/components/schemas/document/resource'
         - properties:
-            attributes:
-              $ref: '#/components/schemas/document/createAttributes'
+            data:
+              allOf:
+              - $ref: '#/components/schemas/document/fields'
+              - $ref: '#/components/schemas/dataTypes/document/uri'
+              - $ref: '#/components/schemas/dataTypes/document/document_id'
 
       createResponse:
         allOf:
-        - $ref: '#/components/schemas/document/getResponse'
-#        - $ref: '#/components/schemas/document/fields'
+        - $ref: '#/components/schemas/document/createResource'
 
     tracking:
       collectionResource:

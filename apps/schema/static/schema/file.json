@@ -1,0 +1,39 @@
+{
+    "links": {
+        "next": null,
+        "previous": null
+    },
+    "data": {
+        "links": {
+            "next": null,
+            "previous": null
+        },
+        "count": 2,
+        "documents": [
+            {
+                "id": "5cd98296-b0b5-45f0-8d3d-e7c33e8f3e8b",
+                "document_type": "bol",
+                "file_type": "pdf",
+                "upload_status": "completed",
+                "name": "Shipment BOL",
+                "description": "First BOL",
+                "uploaded_at": "2018-11-30T15:28:58.018858Z",
+                "owner_id": "cc1f4d3b-92dd-49bf-90ce-edfaeac30f58",
+                "size": 1234567,
+                "url": "http://minio:9000/document-management-s3-local/21f206f5-d650-4d5c-a36a-89419aab1e6d/306d8fbc-a107-4cd0-a2e5-37df94c20d91/ee0414bf-5383-498e-a373-51a2c28eb5a7/5cd98296-b0b5-45f0-8d3d-e7c33e8f3e8b.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=TEST-DEV-KEY%2F20181130%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20181130T191530Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=3ffdd332e71cde0314586da4124b092c8476c95984ff4e31e63e18a6e132ab9a"
+            },
+            {
+                "id": "7ca39b0a-d423-446d-8126-bd634d30367a",
+                "document_type": "bol",
+                "file_type": "pdf",
+                "upload_status": "completed",
+                "name": "Product Desccription",
+                "description": "List of items in the shipment",
+                "uploaded_at": "2018-11-30T18:15:01.967169Z",
+                "owner_id": "cc1f4d3b-92dd-49bf-90ce-edfaeac30f58",
+                "size": 225147,
+                "url": "http://minio:9000/document-management-s3-local/21f206f5-d650-4d5c-a36a-89419aab1e6d/306d8fbc-a107-4cd0-a2e5-37df94c20d91/ee0414bf-5383-498e-a373-51a2c28eb5a7/7ca39b0a-d423-446d-8126-bd634d30367a.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=TEST-DEV-KEY%2F20181130%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20181130T191530Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=d359ec08da0579420482d207c664abd58ec55397bba474d1ab6c1c828e823a8e"
+            }
+        ]
+    }
+}
