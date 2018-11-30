@@ -1,5 +1,5 @@
 import celery
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.urls import reverse
 # TODO: Should this be a Postgres field?
@@ -52,15 +52,16 @@ class AsyncJob(models.Model):
     def rpc_job_for_listener(rpc_method, rpc_parameters, signing_wallet_id, listener, delay=0):
         rpc_module = rpc_method.__module__
         rpc_class, rpc_method = rpc_method.__qualname__.rsplit('.')[-2:]
-        job = AsyncJob.objects.create(parameters={
-            'rpc_class': f'{rpc_module}.{rpc_class}',
-            'rpc_method': f'{rpc_method}',
-            'rpc_parameters': rpc_parameters,
-            'signing_wallet_id': signing_wallet_id,
-        }, delay=delay)
-        job.joblistener_set.create(listener=listener)
-        job.save()
-        job.fire(delay)
+        with transaction.atomic():
+            job = AsyncJob.objects.create(parameters={
+                'rpc_class': f'{rpc_module}.{rpc_class}',
+                'rpc_method': f'{rpc_method}',
+                'rpc_parameters': rpc_parameters,
+                'signing_wallet_id': signing_wallet_id,
+            }, delay=delay)
+            job.joblistener_set.create(listener=listener)
+            job.save()
+            transaction.on_commit(lambda: job.fire(delay))
         return job
 
 
