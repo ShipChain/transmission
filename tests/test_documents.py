@@ -15,7 +15,7 @@ import os
 
 from apps.shipments.models import Shipment
 from apps.shipments.signals import shipment_post_save
-from apps.documents.models import Document, UploadStatus
+from apps.documents.models import Document, UploadStatus, DocumentType
 from apps.authentication import AuthenticatedUser
 from apps.utils import get_s3_client
 from tests.utils import create_form_content
@@ -140,19 +140,19 @@ class PdfDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'upload_status': 1,
         })
-        response = self.client.put(url, file_data, content_type=content_type)
+        response = self.client.patch(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(document[0].upload_status, UploadStatus.COMPLETED)
 
-        # Tentative to update a fields other than upload_status should fail
+        # # Tentative to update a fields other than upload_status should fail
         file_data, content_type = create_form_content({
             'document_type': 1,
             'shipment_id': self.shipment.id,
             # 'upload_status': 1,
         })
-        response = self.client.put(url, file_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(document[0].upload_status, UploadStatus.COMPLETED)
+        response = self.client.patch(url, file_data, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertNotEqual(document[0].document_type, DocumentType.IMAGE)
 
         # Get a document
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
@@ -192,7 +192,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'upload_status': 1,
         })
-        response = self.client.put(url, file_data, content_type=content_type)
+        response = self.client.patch(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(document[1].upload_status, UploadStatus.COMPLETED)
 
@@ -363,7 +363,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'upload_status': 1,
         })
-        response = self.client.put(url, file_data, content_type=content_type)
+        response = self.client.patch(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(document[0].upload_status, UploadStatus.COMPLETED)
 

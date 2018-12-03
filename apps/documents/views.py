@@ -12,7 +12,7 @@ from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
                           DocumentUpdateSerializer,
                           DocumentRetrieveSerializer,)
-from .models import Document
+from .models import Document, UploadStatus
 from .utils import DocumentsPagination, DocumentFilterSet
 
 
@@ -90,7 +90,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset().exclude(upload_status=UploadStatus.FAILED))
 
         page = self.paginate_queryset(queryset)
         if page is not None:

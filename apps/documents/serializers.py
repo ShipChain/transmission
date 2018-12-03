@@ -95,12 +95,7 @@ class DocumentListSerializer(serializers.ListSerializer):
         super(DocumentListSerializer, self).data        # pylint: disable=expression-not-assigned
 
         for item in data:
-            # We clean the list of documents form the one not uploaded to s3
-            if item['upload_status'] != 'completed':
-                data.pop(data.index(item))
-            else:
-                doc = Document.objects.get(id=item['id'])
-                item.update({'url': doc.generate_presigned_url})
+            item.update({'url': Document.objects.get(id=item['id']).generate_presigned_url})
 
         return ReturnList(data, serializer=self)
 

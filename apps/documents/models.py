@@ -54,12 +54,12 @@ class Document(models.Model):
     @property
     def generate_presigned_url(self):
         s3, _ = get_s3_client()     # pylint: disable=invalid-name
-        key = '/'.join(self.s3_path.split('/')[3:])
+
         url = s3.generate_presigned_url(
             'get_object',
             Params={
                 'Bucket': f"{settings.S3_BUCKET}",
-                'Key': key
+                'Key': '/'.join(self.s3_path.split('/')[3:])
             },
             ExpiresIn=settings.S3_URL_LIFE
         )
