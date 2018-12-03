@@ -1314,7 +1314,7 @@
                         "key": "upload_status",
                         "value": "upload_status",
                         "type": "integer",
-                        "disabled": false
+                        "disabled": true
                       },
                       {
                         "key": "size",

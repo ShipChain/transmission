@@ -93,7 +93,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
             'document_type': 0,
             'file_type': 0,
             'size': os.path.getsize(f_path),
-            'upload_status': 0,
+            # 'upload_status': 0,
             'shipment_id': self.shipment.id
         })
 
@@ -113,10 +113,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Check s3 path integrity in db
         shipment = document[0].shipment
         doc_id = document[0].id
-        wallet_id = shipment.shipper_wallet_id
-        storage_credentials_id = shipment.storage_credentials_id
-        vault_id = shipment.vault_id
-        s3_path = f"s3://{settings.S3_BUCKET}/{storage_credentials_id}/{wallet_id}/{vault_id}/{doc_id}.pdf"
+        s3_path = f"s3://{settings.S3_BUCKET}/{shipment.storage_credentials_id}/{shipment.shipper_wallet_id}/" \
+            f"{shipment.vault_id}/{doc_id}.pdf"
         self.assertEqual(document[0].s3_path, s3_path)
 
         data = response.json()['data']['data']
@@ -182,11 +180,6 @@ class PdfDocumentViewSetAPITests(APITestCase):
         document = Document.objects.all()
         self.assertEqual(document.count(), 2)
 
-        # Get the second uploaded document should fail, its upload status is not set to complete
-        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[1].id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
         # Update second uploaded document status to completed
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[1].id})
         file_data, content_type = create_form_content({
@@ -201,26 +194,12 @@ class PdfDocumentViewSetAPITests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # # #### Disable Shipment post save signal for unit testing purposes ####
-        # signals.post_save.disconnect(sender=Shipment, dispatch_uid='shipment_post_save')
-        #
-        # # Trying to access a document after delivery should fail
-        # self.shipment.delivery_actual = datetime.datetime.now() - datetime.timedelta(days=11)
-        # self.shipment.save()
-        #
-        # # #### Re-enable Shipment post save signal ####
-        # signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
-        #
-        # url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
-        # response = self.client.get(url)
-        # # Trying to access a document after delivery should fail
-        # self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
         # Get list of pdf documents via query params, it should return 2 elements
         url = reverse('document-list', kwargs={'version': 'v1'})
         url += f'?file_type=Pdf'
         response = self.client.get(url)
-        data = response.json()['data']['documents']
+        print(f'>>> List response: {response.json()}')
+        data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 2)
 
@@ -228,7 +207,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
         url = reverse('document-list', kwargs={'version': 'v1'})
         url += f'?file_type=Png'
         response = self.client.get(url)
-        data = response.json()['data']['documents']
+        data = response.json()['data']
+        print(f'>>> List of png: {response.json()}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
 
@@ -335,7 +315,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
             'document_type': 1,
             'file_type': 2,
             'size': os.path.getsize(img_path[1]),
-            'upload_status': 0,
+            # 'upload_status': 0,
             'shipment_id': self.shipment.id
         })
 
@@ -370,7 +350,8 @@ class ImageDocumentViewSetAPITests(APITestCase):
         # Get a document
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         response = self.client.get(url)
-        data = response.json()['data']
+        data = response.json()['data']['attributes']
+        # print(data)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertTrue('url' in data.keys())
 
@@ -384,7 +365,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         url = reverse('document-list', kwargs={'version': 'v1'})
         url += '?file_type=Png'
         response = self.client.get(url)
-        data = response.json()['data']['documents']
+        data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 1)
 
@@ -392,6 +373,6 @@ class ImageDocumentViewSetAPITests(APITestCase):
         url = reverse('document-list', kwargs={'version': 'v1'})
         url += '?file_type=Pdf'
         response = self.client.get(url)
-        data = response.json()['data']['documents']
+        data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)

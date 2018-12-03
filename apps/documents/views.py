@@ -12,8 +12,8 @@ from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
                           DocumentUpdateSerializer,
                           DocumentRetrieveSerializer,)
-from .models import Document, UploadStatus
-from .utils import DocumentsPagination, DocumentFilterSet
+from .models import Document
+from .utils import DocumentFilterSet
 
 
 LOG = logging.getLogger('transmission')
@@ -23,7 +23,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
     permission_classes = (permissions.IsAuthenticated, UserHasPermission,)
-    pagination_class = DocumentsPagination
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet
     http_method_names = ['get', 'post', 'patch']
@@ -56,12 +55,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
         # Create document object
         document = self.perform_create(serializer)
-        presigned_data = serializer.s3_sign(document=document)
+        pre_signed_data = serializer.s3_sign(document=document)
 
-        # Assign s3 path
-        document.assign_s3_path(path=presigned_data['uri'])
-
-        return Response(presigned_data, status=status.HTTP_201_CREATED)
+        return Response(pre_signed_data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         """
@@ -85,12 +81,11 @@ class DocumentViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = DocumentRetrieveSerializer(instance)
-        serializer.validate_upload_status()
 
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset().exclude(upload_status=UploadStatus.FAILED))
+        queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
         if page is not None:

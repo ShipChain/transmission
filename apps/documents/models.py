@@ -47,15 +47,11 @@ class Document(models.Model):
     s3_path = models.CharField(max_length=252, blank=True, null=True)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
 
-    def assign_s3_path(self, path=None):
-        self.s3_path = path
-        self.save()
-
     @property
-    def generate_presigned_url(self):
-        s3, _ = get_s3_client()     # pylint: disable=invalid-name
+    def pre_signed_url(self):
+        s_3, _ = get_s3_client()
 
-        url = s3.generate_presigned_url(
+        url = s_3.generate_presigned_url(
             'get_object',
             Params={
                 'Bucket': f"{settings.S3_BUCKET}",
@@ -66,4 +62,5 @@ class Document(models.Model):
 
         LOG.debug(f'Generated one time s3 url for: {self.id}')
         log_metric('transmission.info', tags={'method': 'documents.generate_presigned_url', 'module': __name__})
+
         return url

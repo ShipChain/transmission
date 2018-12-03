@@ -1247,7 +1247,7 @@ components:
               title: url
               description: s3 bucket url
               type: string
-              example: 'https://s3.amazonaws.com/document-management-s3-local'
+              example: 'https://s3.amazon.com/{random-url}'
 
         next:
           properties:
@@ -1255,7 +1255,7 @@ components:
               title: next
               description: link to the next page of documents
               type: string
-              example: 'https://s3.amazonaws.com/document-management-s3-local'
+              example: '/api/v1/{object-type}/?page=2'
 
         previous:
           properties:
@@ -1263,7 +1263,7 @@ components:
               title: previous
               description: link to the previous page of documents
               type: string
-              example: 'https://s3.amazonaws.com/document-management-s3-local'
+              example: '/api/v1/{object-type}/?page=1'
         acl:
           properties:
             acl:

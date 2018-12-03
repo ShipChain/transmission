@@ -1,5 +1,3 @@
-import datetime
-
 from django.conf import settings
 from rest_framework import permissions, status
 
@@ -51,18 +49,3 @@ class UserHasPermission(permissions.BasePermission):
             return obj.owner_id == request.user.id
 
         return is_owner() or is_carrier() or is_moderator() or is_shipper()
-
-
-class AccessPeriodPermission(permissions.BasePermission):
-    """
-    Custom permission for creating and accessing documents after delivery date
-    """
-    def has_object_permission(self, request, view, obj):
-
-        date_now = datetime.datetime.now()
-        delivery_actual = obj.shipment.delivery_actual
-
-        if delivery_actual:
-            return date_now < delivery_actual.replace(tzinfo=None) + datetime.timedelta(days=10)
-
-        return True
