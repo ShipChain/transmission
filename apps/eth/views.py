@@ -48,7 +48,7 @@ class EventViewSet(mixins.CreateModelMixin,
                 LOG.info(f"Non-EthAction Event processed "
                          f"Tx: {serializer.data['transaction_hash']}")
 
-            Event.objects.create(**serializer.data, eth_action=action)
+            Event.objects.get_or_create(**serializer.data, eth_action=action)
 
         else:
             LOG.debug('Events is_many is true')
@@ -66,7 +66,7 @@ class EventViewSet(mixins.CreateModelMixin,
                     LOG.info(f"Non-EthAction Event processed "
                              f"Tx: {event['transaction_hash']}")
 
-                Event.objects.create(**event, eth_action=action)
+                Event.objects.get_or_create(**event, eth_action=action)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
