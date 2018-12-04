@@ -36,7 +36,7 @@ class UploadStatus(Enum):
 
 class Document(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
-    name = models.CharField(max_length=36, null=True, blank=True)
+    name = models.CharField(max_length=36, null=False, blank=False)
     description = models.CharField(max_length=250, null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     owner_id = models.CharField(null=False, max_length=36)
@@ -44,7 +44,7 @@ class Document(models.Model):
     file_type = EnumIntegerField(enum=FileType, default=FileType.PDF)
     upload_status = EnumIntegerField(enum=UploadStatus, default=UploadStatus.PENDING)
     size = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12500000)])
-    s3_path = models.CharField(max_length=252, blank=True, null=True)
+    s3_path = models.CharField(max_length=252, blank=False, null=False)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
 
     @property

@@ -48,4 +48,4 @@ class UserHasPermission(permissions.BasePermission):
         def is_owner():
             return obj.owner_id == request.user.id
 
-        return is_owner() or is_carrier() or is_moderator() or is_shipper()
+        return is_owner() or is_shipper() or is_carrier() or is_moderator()

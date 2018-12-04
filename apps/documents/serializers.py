@@ -7,6 +7,11 @@ from apps.utils import get_s3_client
 from .models import Document, DocumentType, FileType, UploadStatus
 
 
+IMAGE_TYPE = [enum.name.lower() for enum in FileType]
+IMAGE_TYPE.pop(IMAGE_TYPE.index('pdf'))
+IMAGE_TYPE = set(IMAGE_TYPE)
+
+
 class DocumentCreateSerializer(serializers.ModelSerializer):
     """
     Model serializer for documents validation for s3 signing
@@ -26,11 +31,7 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
         file_type = data['file_type']
         file_type_name = file_type.name.lower()
 
-        # Allowed files type list
-        img_types_list = [enum.name.lower() for enum in FileType]
-        img_types_list.pop(img_types_list.index('pdf'))
-
-        if file_type_name in img_types_list:
+        if file_type_name in IMAGE_TYPE:
             content_type = f"image/{file_type_name}"
         else:
             content_type = f"application/{file_type_name}"
@@ -92,4 +93,5 @@ class DocumentRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         exclude = ['s3_path', 'shipment']
-        read_only_fields = ('owner_id', 'shipment', 'document_type', 'file_type', 'size', 'url')
+        read_only_fields = ('owner_id', 'id', 'document_type', 'file_type', 'size', 'url', 'upload_status',
+                            'description', 'name', 'uploaded_at')

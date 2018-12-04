@@ -93,7 +93,6 @@ class PdfDocumentViewSetAPITests(APITestCase):
             'document_type': 0,
             'file_type': 0,
             'size': os.path.getsize(f_path),
-            # 'upload_status': 0,
             'shipment_id': self.shipment.id
         })
 
@@ -146,7 +145,6 @@ class PdfDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'document_type': 1,
             'shipment_id': self.shipment.id,
-            # 'upload_status': 1,
         })
         response = self.client.patch(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -168,10 +166,10 @@ class PdfDocumentViewSetAPITests(APITestCase):
         message = "Second upload pdf test. This should be larger in size!"
         self.make_pdf_file(f_path, message=message)
         file_data, content_type = create_form_content({
+            'name': os.path.basename(f_path),
             'document_type': 0,
             'file_type': 0,
             'size': os.path.getsize(f_path),
-            'upload_status': 0,
             'shipment_id': self.shipment.id
         })
         url = reverse('document-list', kwargs={'version': 'v1'})
@@ -312,10 +310,10 @@ class ImageDocumentViewSetAPITests(APITestCase):
         url = reverse('document-list', kwargs={'version': 'v1'})
 
         file_data, content_type = create_form_content({
+            'name': os.path.basename(img_path[1]),
             'document_type': 1,
             'file_type': 2,
             'size': os.path.getsize(img_path[1]),
-            # 'upload_status': 0,
             'shipment_id': self.shipment.id
         })
 
