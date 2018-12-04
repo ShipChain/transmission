@@ -4,12 +4,13 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import mixins, viewsets, parsers, status, renderers, permissions
 from rest_framework.response import Response
-from rest_framework_json_api import renderers as jsapi_renderers
+from rest_framework_json_api import renderers as jsapi_renderers, serializers
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import EngineRequest
-from apps.eth.models import EthAction, Event
-from apps.eth.serializers import EventSerializer, EthActionSerializer
+from apps.eth.models import EthAction, Event, TransactionReceipt
+from apps.eth.permissions import ProfilesRequest
+from apps.eth.serializers import EventSerializer, EthActionSerializer, TransactionReceiptSerializer
 
 from .permissions import IsOwner
 
@@ -87,4 +88,29 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
             queryset = queryset.filter(ethlistener__shipments__owner_id=self.request.user.id)
+        return queryset
+
+
+class TransactionReceiptViewSet(mixins.ListModelMixin,
+                                viewsets.GenericViewSet):
+    """
+    Get all transactions related to wallet
+    """
+    queryset = TransactionReceipt.objects.all()
+    serializer_class = TransactionReceiptSerializer
+    permission_classes = (ProfilesRequest, )
+    http_method_names = ['get']
+
+    def get_queryset(self):
+        log_metric('transmission.info', tags={'method': 'transaction.get_queryset', 'module': __name__})
+        LOG.debug('Getting tx details for a transaction hash.')
+
+        queryset = self.queryset
+
+        if not self.request.query_params.get('wallet_address'):
+            raise serializers.ValidationError(
+                'wallet_addres required in query parameters')
+
+        queryset = queryset.filter(from_address__iexact=self.request.query_params.get('wallet_address'))
+
         return queryset

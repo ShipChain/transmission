@@ -32,6 +32,8 @@ router.register(f'{API_PREFIX[1:]}/locations', shipments.LocationViewSet)
 router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, base_name='job')
 router.register(f'{API_PREFIX[1:]}/events', eth.EventViewSet, base_name='event')
 router.register(f'{API_PREFIX[1:]}/transactions', eth.TransactionViewSet, base_name='transaction')
+router.register(f'{API_PREFIX[1:]}/transactionreceipts', eth.TransactionReceiptViewSet, base_name='transactionreceipts')
+
 
 urlpatterns = [
     url(
