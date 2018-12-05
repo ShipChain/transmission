@@ -10,20 +10,11 @@ services:
     volumes:
     - /data/shipchain/transmission/minio/data:/data
     - /data/shipchain/transmission/minio/config:/root/.minio
-#    - ./test/.minio/data:/export
-#    - ./test/.minio/config:/root/.minio
     environment:
     - MINIO_ACCESS_KEY=TEST-DEV-KEY
     - MINIO_SECRET_KEY=NON-TRIVIAL-SECRETKEY
     - MINIO_DOMAIN=minio
     command: server /data --address minio:9000
-#    entrypoint: >
-#      /bin/sh -c "
-#      /usr/bin/mc config host add testminio http://minio:9000 TEST-DEV-KEY NON-TRIVIAL-SECRETKEY;
-#      /usr/bin/mc mb test;
-#      /usr/bin/mc policy download test;
-#      exit 0;
-#      "
 
   redis_db:
     image: redis

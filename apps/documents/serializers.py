@@ -26,7 +26,7 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
 
     def s3_sign(self, document=None):
         data = self.validated_data
-        s_3, _ = get_s3_client()
+        s3_client = get_s3_client()[0]
         bucket = settings.S3_BUCKET
         file_type = data['file_type']
         file_type_name = file_type.name.lower()
@@ -40,7 +40,7 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
         file_s3_path = f"{shipment.storage_credentials_id}/{shipment.shipper_wallet_id}/{shipment.vault_id}/" \
             f"{document.id}.{file_type_name}"
 
-        pre_signed_post = s_3.generate_presigned_post(
+        pre_signed_post = s3_client.generate_presigned_post(
             Bucket=bucket,
             Key=file_s3_path,
             Fields={"acl": "public-read", "Content-Type": content_type},

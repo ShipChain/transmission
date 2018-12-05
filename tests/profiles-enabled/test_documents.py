@@ -56,7 +56,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Re-enable Shipment post save signal
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
-        _, s3_resource = get_s3_client()
+        s3_resource = get_s3_client()[1]
 
         for bucket in s3_resource.buckets.all():
             for key in bucket.objects.all():
@@ -118,7 +118,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
 
         data = response.json()['data']['data']
         fields = data['fields']
-        _, s3_resource = get_s3_client()
+
+        s3_resource = get_s3_client()[1]
 
         # File upload
         put_url = data['url']
@@ -196,7 +197,6 @@ class PdfDocumentViewSetAPITests(APITestCase):
         url = reverse('document-list', kwargs={'version': 'v1'})
         url += f'?file_type=Pdf'
         response = self.client.get(url)
-        print(f'>>> List response: {response.json()}')
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 2)
@@ -206,7 +206,6 @@ class PdfDocumentViewSetAPITests(APITestCase):
         url += f'?file_type=Png'
         response = self.client.get(url)
         data = response.json()['data']
-        print(f'>>> List of png: {response.json()}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
 
@@ -235,7 +234,8 @@ class DocumentAPITests(APITestCase):
         # Re-enable Shipment post save signal
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
-        s3_path = 'https://devcenter.heroku.com/articles/s3-upload-python'
+        s3_path = 's3://33ebde34-ff0a-407d-a315-b5ff1260ffd4/10139104-ddc8-4502-8b40-f2598430d6c8/9db6b224-02e6-4720-\
+        a591-b193c527b2f3/5ec57b4d-456c-48cf-826a-435a06670b38.png'
         self.data = [
             {'document_type': 0, 'file_type': 0, 'size': 9000000, 'shipment': shipment, 's3_path': s3_path},
         ]
@@ -280,7 +280,8 @@ class ImageDocumentViewSetAPITests(APITestCase):
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
         # Upload bucket creation
-        _, s3_resource = get_s3_client()
+        # s3_resource = settings.S3_RESOURCE
+        s3_resource = get_s3_client()[1]
 
         try:
             s3_resource.create_bucket(Bucket=settings.S3_BUCKET)
@@ -327,7 +328,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
 
         data = response.json()['data']['data']
         fields = data['fields']
-        _, s3_resource = get_s3_client()
+        # s3_resource = settings.S3_RESOURCE
 
         # File upload
         put_url = data['url']
@@ -349,7 +350,6 @@ class ImageDocumentViewSetAPITests(APITestCase):
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         response = self.client.get(url)
         data = response.json()['data']['attributes']
-        # print(data)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertTrue('url' in data.keys())
 

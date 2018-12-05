@@ -49,9 +49,9 @@ class Document(models.Model):
 
     @property
     def pre_signed_url(self):
-        s_3, _ = get_s3_client()
+        s3_client = get_s3_client()[0]
 
-        url = s_3.generate_presigned_url(
+        url = s3_client.generate_presigned_url(
             'get_object',
             Params={
                 'Bucket': f"{settings.S3_BUCKET}",
@@ -62,5 +62,8 @@ class Document(models.Model):
 
         LOG.debug(f'Generated one time s3 url for: {self.id}')
         log_metric('transmission.info', tags={'method': 'documents.generate_presigned_url', 'module': __name__})
+
+        if self.upload_status != UploadStatus.COMPLETED:
+            return None
 
         return url

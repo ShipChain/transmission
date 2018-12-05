@@ -83,22 +83,12 @@ if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
-    SCHEMA = 'https://'
-    S3_HOST = 's3.amazonaws.com'
+
 else:
     DEBUG = True
     LOG_LEVEL = 'DEBUG'
     DEV_SECRET_KEY = 'devsecretkey' * 19  # noqa
     SECRET_KEY = os.environ.get('SECRET_KEY', DEV_SECRET_KEY)
-    SCHEMA = 'http://'
-    S3_HOST = 'minio:9000'
-
-# Aws s3 credentials
-S3_BUCKET = f"document-management-s3-{ENVIRONMENT.lower()}"
-AWS_SERVER_KEY = os.environ.get('AWS_SERVER_KEY', 'TEST-DEV-KEY')
-AWS_SERVER_SECRET_KEY = os.environ.get('AWS_SERVER_SECRET_KEY', 'NON-TRIVIAL-SECRETKEY')
-# s3 random generated url expiration time in seconds
-S3_URL_LIFE = 900
 
 # Application definition
 

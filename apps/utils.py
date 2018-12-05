@@ -84,31 +84,30 @@ class DecimalEncoder(json.JSONEncoder):
 
 
 def get_s3_client():
-    if settings.ENVIRONMENT in ['LOCAL', 'TEST']:
+    if settings.ENVIRONMENT in ('LOCAL', 'TEST'):
         s_3 = boto3.client(
             's3',
-            endpoint_url=settings.SCHEMA + settings.S3_HOST,
-            aws_access_key_id=settings.AWS_SERVER_KEY,
-            aws_secret_access_key=settings.AWS_SERVER_SECRET_KEY,
+            endpoint_url=settings.S3_ENDPOINT,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
             config=Config(signature_version='s3v4'),
             region_name='us-east-1'
         )
 
         s3_resource = boto3.resource(
             's3',
-            endpoint_url=settings.SCHEMA + settings.S3_HOST,
-            aws_access_key_id=settings.AWS_SERVER_KEY,
-            aws_secret_access_key=settings.AWS_SERVER_SECRET_KEY,
+            endpoint_url=settings.S3_ENDPOINT,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
             config=Config(signature_version='s3v4'),
             region_name='us-east-1'
         )
     else:
-        session = boto3.Session(
-            aws_access_key_id=settings.AWS_SERVER_KEY,
-            aws_secret_access_key=settings.AWS_SERVER_SECRET_KEY,
+        s_3 = boto3.client(
+            's3',
+            endpoint_url=settings.S3_ENDPOINT,
+            region_name='us-east-1'
         )
-
-        s_3 = session.client('s3')
 
         s3_resource = None
 
