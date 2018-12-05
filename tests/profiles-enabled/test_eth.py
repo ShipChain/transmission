@@ -1,6 +1,9 @@
 from apps.eth.models import TransactionReceipt, EthAction
 from apps.jobs.models import AsyncJob
-from django.db import models
+from apps.shipments.models import Shipment
+from unittest import mock
+from apps.shipments.rpc import Load110RPCClient
+
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient, force_authenticate
@@ -98,14 +101,34 @@ class TransactionReceiptTestCase(APITestCase):
 
     @httpretty.activate
     def test_transaction_list(self):
-        class DummyEthListener(models.Model):
-            id = models.CharField(primary_key=True, max_length=36)
-            owner_id = models.CharField(null=False, max_length=36)
+        mock_shipment_rpc_client = Load110RPCClient
 
-            class Meta:
-                app_label = 'apps.jobs'
+        mock_shipment_rpc_client.create_vault = mock.Mock(
+            return_value=(WALLET_ID, 's3://bucket/' + WALLET_ID))
+        mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
+        mock_shipment_rpc_client.create_shipment_transaction = mock.Mock(return_value=('version', {}))
+        mock_shipment_rpc_client.create_shipment_transaction.__qualname__ = 'ShipmentRPCClient.create_shipment_transaction'
+        mock_shipment_rpc_client.sign_transaction = mock.Mock(return_value=({}, 'txHash'))
+        mock_shipment_rpc_client.update_vault_hash_transaction = mock.Mock(return_value=({}))
+        mock_shipment_rpc_client.update_vault_hash_transaction.__qualname__ = 'ShipmentRPCClient.set_vault_hash_tx'
+        mock_shipment_rpc_client.send_transaction = mock.Mock(return_value={
+            "blockHash": "0xccb595947a121e37df8bf689c3f88c6d9c7fb56070c9afda38551540f9e231f7",
+            "blockNumber": 15,
+            "contractAddress": None,
+            "cumulativeGasUsed": 138090,
+            "from": "0x13b1eebb31a1aa2ecaa2ad9e7455df2f717f2143",
+            "gasUsed": 138090,
+            "logs": [],
+            "logsBloom": "0x0000000000",
+            "status": True,
+            "to": "0x25ff5dc79a7c4e34254ff0f4a19d69e491201dd3",
+            "transactionHash": TRANSACTION_HASH,
+            "transactionIndex": 0
+        })
 
-        listener = DummyEthListener(id='FAKE_LISTENER_ID', owner_id=USER_ID)
+        listener = Shipment.objects.create(owner_id=USER_ID, carrier_wallet_id=WALLET_ID,
+                                           shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
+                                           storage_credentials_id=WALLET_ID)
 
         self.createAsyncJobs()
         self.createEthAction(listener)
@@ -128,6 +151,7 @@ class TransactionReceiptTestCase(APITestCase):
 
         # request for specific eth actions using wallet_address should fail
         response = self.client.get(f'{url}?wallet_address={FROM_ADDRESS}')
+        print(response.content)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         httpretty.register_uri(httpretty.GET,
@@ -138,6 +162,7 @@ class TransactionReceiptTestCase(APITestCase):
         # request for specific eth actions should only return ones with that from_address
         response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
         force_authenticate(response, user=self.user_1, token=token)
+        print(response.content)
         response_json = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response_json['data']), 1)

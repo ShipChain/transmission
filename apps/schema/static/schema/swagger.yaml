@@ -290,7 +290,7 @@ paths:
     get:
       summary: List transactions
       description: >
-        Retrieve an array of `EthAction` (association between an Eth `Transaction` and `TransactionReceipt`) associated with a wallet.
+        Retrieve an array of `EthAction`s (association between an Eth `Transaction` and `TransactionReceipt`) associated with a wallet.
       parameters:
       - $ref: '#/components/parameters/transaction/path'
       - $ref: '#/components/parameters/transaction/wallet_id'
@@ -656,7 +656,7 @@ components:
         required: true
         name: wallet_id
         in: path
-        description: Wallet ID to be filter transactions by
+        description: Wallet ID to filter transactions by
         schema:
           $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
 
