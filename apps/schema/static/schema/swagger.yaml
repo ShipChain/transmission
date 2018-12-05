@@ -286,6 +286,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
+  /api/v1/transactions/:
+    get:
+      summary: Get transaction list
+      description: >
+        Get list of `EthAction` (association between an Eth `Transaction` and `TransactionReceipt`) associated with a wallet.
+      parameters:
+      - $ref: '#/components/parameters/transaction/path'
+      - $ref: '#/components/parameters/transaction/wallet_id'
+      tags:
+      - Transactions
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ethAction/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
   /api/v1/transactions/{transaction_hash}/:
     get:
       summary: Get transaction
@@ -628,6 +652,14 @@ components:
         schema:
           $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
 
+      wallet_id:
+        required: true
+        name: wallet_id
+        in: path
+        description: Wallet ID to be queried against
+        schema:
+          $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
+
   schemas:
     dataTypes:
       # General resource parameters
@@ -906,6 +938,14 @@ components:
               type: boolean
               example: True
 
+
+        walletId:
+          properties:
+            wallet_id:
+              <<: *uuid
+              title: wallet_id
+              description: Wallet UUID associated with the transaction
+
         version:
           properties:
             version:
@@ -1067,8 +1107,8 @@ components:
           properties:
             shipper_wallet_id:
               <<: *uuid
-              title: vault_id
-              description: Vault UUID associated with the shipment
+              title: shipper_wallet_id
+              description: Shipper Wallet UUID associated with the shipment
 
         carrierWalletId:
           properties:
@@ -2878,6 +2918,19 @@ components:
               $ref: '#/components/schemas/ethAction/getResource'
             included:
               $ref: '#/components/schemas/ethAction/included'
+
+      listResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/dataArray'
+        - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+        - properties:
+            data:
+              items:
+                $ref: '#/components/schemas/ethAction/getResource'
+            included:
+              items:
+                $ref: '#/components/schemas/ethAction/included'
+
 
     errors:
       401:
