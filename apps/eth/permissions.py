@@ -1,5 +1,4 @@
 from rest_framework import permissions
-from django.conf import settings
 
 
 class IsOwner(permissions.BasePermission):
@@ -13,12 +12,4 @@ class IsOwner(permissions.BasePermission):
         for shipment in obj.listeners.filter(Model='shipments.Shipment'):
             if shipment.owner_id == request.user.id:
                 return True
-        return False
-
-
-class ProfilesRequest(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if settings.PROFILES_ENABLED:
-            return True
-
         return False

@@ -136,9 +136,8 @@ class TransactionReceiptTestCase(APITestCase):
                                status=status.HTTP_200_OK)
 
         # request for specific eth actions should only return ones with that from_address
-        response = self.client.get(f'{url}?wallet_id={WALLET_ID}&shipper_wallet_id={WALLET_ID}')
+        response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
         force_authenticate(response, user=self.user_1, token=token)
-        print(response.content)
         response_json = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response_json['data']), 1)

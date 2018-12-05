@@ -33,7 +33,6 @@ router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, base_name='job')
 router.register(f'{API_PREFIX[1:]}/events', eth.EventViewSet, base_name='event')
 router.register(f'{API_PREFIX[1:]}/transactions', eth.TransactionViewSet, base_name='transaction')
 
-
 urlpatterns = [
     url(
         r'(^(api/v1/schema)|^$)',

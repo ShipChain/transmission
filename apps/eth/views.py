@@ -90,36 +90,36 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
         if settings.PROFILES_ENABLED:
             queryset = queryset.filter(Q(ethlistener__shipments__owner_id=self.request.user.id) |
                                        Q(ethlistener__shipments__shipper_wallet_id=
-                                         self.request.query_params.get('shipper_wallet_id')) |
+                                         self.request.query_params.get('wallet_id')) |
+                                       Q(ethlistener__shipments__moderator_wallet_id=
+                                         self.request.query_params.get('wallet_id')) |
                                        Q(ethlistener__shipments__carrier_wallet_id=
-                                         self.request.query_params.get('carrier_wallet_id')))
+                                         self.request.query_params.get('wallet_id')))
         return queryset
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
         if not settings.PROFILES_ENABLED:
-            if not self.request.query_params.get('wallet_address'):
+            if 'wallet_address' not in self.request.query_params:
                 raise serializers.ValidationError(
                     'wallet_address required in query parameters')
 
             from_address = self.request.query_params.get('wallet_address')
 
         else:
-            if not self.request.query_params.get('wallet_id'):
+            if 'wallet_id' not in self.request.query_params:
                 raise serializers.ValidationError(
                     'wallet_id required in query parameters')
 
             wallet_id = self.request.query_params.get('wallet_id')
 
-            auth = request.auth
-
             wallet_response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{wallet_id}/',
-                                                            headers={'Authorization': 'JWT {}'.format(auth.decode())})
+                                                            headers={'Authorization': 'JWT {}'.format(
+                                                                request.auth.decode())})
 
             if not wallet_response.status_code == status.HTTP_200_OK:
-                print('hello there')
-                raise serializers.ValidationError('Error validating wallet on ShipChain Profiles')
+                raise serializers.ValidationError('Error retrieving Wallet from  on ShipChain Profiles')
 
             wallet_details = wallet_response.json()
             from_address = wallet_details['data']['attributes']['address']
