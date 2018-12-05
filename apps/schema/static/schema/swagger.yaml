@@ -190,12 +190,33 @@ paths:
   /api/v1/shipments/{shipment_id}/tracking/:
     post:
       summary: Add tracking data
-      description: >
-        Associate GPS tracking data with a `Shipment`.
+      description: |
+        Associate GPS tracking data with a `Shipment`. The tracking payload must be signed and encoded as a [JWS](https://tools.ietf.org/html/rfc7515).
+        An active AXLE certificate must be used to sign this JWS, and the certificate ID must be included in the headers as `kid`.
+
+        A JSON Schema specification for the tracking data payload format is located at [schema.shipchain.io](http://schema.shipchain.io/1.0.1/tracking.json)
+
+        An example of a raw payload:
+        ```
+        {
+          "position": {
+            "latitude": -81.048253,
+            "longitude": 34.628643,
+            "altitude": 924,
+            "source": "gps",
+            "uncertainty": 95,
+            "speed": 34
+          },
+          "version": "1.0.0",
+          "timestamp": "2018-08-22T17:44:39.874352",
+          "device_id": "1243d23b-e2fc-475a-8290-0e4f53479553"
+        }
+        ```
       parameters:
       - $ref: '#/components/parameters/shipment/path'
       tags:
       - Shipments
+      security: []
       responses:
         '204':
           description: *response_204
@@ -1518,73 +1539,6 @@ components:
                   <<: *uuid
                   title: id
                   description: LoadShipment UUID associated with the shipment
-
-        tracking:
-          version:
-            properties:
-              version:
-                title: version
-                description: Version of the tracking data format
-                type: string
-                example: '1.0.0'
-
-          timestamp:
-            properties:
-              timestamp:
-                title: timestamp
-                description: Timestamp of the GPS fix (ISO 8601 format)
-                type: string
-                example: '2018-08-22T17:44:39.874352'
-
-          latitude:
-            properties:
-              latitude:
-                title: latitude
-                description: Latitude at the device's position
-                type: number
-                format: double
-                example: -81.048253
-
-          longitude:
-            properties:
-              longitude:
-                title: longitude
-                description: Longitude at the device's position
-                type: number
-                format: double
-                example: 34.628643
-
-          altitude:
-            properties:
-              altitude:
-                title: altitude
-                description: Altitude at the device's position
-                type: number
-                example: 924
-
-          uncertainty:
-            properties:
-              uncertainty:
-                title: uncertainty
-                description: Estimated accuracy of the GPS fix in meters
-                type: number
-                example: 95
-
-          speed:
-            properties:
-              speed:
-                title: speed
-                description: The device's current velocity in m/s
-                type: number
-                example: 34
-
-          source:
-            properties:
-              source:
-                title: source
-                description: Geolocation method
-                type: string
-                example: gps
 
       # General Job Parameters
       job:
@@ -3058,50 +3012,18 @@ components:
               $ref: '#/components/requestBodies/shipment/createResource'
 
       tracking:
-        createResource:
-         allOf:
-         - properties:
-            attributes:
-              $ref: '#/components/requestBodies/shipment/tracking/createAttributes'
-
-
-        createRequest:
-          allOf:
-          - properties:
-              data:
-                $ref: '#/components/requestBodies/shipment/tracking/createResource'
-
-        position:
-          properties:
-            position:
-              description: GPS data related to a device's position
-              allOf:
-              - $ref: '#/components/schemas/dataTypes/shipment/tracking/latitude'
-              - $ref: '#/components/schemas/dataTypes/shipment/tracking/longitude'
-              - $ref: '#/components/schemas/dataTypes/shipment/tracking/altitude'
-              - $ref: '#/components/schemas/dataTypes/shipment/tracking/source'
-              - $ref: '#/components/schemas/dataTypes/shipment/tracking/uncertainty'
-              - $ref: '#/components/schemas/dataTypes/shipment/tracking/speed'
-
         payload:
           properties:
             payload:
-              description: Tracking data payload
-              allOf:
-                - $ref: '#/components/requestBodies/shipment/tracking/createAttributes'
-
-        createAttributes:
-          required:
-          - position
-          - version
-          - timestamp
-          - device_id
-          allOf:
-          - $ref: '#/components/requestBodies/shipment/tracking/position'
-          - $ref: '#/components/schemas/dataTypes/shipment/tracking/version'
-          - $ref: '#/components/schemas/dataTypes/shipment/tracking/timestamp'
-          - $ref: '#/components/schemas/dataTypes/shipment/deviceId'
-
+              title: payload
+              description: Tracking data payload JWS
+              type: string
+              example: >-
+                eyJraWQiOiJlNjZhMmFiNjI0OGQxYzZkNTMxNmQ0MTIzNTlmNWU4ZGM1MzY2ZThkMTQ0ZDMwYTRlYzFmNzg3YmNhYjQ0MTQ2IiwiYWxnIj
+                oiRVMyNTYifQ.eyJkZXZpY2VfaWQiOiIzMjFhMWYzYy0zYmVjLTQ1ZDktYTM5OS00ODM5MmUzYTJiMTQiLCJwb3NpdGlvbiI6eyJhbHRpd
+                HVkZSI6MjcxLjAsImxhdGl0dWRlIjozNC44NTIwNTU1LCJsb25naXR1ZGUiOi04Mi40MDAwOTQ3LCJzb3VyY2UiOiJHUFMiLCJzcGVlZCI
+                6MC4wLCJ1bmNlcnRhaW50eSI6OTl9LCJ0aW1lc3RhbXAiOiIyMDE4LTExLTI5VDIwOjI4OjA3WiIsInZlcnNpb24iOiIxLjAuMCJ9.jNWQ
+                j7kC8iacZwpEYlWexcDsP8ed-wIaebwSwOsrB7nTIoMOmbMWVHL3JC5dMzs8yCA3rReSkqbOu3TG0ACudw
     location:
       createResource:
         allOf:
