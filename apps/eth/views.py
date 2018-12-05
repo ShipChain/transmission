@@ -2,15 +2,15 @@ import logging
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from rest_framework import mixins, viewsets, parsers, status, renderers, permissions
 from rest_framework.response import Response
 from rest_framework_json_api import renderers as jsapi_renderers, serializers
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import EngineRequest
-from apps.eth.models import EthAction, Event, TransactionReceipt
-from apps.eth.permissions import ProfilesRequest
-from apps.eth.serializers import EventSerializer, EthActionSerializer, TransactionReceiptSerializer
+from apps.eth.models import EthAction, Event
+from apps.eth.serializers import EventSerializer, EthActionSerializer
 
 from .permissions import IsOwner
 
@@ -73,6 +73,7 @@ class EventViewSet(mixins.CreateModelMixin,
 
 
 class TransactionViewSet(mixins.RetrieveModelMixin,
+                         mixins.ListModelMixin,
                          viewsets.GenericViewSet):
     """
     Get tx details for a transaction hash
@@ -87,30 +88,48 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
         LOG.debug('Getting tx details for a transaction hash.')
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(ethlistener__shipments__owner_id=self.request.user.id)
+            queryset = queryset.filter(Q(ethlistener__shipments__owner_id=self.request.user.id) |
+                                       Q(ethlistener__shipments__shipper_wallet_id=
+                                         self.request.query_params.get('shipper_wallet_id')) |
+                                       Q(ethlistener__shipments__carrier_wallet_id=
+                                         self.request.query_params.get('carrier_wallet_id')))
         return queryset
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
 
-class TransactionReceiptViewSet(mixins.ListModelMixin,
-                                viewsets.GenericViewSet):
-    """
-    Get all transactions related to wallet
-    """
-    queryset = TransactionReceipt.objects.all()
-    serializer_class = TransactionReceiptSerializer
-    permission_classes = (ProfilesRequest, )
-    http_method_names = ['get']
+        if not settings.PROFILES_ENABLED:
+            if not self.request.query_params.get('wallet_address'):
+                raise serializers.ValidationError(
+                    'wallet_address required in query parameters')
 
-    def get_queryset(self):
-        log_metric('transmission.info', tags={'method': 'transaction.get_queryset', 'module': __name__})
-        LOG.debug('Getting tx details for a transaction hash.')
+            from_address = self.request.query_params.get('wallet_address')
 
-        queryset = self.queryset
+        else:
+            if not self.request.query_params.get('wallet_id'):
+                raise serializers.ValidationError(
+                    'wallet_id required in query parameters')
 
-        if not self.request.query_params.get('wallet_address'):
-            raise serializers.ValidationError(
-                'wallet_addres required in query parameters')
+            wallet_id = self.request.query_params.get('wallet_id')
 
-        queryset = queryset.filter(from_address__iexact=self.request.query_params.get('wallet_address'))
+            auth = request.auth
 
-        return queryset
+            wallet_response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{wallet_id}/',
+                                                            headers={'Authorization': 'JWT {}'.format(auth.decode())})
+
+            if not wallet_response.status_code == status.HTTP_200_OK:
+                print('hello there')
+                raise serializers.ValidationError('Error validating wallet on ShipChain Profiles')
+
+            wallet_details = wallet_response.json()
+            from_address = wallet_details['data']['attributes']['address']
+
+        queryset = queryset.filter(transactionreceipt__from_address__iexact=from_address)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
