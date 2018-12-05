@@ -119,7 +119,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
                                                                 request.auth.decode())})
 
             if not wallet_response.status_code == status.HTTP_200_OK:
-                raise serializers.ValidationError('Error retrieving Wallet from  on ShipChain Profiles')
+                raise serializers.ValidationError('Error retrieving Wallet from ShipChain Profiles')
 
             wallet_details = wallet_response.json()
             from_address = wallet_details['data']['attributes']['address']
