@@ -207,7 +207,7 @@ paths:
             "uncertainty": 95,
             "speed": 34
           },
-          "version": "1.0.0",
+          "version": "1.0.1",
           "timestamp": "2018-08-22T17:44:39.874352",
           "device_id": "1243d23b-e2fc-475a-8290-0e4f53479553"
         }
@@ -3019,11 +3019,11 @@ components:
               description: Tracking data payload JWS
               type: string
               example: >-
-                eyJraWQiOiJlNjZhMmFiNjI0OGQxYzZkNTMxNmQ0MTIzNTlmNWU4ZGM1MzY2ZThkMTQ0ZDMwYTRlYzFmNzg3YmNhYjQ0MTQ2IiwiYWxnIj
-                oiRVMyNTYifQ.eyJkZXZpY2VfaWQiOiIzMjFhMWYzYy0zYmVjLTQ1ZDktYTM5OS00ODM5MmUzYTJiMTQiLCJwb3NpdGlvbiI6eyJhbHRpd
-                HVkZSI6MjcxLjAsImxhdGl0dWRlIjozNC44NTIwNTU1LCJsb25naXR1ZGUiOi04Mi40MDAwOTQ3LCJzb3VyY2UiOiJHUFMiLCJzcGVlZCI
-                6MC4wLCJ1bmNlcnRhaW50eSI6OTl9LCJ0aW1lc3RhbXAiOiIyMDE4LTExLTI5VDIwOjI4OjA3WiIsInZlcnNpb24iOiIxLjAuMCJ9.jNWQ
-                j7kC8iacZwpEYlWexcDsP8ed-wIaebwSwOsrB7nTIoMOmbMWVHL3JC5dMzs8yCA3rReSkqbOu3TG0ACudw
+                eyJraWQiOiJlNjZhMmFiNjI0OGQxYzZkNTMxNmQ0MTIzNTlmNWU4ZGM1MzY2ZThkMTQ0ZDMwYTRlYzFmNzg3YmNhYjQ0MTQ2IiwiYWxn
+                IjoiRVMyNTYifQ.eyJkZXZpY2VfaWQiOiIzMjFhMWYzYy0zYmVjLTQ1ZDktYTM5OS00ODM5MmUzYTJiMTQiLCJwb3NpdGlvbiI6eyJhb
+                HRpdHVkZSI6MjcxLjAsImxhdGl0dWRlIjozNC44NTIwNTU1LCJsb25naXR1ZGUiOi04Mi40MDAwOTQ3LCJzb3VyY2UiOiJHUFMiLCJzc
+                GVlZCI6MC4wLCJ1bmNlcnRhaW50eSI6OTl9LCJ0aW1lc3RhbXAiOiIyMDE4LTExLTI5VDIwOjI4OjA3WiIsInZlcnNpb24iOiIxLjAuM
+                SJ9.jNWQj7kC8iacZwpEYlWexcDsP8ed-wIaebwSwOsrB7nTIoMOmbMWVHL3JC5dMzs8yCA3rReSkqbOu3TG0ACudw
     location:
       createResource:
         allOf:
