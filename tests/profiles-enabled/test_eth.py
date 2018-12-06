@@ -151,7 +151,6 @@ class TransactionReceiptTestCase(APITestCase):
 
         # request for specific eth actions using wallet_address should fail
         response = self.client.get(f'{url}?wallet_address={FROM_ADDRESS}')
-        print(response.content)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         httpretty.register_uri(httpretty.GET,
@@ -162,7 +161,6 @@ class TransactionReceiptTestCase(APITestCase):
         # request for specific eth actions should only return ones with that from_address
         response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
         force_authenticate(response, user=self.user_1, token=token)
-        print(response.content)
         response_json = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response_json['data']), 1)

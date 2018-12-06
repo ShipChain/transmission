@@ -292,8 +292,9 @@ paths:
       description: >
         Retrieve an array of `EthAction`s (association between an Eth `Transaction` and `TransactionReceipt`) associated with a wallet.
       parameters:
-      - $ref: '#/components/parameters/transaction/path'
       - $ref: '#/components/parameters/transaction/wallet_id'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/page_size'
       tags:
       - Transactions
       responses:
@@ -655,10 +656,10 @@ components:
       wallet_id:
         required: true
         name: wallet_id
-        in: path
+        in: query
         description: Wallet ID to filter transactions by
         schema:
-          $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
+          $ref: '#/components/schemas/dataTypes/walletId'
 
   schemas:
     dataTypes:
@@ -689,6 +690,13 @@ components:
             <<: *uuid
             title: async_job_id
             description: Async Job's UUID
+
+      walletId:
+        properties:
+          wallet_id:
+            <<: *uuid
+            title: wallet_id
+            description: Wallet's UUID
 
       resourceId:
         properties:
