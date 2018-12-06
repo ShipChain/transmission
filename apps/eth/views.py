@@ -99,6 +99,8 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        log_metric('transmission.info', tags={'method': 'transaction.list', 'module': __name__})
+        LOG.debug('Getting tx details filtered by wallet address.')
 
         if not settings.PROFILES_ENABLED:
             if 'wallet_address' not in self.request.query_params:
