@@ -115,8 +115,9 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
             wallet_id = self.request.query_params.get('wallet_id')
 
             wallet_response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{wallet_id}/',
-                                                            headers={'Authorization': 'JWT {}'.format(
-                                                                request.auth.decode())})
+                                                            headers={
+                                                                'Authorization': 'JWT {}'.format(request.auth.decode())
+                                                            })
 
             if not wallet_response.status_code == status.HTTP_200_OK:
                 raise serializers.ValidationError('Error retrieving Wallet from ShipChain Profiles')
