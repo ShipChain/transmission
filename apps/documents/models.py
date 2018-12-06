@@ -60,10 +60,10 @@ class Document(models.Model):
             ExpiresIn=settings.S3_URL_LIFE
         )
 
-        LOG.debug(f'Generated one time s3 url for: {self.id}')
-        log_metric('transmission.info', tags={'method': 'documents.generate_presigned_url', 'module': __name__})
-
         if self.upload_status != UploadStatus.COMPLETED:
             return None
+
+        LOG.debug(f'Generated one time s3 url for: {self.id}')
+        log_metric('transmission.info', tags={'method': 'documents.generate_presigned_url', 'module': __name__})
 
         return url

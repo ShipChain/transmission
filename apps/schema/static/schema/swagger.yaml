@@ -195,6 +195,9 @@ paths:
       parameters:
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/document/fileType'
+      - $ref: '#/components/parameters/document/documentType'
+      - $ref: '#/components/parameters/document/uploadStatus'
       tags:
       - Documents
       responses:
@@ -267,30 +270,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
-  patch:
-    summary: Update a Document
-    description: >
-      Update a `Document` object with the provided parameters.
-    tags:
-    - Documents
-    responses:
-      '202':
-        description: *response_202
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/schemas/document/createResponse'
-      '401':
-        description: *response_401
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/schemas/errors/401'
+    patch:
+      summary: Update a Document
+      description: >
+        Update a `Document` object with the provided parameters.
+      tags:
+      - Documents
+      responses:
+        '202':
+          description: *response_202
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/document/createPatchResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
       requestBody:
         content:
           application/vnd.api+json:
             schema:
-              $ref: '#/components/requestBodies/document/createRequest'
+              $ref: '#/components/requestBodies/document/createPatchRequest'
           application/json:
             schema:
               allOf:
@@ -771,6 +774,33 @@ components:
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
+      fileType:
+        required: false
+        in: query
+        name: file_type
+        description: Type of file to filter
+        schema:
+          type: string
+          enum: [Pdf, Jpeg, Png]
+
+      documentType:
+        required: false
+        in: query
+        name: document_type
+        description: Type of the resource to query for
+        schema:
+          type: string
+          enum: [Bol, Image, Other]
+
+      uploadStatus:
+        required: false
+        in: query
+        name: upload_status
+        description: Upload status of the files to query for
+        schema:
+          type: string
+          enum: [Pending, Completed, Failed]
+
   schemas:
     dataTypes:
       # General resource parameters
@@ -1222,14 +1252,14 @@ components:
               title: upload_status
               description: Status of the file in upload. 0 for PENDING, 1 for COMPLETED and 2 for FAILED
               type: integer
-              enum: [{0: PENDIND}, {1: COMPLETED}, {2: FAILED}]
+              enum: [{0: PENDING}, {1: COMPLETED}, {2: FAILED}]
               example: 0
 
         size:
           properties:
             size:
               title: size
-              description: file size of the Document to upload
+              description: file size of the Document
               type: integer
               example: 1234567
 
@@ -1245,9 +1275,9 @@ components:
           properties:
             url:
               title: url
-              description: s3 bucket url
+              description: s3 one time pre-signed url to access the document
               type: string
-              example: 'https://s3.amazon.com/{random-url}'
+              example: 'https://s3.amazonaws.com/{random-string}'
 
         next:
           properties:
@@ -1294,7 +1324,7 @@ components:
               title: key
               description: Key
               type: string
-              example: 'image/png'
+              example: '33ebde34-ff0a-407d-a315-b5ff1260ffd4/10139104-ddc8-4502-8b40-f2598430d6c8/fa50cb2a-bbca-43c1-9acc-a75da16e98cc/c06ecadb-ab1a-403a-a94c-c968f62a0a33.png'
 
         x-amz-algorithm:
           properties:
@@ -1336,14 +1366,6 @@ components:
               type: string
               example: 'c660f43cdbea52ada8b9bc128286728aaaf24c3de96c009a9661b56c95cc7b2e'
 
-        uri:
-          properties:
-            uri:
-              title: uri
-              description: uri to the s3 bucket
-              type: string
-              example: 's3://document-management-s3-local/21f206f5-d650-4d5c-a36a-89419aab1e6d/3b0d6c33-31fd-4ec7-b69d-d536433d615d/1d4de6fe-c362-4c56-9add-3472bae4f93a/fe879e4e-3965-4573-843b-0e912686d3fc.png'
-
         document_id:
           properties:
             document_id:
@@ -1351,6 +1373,22 @@ components:
               description: uuid of the document
               type: string
               example: '1243d23b-e2fc-475a-8290-0e4f53479553'
+
+        id:
+          properties:
+            id:
+              title: id
+              description: uuid of the document
+              type: string
+              example: '1243d23b-e2fc-475a-8290-0e4f53479553'
+
+        bucket_url:
+          properties:
+            url:
+              title: url
+              description: Bucket url
+              type: string
+              example: 'https://s3.amazonaws.com/document-management-s3-local'
 
       shipment:
         storageCredentialsId:
@@ -2869,39 +2907,21 @@ components:
           - $ref: '#/components/schemas/dataTypes/document/documentType'
           - $ref: '#/components/schemas/dataTypes/document/fileType'
           - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
-#          - $ref: '#/components/schemas/dataTypes/document/s3Path'
           - $ref: '#/components/schemas/dataTypes/document/uploadedAt'
 
       fields:
-        properties:
-          data:
-            allOf:
-            - $ref: '#/components/schemas/dataTypes/document/acl'
-            - $ref: '#/components/schemas/dataTypes/document/contentType'
-            - $ref: '#/components/schemas/dataTypes/document/key'
-            - $ref: '#/components/schemas/dataTypes/document/x-amz-algorithm'
-            - $ref: '#/components/schemas/dataTypes/document/x-amz-credential'
-            - $ref: '#/components/schemas/dataTypes/document/x-amz-date'
-            - $ref: '#/components/schemas/dataTypes/document/policy'
-            - $ref: '#/components/schemas/dataTypes/document/x-amz-signature'
-
-      documents:
-        properties:
-          documents:
-            type: array
-            items:
-              $ref: '#/components/schemas/document/document'
-
-      links:
-        properties:
-          links:
-            allOf:
-            - $ref: '#/components/schemas/dataTypes/document/next'
-            - $ref: '#/components/schemas/dataTypes/document/previous'
+        allOf:
+        - $ref: '#/components/schemas/dataTypes/document/acl'
+        - $ref: '#/components/schemas/dataTypes/document/contentType'
+        - $ref: '#/components/schemas/dataTypes/document/key'
+        - $ref: '#/components/schemas/dataTypes/document/x-amz-algorithm'
+        - $ref: '#/components/schemas/dataTypes/document/x-amz-credential'
+        - $ref: '#/components/schemas/dataTypes/document/x-amz-date'
+        - $ref: '#/components/schemas/dataTypes/document/policy'
+        - $ref: '#/components/schemas/dataTypes/document/x-amz-signature'
 
       document:
         allOf:
-        - $ref: '#/components/schemas/dataTypes/resourceId'
         - $ref: '#/components/schemas/dataTypes/document/documentType'
         - $ref: '#/components/schemas/dataTypes/document/fileType'
         - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
@@ -2912,40 +2932,48 @@ components:
         - $ref: '#/components/schemas/dataTypes/document/size'
         - $ref: '#/components/schemas/dataTypes/document/url'
 
-      getResource:
-        allOf:
-        - $ref: '#/components/schemas/dataTypes/resourceId'
-        - $ref: '#/components/schemas/document/resource'
-        - properties:
-            attributes:
-              $ref: '#/components/schemas/document/attributes'
-
       getResponse:
         allOf:
-        - properties:
-            data:
-              allOf:
-              - $ref: '#/components/schemas/document/links'
-              - $ref: '#/components/schemas/dataTypes/document/count'
-              - $ref: '#/components/schemas/document/documents'
+          - $ref: '#/components/schemas/document/createPatchResponse'
 
       listResponse:
         allOf:
-        - $ref: '#/components/schemas/document/links'
-        - $ref: '#/components/schemas/document/getResponse'
+          - $ref: '#/components/schemas/jsonApi/dataArray'
+          - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+          - properties:
+              data:
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/dataTypes/resourceId'
+                    - $ref: '#/components/requestBodies/document/PatchResponseResource'
 
       createResource:
         allOf:
         - properties:
             data:
               allOf:
-              - $ref: '#/components/schemas/document/fields'
-              - $ref: '#/components/schemas/dataTypes/document/uri'
+              - properties:
+                  data:
+                    allOf:
+                    - $ref: '#/components/schemas/dataTypes/document/bucket_url'
+                    - properties:
+                        fields:
+                          allOf:
+                            - $ref: '#/components/schemas/document/fields'
               - $ref: '#/components/schemas/dataTypes/document/document_id'
 
       createResponse:
         allOf:
         - $ref: '#/components/schemas/document/createResource'
+
+      createPatchResponse:
+        allOf:
+          - $ref: '#/components/requestBodies/jsonApi/createData'
+          - properties:
+              data:
+                allOf:
+                 - $ref: '#/components/schemas/dataTypes/resourceId'
+                 - $ref: '#/components/requestBodies/document/PatchResponseResource'
 
     tracking:
       collectionResource:
@@ -3335,11 +3363,47 @@ components:
               attributes:
                 $ref: '#/components/requestBodies/document/createAttributes'
 
+      createPatchResource:
+        allOf:
+          - $ref: '#/components/schemas/document/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/requestBodies/document/createPatchAttributes'
+
+      patchResponseResource:
+        allOf:
+          - $ref: '#/components/schemas/document/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/requestBodies/document/createPatchAttributes'
+
+
+      PatchResponseResource:
+        allOf:
+          - $ref: '#/components/schemas/document/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/schemas/document/document'
+
+      createPatchAttributes:
+        required:
+          - upload_status
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/document/name'
+          - $ref: '#/components/schemas/dataTypes/document/description'
+          - $ref: '#/components/schemas/dataTypes/document/documentType'
+          - $ref: '#/components/schemas/dataTypes/document/fileType'
+          - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
+          - $ref: '#/components/schemas/dataTypes/document/size'
+
       createAttributes:
         required:
           - owner_id
-          - shipment
+          - shipment_id
+          - file_type
+          - document_type
           - size
+          - name
         allOf:
           - $ref: '#/components/schemas/dataTypes/document/name'
           - $ref: '#/components/schemas/dataTypes/document/description'
@@ -3355,6 +3419,13 @@ components:
           - properties:
               data:
                 $ref: '#/components/requestBodies/document/createResource'
+
+      createPatchRequest:
+        allOf:
+          - $ref: '#/components/requestBodies/jsonApi/createData'
+          - properties:
+              data:
+                $ref: '#/components/requestBodies/document/createPatchResource'
 
     shipment:
       createResource:

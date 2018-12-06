@@ -81,7 +81,8 @@ class DocumentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = '__all__'
-        read_only_fields = ('owner_id', 'shipment', 'document_type', 'file_type', 'size', 's3_path')
+        read_only_fields = ('owner_id', 'id', 'document_type', 'file_type', 'size', 'url', 'description', 'name',
+                            'uploaded_at', 's3_path')
 
 
 class DocumentRetrieveSerializer(serializers.ModelSerializer):
