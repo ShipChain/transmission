@@ -88,13 +88,17 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
         LOG.debug('Getting tx details for a transaction hash.')
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(Q(ethlistener__shipments__owner_id=self.request.user.id) |
-                                       Q(ethlistener__shipments__shipper_wallet_id=
-                                         self.request.query_params.get('wallet_id')) |
-                                       Q(ethlistener__shipments__moderator_wallet_id=
-                                         self.request.query_params.get('wallet_id')) |
-                                       Q(ethlistener__shipments__carrier_wallet_id=
-                                         self.request.query_params.get('wallet_id')))
+            if 'wallet_id' in self.request.query_params:
+                queryset = queryset.filter(Q(ethlistener__shipments__owner_id=self.request.user.id) |
+                                           Q(ethlistener__shipments__shipper_wallet_id=
+                                             self.request.query_params.get('wallet_id')) |
+                                           Q(ethlistener__shipments__moderator_wallet_id=
+                                             self.request.query_params.get('wallet_id')) |
+                                           Q(ethlistener__shipments__carrier_wallet_id=
+                                             self.request.query_params.get('wallet_id')))
+            else:
+                queryset = queryset.filter(ethlistener__shipments__owner_id=self.request.user.id)
+
         return queryset
 
     def list(self, request, *args, **kwargs):

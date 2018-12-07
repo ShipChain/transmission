@@ -99,6 +99,50 @@ class TransactionReceiptTestCase(APITestCase):
                                                                           to_address=TO_ADDRESS,
                                                                           eth_action=self.ethActions[1]))
 
+    def test_transaction_get(self):
+        mock_shipment_rpc_client = Load110RPCClient
+
+        mock_shipment_rpc_client.create_vault = mock.Mock(
+            return_value=(WALLET_ID, 's3://bucket/' + WALLET_ID))
+        mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
+        mock_shipment_rpc_client.create_shipment_transaction = mock.Mock(return_value=('version', {}))
+        mock_shipment_rpc_client.create_shipment_transaction.__qualname__ = 'ShipmentRPCClient.create_shipment_transaction'
+        mock_shipment_rpc_client.sign_transaction = mock.Mock(return_value=({}, 'txHash'))
+        mock_shipment_rpc_client.update_vault_hash_transaction = mock.Mock(return_value=({}))
+        mock_shipment_rpc_client.update_vault_hash_transaction.__qualname__ = 'ShipmentRPCClient.set_vault_hash_tx'
+        mock_shipment_rpc_client.send_transaction = mock.Mock(return_value={
+            "blockHash": "0xccb595947a121e37df8bf689c3f88c6d9c7fb56070c9afda38551540f9e231f7",
+            "blockNumber": 15,
+            "contractAddress": None,
+            "cumulativeGasUsed": 138090,
+            "from": "0x13b1eebb31a1aa2ecaa2ad9e7455df2f717f2143",
+            "gasUsed": 138090,
+            "logs": [],
+            "logsBloom": "0x0000000000",
+            "status": True,
+            "to": "0x25ff5dc79a7c4e34254ff0f4a19d69e491201dd3",
+            "transactionHash": TRANSACTION_HASH,
+            "transactionIndex": 0
+        })
+
+        listener = Shipment.objects.create(owner_id=USER_ID, carrier_wallet_id=WALLET_ID,
+                                           shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
+                                           storage_credentials_id=WALLET_ID)
+
+        self.createAsyncJobs()
+        self.createEthAction(listener)
+        self.createTransactionReceipts()
+
+        url = reverse('transaction-detail', kwargs={'pk': TRANSACTION_HASH, 'version': 'v1'})
+
+        self.set_user(self.user_1)
+        response = self.client.get(url)
+        response_json = response.json()
+        print(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_json['included'][1]['attributes']['from_address'], FROM_ADDRESS)
+
     @httpretty.activate
     def test_transaction_list(self):
         mock_shipment_rpc_client = Load110RPCClient

@@ -63,7 +63,7 @@ class TransactionReceiptTestCase(APITestCase):
                                                                           to_address=TO_ADDRESS,
                                                                           eth_action=self.ethActions[1]))
 
-    def test_transaction_list(self):
+    def test_transaction_get(self):
         class DummyEthListener(models.Model):
             id = models.CharField(primary_key=True, max_length=36)
             owner_id = models.CharField(null=False, max_length=36)
@@ -72,6 +72,29 @@ class TransactionReceiptTestCase(APITestCase):
                 app_label = 'apps.jobs'
 
         listener = DummyEthListener(id='FAKE_LISTENER_ID', owner_id=USER_ID)
+
+        self.createAsyncJobs()
+        self.createEthAction(listener)
+        self.createTransactionReceipts()
+
+        url = reverse('transaction-detail', kwargs={'pk': TRANSACTION_HASH, 'version': 'v1'})
+
+        response = self.client.get(url)
+        response_json = response.json()
+        print(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response_json['included'][1]['attributes']['from_address'], FROM_ADDRESS)
+
+    def test_transaction_list(self):
+        class DummyEthListener(models.Model):
+            id = models.CharField(primary_key=True, max_length=36)
+            owner_id = models.CharField(null=False, max_length=36)
+
+            class Meta:
+                app_label = 'apps.jobs'
+
+        listener = DummyEthListener(id='FAKE_LISTENER_ID_2', owner_id=USER_ID)
 
         self.createAsyncJobs()
         self.createEthAction(listener)

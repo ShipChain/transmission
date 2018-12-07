@@ -659,7 +659,7 @@ components:
         in: query
         description: Wallet ID to filter transactions by
         schema:
-          $ref: '#/components/schemas/dataTypes/walletId'
+          $ref: '#/components/schemas/dataTypes/uuid'
 
   schemas:
     dataTypes:
