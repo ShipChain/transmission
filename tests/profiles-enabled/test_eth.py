@@ -138,7 +138,6 @@ class TransactionReceiptTestCase(APITestCase):
         self.set_user(self.user_1)
         response = self.client.get(url)
         response_json = response.json()
-        print(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response_json['included'][1]['attributes']['from_address'], FROM_ADDRESS)
