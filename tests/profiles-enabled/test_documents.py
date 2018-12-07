@@ -12,6 +12,7 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient, force_authenticate
 
 import os
+import glob
 
 from apps.shipments.models import Shipment
 from apps.shipments.signals import shipment_post_save
@@ -67,6 +68,11 @@ class PdfDocumentViewSetAPITests(APITestCase):
         except Exception as exc:
             pass
 
+    def tearDown(self):
+        files = glob.glob('./tests/tmp/*.*')
+        for f in files:
+            os.remove(f)
+
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
@@ -83,7 +89,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
     def test_sign_to_s3(self):
         url = reverse('document-list', kwargs={'version': 'v1'})
 
-        f_path = './test_upload.pdf'
+        f_path = './tests/tmp/test_upload.pdf'
         self.make_pdf_file(f_path)
 
         file_data, content_type = create_form_content({
@@ -126,10 +132,10 @@ class PdfDocumentViewSetAPITests(APITestCase):
             res = requests.post(put_url, data=fields, files={'file': pdf})
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-        s3_resource.Bucket(settings.S3_BUCKET).download_file(fields['key'], './downloaded.pdf')
+        s3_resource.Bucket(settings.S3_BUCKET).download_file(fields['key'], './tests/tmp/downloaded.pdf')
 
         # We verify the integrity of the uploaded file
-        downloaded_file = Path('./downloaded.pdf')
+        downloaded_file = Path('./tests/tmp/downloaded.pdf')
         self.assertTrue(downloaded_file.exists())
 
         # Update document object upon upload completion
@@ -158,11 +164,11 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Download document from pre-signed s3 generated url
         s3_url = response.data['url']
         res = requests.get(s3_url)
-        with open('./from_presigned_s3_url.pdf', 'wb') as f:
+        with open('./tests/tmp/from_presigned_s3_url.pdf', 'wb') as f:
             f.write(res.content)
 
         # Second pdf document
-        f_path = './second_test_upload.pdf'
+        f_path = './tests/tmp/second_test_upload.pdf'
         message = "Second upload pdf test. This should be larger in size!"
         self.make_pdf_file(f_path, message=message)
         file_data, content_type = create_form_content({
@@ -286,6 +292,11 @@ class ImageDocumentViewSetAPITests(APITestCase):
         except Exception as exc:
             pass
 
+    def tearDown(self):
+        files = glob.glob('./tests/tmp/*.*')
+        for f in files:
+            os.remove(f)
+
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
@@ -301,7 +312,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         img.save(file_path)
 
     def test_image_creation(self):
-        img_path = ['./jpeg_img.jpg', './png_img.png']
+        img_path = ['./tests/tmp/jpeg_img.jpg', './tests/tmp/png_img.png']
 
         for img in img_path:
             self.make_image(img)
@@ -354,7 +365,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         # Download document from pre-signed s3 generated url
         s3_url = data['url']
         res = requests.get(s3_url)
-        with open('./png_img_from_presigned_s3_url.png', 'wb') as f:
+        with open('./tests/tmp/png_img_from_presigned_s3_url.png', 'wb') as f:
             f.write(res.content)
 
         # Get list of png image via query params, should return one document
