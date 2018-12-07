@@ -16,7 +16,7 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Document
-        fields = ['name', 'description', 'document_type', 'file_type', 'size', 'shipment_id']
+        fields = ['name', 'description', 'document_type', 'file_type', 'shipment_id']
 
     def s3_sign(self, document=None):
         data = self.validated_data
@@ -38,7 +38,8 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
             Fields={"acl": "public-read", "Content-Type": content_type},
             Conditions=[
                 {"acl": "public-read"},
-                {"Content-Type": content_type}
+                {"Content-Type": content_type},
+                ["content-length-range", 0, 12500000]
             ],
             ExpiresIn=settings.S3_URL_LIFE
         )
@@ -61,7 +62,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         exclude = ['shipment']
-        read_only_fields = ('owner_id', 'shipment', 'document_type', 'file_type', 'size', 's3_path')
+        read_only_fields = ('owner_id', 'shipment', 'document_type', 'file_type', 's3_path')
 
     class JSONAPIMeta:
         included_resources = ['shipment']
@@ -73,8 +74,8 @@ class DocumentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = '__all__'
-        read_only_fields = ('owner_id', 'id', 'document_type', 'file_type', 'size', 'url', 'description', 'name',
-                            'uploaded_at', 's3_path')
+        read_only_fields = ('owner_id', 'id', 'document_type', 'file_type', 'url', 'description', 'name',
+                            'created_at', 'updated_at', 's3_path')
 
 
 class DocumentRetrieveSerializer(serializers.ModelSerializer):
@@ -86,5 +87,5 @@ class DocumentRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         exclude = ['s3_path', 'shipment']
-        read_only_fields = ('owner_id', 'id', 'document_type', 'file_type', 'size', 'url', 'upload_status',
-                            'description', 'name', 'uploaded_at')
+        read_only_fields = ('owner_id', 'id', 'document_type', 'file_type', 'url', 'upload_status',
+                            'description', 'name', 'created_at', 'updated_at')

@@ -9,14 +9,14 @@ from django.db.models import signals
 from django.conf import settings
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.test import APITestCase, APIClient, force_authenticate
+from rest_framework.test import APITestCase, APIClient
 
 import os
 import glob
 
 from apps.shipments.models import Shipment
 from apps.shipments.signals import shipment_post_save
-from apps.documents.models import Document, UploadStatus, DocumentType
+from apps.documents.models import Document, UploadStatus, DocumentType, FileType
 from apps.authentication import AuthenticatedUser
 from tests.utils import create_form_content
 
@@ -95,9 +95,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'name': 'Test BOL',
             'description': 'Auto generated file for test purposes',
-            'document_type': 0,
-            'file_type': 0,
-            'size': os.path.getsize(f_path),
+            'document_type': DocumentType.BOL.value,
+            'file_type': FileType.PDF.value,
             'shipment_id': self.shipment.id
         })
 
@@ -141,7 +140,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Update document object upon upload completion
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         file_data, content_type = create_form_content({
-            'upload_status': 1,
+            'upload_status': UploadStatus.COMPLETED.value,
         })
         response = self.client.patch(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -149,7 +148,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
 
         # # Tentative to update a fields other than upload_status should fail
         file_data, content_type = create_form_content({
-            'document_type': 1,
+            'document_type': UploadStatus.COMPLETED.value,
             'shipment_id': self.shipment.id,
         })
         response = self.client.patch(url, file_data, content_type=content_type)
@@ -173,9 +172,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.make_pdf_file(f_path, message=message)
         file_data, content_type = create_form_content({
             'name': os.path.basename(f_path),
-            'document_type': 0,
-            'file_type': 0,
-            'size': os.path.getsize(f_path),
+            'document_type': DocumentType.BOL.value,
+            'file_type': FileType.PDF.value,
             'shipment_id': self.shipment.id
         })
         url = reverse('document-list', kwargs={'version': 'v1'})
@@ -187,7 +185,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Update second uploaded document status to completed
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[1].id})
         file_data, content_type = create_form_content({
-            'upload_status': 1,
+            'upload_status': UploadStatus.COMPLETED.value,
         })
         response = self.client.patch(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -242,7 +240,7 @@ class DocumentAPITests(APITestCase):
         s3_path = 's3://33ebde34-ff0a-407d-a315-b5ff1260ffd4/10139104-ddc8-4502-8b40-f2598430d6c8/9db6b224-02e6-4720-\
         a591-b193c527b2f3/5ec57b4d-456c-48cf-826a-435a06670b38.png'
         self.data = [
-            {'document_type': 0, 'file_type': 0, 'size': 9000000, 'shipment': shipment, 's3_path': s3_path},
+            {'document_type': DocumentType.BOL, 'file_type': FileType.PDF, 'shipment': shipment, 's3_path': s3_path},
         ]
 
     def create_docs_data(self):
@@ -321,9 +319,8 @@ class ImageDocumentViewSetAPITests(APITestCase):
 
         file_data, content_type = create_form_content({
             'name': os.path.basename(img_path[1]),
-            'document_type': 1,
-            'file_type': 2,
-            'size': os.path.getsize(img_path[1]),
+            'document_type': DocumentType.IMAGE.value,
+            'file_type': FileType.PNG.value,
             'shipment_id': self.shipment.id
         })
 
@@ -337,7 +334,6 @@ class ImageDocumentViewSetAPITests(APITestCase):
 
         data = response.json()['data']['data']
         fields = data['fields']
-        # s3_resource = settings.S3_RESOURCE
 
         # File upload
         put_url = data['url']
@@ -349,7 +345,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         # Update document object upon upload completion
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         file_data, content_type = create_form_content({
-            'upload_status': 1,
+            'upload_status': UploadStatus.COMPLETED.value,
         })
         response = self.client.patch(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)

@@ -191,7 +191,7 @@ paths:
     get:
       summary: List documents
       description: >
-        Retrieve an array of `Document` objects associated with the current user
+        Retrieve an array of `Document` objects associated with the current user.
       parameters:
       - $ref: '#/components/parameters/page'
       - $ref: '#/components/parameters/page_size'
@@ -215,7 +215,7 @@ paths:
                 $ref: '#/components/schemas/errors/401'
 
     post:
-      summary: Create Document
+      summary: Create document
       description: >
         Create a new `Document` owned by the current user.
       tags:
@@ -226,7 +226,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/document/createResponse'
+                $ref: '#/components/schemas/document/getResponse'
         '401':
           description: *response_401
           content:
@@ -271,7 +271,7 @@ paths:
                 $ref: '#/components/schemas/errors/401'
 
     patch:
-      summary: Update a Document
+      summary: Update a document
       description: >
         Update a `Document` object with the provided parameters.
       tags:
@@ -282,7 +282,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/document/createPatchResponse'
+                $ref: '#/components/schemas/document/getResponse'
         '401':
           description: *response_401
           content:
@@ -293,7 +293,7 @@ paths:
         content:
           application/vnd.api+json:
             schema:
-              $ref: '#/components/requestBodies/document/createPatchRequest'
+              $ref: '#/components/requestBodies/document/createRequest'
           application/json:
             schema:
               allOf:
@@ -811,7 +811,7 @@ components:
         required: false
         in: query
         name: file_type
-        description: Type of file to filter
+        description: Type of file extension to filter by
         schema:
           type: string
           enum: [Pdf, Jpeg, Png]
@@ -820,7 +820,7 @@ components:
         required: false
         in: query
         name: document_type
-        description: Type of the resource to query for
+        description: Document category to filter by
         schema:
           type: string
           enum: [Bol, Image, Other]
@@ -829,7 +829,7 @@ components:
         required: false
         in: query
         name: upload_status
-        description: Upload status of the files to query for
+        description: Upload status of the files to filter by
         schema:
           type: string
           enum: [Pending, Completed, Failed]
@@ -1264,17 +1264,17 @@ components:
           properties:
             name:
               title: name
-              description: Optional name assigned to a Document
+              description: A nickname used to describe the file
               type: string
-              example: 'Bol'
+              example: 'BOL #123'
 
         description:
           properties:
             description:
               title: description
-              description: Optional description for a Document
+              description: Longer description for a Document
               type: string
-              example: 'Image for record'
+              example: 'The Bill of Lading for Shipment #123'
 
         documentType:
           properties:
@@ -1303,50 +1303,19 @@ components:
               enum: [{0: PENDING}, {1: COMPLETED}, {2: FAILED}]
               example: 0
 
-        size:
-          properties:
-            size:
-              title: size
-              description: file size of the Document
-              type: integer
-              example: 1234567
-
-        count:
-          properties:
-            count:
-              title: count
-              description: Amount of document objects returned
-              type: integer
-              example: 1
-
         url:
           properties:
             url:
               title: url
-              description: s3 one time pre-signed url to access the document
+              description: Temporary S3 pre-signed URL to access the document
               type: string
               example: 'https://s3.amazonaws.com/{random-string}'
 
-        next:
-          properties:
-            next:
-              title: next
-              description: link to the next page of documents
-              type: string
-              example: '/api/v1/{object-type}/?page=2'
-
-        previous:
-          properties:
-            previous:
-              title: previous
-              description: link to the previous page of documents
-              type: string
-              example: '/api/v1/{object-type}/?page=1'
         acl:
           properties:
             acl:
               title: acl
-              description: Aws read policy type
+              description: AWS read policy type
               type: string
               example: 'public-read'
 
@@ -1357,14 +1326,6 @@ components:
               description: Content type of the document
               type: string
               example: 'image/png'
-
-        uploadedAt:
-          properties:
-            uploaded_at:
-              title: uploaded_at
-              description: Upload date of the document
-              type: string
-              example: '2018-11-30T15:28:58.018858Z'
 
         key:
           properties:
@@ -1413,22 +1374,6 @@ components:
               description: Signature of the AWS server
               type: string
               example: 'c660f43cdbea52ada8b9bc128286728aaaf24c3de96c009a9661b56c95cc7b2e'
-
-        document_id:
-          properties:
-            document_id:
-              title: document_id
-              description: uuid of the document
-              type: string
-              example: '1243d23b-e2fc-475a-8290-0e4f53479553'
-
-        id:
-          properties:
-            id:
-              title: id
-              description: uuid of the document
-              type: string
-              example: '1243d23b-e2fc-475a-8290-0e4f53479553'
 
         bucket_url:
           properties:
@@ -2449,12 +2394,13 @@ components:
         - $ref: '#/components/schemas/dataTypes/resourceId'
         - $ref: '#/components/requestBodies/jsonApi/createResource'
         - type: object
-          description: Primary data related to the resource.
+          description: Primary data related to the resource
 
       dataArray:
         properties:
           data:
             type: array
+            description: A list of resources returned for this request
             items:
               $ref: '#/components/schemas/jsonApi/resource'
 
@@ -2955,7 +2901,8 @@ components:
           - $ref: '#/components/schemas/dataTypes/document/documentType'
           - $ref: '#/components/schemas/dataTypes/document/fileType'
           - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
-          - $ref: '#/components/schemas/dataTypes/document/uploadedAt'
+          - $ref: '#/components/schemas/dataTypes/createdAt'
+          - $ref: '#/components/schemas/dataTypes/updatedAt'
 
       fields:
         allOf:
@@ -2968,21 +2915,20 @@ components:
         - $ref: '#/components/schemas/dataTypes/document/policy'
         - $ref: '#/components/schemas/dataTypes/document/x-amz-signature'
 
-      document:
+      getResource:
         allOf:
-        - $ref: '#/components/schemas/dataTypes/document/documentType'
-        - $ref: '#/components/schemas/dataTypes/document/fileType'
-        - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
-        - $ref: '#/components/schemas/dataTypes/document/name'
-        - $ref: '#/components/schemas/dataTypes/document/description'
-        - $ref: '#/components/schemas/dataTypes/document/uploadedAt'
-        - $ref: '#/components/schemas/dataTypes/ownerId'
-        - $ref: '#/components/schemas/dataTypes/document/size'
-        - $ref: '#/components/schemas/dataTypes/document/url'
+          - $ref: '#/components/schemas/dataTypes/resourceId'
+          - $ref: '#/components/schemas/document/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/schemas/document/attributes'
 
       getResponse:
         allOf:
-          - $ref: '#/components/schemas/document/createPatchResponse'
+          - $ref: '#/components/schemas/jsonApi/data'
+          - properties:
+              data:
+                $ref: '#/components/schemas/document/getResource'
 
       listResponse:
         allOf:
@@ -2991,37 +2937,7 @@ components:
           - properties:
               data:
                 items:
-                  allOf:
-                    - $ref: '#/components/schemas/dataTypes/resourceId'
-                    - $ref: '#/components/requestBodies/document/PatchResponseResource'
-
-      createResource:
-        allOf:
-        - properties:
-            data:
-              allOf:
-              - properties:
-                  data:
-                    allOf:
-                    - $ref: '#/components/schemas/dataTypes/document/bucket_url'
-                    - properties:
-                        fields:
-                          allOf:
-                            - $ref: '#/components/schemas/document/fields'
-              - $ref: '#/components/schemas/dataTypes/document/document_id'
-
-      createResponse:
-        allOf:
-        - $ref: '#/components/schemas/document/createResource'
-
-      createPatchResponse:
-        allOf:
-          - $ref: '#/components/requestBodies/jsonApi/createData'
-          - properties:
-              data:
-                allOf:
-                 - $ref: '#/components/schemas/dataTypes/resourceId'
-                 - $ref: '#/components/requestBodies/document/PatchResponseResource'
+                  $ref: '#/components/schemas/document/getResource'
 
     tracking:
       collectionResource:
@@ -3346,7 +3262,7 @@ components:
 
     links:
       type: object
-      description: Links related to the primary data.
+      description: Links related to the primary data
       properties:
         first:
           title: first
@@ -3371,10 +3287,11 @@ components:
 
     meta:
       type: object
-      description: Non-standard meta-information.
+      description: Non-standard meta-information
       properties:
         pagination:
           type: object
+          description: The pagination state for the current request
           properties:
             count:
               title: count
@@ -3399,7 +3316,7 @@ components:
     jsonApi:
       createResource:
         type: object
-        description: Primary data related to the resource.
+        description: Primary data related to the resource
         properties:
           type:
             type: string
@@ -3424,46 +3341,12 @@ components:
               attributes:
                 $ref: '#/components/requestBodies/document/createAttributes'
 
-      createPatchResource:
-        allOf:
-          - $ref: '#/components/schemas/document/resource'
-          - properties:
-              attributes:
-                $ref: '#/components/requestBodies/document/createPatchAttributes'
-
-      patchResponseResource:
-        allOf:
-          - $ref: '#/components/schemas/document/resource'
-          - properties:
-              attributes:
-                $ref: '#/components/requestBodies/document/createPatchAttributes'
-
-
-      PatchResponseResource:
-        allOf:
-          - $ref: '#/components/schemas/document/resource'
-          - properties:
-              attributes:
-                $ref: '#/components/schemas/document/document'
-
-      createPatchAttributes:
-        required:
-          - upload_status
-        allOf:
-          - $ref: '#/components/schemas/dataTypes/document/name'
-          - $ref: '#/components/schemas/dataTypes/document/description'
-          - $ref: '#/components/schemas/dataTypes/document/documentType'
-          - $ref: '#/components/schemas/dataTypes/document/fileType'
-          - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
-          - $ref: '#/components/schemas/dataTypes/document/size'
-
       createAttributes:
         required:
           - owner_id
           - shipment_id
           - file_type
           - document_type
-          - size
           - name
         allOf:
           - $ref: '#/components/schemas/dataTypes/document/name'
@@ -3471,8 +3354,8 @@ components:
           - $ref: '#/components/schemas/dataTypes/document/documentType'
           - $ref: '#/components/schemas/dataTypes/document/fileType'
           - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
-          - $ref: '#/components/schemas/dataTypes/document/size'
           - $ref: '#/components/schemas/dataTypes/shipmentId'
+
 
       createRequest:
         allOf:
@@ -3481,12 +3364,6 @@ components:
               data:
                 $ref: '#/components/requestBodies/document/createResource'
 
-      createPatchRequest:
-        allOf:
-          - $ref: '#/components/requestBodies/jsonApi/createData'
-          - properties:
-              data:
-                $ref: '#/components/requestBodies/document/createPatchResource'
 
     shipment:
       createResource:

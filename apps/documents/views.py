@@ -13,7 +13,7 @@ from .serializers import (DocumentSerializer,
                           DocumentUpdateSerializer,
                           DocumentRetrieveSerializer,)
 from .models import Document
-from .utils import DocumentFilterSet
+from .filters import DocumentFilterSet
 
 
 LOG = logging.getLogger('transmission')
