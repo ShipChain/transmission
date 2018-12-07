@@ -8,7 +8,7 @@ from enumfields import EnumIntegerField
 from influxdb_metrics.loader import log_metric
 
 from apps.shipments.models import Shipment
-from apps.utils import random_id, get_s3_client
+from apps.utils import random_id
 
 LOG = logging.getLogger('transmission')
 
@@ -49,7 +49,7 @@ class Document(models.Model):
 
     @property
     def pre_signed_url(self):
-        s3_client = get_s3_client()[0]
+        s3_client = settings.S3_CLIENT
 
         url = s3_client.generate_presigned_url(
             'get_object',

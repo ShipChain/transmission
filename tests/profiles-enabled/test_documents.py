@@ -17,7 +17,6 @@ from apps.shipments.models import Shipment
 from apps.shipments.signals import shipment_post_save
 from apps.documents.models import Document, UploadStatus, DocumentType
 from apps.authentication import AuthenticatedUser
-from apps.utils import get_s3_client
 from tests.utils import create_form_content
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'
@@ -56,7 +55,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Re-enable Shipment post save signal
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
-        s3_resource = get_s3_client()[1]
+        s3_resource = settings.S3_RESOURCE
 
         for bucket in s3_resource.buckets.all():
             for key in bucket.objects.all():
@@ -119,7 +118,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         data = response.json()['data']['data']
         fields = data['fields']
 
-        s3_resource = get_s3_client()[1]
+        s3_resource = settings.S3_RESOURCE
 
         # File upload
         put_url = data['url']
@@ -280,8 +279,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
         # Upload bucket creation
-        # s3_resource = settings.S3_RESOURCE
-        s3_resource = get_s3_client()[1]
+        s3_resource = settings.S3_RESOURCE
 
         try:
             s3_resource.create_bucket(Bucket=settings.S3_BUCKET)

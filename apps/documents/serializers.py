@@ -3,7 +3,6 @@ from django.conf import settings
 from enumfields.drf import EnumField
 from rest_framework_json_api import serializers
 
-from apps.utils import get_s3_client
 from .models import Document, DocumentType, FileType, UploadStatus
 
 
@@ -26,8 +25,6 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
 
     def s3_sign(self, document=None):
         data = self.validated_data
-        s3_client = get_s3_client()[0]
-        bucket = settings.S3_BUCKET
         file_type = data['file_type']
         file_type_name = file_type.name.lower()
 
@@ -40,8 +37,8 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
         file_s3_path = f"{shipment.storage_credentials_id}/{shipment.shipper_wallet_id}/{shipment.vault_id}/" \
             f"{document.id}.{file_type_name}"
 
-        pre_signed_post = s3_client.generate_presigned_post(
-            Bucket=bucket,
+        pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
+            Bucket=settings.S3_BUCKET,
             Key=file_s3_path,
             Fields={"acl": "public-read", "Content-Type": content_type},
             Conditions=[
@@ -52,7 +49,7 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
         )
 
         # Assign s3 path
-        document.s3_path = f"s3://{bucket}/{file_s3_path}"
+        document.s3_path = f"s3://{settings.S3_BUCKET}/{file_s3_path}"
         document.save()
 
         return {

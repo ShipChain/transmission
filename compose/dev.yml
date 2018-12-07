@@ -55,6 +55,8 @@ services:
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
       - ELASTICSEARCH_URL
+      - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
+      - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
     command: "bash"
     entrypoint: []
 
@@ -89,6 +91,8 @@ services:
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
       - ELASTICSEARCH_URL
+      - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
+      - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
 
   celery:
     extends:
@@ -117,6 +121,8 @@ services:
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
       - ELASTICSEARCH_URL
+      - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
+      - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
     entrypoint: []
 
 networks:

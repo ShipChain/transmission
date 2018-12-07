@@ -1,12 +1,7 @@
 import decimal
 import json
 import re
-import boto3
-
-from botocore.client import Config
 from drf_enum_field.fields import EnumField
-
-from django.conf import settings
 
 
 def random_id():
@@ -81,34 +76,3 @@ class DecimalEncoder(json.JSONEncoder):
         if isinstance(o, decimal.Decimal):
             return float(o)
         return super(DecimalEncoder, self).default(o)
-
-
-def get_s3_client():
-    if settings.ENVIRONMENT in ('LOCAL', 'TEST'):
-        s_3 = boto3.client(
-            's3',
-            endpoint_url=settings.S3_ENDPOINT,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            config=Config(signature_version='s3v4'),
-            region_name='us-east-1'
-        )
-
-        s3_resource = boto3.resource(
-            's3',
-            endpoint_url=settings.S3_ENDPOINT,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            config=Config(signature_version='s3v4'),
-            region_name='us-east-1'
-        )
-    else:
-        s_3 = boto3.client(
-            's3',
-            endpoint_url=settings.S3_ENDPOINT,
-            region_name='us-east-1'
-        )
-
-        s3_resource = None
-
-    return s_3, s3_resource
