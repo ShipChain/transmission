@@ -67,14 +67,9 @@ class TransactionReceiptTestCase(APITestCase):
                                                                           eth_action=self.ethActions[1]))
 
     def test_transaction_get(self):
-        class DummyEthListener(models.Model):
-            id = models.CharField(primary_key=True, max_length=36)
-            owner_id = models.CharField(null=False, max_length=36)
+        mock_shipment_rpc_client = Load110RPCClient
 
-            class Meta:
-                app_label = 'apps.jobs'
-
-        listener = DummyEthListener(id='FAKE_LISTENER_ID', owner_id=USER_ID)
+        mock_shipment_rpc_client.create_vault = mock.Mock(
             return_value=(WALLET_ID, 's3://bucket/' + WALLET_ID))
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
         mock_shipment_rpc_client.create_shipment_transaction = mock.Mock(return_value=('version', {}))
