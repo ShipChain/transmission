@@ -135,5 +135,4 @@ class ShipmentAPITests(APITestCase):
         url = reverse('shipment-list', kwargs={'version': 'v1'})
 
         response = self.client.post(url, one_location_profiles_disabled, content_type=content_type)
-        print(response.content)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)

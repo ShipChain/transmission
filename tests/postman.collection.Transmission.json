@@ -1266,6 +1266,36 @@
                 "response": [
 
                 ]
+              },
+              {
+                "name": "List Transactions",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/transactions/?wallet_id=<<wallet_id>>",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "transaction",
+                      "?wallet_id=<<wallet_id>>"
+                    ]
+                  }
+                },
+                "response": [
+
+                ]
               }
             ]
           }
