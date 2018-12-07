@@ -3,12 +3,7 @@ from django.conf import settings
 from enumfields.drf import EnumField
 from rest_framework_json_api import serializers
 
-from .models import Document, DocumentType, FileType, UploadStatus
-
-
-IMAGE_TYPE = [enum.name.lower() for enum in FileType]
-IMAGE_TYPE.pop(IMAGE_TYPE.index('pdf'))
-IMAGE_TYPE = set(IMAGE_TYPE)
+from .models import Document, DocumentType, FileType, UploadStatus, IMAGE_TYPES
 
 
 class DocumentCreateSerializer(serializers.ModelSerializer):
@@ -28,7 +23,7 @@ class DocumentCreateSerializer(serializers.ModelSerializer):
         file_type = data['file_type']
         file_type_name = file_type.name.lower()
 
-        if file_type_name in IMAGE_TYPE:
+        if file_type_name in IMAGE_TYPES:
             content_type = f"image/{file_type_name}"
         else:
             content_type = f"application/{file_type_name}"

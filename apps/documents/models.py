@@ -28,6 +28,9 @@ class FileType(Enum):
     PNG = 2
 
 
+IMAGE_TYPES = (FileType.JPEG, FileType.PNG)
+
+
 class UploadStatus(Enum):
     PENDING = 0
     COMPLETED = 1
