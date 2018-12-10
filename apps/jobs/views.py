@@ -23,12 +23,13 @@ class JobsViewSet(mixins.ListModelMixin,
     """
     queryset = AsyncJob.objects.all()
     serializer_class = AsyncJobSerializer
-    permission_classes = (permissions.IsAuthenticated, IsOwner) if settings.PROFILES_URL else (permissions.AllowAny,)
+    permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
+                          else (permissions.AllowAny,))
     parser_classes = (parsers.JSONParser, jsapi_parsers.JSONParser)
 
     def get_queryset(self):
         queryset = self.queryset
-        if settings.PROFILES_URL:
+        if settings.PROFILES_ENABLED:
             queryset = queryset.filter(joblistener__shipments__owner_id=self.request.user.id)
         return queryset
 

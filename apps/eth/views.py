@@ -2,9 +2,10 @@ import logging
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from rest_framework import mixins, viewsets, parsers, status, renderers, permissions
 from rest_framework.response import Response
-from rest_framework_json_api import renderers as jsapi_renderers
+from rest_framework_json_api import renderers as jsapi_renderers, serializers
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import EngineRequest
@@ -72,6 +73,7 @@ class EventViewSet(mixins.CreateModelMixin,
 
 
 class TransactionViewSet(mixins.RetrieveModelMixin,
+                         mixins.ListModelMixin,
                          viewsets.GenericViewSet):
     """
     Get tx details for a transaction hash
@@ -86,5 +88,55 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
         LOG.debug('Getting tx details for a transaction hash.')
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(ethlistener__shipments__owner_id=self.request.user.id)
+            if 'wallet_id' in self.request.query_params:
+                queryset = queryset.filter(Q(ethlistener__shipments__owner_id=self.request.user.id) |
+                                           Q(ethlistener__shipments__shipper_wallet_id=
+                                             self.request.query_params.get('wallet_id')) |
+                                           Q(ethlistener__shipments__moderator_wallet_id=
+                                             self.request.query_params.get('wallet_id')) |
+                                           Q(ethlistener__shipments__carrier_wallet_id=
+                                             self.request.query_params.get('wallet_id')))
+            else:
+                queryset = queryset.filter(ethlistener__shipments__owner_id=self.request.user.id)
+
         return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        log_metric('transmission.info', tags={'method': 'transaction.list', 'module': __name__})
+        LOG.debug('Getting tx details filtered by wallet address.')
+
+        if not settings.PROFILES_ENABLED:
+            if 'wallet_address' not in self.request.query_params:
+                raise serializers.ValidationError(
+                    'wallet_address required in query parameters')
+
+            from_address = self.request.query_params.get('wallet_address')
+
+        else:
+            if 'wallet_id' not in self.request.query_params:
+                raise serializers.ValidationError(
+                    'wallet_id required in query parameters')
+
+            wallet_id = self.request.query_params.get('wallet_id')
+
+            wallet_response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{wallet_id}/',
+                                                            headers={
+                                                                'Authorization': 'JWT {}'.format(request.auth.decode())
+                                                            })
+
+            if not wallet_response.status_code == status.HTTP_200_OK:
+                raise serializers.ValidationError('Error retrieving Wallet from ShipChain Profiles')
+
+            wallet_details = wallet_response.json()
+            from_address = wallet_details['data']['attributes']['address']
+
+        queryset = queryset.filter(transactionreceipt__from_address__iexact=from_address)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

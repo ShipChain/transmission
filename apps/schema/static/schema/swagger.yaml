@@ -423,6 +423,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
+  /api/v1/transactions/:
+    get:
+      summary: List transactions
+      description: >
+        Retrieve an array of `EthAction`s (association between an Eth `Transaction` and `TransactionReceipt`) associated with a wallet.
+      parameters:
+      - $ref: '#/components/parameters/transaction/wallet_id'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/page_size'
+      tags:
+      - Transactions
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ethAction/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
   /api/v1/transactions/{transaction_hash}/:
     get:
       summary: Get transaction
@@ -764,6 +789,14 @@ components:
         description: Hash of a signed Ethereum transaction
         schema:
           $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
+          
+      wallet_id:
+        required: true
+        name: wallet_id
+        in: query
+        description: Wallet ID to filter transactions by
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
 
     document:
       path:
@@ -837,6 +870,13 @@ components:
             <<: *uuid
             title: async_job_id
             description: Async Job's UUID
+
+      walletId:
+        properties:
+          wallet_id:
+            <<: *uuid
+            title: wallet_id
+            description: Wallet's UUID
 
       resourceId:
         properties:
@@ -1085,6 +1125,14 @@ components:
               description: Was the location obtained via GPS
               type: boolean
               example: True
+
+
+        walletId:
+          properties:
+            wallet_id:
+              <<: *uuid
+              title: wallet_id
+              description: Wallet UUID associated with the transaction
 
         version:
           properties:
@@ -1427,8 +1475,8 @@ components:
           properties:
             shipper_wallet_id:
               <<: *uuid
-              title: vault_id
-              description: Vault UUID associated with the shipment
+              title: shipper_wallet_id
+              description: Shipper Wallet UUID associated with the shipment
 
         carrierWalletId:
           properties:
@@ -3253,6 +3301,19 @@ components:
               $ref: '#/components/schemas/ethAction/getResource'
             included:
               $ref: '#/components/schemas/ethAction/included'
+
+      listResponse:
+        allOf:
+        - $ref: '#/components/schemas/jsonApi/dataArray'
+        - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+        - properties:
+            data:
+              items:
+                $ref: '#/components/schemas/ethAction/getResource'
+            included:
+              items:
+                $ref: '#/components/schemas/ethAction/included'
+
 
     errors:
       401:
