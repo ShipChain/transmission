@@ -216,8 +216,14 @@ paths:
 
     post:
       summary: Create document
-      description: >
+      description: |
         Create a new `Document` owned by the current user.
+
+        A presigned S3 request will be generated with credentials to POST a new file of the specified type to S3.
+        Engine will then upload the file to the Shipment's vault.
+
+        Note: `Document.upload_status` will need to be updated to `COMPLETE` in order for the document to be retrieved
+        from S3.
       tags:
       - Documents
       responses:
@@ -250,8 +256,11 @@ paths:
   /api/v1/documents/{document_id}/:
     get:
       summary: Get document details
-      description: >
+      description: |
         Get additional info about a `Document`.
+
+        If `Document.upload_status` is `COMPLETE`, a presigned S3 URL for downloading the file will be included in the
+        `meta` payload.
       parameters:
       - $ref: '#/components/parameters/document/path'
       tags:
