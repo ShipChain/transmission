@@ -20,6 +20,7 @@ from rest_framework import routers
 from apps.jobs import views as jobs
 from apps.shipments import views as shipments
 from apps.eth import views as eth
+from apps.documents import views as documents
 
 
 API_PREFIX = r'^api/(?P<version>(v1|v2))'
@@ -32,6 +33,7 @@ router.register(f'{API_PREFIX[1:]}/locations', shipments.LocationViewSet)
 router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, base_name='job')
 router.register(f'{API_PREFIX[1:]}/events', eth.EventViewSet, base_name='event')
 router.register(f'{API_PREFIX[1:]}/transactions', eth.TransactionViewSet, base_name='transaction')
+router.register(f'{API_PREFIX[1:]}/documents', documents.DocumentViewSet)
 
 urlpatterns = [
     url(

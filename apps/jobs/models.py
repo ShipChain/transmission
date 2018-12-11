@@ -20,6 +20,12 @@ class JobState(Enum):
     FAILED = 2
     COMPLETE = 3
 
+    class Labels:
+        PENDING = 'PENDING'
+        RUNNING = 'RUNNING'
+        FAILED = 'FAILED'
+        COMPLETE = 'COMPLETE'
+
 
 class AsyncJob(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
@@ -68,6 +74,10 @@ class AsyncJob(models.Model):
 class MessageType(Enum):
     ERROR = 0
     ETH_TRANSACTION = 1
+
+    class Labels:
+        ERROR = 'ERROR'
+        ETH_TRANSACTION = 'ETH_TRANSACTION'
 
 
 class Message(models.Model):

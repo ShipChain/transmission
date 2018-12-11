@@ -1,6 +1,21 @@
 version: '2.1'
 services:
 
+  minio:
+    image: minio/minio
+    ports:
+    - "9090:9000"
+    expose:
+      - '9000'
+    volumes:
+    - /data/shipchain/transmission/minio/data:/data
+    - /data/shipchain/transmission/minio/config:/root/.minio
+    environment:
+    - MINIO_ACCESS_KEY=TEST-DEV-KEY
+    - MINIO_SECRET_KEY=NON-TRIVIAL-SECRETKEY
+    - MINIO_DOMAIN=minio
+    command: server /data --address minio:9000
+
   redis_db:
     image: redis
     expose:
@@ -30,6 +45,7 @@ services:
     links:
       - psql
       - redis_db
+      - minio
     environment:
       - ENV
       - SECRET_KEY
@@ -39,6 +55,8 @@ services:
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
       - ELASTICSEARCH_URL
+      - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
+      - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
     command: "bash"
     entrypoint: []
 
@@ -59,6 +77,7 @@ services:
     links:
       - psql
       - redis_db
+      - minio
     volumes:
       - ../:/app
       - ./django/pip.cache:/build/pip.volume
@@ -72,6 +91,8 @@ services:
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
       - ELASTICSEARCH_URL
+      - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
+      - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
 
   celery:
     extends:
@@ -88,6 +109,7 @@ services:
     links:
       - psql
       - redis_db
+      - minio
     volumes:
       - ../:/app
     environment:
@@ -99,6 +121,8 @@ services:
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
       - ELASTICSEARCH_URL
+      - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
+      - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
     entrypoint: []
 
 networks:

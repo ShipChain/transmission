@@ -27,6 +27,8 @@ from tests.utils import replace_variables_in_string, create_form_content
 
 from apps.shipments.views import ShipmentViewSet
 
+boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
+
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'

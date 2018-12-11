@@ -187,6 +187,131 @@ paths:
               allOf:
               - $ref: '#/components/requestBodies/shipment/createAttributes'
 
+  /api/v1/documents/:
+    get:
+      summary: List documents
+      description: >
+        Retrieve an array of `Document` objects associated with the current user.
+      parameters:
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/document/fileType'
+      - $ref: '#/components/parameters/document/documentType'
+      - $ref: '#/components/parameters/document/uploadStatus'
+      tags:
+      - Documents
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/document/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+    post:
+      summary: Create document
+      description: |
+        Create a new `Document` owned by the current user.
+
+        A presigned S3 request will be generated with credentials to POST a new file of the specified type to S3.
+        Engine will then upload the file to the Shipment's vault.
+
+        Note: `Document.upload_status` will need to be updated to `COMPLETE` in order for the document to be retrieved
+        from S3.
+      tags:
+      - Documents
+      responses:
+        '202':
+          description: *response_202
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/document/createResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/document/createRequest'
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/document/createAttributes'
+          multipart/form-data:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/document/createAttributes'
+
+  /api/v1/documents/{document_id}/:
+    get:
+      summary: Get document details
+      description: |
+        Get additional info about a `Document`.
+
+        If `Document.upload_status` is `COMPLETE`, a presigned S3 URL for downloading the file will be included in the
+        `meta` payload.
+      parameters:
+      - $ref: '#/components/parameters/document/path'
+      tags:
+      - Documents
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/document/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+    patch:
+      summary: Update a document
+      description: >
+        Update a `Document` object with the provided parameters.
+      tags:
+      - Documents
+      responses:
+        '202':
+          description: *response_202
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/document/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/document/createRequest'
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/document/createAttributes'
+          multipart/form-data:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/document/createAttributes'
+
   /api/v1/shipments/{shipment_id}/tracking/:
     post:
       summary: Add tracking data
@@ -673,7 +798,7 @@ components:
         description: Hash of a signed Ethereum transaction
         schema:
           $ref: '#/components/schemas/dataTypes/ethereum/transactionHash'
-
+          
       wallet_id:
         required: true
         name: wallet_id
@@ -681,6 +806,42 @@ components:
         description: Wallet ID to filter transactions by
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
+
+    document:
+      path:
+        required: true
+        name: document_id
+        in: path
+        description: ID of the Document
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
+
+      fileType:
+        required: false
+        in: query
+        name: file_type
+        description: Type of file extension to filter by
+        schema:
+          type: string
+          enum: [PDF, JPEG, PNG]
+
+      documentType:
+        required: false
+        in: query
+        name: document_type
+        description: Document category to filter by
+        schema:
+          type: string
+          enum: [BOL, IMAGE, OTHER]
+
+      uploadStatus:
+        required: false
+        in: query
+        name: upload_status
+        description: Upload status of the files to filter by
+        schema:
+          type: string
+          enum: [PENDING, COMPLETE, FAILED]
 
   schemas:
     dataTypes:
@@ -691,19 +852,19 @@ components:
         description: Unique UUID for this resource
         example: '1243d23b-e2fc-475a-8290-0e4f53479553'
 
-      ownerId:
-        properties:
-          owner_id:
-            <<: *uuid
-            title: owner_id
-            description: Owner's UUID
-
       shipmentId:
         properties:
           shipment_id:
             <<: *uuid
             title: shipment_id
             description: Shipment's UUID
+
+      documentId:
+        properties:
+          document_id:
+            <<: *uuid
+            title: document_id
+            description: Document's UUID
 
       asyncJobId:
         properties:
@@ -1098,6 +1259,157 @@ components:
                   type: string
                 coordinates:
                   $ref: '#/components/schemas/dataTypes/tracking/lineCoordinates'
+
+      # General Document Parameters
+      document:
+        name:
+          properties:
+            name:
+              title: name
+              description: A nickname used to describe the file
+              type: string
+              example: 'BOL #123'
+
+        description:
+          properties:
+            description:
+              title: description
+              description: Longer description for a Document
+              type: string
+              example: 'The Bill of Lading for Shipment #123'
+
+        documentType:
+          properties:
+            document_type:
+              title: document_type
+              description: Category of Document to upload
+              type: string
+              enum: [BOL, IMAGE, OTHER]
+              example: 'BOL'
+        fileType:
+          properties:
+            file_type:
+              title: file_type
+              description: File MIME type to upload
+              type: string
+              enum: [PDF, JPEG, PNG]
+              example: 'PDF'
+
+        uploadStatus:
+          properties:
+            upload_status:
+              title: upload_status
+              description: Status of the file upload
+              type: string
+              enum: [PENDING, COMPLETE, FAILED]
+              example: 'PENDING'
+
+        acl:
+          properties:
+            acl:
+              title: acl
+              description: AWS read policy type
+              type: string
+              example: 'private'
+
+        contentType:
+          properties:
+            Content-Type:
+              title: Content-Type
+              description: Content type of the document
+              type: string
+              example: 'image/png'
+
+        key:
+          properties:
+            key:
+              title: key
+              description: Key
+              type: string
+              example: '33ebde34-ff0a-407d-a315-b5ff1260ffd4/10139104-ddc8-4502-8b40-f2598430d6c8/fa50cb2a-bbca-43c1-9acc-a75da16e98cc/c06ecadb-ab1a-403a-a94c-c968f62a0a33.png'
+
+        xAmzAlgorithm:
+          properties:
+            x-amz-algorithm:
+              title: x-amz-algorithm
+              description: Algorithm used to encode the document
+              type: string
+              example: 'AWS4-HMAC-SHA256'
+
+        xAmzCredential:
+          properties:
+            x-amz-credential:
+              title: x-amz-credential
+              description: Key
+              type: string
+              example: 'TEST-DEV-KEY/20181129/us-east-1/s3/aws4_request'
+
+        xAmzDate:
+          properties:
+            x-amz-date:
+              title: x-amz-date
+              description: Date when it was posted to the AWS server
+              type: string
+              example: '20181129T203522Z'
+
+        policy:
+          properties:
+            policy:
+              title: policy
+              description: AWS Policy
+              type: string
+              example: 'eyJleHBpcmF0aW9uIjogIjIwMTgtMTEtMjlUMjA6NTA6MjJaIiwgImNvbmRpdGlvbnMiOiBbeyJhY2wiOiAicHVibGljLXJlYWQifSwgeyJDb250ZW50LVR5cGUiOiAiaW1hZ2UvcG5nIn0sIHsiYnVja2V0IjogImRvY3VtZW50LW1hbmFnZW1lbnQtczMtbG9jYWwifSwgeyJrZXkiOiAiMjFmMjA2ZjUtZDY1MC00ZDVjLWEzNmEtODk0MTlhYWIxZTZkLzNiMGQ2YzMzLTMxZmQtNGVjNy1iNjlkLWQ1MzY0MzNkNjE1ZC8xZDRkZTZmZS1jMzYyLTRjNTYtOWFkZC0zNDcyYmFlNGY5M2EvZmU4NzllNGUtMzk2NS00NTczLTg0M2ItMGU5MTI2ODZkM2ZjLnBuZyJ9LCB7IngtYW16LWFsZ29yaXRobSI6ICJBV1M0LUhNQUMtU0hBMjU2In0sIHsieC1hbXotY3JlZGVudGlhbCI6ICJURVNULURFVi1LRVkvMjAxODExMjkvdXMtZWFzdC0xL3MzL2F3czRfcmVxdWVzdCJ9LCB7IngtYW16LWRhdGUiOiAiMjAxODExMjlUMjAzNTIyWiJ9XX0='
+
+        xAmzSignature:
+          properties:
+            x-amz-signature:
+              title: x-amz-signature
+              description: Signature of the AWS server
+              type: string
+              example: 'c660f43cdbea52ada8b9bc128286728aaaf24c3de96c009a9661b56c95cc7b2e'
+
+        s3Fields:
+          properties:
+            fields:
+              allOf:
+              - type: object
+                title: fields
+                description: Request parameters to be included in POST to S3
+              - $ref: '#/components/schemas/dataTypes/document/acl'
+              - $ref: '#/components/schemas/dataTypes/document/contentType'
+              - $ref: '#/components/schemas/dataTypes/document/key'
+              - $ref: '#/components/schemas/dataTypes/document/xAmzAlgorithm'
+              - $ref: '#/components/schemas/dataTypes/document/xAmzCredential'
+              - $ref: '#/components/schemas/dataTypes/document/xAmzDate'
+              - $ref: '#/components/schemas/dataTypes/document/policy'
+              - $ref: '#/components/schemas/dataTypes/document/xAmzSignature'
+
+        bucketUrl:
+          properties:
+            url:
+              title: url
+              description: Bucket URL
+              type: string
+              example: 'https://s3.amazonaws.com/document-management-s3-prod'
+
+        presignedS3Get:
+          properties:
+            presigned_s3:
+              type: string
+              title: presigned_s3
+              description: Temporary presigned URL with read access to document in S3
+              example: https://s3.amazonaws.com/document-management-s3-prod/e78ce477-1d8c-4319-b7ef-164cc769c1b5/8bcf2521-8afc-4836-ba2f-be1577e731e6/c55332a6-ca5e-4c83-a1de-ea49fdf82d97/ea6a4729-0039-40bb-8a4b-69476627cdcc.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=TEST-DEV-KEY%2F20181211%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20181211T170636Z&X-Amz-Expires=1800&X-Amz-SignedHeaders=host&X-Amz-Signature=5e95676fda122068fc070efce891d42913c9d17b8d2d98c1bb463ce0bae0fd5c
+
+        presignedS3Post:
+          properties:
+            presigned_s3:
+              allOf:
+               - type: object
+                 title: presigned_s3
+                 description: Presigned S3 POST request parameters
+
+               - $ref: '#/components/schemas/dataTypes/document/bucketUrl'
+               - $ref: '#/components/schemas/dataTypes/document/s3Fields'
 
       shipment:
         storageCredentialsId:
@@ -2005,14 +2317,6 @@ components:
 
       # General Location Parameters
       location:
-        ownerId:
-          properties:
-            owner_id:
-              title: owner_id
-              description: ID of the location ower
-              type: string
-              example: '0ee14e26-ab29-4b6d-b04f-cca79e2948a3'
-
         name:
           properties:
             name:
@@ -2110,12 +2414,13 @@ components:
         - $ref: '#/components/schemas/dataTypes/resourceId'
         - $ref: '#/components/requestBodies/jsonApi/createResource'
         - type: object
-          description: Primary data related to the resource.
+          description: Primary data related to the resource
 
       dataArray:
         properties:
           data:
             type: array
+            description: A list of resources returned for this request
             items:
               $ref: '#/components/schemas/jsonApi/resource'
 
@@ -2378,7 +2683,6 @@ components:
       attributes:
         allOf:
         - $ref: '#/components/schemas/dataTypes/shipment/transactions'
-        - $ref: '#/components/schemas/dataTypes/ownerId'
         - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
         - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
         - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
@@ -2505,7 +2809,6 @@ components:
 
       createAttributes:
         allOf:
-        - $ref: '#/components/schemas/dataTypes/ownerId'
         - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
         - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
         - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
@@ -2601,6 +2904,64 @@ components:
                 $ref: '#/components/schemas/shipment/getResource'
             included:
               $ref: '#/components/schemas/shipment/included'
+
+    document:
+      resource:
+        properties:
+          type:
+            example: Document
+
+      attributes:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/document/name'
+          - $ref: '#/components/schemas/dataTypes/document/description'
+          - $ref: '#/components/schemas/dataTypes/document/documentType'
+          - $ref: '#/components/schemas/dataTypes/document/fileType'
+          - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
+          - $ref: '#/components/schemas/dataTypes/createdAt'
+          - $ref: '#/components/schemas/dataTypes/updatedAt'
+
+
+      getResource:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/resourceId'
+          - $ref: '#/components/schemas/document/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/schemas/document/attributes'
+
+      getResponse:
+        allOf:
+          - $ref: '#/components/schemas/jsonApi/data'
+          - properties:
+              data:
+                $ref: '#/components/schemas/document/getResource'
+          - properties:
+              data:
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/dataTypes/document/presignedS3Get'
+
+      createResponse:
+        allOf:
+          - $ref: '#/components/schemas/jsonApi/data'
+          - properties:
+              data:
+                $ref: '#/components/schemas/document/getResource'
+          - properties:
+              data:
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/dataTypes/document/presignedS3Post'
+
+      listResponse:
+        allOf:
+          - $ref: '#/components/schemas/jsonApi/dataArray'
+          - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+          - properties:
+              data:
+                items:
+                  $ref: '#/components/schemas/document/getResource'
 
     tracking:
       collectionResource:
@@ -2925,7 +3286,7 @@ components:
 
     links:
       type: object
-      description: Links related to the primary data.
+      description: Links related to the primary data
       properties:
         first:
           title: first
@@ -2950,10 +3311,11 @@ components:
 
     meta:
       type: object
-      description: Non-standard meta-information.
+      description: Non-standard meta-information
       properties:
         pagination:
           type: object
+          description: The pagination state for the current request
           properties:
             count:
               title: count
@@ -2978,7 +3340,7 @@ components:
     jsonApi:
       createResource:
         type: object
-        description: Primary data related to the resource.
+        description: Primary data related to the resource
         properties:
           type:
             type: string
@@ -2994,6 +3356,37 @@ components:
           data:
             type: object
             $ref: '#/components/requestBodies/jsonApi/createResource'
+
+    document:
+      createResource:
+        allOf:
+          - $ref: '#/components/schemas/document/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/requestBodies/document/createAttributes'
+
+      createAttributes:
+        required:
+          - shipment_id
+          - file_type
+          - document_type
+          - name
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/document/name'
+          - $ref: '#/components/schemas/dataTypes/document/description'
+          - $ref: '#/components/schemas/dataTypes/document/documentType'
+          - $ref: '#/components/schemas/dataTypes/document/fileType'
+          - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
+          - $ref: '#/components/schemas/dataTypes/shipmentId'
+
+
+      createRequest:
+        allOf:
+          - $ref: '#/components/requestBodies/jsonApi/createData'
+          - properties:
+              data:
+                $ref: '#/components/requestBodies/document/createResource'
+
 
     shipment:
       createResource:
@@ -3140,3 +3533,6 @@ tags:
 - name: Transactions
   description: >
     Transaction entities contain read-only data about Ethereum Transactions and Transaction Receipts.
+- name: Documents
+  description: >
+    Documents are entities that allow documents and media objects management within ShipChain Transmission service.

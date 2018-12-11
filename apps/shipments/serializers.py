@@ -9,7 +9,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from django.conf import settings
 from django.db import transaction
-from enumfields.drf import EnumField
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions, status, serializers as rest_serializers
@@ -17,7 +16,7 @@ from rest_framework.utils import model_meta
 from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
 
-
+from apps.utils import UpperEnumField
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData
 
@@ -60,8 +59,7 @@ class LocationSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        fields = '__all__'
-        read_only_fields = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
 
 
 class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -78,9 +76,9 @@ class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     """
     Serializer for a location, used nested in a Shipment
     """
-    funding_type = EnumField(FundingType, ints_as_names=True)
-    escrow_state = EnumField(EscrowState, ints_as_names=True)
-    shipment_state = EnumField(ShipmentState, ints_as_names=True)
+    funding_type = UpperEnumField(FundingType, ints_as_names=True)
+    escrow_state = UpperEnumField(EscrowState, ints_as_names=True)
+    shipment_state = UpperEnumField(ShipmentState, ints_as_names=True)
 
     class Meta:
         model = LoadShipment
@@ -103,8 +101,8 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
 
     class Meta:
         model = Shipment
-        fields = '__all__'
-        read_only_fields = ('owner_id', 'contract_version') if settings.PROFILES_ENABLED else ('contract_version',)
+        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        read_only_fields = ('contract_version',)
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location',
@@ -162,13 +160,9 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     class Meta:
         model = Shipment
-        fields = '__all__'
-        if settings.PROFILES_ENABLED:
-            read_only_fields = ('owner_id', 'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
-                                'storage_credentials_id', 'contract_version')
-        else:
-            read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
-                                'storage_credentials_id', 'contract_version')
+        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
+                            'storage_credentials_id', 'contract_version')
 
     def update(self, instance, validated_data):
         auth = self.context['auth']
@@ -212,8 +206,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shipment
-        fields = '__all__'
-        read_only_fields = ('owner_id',)
+        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
         meta_fields = ('async_job_id',)
 
     class JSONAPIMeta:

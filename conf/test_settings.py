@@ -24,6 +24,9 @@ for name, logger in LOGGING['loggers'].items():
 JWT_AUTH['JWT_PRIVATE_KEY'] = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 JWT_AUTH['JWT_PUBLIC_KEY'] = JWT_AUTH['JWT_PRIVATE_KEY'].public_key()
 
-os.environ['AWS_ACCESS_KEY_ID'] = 'dummy-access-key'
-os.environ['AWS_SECRET_ACCESS_KEY'] = 'dummy-access-key-secret'
-os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+S3_RESOURCE = boto3.resource(
+    's3',
+    endpoint_url='http://minio:9000',
+    config=Config(signature_version='s3v4'),
+    region_name='us-east-1'
+)

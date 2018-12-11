@@ -1,6 +1,9 @@
 .idea
 bin/dev-tools/node_modules
 test-results
+tests/tmp/*.pdf
+tests/tmp/*.jp*
+tests/tmp/*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -83,6 +83,7 @@ if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
+
 else:
     DEBUG = True
     LOG_LEVEL = 'DEBUG'
@@ -99,6 +100,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
+    'django_filters',
     'rest_framework',
     'rest_framework_gis',
     'influxdb_metrics',
@@ -108,6 +110,7 @@ INSTALLED_APPS = [
     'apps.eth',
     'apps.shipments',
     'apps.schema',
+    'apps.documents',
     'channels',
 ]
 

@@ -1298,6 +1298,186 @@
                 ]
               }
             ]
+          },
+           {
+            "name": "Documents",
+            "description": null,
+            "item": [
+              {
+                "name": "Create Document",
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "name",
+                        "value": "name",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "description",
+                        "value": "description",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "document_type",
+                        "value": "document_type",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "file_type",
+                        "value": "file_type",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "shipment_id",
+                        "value": "shipment_id",
+                        "type": "text",
+                        "disabled": false
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/documents/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "List Documents",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/documents/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Get Document",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/documents/{{document_id}}/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      "{{document_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Update Document",
+                "request": {
+                  "method": "PATCH",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "upload_status",
+                        "value": "upload_status",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "name",
+                        "value": "name",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "description",
+                        "value": "description",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "document_type",
+                        "value": "document_type",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "file_type",
+                        "value": "file_type",
+                        "type": "text",
+                        "disabled": true
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/documents/{{document_id}}/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      "{{document_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              }
+            ]
           }
     ],
     "event": [
