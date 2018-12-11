@@ -1310,7 +1310,7 @@ components:
               title: acl
               description: AWS read policy type
               type: string
-              example: 'public-read'
+              example: 'private'
 
         contentType:
           properties:

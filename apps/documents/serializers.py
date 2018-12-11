@@ -53,9 +53,9 @@ class DocumentCreateSerializer(DocumentSerializer):
         pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
             Bucket=settings.S3_BUCKET,
             Key=obj.s3_key,
-            Fields={"acl": "public-read", "Content-Type": content_type},
+            Fields={"acl": "private", "Content-Type": content_type},
             Conditions=[
-                {"acl": "public-read"},
+                {"acl": "private"},
                 {"Content-Type": content_type},
                 ["content-length-range", 0, settings.S3_MAX_BYTES]
             ],
