@@ -23,9 +23,6 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
         else:
             exclude = ('shipment',)
 
-    class JSONAPIMeta:
-        included_resources = ['shipment']
-
 
 class DocumentCreateSerializer(DocumentSerializer):
     """
