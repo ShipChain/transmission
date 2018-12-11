@@ -39,8 +39,8 @@ class ShipmentAPITests(APITestCase):
         parameters = {
             '_vault_id': VAULT_ID,
             '_vault_uri': 's3://bucket/' + VAULT_ID,
-            '_carrier_wallet_id': CARRIER_WALLET_ID,
-            '_shipper_wallet_id': SHIPPER_WALLET_ID,
+            '_carriers_wallet_id': CARRIER_WALLET_ID,
+            '_shippers_wallet_id': SHIPPER_WALLET_ID,
             '_owner_id': OWNER_ID,
             '_storage_credentials_id': STORAGE_CRED_ID,
             '_async_hash': 'txHash',
@@ -51,8 +51,8 @@ class ShipmentAPITests(APITestCase):
                       "data": {
                         "type": "Shipment",
                         "attributes": {
-                          "carrier_wallet_id": "<<_carrier_wallet_id>>",
-                          "shipper_wallet_id": "<<_shipper_wallet_id>>",
+                          "carriers_wallet_id": "<<_carriers_wallet_id>>",
+                          "shippers_wallet_id": "<<_shippers_wallet_id>>",
                           "storage_credentials_id": "<<_storage_credentials_id>>",
                           "owner_id": "<<_owner_id>>"
                         }
@@ -92,8 +92,8 @@ class ShipmentAPITests(APITestCase):
         parameters = {
             '_vault_id': VAULT_ID,
             '_vault_uri': 's3://bucket/' + VAULT_ID,
-            '_carrier_wallet_id': CARRIER_WALLET_ID,
-            '_shipper_wallet_id': SHIPPER_WALLET_ID,
+            '_carriers_wallet_id': CARRIER_WALLET_ID,
+            '_shippers_wallet_id': SHIPPER_WALLET_ID,
             '_storage_credentials_id': STORAGE_CRED_ID,
             '_async_hash': 'txHash',
             '_ship_from_location_name': LOCATION_NAME,
@@ -126,8 +126,8 @@ class ShipmentAPITests(APITestCase):
 
         one_location_profiles_disabled, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
                                                                             'ship_from_location.owner_id': OWNER_ID,
-                                                                            'carrier_wallet_id': CARRIER_WALLET_ID,
-                                                                            'shipper_wallet_id': SHIPPER_WALLET_ID,
+                                                                            'carriers_wallet_id': CARRIER_WALLET_ID,
+                                                                            'shippers_wallet_id': SHIPPER_WALLET_ID,
                                                                             'storage_credentials_id': STORAGE_CRED_ID,
                                                                             'owner_id': OWNER_ID
                                                                            })

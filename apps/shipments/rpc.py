@@ -10,15 +10,15 @@ LOG = logging.getLogger('transmission')
 
 
 class ShipmentRPCClient(RPCClient):
-    def create_vault(self, storage_credentials_id, shipper_wallet_id, carrier_wallet_id):
+    def create_vault(self, storage_credentials_id, shippers_wallet_id, carriers_wallet_id):
         LOG.debug(f'Creating vault with storage_credentials_id {storage_credentials_id},'
-                  f'shipper_wallet_id {shipper_wallet_id}, and carrier_wallet_id {carrier_wallet_id}.')
+                  f'shippers_wallet_id {shippers_wallet_id}, and carrier_wallet_id {carriers_wallet_id}.')
         log_metric('transmission.info', tags={'method': 'shipment_rpcclient.create_vault', 'module': __name__})
 
         result = self.call('vault.create', {
             "storageCredentials": storage_credentials_id,
-            "shipperWallet": shipper_wallet_id,
-            "carrierWallet": carrier_wallet_id
+            "shipperWallet": shippers_wallet_id,
+            "carrierWallet": carriers_wallet_id
         })
 
         if 'success' in result and result['success']:
@@ -78,15 +78,15 @@ class ShipmentRPCClient(RPCClient):
             LOG.error('Invalid addition of tracking data.')
             raise RPCError("Invalid response from Engine")
 
-    def create_shipment_transaction(self, shipper_wallet_id, shipment_id, funding_type, contracted_amount):
+    def create_shipment_transaction(self, shippers_wallet_id, shipment_id, funding_type, contracted_amount):
         LOG.debug(
             f'Creating shipment transaction with funding_type {funding_type}, shipment_amount {contracted_amount},'
-            f'shipper_wallet_id {shipper_wallet_id}, and shipment_id {shipment_id}.')
+            f'shipper_wallet_id {shippers_wallet_id}, and shipment_id {shipment_id}.')
         log_metric('transmission.info', tags={'method': 'shipment_rpcclient.create_shipment_transaction',
                                               'module': __name__})
 
         result = self.call('load.create_shipment_tx', {
-            "senderWallet": shipper_wallet_id,
+            "senderWallet": shippers_wallet_id,
             "shipmentUuid": shipment_id,
             "fundingType": funding_type,
             "contractedAmount": contracted_amount

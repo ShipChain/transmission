@@ -130,16 +130,16 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
             return Shipment.objects.create(**validated_data, **extra_args)
 
-    def validate_shipper_wallet_id(self, shipper_wallet_id):
+    def validate_shippers_wallet_id(self, shippers_wallet_id):
         if settings.PROFILES_ENABLED:
             auth = self.context['auth']
-            response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
+            response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shippers_wallet_id}/',
                                                      headers={'Authorization': 'JWT {}'.format(auth.decode())})
 
             if response.status_code != status.HTTP_200_OK:
                 raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
 
-        return shipper_wallet_id
+        return shippers_wallet_id
 
     def validate_storage_credentials_id(self, storage_credentials_id):
         if settings.PROFILES_ENABLED:
@@ -161,7 +161,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
     class Meta:
         model = Shipment
         exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
-        read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
+        read_only_fields = ('vault_id', 'vault_uri', 'shippers_wallet_id', 'carriers_wallet_id',
                             'storage_credentials_id', 'contract_version')
 
     def update(self, instance, validated_data):
@@ -225,7 +225,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Shipment
         exclude = ('owner_id', 'storage_credentials_id',
-                   'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
+                   'vault_id', 'vault_uri', 'shippers_wallet_id', 'carriers_wallet_id',
                    'contract_version', 'device')
 
 

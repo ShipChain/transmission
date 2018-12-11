@@ -116,8 +116,8 @@ class JobsAPITests(APITestCase):
 
             self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
                                                           owner_id=self.user_1.id,
-                                                          carrier_wallet_id=CARRIER_WALLET_ID,
-                                                          shipper_wallet_id=SHIPPER_WALLET_ID,
+                                                          carriers_wallet_id=CARRIER_WALLET_ID,
+                                                          shippers_wallet_id=SHIPPER_WALLET_ID,
                                                           storage_credentials_id=STORAGE_CRED_ID))
 
             self.load_shipments.append(self.shipments[0].loadshipment)

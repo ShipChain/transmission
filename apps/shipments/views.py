@@ -25,8 +25,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                           else (permissions.AllowAny,))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     filterset_class = ShipmentFilter
-    search_fields = ('shipper_reference', 'forwarder_reference')
-    ordering_fields = ('modified_at', 'created_at', 'pickup_estimated', 'delivery_estimated')
+    search_fields = ('shippers_reference', 'forwarders_reference')
+    ordering_fields = ('modified_at', 'created_at', 'pickup_est', 'delivery_est')
     http_method_names = ['get', 'post', 'delete', 'patch']
 
     def get_queryset(self):

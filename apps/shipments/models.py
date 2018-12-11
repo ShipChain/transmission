@@ -161,9 +161,9 @@ class Shipment(models.Model):
     vault_id = models.CharField(null=True, max_length=36)
     vault_uri = models.CharField(null=True, max_length=255)
     device = models.ForeignKey(Device, on_delete=models.PROTECT, null=True)
-    shipper_wallet_id = models.CharField(null=False, max_length=36)
-    carrier_wallet_id = models.CharField(null=False, max_length=36)
-    moderator_wallet_id = models.CharField(null=True, max_length=36)
+    shippers_wallet_id = models.CharField(null=False, max_length=36)
+    carriers_wallet_id = models.CharField(null=False, max_length=36)
+    moderators_wallet_id = models.CharField(null=True, max_length=36)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -177,12 +177,12 @@ class Shipment(models.Model):
         ordering = ('created_at',)
 
     # Shipment Schema fields
-    carrier_scac = models.CharField(max_length=255, blank=True, null=True)
+    carriers_scac = models.CharField(max_length=255, blank=True, null=True)
     forwarder_scac = models.CharField(max_length=255, blank=True, null=True)
     nvocc_scac = models.CharField(max_length=255, blank=True, null=True)
-    shipper_reference = models.CharField(max_length=255, blank=True, null=True)
-    forwarder_reference = models.CharField(max_length=255, blank=True, null=True)
-    forwarders_shipper_id = models.CharField(max_length=255, blank=True, null=True)
+    shippers_reference = models.CharField(max_length=255, blank=True, null=True)
+    forwarders_reference = models.CharField(max_length=255, blank=True, null=True)
+    forwarder_shipper_id = models.CharField(max_length=255, blank=True, null=True)
 
     ship_from_location = models.ForeignKey(Location, on_delete=models.PROTECT,
                                            related_name='shipments_from', null=True)
@@ -191,53 +191,53 @@ class Shipment(models.Model):
     final_destination_location = models.ForeignKey(Location, on_delete=models.PROTECT,
                                                    related_name='shipments_dest', null=True)
 
-    carrier_instructions = models.CharField(max_length=255, blank=True, null=True)
+    carriers_instructions = models.CharField(max_length=255, blank=True, null=True)
     pro_number = models.CharField(max_length=255, blank=True, null=True)
-    master_bill = models.CharField(max_length=255, blank=True, null=True)
-    house_bill = models.CharField(max_length=255, blank=True, null=True)
-    subhouse_bill = models.CharField(max_length=255, blank=True, null=True)
-    freight_payment_terms = models.CharField(max_length=255, blank=True, null=True)
+    bill_master = models.CharField(max_length=255, blank=True, null=True)
+    bill_house = models.CharField(max_length=255, blank=True, null=True)
+    bill_subhouse = models.CharField(max_length=255, blank=True, null=True)
+    payment_terms = models.CharField(max_length=255, blank=True, null=True)
     vessel_name = models.CharField(max_length=255, blank=True, null=True)
     voyage_number = models.CharField(max_length=255, blank=True, null=True)
-    mode = models.CharField(max_length=255, blank=True, null=True)
+    mode_of_transport_code = models.CharField(max_length=255, blank=True, null=True)
 
-    number_of_packages = models.IntegerField(blank=True, null=True)
-    gross_weight_kgs = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
-    volume_cbms = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
-    container_count = models.IntegerField(blank=True, null=True)
-    dimensional_weight = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
+    package_qty = models.IntegerField(blank=True, null=True)
+    weight_gross = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
+    volume = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
+    container_qty = models.IntegerField(blank=True, null=True)
+    weight_dim = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
     chargeable_weight = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
 
-    docs_received_actual = models.DateTimeField(blank=True, null=True)
-    docs_approved_actual = models.DateTimeField(blank=True, null=True)
-    pickup_appointment_actual = models.DateTimeField(blank=True, null=True)
-    pickup_estimated = models.DateTimeField(blank=True, null=True)
-    pickup_actual = models.DateTimeField(blank=True, null=True)
-    loading_estimated = models.DateTimeField(blank=True, null=True)
-    loading_actual = models.DateTimeField(blank=True, null=True)
-    departure_estimated = models.DateTimeField(blank=True, null=True)
-    departure_actual = models.DateTimeField(blank=True, null=True)
-    delivery_appointment_actual = models.DateTimeField(blank=True, null=True)
-    arrival_port_estimated = models.DateTimeField(blank=True, null=True)
-    arrival_port_actual = models.DateTimeField(blank=True, null=True)
-    delivery_estimated = models.DateTimeField(blank=True, null=True)
-    delivery_actual = models.DateTimeField(blank=True, null=True)
-    last_attempted_delivery_actual = models.DateTimeField(blank=True, null=True)
-    cancel_requested_date_actual = models.DateTimeField(blank=True, null=True)
-    cancel_confirmed_date_actual = models.DateTimeField(blank=True, null=True)
-    customs_filed_date_actual = models.DateTimeField(blank=True, null=True)
-    customs_hold_date_actual = models.DateTimeField(blank=True, null=True)
-    customs_release_date_actual = models.DateTimeField(blank=True, null=True)
+    docs_received_act = models.DateTimeField(blank=True, null=True)
+    docs_approved_act = models.DateTimeField(blank=True, null=True)
+    pickup_appt = models.DateTimeField(blank=True, null=True)
+    pickup_est = models.DateTimeField(blank=True, null=True)
+    pickup_act = models.DateTimeField(blank=True, null=True)
+    loading_est = models.DateTimeField(blank=True, null=True)
+    loading_act = models.DateTimeField(blank=True, null=True)
+    departure_est = models.DateTimeField(blank=True, null=True)
+    departure_act = models.DateTimeField(blank=True, null=True)
+    delivery_appt_act = models.DateTimeField(blank=True, null=True)
+    port_arrival_est = models.DateTimeField(blank=True, null=True)
+    port_arrival_act = models.DateTimeField(blank=True, null=True)
+    delivery_est = models.DateTimeField(blank=True, null=True)
+    delivery_act = models.DateTimeField(blank=True, null=True)
+    delivery_attempt = models.DateTimeField(blank=True, null=True)
+    cancel_requested_date_act = models.DateTimeField(blank=True, null=True)
+    cancel_confirmed_date_act = models.DateTimeField(blank=True, null=True)
+    customs_filed_date_act = models.DateTimeField(blank=True, null=True)
+    customs_hold_date_act = models.DateTimeField(blank=True, null=True)
+    customs_release_date_act = models.DateTimeField(blank=True, null=True)
 
-    containerization_type = models.CharField(max_length=255, blank=True, null=True)
-    arrival_unlocode = models.CharField(max_length=255, blank=True, null=True)
-    final_port_unlocode = models.CharField(max_length=255, blank=True, null=True)
-    import_unlocode = models.CharField(max_length=255, blank=True, null=True)
-    lading_unlocode = models.CharField(max_length=255, blank=True, null=True)
-    origin_unlocode = models.CharField(max_length=255, blank=True, null=True)
-    us_routed_export = models.CharField(max_length=255, blank=True, null=True)
+    container_type = models.CharField(max_length=255, blank=True, null=True)
+    port_arrival_locode = models.CharField(max_length=255, blank=True, null=True)
+    final_port_locode = models.CharField(max_length=255, blank=True, null=True)
+    import_locode = models.CharField(max_length=255, blank=True, null=True)
+    lading_locode = models.CharField(max_length=255, blank=True, null=True)
+    origin_locode = models.CharField(max_length=255, blank=True, null=True)
+    us_routed = models.CharField(max_length=255, blank=True, null=True)
     import_customs_mode = models.CharField(max_length=255, blank=True, null=True)
-    us_customs_export_port = models.CharField(max_length=255, blank=True, null=True)
+    us_export_port = models.CharField(max_length=255, blank=True, null=True)
 
     customer_fields = JSONField(blank=True, null=True)
 
@@ -253,10 +253,10 @@ class Shipment(models.Model):
             LOG.debug(f'Shipment {self.id} requested a carrier update')
             async_job = AsyncJob.rpc_job_for_listener(
                 rpc_method=rpc_client.set_carrier_tx,
-                rpc_parameters=[self.shipper_wallet_id,
+                rpc_parameters=[self.shippers_wallet_id,
                                 self.id,
-                                self.carrier_wallet_id],
-                signing_wallet_id=self.shipper_wallet_id,
+                                self.carriers_wallet_id],
+                signing_wallet_id=self.shippers_wallet_id,
                 listener=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_carrier before contract shipment was created.')
@@ -272,10 +272,10 @@ class Shipment(models.Model):
             LOG.debug(f'Shipment {self.id} requested a carrier update')
             async_job = AsyncJob.rpc_job_for_listener(
                 rpc_method=rpc_client.set_moderator_tx,
-                rpc_parameters=[self.shipper_wallet_id,
+                rpc_parameters=[self.shippers_wallet_id,
                                 self.id,
-                                self.moderator_wallet_id],
-                signing_wallet_id=self.shipper_wallet_id,
+                                self.moderators_wallet_id],
+                signing_wallet_id=self.shippers_wallet_id,
                 listener=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_moderator before contract shipment was created.')
@@ -291,10 +291,10 @@ class Shipment(models.Model):
             LOG.debug(f'Shipment {self.id} requested a vault uri update')
             async_job = AsyncJob.rpc_job_for_listener(
                 rpc_method=rpc_client.set_vault_uri_tx,
-                rpc_parameters=[self.shipper_wallet_id,
+                rpc_parameters=[self.shippers_wallet_id,
                                 self.id,
                                 vault_uri],
-                signing_wallet_id=self.shipper_wallet_id,
+                signing_wallet_id=self.shippers_wallet_id,
                 listener=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_vault_uri before contract shipment was created.')
@@ -311,7 +311,7 @@ class Shipment(models.Model):
                 joblistener__shipments__id=self.id,
                 state=JobState.PENDING,
                 parameters__rpc_method=rpc_client.set_vault_hash_tx.__name__,
-                parameters__signing_wallet_id=self.shipper_wallet_id,
+                parameters__signing_wallet_id=self.shippers_wallet_id,
             )
             if job_queryset.count():
                 # Update vault hash for all current queued jobs
@@ -319,7 +319,7 @@ class Shipment(models.Model):
                     LOG.debug(f'Shipment {self.id} found a pending vault hash update {async_job.id}, '
                               f'updating its parameters with new hash')
                     async_job.parameters['rpc_parameters'] = [
-                        self.shipper_wallet_id,
+                        self.shippers_wallet_id,
                         self.id,
                         vault_hash
                     ]
@@ -336,20 +336,20 @@ class Shipment(models.Model):
                           f'sending one in {settings.VAULT_HASH_RATE_LIMIT} minutes')
                 async_job = AsyncJob.rpc_job_for_listener(
                     rpc_method=rpc_client.set_vault_hash_tx,
-                    rpc_parameters=[self.shipper_wallet_id,
+                    rpc_parameters=[self.shippers_wallet_id,
                                     self.id,
                                     vault_hash],
-                    signing_wallet_id=self.shipper_wallet_id,
+                    signing_wallet_id=self.shippers_wallet_id,
                     listener=self,
                     delay=settings.VAULT_HASH_RATE_LIMIT)
             else:
                 LOG.debug(f'Shipment {self.id} requested a vault hash update')
                 async_job = AsyncJob.rpc_job_for_listener(
                     rpc_method=rpc_client.set_vault_hash_tx,
-                    rpc_parameters=[self.shipper_wallet_id,
+                    rpc_parameters=[self.shippers_wallet_id,
                                     self.id,
                                     vault_hash],
-                    signing_wallet_id=self.shipper_wallet_id,
+                    signing_wallet_id=self.shippers_wallet_id,
                     listener=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_vault_hash before contract shipment was created.')
