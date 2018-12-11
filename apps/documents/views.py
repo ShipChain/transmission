@@ -2,7 +2,7 @@ import logging
 
 from django.conf import settings
 from django_filters import rest_framework as filters
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
@@ -18,13 +18,16 @@ from .filters import DocumentFilterSet
 LOG = logging.getLogger('transmission')
 
 
-class DocumentViewSet(viewsets.ModelViewSet):
+class DocumentViewSet(mixins.CreateModelMixin,
+                      mixins.RetrieveModelMixin,
+                      mixins.ListModelMixin,
+                      mixins.UpdateModelMixin,
+                      viewsets.GenericViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
     permission_classes = (permissions.IsAuthenticated, UserHasPermission,)
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet
-    http_method_names = ['get', 'post', 'patch']
 
     def get_queryset(self):
         queryset = self.queryset
