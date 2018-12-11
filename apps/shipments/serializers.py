@@ -59,8 +59,7 @@ class LocationSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        fields = '__all__'
-        read_only_fields = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
 
 
 class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -102,8 +101,8 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
 
     class Meta:
         model = Shipment
-        fields = '__all__'
-        read_only_fields = ('owner_id', 'contract_version') if settings.PROFILES_ENABLED else ('contract_version',)
+        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        read_only_fields = ('contract_version',)
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location',
@@ -161,13 +160,9 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     class Meta:
         model = Shipment
-        fields = '__all__'
-        if settings.PROFILES_ENABLED:
-            read_only_fields = ('owner_id', 'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
-                                'storage_credentials_id', 'contract_version')
-        else:
-            read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
-                                'storage_credentials_id', 'contract_version')
+        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
+                            'storage_credentials_id', 'contract_version')
 
     def update(self, instance, validated_data):
         auth = self.context['auth']
@@ -211,8 +206,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shipment
-        fields = '__all__'
-        read_only_fields = ('owner_id',)
+        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
         meta_fields = ('async_job_id',)
 
     class JSONAPIMeta:

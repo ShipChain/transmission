@@ -15,13 +15,13 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     document_type = UpperEnumField(DocumentType, lenient=True, read_only=True, ints_as_names=True)
     file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
-    s3_path = serializers.ReadOnlyField()
 
     class Meta:
         model = Document
-        exclude = ('shipment',)
         if settings.PROFILES_ENABLED:
-            read_only_fields = ('owner_id',)
+            exclude = ('owner_id', 'shipment')
+        else:
+            exclude = ('shipment',)
 
     class JSONAPIMeta:
         included_resources = ['shipment']
