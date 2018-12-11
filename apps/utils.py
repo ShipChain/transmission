@@ -1,7 +1,8 @@
 import decimal
 import json
+
 import re
-from drf_enum_field.fields import EnumField
+from enumfields.drf import EnumField
 
 
 def random_id():
@@ -47,11 +48,6 @@ def assertDeepAlmostEqual(test_case, expected, actual, *args, **kwargs):  # nope
         raise exc
 
 
-class EnumToNameField(EnumField):
-    def to_internal_value(self, data):
-        return super(EnumToNameField, self).to_internal_value(data).name
-
-
 def snake_to_sentence(word):
     return ' '.join(x.capitalize() or '_' for x in word.split('_'))
 
@@ -76,3 +72,8 @@ class DecimalEncoder(json.JSONEncoder):
         if isinstance(o, decimal.Decimal):
             return float(o)
         return super(DecimalEncoder, self).default(o)
+
+
+class UpperEnumField(EnumField):
+    def to_representation(self, instance):
+        return super(UpperEnumField, self).to_representation(instance).upper()

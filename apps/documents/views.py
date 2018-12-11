@@ -10,7 +10,6 @@ from .permissions import UserHasPermission
 
 from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
-                          DocumentUpdateSerializer,
                           DocumentRetrieveSerializer,)
 from .models import Document
 from .filters import DocumentFilterSet
@@ -29,19 +28,16 @@ class DocumentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = self.queryset
-        if settings.PROFILES_URL:
+        if settings.PROFILES_ENABLED:
             queryset = queryset.filter(owner_id=self.request.user.id)
         return queryset
 
     def perform_create(self, serializer):
-        if settings.PROFILES_URL:
+        if settings.PROFILES_ENABLED:
             created = serializer.save(owner_id=self.request.user.id)
         else:
             created = serializer.save()
         return created
-
-    def perform_update(self, serializer):
-        return serializer.save()
 
     def create(self, request, *args, **kwargs):
         """
@@ -50,48 +46,13 @@ class DocumentViewSet(viewsets.ModelViewSet):
         LOG.debug(f'Creating a document object.')
         log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
 
-        serializer = DocumentCreateSerializer(data=request.data, context={'auth': request.auth})
+        serializer = DocumentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        # Create document object
-        document = self.perform_create(serializer)
-        pre_signed_data = serializer.s3_sign(document=document)
-
-        return Response(pre_signed_data, status=status.HTTP_201_CREATED)
-
-    def update(self, request, *args, **kwargs):
-        """
-        Update document object status according to upload status: COMPLETED or FAILED
-        """
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        LOG.debug(f'Updating document {instance.id} with new details.')
-        log_metric('transmission.info', tags={'method': 'documents.update', 'module': __name__})
-
-        serializer = DocumentUpdateSerializer(instance, data=request.data, partial=partial,
-                                              context={'auth': request.auth})
-        serializer.is_valid(raise_exception=True)
-
-        document = self.perform_update(serializer)
-
-        response = DocumentRetrieveSerializer(document)
-
-        return Response(response.data, status=status.HTTP_202_ACCEPTED)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = DocumentRetrieveSerializer(instance)
-
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = DocumentRetrieveSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = DocumentRetrieveSerializer(queryset, many=True)
-
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.data)

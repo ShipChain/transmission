@@ -1331,25 +1331,13 @@
                       {
                         "key": "document_type",
                         "value": "document_type",
-                        "type": "integer",
+                        "type": "text",
                         "disabled": false
                       },
                       {
                         "key": "file_type",
                         "value": "file_type",
-                        "type": "integer",
-                        "disabled": false
-                      },
-                      {
-                        "key": "upload_status",
-                        "value": "upload_status",
-                        "type": "integer",
-                        "disabled": true
-                      },
-                      {
-                        "key": "size",
-                        "value": "size",
-                        "type": "integer",
+                        "type": "text",
                         "disabled": false
                       },
                       {
@@ -1444,7 +1432,7 @@
                       {
                         "key": "upload_status",
                         "value": "upload_status",
-                        "type": "integer",
+                        "type": "text",
                         "disabled": false
                       },
                       {
@@ -1462,24 +1450,12 @@
                       {
                         "key": "document_type",
                         "value": "document_type",
-                        "type": "integer",
+                        "type": "text",
                         "disabled": true
                       },
                       {
                         "key": "file_type",
                         "value": "file_type",
-                        "type": "integer",
-                        "disabled": true
-                      },
-                      {
-                        "key": "size",
-                        "value": "size",
-                        "type": "integer",
-                        "disabled": true
-                      },
-                      {
-                        "key": "shipment_id",
-                        "value": "shipment_id",
                         "type": "text",
                         "disabled": true
                       }

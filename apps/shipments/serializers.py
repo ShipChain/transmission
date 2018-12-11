@@ -9,7 +9,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from django.conf import settings
 from django.db import transaction
-from enumfields.drf import EnumField
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions, status, serializers as rest_serializers
@@ -17,7 +16,7 @@ from rest_framework.utils import model_meta
 from rest_framework.fields import SkipField
 from rest_framework_json_api import serializers
 
-
+from apps.utils import UpperEnumField
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData
 
@@ -78,9 +77,9 @@ class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     """
     Serializer for a location, used nested in a Shipment
     """
-    funding_type = EnumField(FundingType, ints_as_names=True)
-    escrow_state = EnumField(EscrowState, ints_as_names=True)
-    shipment_state = EnumField(ShipmentState, ints_as_names=True)
+    funding_type = UpperEnumField(FundingType, ints_as_names=True)
+    escrow_state = UpperEnumField(EscrowState, ints_as_names=True)
+    shipment_state = UpperEnumField(ShipmentState, ints_as_names=True)
 
     class Meta:
         model = LoadShipment

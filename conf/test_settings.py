@@ -26,9 +26,7 @@ JWT_AUTH['JWT_PUBLIC_KEY'] = JWT_AUTH['JWT_PRIVATE_KEY'].public_key()
 
 S3_RESOURCE = boto3.resource(
     's3',
-    endpoint_url=S3_ENDPOINT,
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    endpoint_url='http://minio:9000',
     config=Config(signature_version='s3v4'),
     region_name='us-east-1'
 )
