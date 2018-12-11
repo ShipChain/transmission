@@ -20,9 +20,9 @@ def filter_enum(queryset, name, value):
 
 
 class DocumentFilterSet(filters.FilterSet):
-    file_type = CharFilter(lookup_expr='iexact', method=filter_enum)
-    document_type = CharFilter(lookup_expr='iexact', method=filter_enum)
-    upload_status = CharFilter(lookup_expr='iexact', method=filter_enum)
+    file_type = CharFilter(method=filter_enum)
+    document_type = CharFilter(method=filter_enum)
+    upload_status = CharFilter(method=filter_enum)
 
     class Meta:
         model = Document
