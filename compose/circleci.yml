@@ -31,9 +31,11 @@ services:
     networks:
       - portal
     environment:
-      POSTGRES_USER: transmission
-      POSTGRES_PASSWORD: transmission
-      POSTGRES_DB: transmission
+      - POSTGRES_USER=transmission
+      - POSTGRES_PASS=transmission
+      - POSTGRES_HOST=psql
+      - POSTGRES_DBNAME=transmission
+      - ALLOW_IP_RANGE=0.0.0.0/0
 
   runserver:
     extends:
