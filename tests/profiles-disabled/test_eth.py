@@ -7,6 +7,9 @@ from rest_framework.reverse import reverse
 from apps.shipments.models import Shipment
 from unittest import mock
 from apps.shipments.rpc import Load110RPCClient
+from apps.eth.rpc import EventRPCClient
+import json
+from conf import test_settings
 
 
 BLOCK_HASH = "0x38823cb26b528867c8dbea4146292908f55e1ee7f293685db1df0851d1b93b24"
@@ -138,3 +141,34 @@ class TransactionReceiptTestCase(APITestCase):
         # Request with wallet_id should fail
         response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_engine_subscribe_generic(self):
+        from apps.rpc_client import requests
+        from tests.utils import mocked_rpc_response
+
+        mock_shipment_rpc = EventRPCClient()
+
+        params = {
+            "url": "URL",
+            "project": "LOAD",
+            "interval": 5000,
+            "eventNames": ["allEvents"]
+        }
+        full_params = {
+            'jsonrpc': '2.0',
+            'id': 0,
+            'params': params,
+            'method': 'event.subscribe'
+        }
+
+        with mock.patch.object(requests.Session, 'post') as mock_method:
+
+            mock_method.return_value = mocked_rpc_response({'result': {'success': True, 'subscription': params}})
+
+            mock_shipment_rpc.subscribe(project="LOAD", url="URL")
+
+            print(mock_method.target)
+
+            mock_method.assert_called_with(test_settings.ENGINE_RPC_URL, data=json.dumps(full_params))
+
+
