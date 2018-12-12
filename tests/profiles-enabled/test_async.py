@@ -25,7 +25,7 @@ from django_mock_queries.mocks import mocked_relations
 from mock import patch
 
 from apps.jobs.models import AsyncJob, JobListener, MessageType
-from apps.jobs.consumers import EventTypes
+from apps.consumers import EventTypes
 from apps.routing import application
 
 USER_ID = '00000000-0000-0000-0000-000000000000'

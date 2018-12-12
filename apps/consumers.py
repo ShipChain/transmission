@@ -19,8 +19,8 @@ from enumfields import Enum
 from rest_framework.renderers import JSONRenderer
 
 from apps.authentication import AsyncJsonAuthConsumer
-from .models import AsyncJob
-from .serializers import AsyncJobSerializer
+from apps.jobs.models import AsyncJob
+from apps.jobs.serializers import AsyncJobSerializer
 
 
 class EventTypes(Enum):
@@ -28,7 +28,7 @@ class EventTypes(Enum):
     asyncjob_update = 1
 
 
-class JobsConsumer(AsyncJsonAuthConsumer):
+class AppsConsumer(AsyncJsonAuthConsumer):
     async def jobs_update(self, event):
         job_json = await database_sync_to_async(self.render_async_job)(event['async_job_id'])
         await self.send(job_json)
