@@ -1466,10 +1466,10 @@ components:
               type: string
               example: 'SCAC'
 
-        forwarderScac:
+        forwardersScac:
           properties:
-            forwarder_scac:
-              title: forwarder_scac
+            forwarders_scac:
+              title: forwarders_scac
               description: Standard Carrier Alpha code used for the forwarder
               type: string
               example: 'SCAC'
@@ -1606,7 +1606,7 @@ components:
 
         weightDim:
           properties:
-            weightDim:
+            weight_dim:
               title: weight_dim
               description: Estimated weight that is calculated from the length, width and height of shipment
               type: number
@@ -2682,7 +2682,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/createdAt'
         - $ref: '#/components/schemas/dataTypes/updatedAt'
         - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
-        - $ref: '#/components/schemas/dataTypes/shipment/forwarderScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
         - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
         - $ref: '#/components/schemas/dataTypes/shipment/shippersReference'
         - $ref: '#/components/schemas/dataTypes/shipment/forwardersReference'
@@ -2807,7 +2807,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/createdAt'
         - $ref: '#/components/schemas/dataTypes/updatedAt'
         - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
-        - $ref: '#/components/schemas/dataTypes/shipment/forwarderScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
         - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
         - $ref: '#/components/schemas/dataTypes/shipment/shippersReference'
         - $ref: '#/components/schemas/dataTypes/shipment/forwardersReference'
@@ -3397,7 +3397,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/shippersWalletId'
         - $ref: '#/components/schemas/dataTypes/shipment/carriersWalletId'
         - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
-        - $ref: '#/components/schemas/dataTypes/shipment/forwarderScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
         - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
         - $ref: '#/components/schemas/dataTypes/shipment/shippersReference'
         - $ref: '#/components/schemas/dataTypes/shipment/forwardersReference'

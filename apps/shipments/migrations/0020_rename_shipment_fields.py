@@ -245,4 +245,14 @@ class Migration(migrations.Migration):
             old_name='dimensional_weight',
             new_name='weight_dim',
         ),
+        migrations.RenameField(
+            model_name='shipment',
+            old_name='forwarder_shipper_id',
+            new_name='forwarders_shipper_id',
+        ),
+        migrations.RenameField(
+            model_name='shipment',
+            old_name='forwarder_scac',
+            new_name='forwarders_scac',
+        ),
     ]

@@ -178,11 +178,11 @@ class Shipment(models.Model):
 
     # Shipment Schema fields
     carriers_scac = models.CharField(max_length=255, blank=True, null=True)
-    forwarder_scac = models.CharField(max_length=255, blank=True, null=True)
+    forwarders_scac = models.CharField(max_length=255, blank=True, null=True)
     nvocc_scac = models.CharField(max_length=255, blank=True, null=True)
     shippers_reference = models.CharField(max_length=255, blank=True, null=True)
     forwarders_reference = models.CharField(max_length=255, blank=True, null=True)
-    forwarder_shipper_id = models.CharField(max_length=255, blank=True, null=True)
+    forwarders_shipper_id = models.CharField(max_length=255, blank=True, null=True)
 
     ship_from_location = models.ForeignKey(Location, on_delete=models.PROTECT,
                                            related_name='shipments_from', null=True)
