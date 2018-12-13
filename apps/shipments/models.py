@@ -161,9 +161,9 @@ class Shipment(models.Model):
     vault_id = models.CharField(null=True, max_length=36)
     vault_uri = models.CharField(null=True, max_length=255)
     device = models.ForeignKey(Device, on_delete=models.PROTECT, null=True)
-    shippers_wallet_id = models.CharField(null=False, max_length=36)
-    carriers_wallet_id = models.CharField(null=False, max_length=36)
-    moderators_wallet_id = models.CharField(null=True, max_length=36)
+    shipper_wallet_id = models.CharField(null=False, max_length=36)
+    carrier_wallet_id = models.CharField(null=False, max_length=36)
+    moderator_wallet_id = models.CharField(null=True, max_length=36)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -206,7 +206,7 @@ class Shipment(models.Model):
     volume = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
     container_qty = models.IntegerField(blank=True, null=True)
     weight_dim = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
-    chargeable_weight = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
+    weight_chargeable = models.DecimalField(blank=True, null=True, decimal_places=4, max_digits=9)
 
     docs_received_act = models.DateTimeField(blank=True, null=True)
     docs_approved_act = models.DateTimeField(blank=True, null=True)
@@ -253,10 +253,10 @@ class Shipment(models.Model):
             LOG.debug(f'Shipment {self.id} requested a carrier update')
             async_job = AsyncJob.rpc_job_for_listener(
                 rpc_method=rpc_client.set_carrier_tx,
-                rpc_parameters=[self.shippers_wallet_id,
+                rpc_parameters=[self.shipper_wallet_id,
                                 self.id,
-                                self.carriers_wallet_id],
-                signing_wallet_id=self.shippers_wallet_id,
+                                self.carrier_wallet_id],
+                signing_wallet_id=self.shipper_wallet_id,
                 listener=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_carrier before contract shipment was created.')
@@ -272,10 +272,10 @@ class Shipment(models.Model):
             LOG.debug(f'Shipment {self.id} requested a carrier update')
             async_job = AsyncJob.rpc_job_for_listener(
                 rpc_method=rpc_client.set_moderator_tx,
-                rpc_parameters=[self.shippers_wallet_id,
+                rpc_parameters=[self.shipper_wallet_id,
                                 self.id,
-                                self.moderators_wallet_id],
-                signing_wallet_id=self.shippers_wallet_id,
+                                self.moderator_wallet_id],
+                signing_wallet_id=self.shipper_wallet_id,
                 listener=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_moderator before contract shipment was created.')
@@ -291,10 +291,10 @@ class Shipment(models.Model):
             LOG.debug(f'Shipment {self.id} requested a vault uri update')
             async_job = AsyncJob.rpc_job_for_listener(
                 rpc_method=rpc_client.set_vault_uri_tx,
-                rpc_parameters=[self.shippers_wallet_id,
+                rpc_parameters=[self.shipper_wallet_id,
                                 self.id,
                                 vault_uri],
-                signing_wallet_id=self.shippers_wallet_id,
+                signing_wallet_id=self.shipper_wallet_id,
                 listener=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_vault_uri before contract shipment was created.')
@@ -311,7 +311,7 @@ class Shipment(models.Model):
                 joblistener__shipments__id=self.id,
                 state=JobState.PENDING,
                 parameters__rpc_method=rpc_client.set_vault_hash_tx.__name__,
-                parameters__signing_wallet_id=self.shippers_wallet_id,
+                parameters__signing_wallet_id=self.shipper_wallet_id,
             )
             if job_queryset.count():
                 # Update vault hash for all current queued jobs
@@ -319,7 +319,7 @@ class Shipment(models.Model):
                     LOG.debug(f'Shipment {self.id} found a pending vault hash update {async_job.id}, '
                               f'updating its parameters with new hash')
                     async_job.parameters['rpc_parameters'] = [
-                        self.shippers_wallet_id,
+                        self.shipper_wallet_id,
                         self.id,
                         vault_hash
                     ]
@@ -336,20 +336,20 @@ class Shipment(models.Model):
                           f'sending one in {settings.VAULT_HASH_RATE_LIMIT} minutes')
                 async_job = AsyncJob.rpc_job_for_listener(
                     rpc_method=rpc_client.set_vault_hash_tx,
-                    rpc_parameters=[self.shippers_wallet_id,
+                    rpc_parameters=[self.shipper_wallet_id,
                                     self.id,
                                     vault_hash],
-                    signing_wallet_id=self.shippers_wallet_id,
+                    signing_wallet_id=self.shipper_wallet_id,
                     listener=self,
                     delay=settings.VAULT_HASH_RATE_LIMIT)
             else:
                 LOG.debug(f'Shipment {self.id} requested a vault hash update')
                 async_job = AsyncJob.rpc_job_for_listener(
                     rpc_method=rpc_client.set_vault_hash_tx,
-                    rpc_parameters=[self.shippers_wallet_id,
+                    rpc_parameters=[self.shipper_wallet_id,
                                     self.id,
                                     vault_hash],
-                    signing_wallet_id=self.shippers_wallet_id,
+                    signing_wallet_id=self.shipper_wallet_id,
                     listener=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_vault_hash before contract shipment was created.')

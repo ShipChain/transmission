@@ -53,14 +53,14 @@
                         "disabled": true
                       },
                       {
-                        "key": "carrier_scac",
-                        "value": "carrier_scac",
+                        "key": "carriers_scac",
+                        "value": "carriers_scac",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "forwarder_scac",
-                        "value": "forwarder_scac",
+                        "key": "forwarders_scac",
+                        "value": "forwarders_scac",
                         "type": "text",
                         "disabled": true
                       },
@@ -71,14 +71,14 @@
                         "disabled": true
                       },
                       {
-                        "key": "shipper_reference",
-                        "value": "shipper_reference",
+                        "key": "shippers_reference",
+                        "value": "shippers_reference",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "forwarder_reference",
-                        "value": "forwarder_reference",
+                        "key": "forwarders_reference",
+                        "value": "forwarders_reference",
                         "type": "text",
                         "disabled": true
                       },
@@ -89,7 +89,7 @@
                         "disabled": true
                       },
                       {
-                        "key": "carrier_instructions",
+                        "key": "carriers_instructions",
                         "value": "Make sure package is carefully packed",
                         "type": "text",
                         "disabled": true
@@ -101,26 +101,26 @@
                         "disabled": true
                       },
                       {
-                        "key": "master_bill",
-                        "value": "master_bill",
+                        "key": "bill_master",
+                        "value": "bill_master",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "house_bill",
-                        "value": "house_bill",
+                        "key": "bill_house",
+                        "value": "bill_house",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "subhouse_bill",
-                        "value": "subhouse_bill",
+                        "key": "bill_subhouse",
+                        "value": "bill_subhouse",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "freight_payment_terms",
-                        "value": "freight_payment_terms",
+                        "key": "payment_terms",
+                        "value": "payment_terms",
                         "type": "text",
                         "disabled": true
                       },
@@ -137,211 +137,205 @@
                         "disabled": true
                       },
                       {
-                        "key": "mode",
-                        "value": "mode",
+                        "key": "mode_of_transport_code",
+                        "value": "mode_of_transport_code",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "number_of_packages",
+                        "key": "package_qty",
                         "value": "1234",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "number_of_packages",
+                        "key": "weight_gross",
+                        "value": "1234.45",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "volume",
+                        "value": "1234.45",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "container_qty",
                         "value": "1234",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "gross_weight_kgs",
+                        "key": "weight_dim",
                         "value": "1234.45",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "volume_cbms",
+                        "key": "weight_chargeable",
                         "value": "1234.45",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "container_count",
-                        "value": "1234",
-                        "type": "text",
-                        "disabled": true
-                      },
-                      {
-                        "key": "dimensional_weight",
-                        "value": "1234.45",
-                        "type": "text",
-                        "disabled": true
-                      },
-                      {
-                        "key": "chargeable_weight",
-                        "value": "1234.45",
-                        "type": "text",
-                        "disabled": true
-                      },
-                      {
-                        "key": "docs_received_actual",
+                        "key": "docs_received_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "docs_approved_actual",
+                        "key": "docs_approved_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "pickup_appointment_actual",
+                        "key": "pickup_appt",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "pickup_estimated",
+                        "key": "pickup_est",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "pickup_actual",
+                        "key": "pickup_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "loading_estimated",
+                        "key": "loading_est",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "loading_actual",
+                        "key": "loading_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "departure_estimated",
+                        "key": "departure_est",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "departure_actual",
+                        "key": "departure_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "delivery_appointment_actual",
+                        "key": "delivery_appt_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "arrival_port_estimated",
+                        "key": "port_arrival_est",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "arrival_port_actual",
+                        "key": "port_arrival_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "delivery_estimated",
+                        "key": "delivery_est",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "delivery_actual",
+                        "key": "delivery_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "last_attempted_delivery_actual",
+                        "key": "delivery_attempt",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "cancel_requested_date_actual",
+                        "key": "cancel_requested_date_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "cancel_confirmed_date_actual",
+                        "key": "cancel_confirmed_date_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "customs_filed_date_actual",
+                        "key": "customs_filed_date_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "customs_hold_date_actual",
+                        "key": "customs_hold_date_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "customs_release_date_actual",
+                        "key": "customs_release_date_act",
                         "value": "2018-08-22T17:44:39.874352",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "containerization_type",
+                        "key": "container_type",
                         "value": "BLK",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "arrival_unlocode",
+                        "key": "port_arrival_locode",
                         "value": "USCHI",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "final_port_unlocode",
+                        "key": "final_port_locode",
                         "value": "USCHI",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "import_unlocode",
+                        "key": "import_locode",
                         "value": "USCHI",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "lading_unlocode",
+                        "key": "lading_locode",
                         "value": "USCHI",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "origin_unlocode",
+                        "key": "origin_locode",
                         "value": "USCHI",
                         "type": "text",
                         "disabled": true
                       },
                       {
-                        "key": "us_routed_export",
+                        "key": "us_routed",
                         "value": "true",
                         "type": "text",
                         "disabled": true
@@ -353,7 +347,7 @@
                         "disabled": true
                       },
                       {
-                        "key": "us_customs_export_port",
+                        "key": "us_export_port",
                         "value": "29601",
                         "type": "text",
                         "disabled": true

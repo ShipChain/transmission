@@ -79,14 +79,14 @@ class ShipmentAPITests(APITestCase):
     def create_shipment(self):
         self.shipments = []
         self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
-                                                      carriers_wallet_id=CARRIER_WALLET_ID,
-                                                      shippers_wallet_id=SHIPPER_WALLET_ID,
+                                                      carrier_wallet_id=CARRIER_WALLET_ID,
+                                                      shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
                                                       pickup_est="2018-11-10T17:57:05.070419Z",
                                                       owner_id=self.user_1.id))
         self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
-                                                      carriers_wallet_id=CARRIER_WALLET_ID,
-                                                      shippers_wallet_id=SHIPPER_WALLET_ID,
+                                                      carrier_wallet_id=CARRIER_WALLET_ID,
+                                                      shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
                                                       pickup_est="2018-11-05T17:57:05.070419Z",
                                                       mode_of_transport_code='mode',
@@ -368,8 +368,8 @@ class ShipmentAPITests(APITestCase):
         parameters = {
             '_vault_id': VAULT_ID,
             '_vault_uri': 's3://bucket/' + VAULT_ID,
-            '_carriers_wallet_id': CARRIER_WALLET_ID,
-            '_shippers_wallet_id': SHIPPER_WALLET_ID,
+            '_carrier_wallet_id': CARRIER_WALLET_ID,
+            '_shipper_wallet_id': SHIPPER_WALLET_ID,
             '_storage_credentials_id': STORAGE_CRED_ID,
             '_async_hash': 'txHash'
         }
@@ -379,8 +379,8 @@ class ShipmentAPITests(APITestCase):
               "data": {
                 "type": "Shipment",
                 "attributes": {
-                  "carriers_wallet_id": "<<_carriers_wallet_id>>",
-                  "shippers_wallet_id": "<<_shippers_wallet_id>>",
+                  "carrier_wallet_id": "<<_carrier_wallet_id>>",
+                  "shipper_wallet_id": "<<_shipper_wallet_id>>",
                   "storage_credentials_id": "<<_storage_credentials_id>>"
                 }
               }
@@ -421,7 +421,7 @@ class ShipmentAPITests(APITestCase):
         post_data = replace_variables_in_string(post_data, parameters)
 
         httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shippers_wallet_id']}/",
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
@@ -433,14 +433,14 @@ class ShipmentAPITests(APITestCase):
 
         response_data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response_data['attributes']['carriers_wallet_id'], parameters['_carriers_wallet_id'])
-        self.assertEqual(response_data['attributes']['shippers_wallet_id'], parameters['_shippers_wallet_id'])
+        self.assertEqual(response_data['attributes']['carrier_wallet_id'], parameters['_carrier_wallet_id'])
+        self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'], parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
         self.assertIsNotNone(response_data['meta']['async_job_id'])
 
         httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shippers_wallet_id']}/",
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
@@ -450,7 +450,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shippers_wallet_id']}/",
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'bad': 'bad'}), status=status.HTTP_400_BAD_REQUEST)
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
@@ -470,8 +470,8 @@ class ShipmentAPITests(APITestCase):
         parameters = {
             '_vault_id': VAULT_ID,
             '_vault_uri': 's3://bucket/' + VAULT_ID,
-            '_carriers_wallet_id': CARRIER_WALLET_ID,
-            '_shippers_wallet_id': SHIPPER_WALLET_ID,
+            '_carrier_wallet_id': CARRIER_WALLET_ID,
+            '_shipper_wallet_id': SHIPPER_WALLET_ID,
             '_storage_credentials_id': STORAGE_CRED_ID,
             '_async_hash': 'txHash',
             '_ship_from_location_city': LOCATION_CITY,
@@ -485,8 +485,8 @@ class ShipmentAPITests(APITestCase):
         one_location, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
                                                           'ship_from_location.city': LOCATION_CITY,
                                                           'ship_from_location.state': LOCATION_STATE,
-                                                          'carriers_wallet_id': CARRIER_WALLET_ID,
-                                                          'shippers_wallet_id': SHIPPER_WALLET_ID,
+                                                          'carrier_wallet_id': CARRIER_WALLET_ID,
+                                                          'shipper_wallet_id': SHIPPER_WALLET_ID,
                                                           'storage_credentials_id': STORAGE_CRED_ID
                                                           })
 
@@ -494,8 +494,8 @@ class ShipmentAPITests(APITestCase):
                                                                             'ship_from_location.city': LOCATION_CITY,
                                                                             'ship_from_location.state': LOCATION_STATE,
                                                                             'ship_from_location.owner_id': OWNER_ID,
-                                                                            'carriers_wallet_id': CARRIER_WALLET_ID,
-                                                                            'shippers_wallet_id': SHIPPER_WALLET_ID,
+                                                                            'carrier_wallet_id': CARRIER_WALLET_ID,
+                                                                            'shipper_wallet_id': SHIPPER_WALLET_ID,
                                                                             'storage_credentials_id': STORAGE_CRED_ID,
                                                                             'owner_id': OWNER_ID
                                                                            })
@@ -506,8 +506,8 @@ class ShipmentAPITests(APITestCase):
                                                            'ship_to_location.name': LOCATION_NAME_2,
                                                            'ship_to_location.city': LOCATION_CITY,
                                                            'ship_to_location.state': LOCATION_STATE,
-                                                           'carriers_wallet_id': CARRIER_WALLET_ID,
-                                                           'shippers_wallet_id': SHIPPER_WALLET_ID,
+                                                           'carrier_wallet_id': CARRIER_WALLET_ID,
+                                                           'shipper_wallet_id': SHIPPER_WALLET_ID,
                                                            'storage_credentials_id': STORAGE_CRED_ID
                                                            })
 
@@ -542,7 +542,7 @@ class ShipmentAPITests(APITestCase):
         httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
         httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
         httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shippers_wallet_id']}/",
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
@@ -560,8 +560,8 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response_data['attributes']['carriers_wallet_id'], parameters['_carriers_wallet_id'])
-        self.assertEqual(response_data['attributes']['shippers_wallet_id'], parameters['_shippers_wallet_id'])
+        self.assertEqual(response_data['attributes']['carrier_wallet_id'], parameters['_carrier_wallet_id'])
+        self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'],
                          parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
@@ -581,8 +581,8 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response_data['attributes']['carriers_wallet_id'], parameters['_carriers_wallet_id'])
-        self.assertEqual(response_data['attributes']['shippers_wallet_id'], parameters['_shippers_wallet_id'])
+        self.assertEqual(response_data['attributes']['carrier_wallet_id'], parameters['_carrier_wallet_id'])
+        self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'],
                          parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
@@ -611,8 +611,8 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response_data['attributes']['carriers_wallet_id'], parameters['_carriers_wallet_id'])
-        self.assertEqual(response_data['attributes']['shippers_wallet_id'], parameters['_shippers_wallet_id'])
+        self.assertEqual(response_data['attributes']['carrier_wallet_id'], parameters['_carrier_wallet_id'])
+        self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'],
                          parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
@@ -632,8 +632,8 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response_data['attributes']['carriers_wallet_id'], parameters['_carriers_wallet_id'])
-        self.assertEqual(response_data['attributes']['shippers_wallet_id'], parameters['_shippers_wallet_id'])
+        self.assertEqual(response_data['attributes']['carrier_wallet_id'], parameters['_carrier_wallet_id'])
+        self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'],
                          parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
@@ -655,7 +655,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.geometry.coords, (12.0, 23.0))
 
         httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shippers_wallet_id']}/",
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
@@ -665,7 +665,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shippers_wallet_id']}/",
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'bad': 'bad'}), status=status.HTTP_400_BAD_REQUEST)
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
@@ -849,8 +849,8 @@ class ShipmentAPITests(APITestCase):
 
         parameters = {
             '_vault_id': VAULT_ID,
-            '_carriers_wallet_id': CARRIER_WALLET_ID,
-            '_shippers_wallet_id': SHIPPER_WALLET_ID,
+            '_carrier_wallet_id': CARRIER_WALLET_ID,
+            '_shipper_wallet_id': SHIPPER_WALLET_ID,
             '_storage_credentials_id': STORAGE_CRED_ID,
             '_async_hash': 'txHash',
             '_shipment_id': self.shipments[0].id,
@@ -903,8 +903,8 @@ class ShipmentAPITests(APITestCase):
         response = self.client.patch(url, post_data, content_type='application/vnd.api+json')
 
         response_data = response.json()['data']
-        self.assertEqual(response_data['attributes']['carriers_wallet_id'], parameters['_carriers_wallet_id'])
-        self.assertEqual(response_data['attributes']['shippers_wallet_id'], parameters['_shippers_wallet_id'])
+        self.assertEqual(response_data['attributes']['carrier_wallet_id'], parameters['_carrier_wallet_id'])
+        self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'],
                          parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['carriers_scac'], parameters['_carriers_scac'])
@@ -922,8 +922,8 @@ class ShipmentAPITests(APITestCase):
 
         parameters = {
             '_vault_id': VAULT_ID,
-            '_carriers_wallet_id': CARRIER_WALLET_ID,
-            '_shippers_wallet_id': SHIPPER_WALLET_ID,
+            '_carrier_wallet_id': CARRIER_WALLET_ID,
+            '_shipper_wallet_id': SHIPPER_WALLET_ID,
             '_storage_credentials_id': STORAGE_CRED_ID,
             '_async_hash': 'txHash',
             '_ship_from_location_city': LOCATION_CITY,
@@ -982,8 +982,8 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response_data['attributes']['carriers_wallet_id'], parameters['_carriers_wallet_id'])
-        self.assertEqual(response_data['attributes']['shippers_wallet_id'], parameters['_shippers_wallet_id'])
+        self.assertEqual(response_data['attributes']['carrier_wallet_id'], parameters['_carrier_wallet_id'])
+        self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'],
                          parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
@@ -1004,8 +1004,8 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response_data['attributes']['carriers_wallet_id'], parameters['_carriers_wallet_id'])
-        self.assertEqual(response_data['attributes']['shippers_wallet_id'], parameters['_shippers_wallet_id'])
+        self.assertEqual(response_data['attributes']['carrier_wallet_id'], parameters['_carrier_wallet_id'])
+        self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'],
                          parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
@@ -1035,8 +1035,8 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response_data['attributes']['carriers_wallet_id'], parameters['_carriers_wallet_id'])
-        self.assertEqual(response_data['attributes']['shippers_wallet_id'], parameters['_shippers_wallet_id'])
+        self.assertEqual(response_data['attributes']['carrier_wallet_id'], parameters['_carrier_wallet_id'])
+        self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'],
                          parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
@@ -1057,8 +1057,8 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        self.assertEqual(response_data['attributes']['carriers_wallet_id'], parameters['_carriers_wallet_id'])
-        self.assertEqual(response_data['attributes']['shippers_wallet_id'], parameters['_shippers_wallet_id'])
+        self.assertEqual(response_data['attributes']['carrier_wallet_id'], parameters['_carrier_wallet_id'])
+        self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'],
                          parameters['_storage_credentials_id'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
@@ -1271,8 +1271,8 @@ class TrackingDataAPITests(APITestCase):
     def create_shipment(self):
         self.shipments = []
         self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
-                                                      carriers_wallet_id=CARRIER_WALLET_ID,
-                                                      shippers_wallet_id=SHIPPER_WALLET_ID,
+                                                      carrier_wallet_id=CARRIER_WALLET_ID,
+                                                      shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
                                                       owner_id=self.user_1.id))
 

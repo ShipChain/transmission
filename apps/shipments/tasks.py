@@ -20,7 +20,7 @@ def tracking_data_update(self, shipment_id, payload):
 
     rpc_client = RPCClientFactory.get_client()
     signature = rpc_client.add_tracking_data(shipment.storage_credentials_id,
-                                             shipment.shippers_wallet_id,
+                                             shipment.shipper_wallet_id,
                                              shipment.vault_id,
                                              payload)
     shipment.update_vault_hash(signature['hash'], rate_limit=True)

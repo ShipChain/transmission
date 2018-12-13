@@ -95,8 +95,8 @@ class TransactionReceiptTestCase(APITestCase):
             "transactionIndex": 0
         })
 
-        listener = Shipment.objects.create(owner_id=USER_ID, carriers_wallet_id=WALLET_ID,
-                                           shippers_wallet_id=WALLET_ID, vault_id=WALLET_ID,
+        listener = Shipment.objects.create(owner_id=USER_ID, carrier_wallet_id=WALLET_ID,
+                                           shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
                                            storage_credentials_id=WALLET_ID)
 
         self.createAsyncJobs()

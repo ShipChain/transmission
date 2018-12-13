@@ -37,11 +37,6 @@ class Migration(migrations.Migration):
         ),
         migrations.RenameField(
             model_name='shipment',
-            old_name='carrier_wallet_id',
-            new_name='carriers_wallet_id',
-        ),
-        migrations.RenameField(
-            model_name='shipment',
             old_name='container_count',
             new_name='container_qty',
         ),
@@ -122,11 +117,6 @@ class Migration(migrations.Migration):
         ),
         migrations.RenameField(
             model_name='shipment',
-            old_name='moderator_wallet_id',
-            new_name='moderators_wallet_id',
-        ),
-        migrations.RenameField(
-            model_name='shipment',
             old_name='origin_unlocode',
             new_name='origin_locode',
         ),
@@ -169,11 +159,6 @@ class Migration(migrations.Migration):
             model_name='shipment',
             old_name='shipper_reference',
             new_name='shippers_reference',
-        ),
-        migrations.RenameField(
-            model_name='shipment',
-            old_name='shipper_wallet_id',
-            new_name='shippers_wallet_id',
         ),
         migrations.RenameField(
             model_name='shipment',
@@ -254,5 +239,10 @@ class Migration(migrations.Migration):
             model_name='shipment',
             old_name='forwarder_scac',
             new_name='forwarders_scac',
+        ),
+        migrations.RenameField(
+            model_name='shipment',
+            old_name='chargeable_weight',
+            new_name='weight_chargeable',
         ),
     ]

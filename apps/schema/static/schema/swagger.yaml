@@ -1444,18 +1444,18 @@ components:
                 description: Transaction Hashes associated with the shipment
                 example: '0xf53ffac288474d65dc7ad79ea484ab742cc452ccc119053a8274b29f4bdfc888'
 
-        shippersWalletId:
+        shipperWalletId:
           properties:
-            shippers_wallet_id:
+            shipper_wallet_id:
               <<: *uuid
-              title: shippers_wallet_id
+              title: shipper_wallet_id
               description: Shippers Wallet UUID associated with the shipment
 
-        carriersWalletId:
+        carrierWalletId:
           properties:
-            carriers_wallet_id:
+            carrier_wallet_id:
               <<: *uuid
-              title: carriers_wallet_id
+              title: carrier_wallet_id
               description: Carriers Wallet UUID associated with the shipment
 
         carriersScac:
@@ -1612,10 +1612,10 @@ components:
               type: number
               example: 12345.67
 
-        chargeableWeight:
+        weightChargeable:
           properties:
-            chargeable_weight:
-              title: chargeable_weight
+            weight_chargeable:
+              title: weight_chargeable
               description: Weight of the shipment used for billing
               type: number
               example: 12345.67
@@ -2489,8 +2489,8 @@ components:
         - $ref: '#/components/schemas/dataTypes/loadShipment/shipmentAmount'
         - $ref: '#/components/schemas/dataTypes/loadShipment/paidAmount'
         - $ref: '#/components/schemas/dataTypes/loadShipment/paidTokens'
-        - $ref: '#/components/schemas/dataTypes/shipment/shippersWalletId'
-        - $ref: '#/components/schemas/dataTypes/shipment/carriersWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
         - $ref: '#/components/schemas/dataTypes/ethereum/moderator'
         - $ref: '#/components/schemas/dataTypes/loadShipment/contractFunded'
         - $ref: '#/components/schemas/dataTypes/loadShipment/shipmentCreated'
@@ -2677,8 +2677,8 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/transactions'
         - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
         - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
-        - $ref: '#/components/schemas/dataTypes/shipment/shippersWalletId'
-        - $ref: '#/components/schemas/dataTypes/shipment/carriersWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
         - $ref: '#/components/schemas/dataTypes/createdAt'
         - $ref: '#/components/schemas/dataTypes/updatedAt'
         - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
@@ -2701,7 +2701,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/volume'
         - $ref: '#/components/schemas/dataTypes/shipment/containerQty'
         - $ref: '#/components/schemas/dataTypes/shipment/weightDim'
-        - $ref: '#/components/schemas/dataTypes/shipment/chargeableWeight'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightChargeable'
         - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedAct'
         - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedAct'
         - $ref: '#/components/schemas/dataTypes/shipment/pickupAppt'
@@ -2802,8 +2802,8 @@ components:
         allOf:
         - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
         - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
-        - $ref: '#/components/schemas/dataTypes/shipment/shippersWalletId'
-        - $ref: '#/components/schemas/dataTypes/shipment/carriersWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
         - $ref: '#/components/schemas/dataTypes/createdAt'
         - $ref: '#/components/schemas/dataTypes/updatedAt'
         - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
@@ -2826,7 +2826,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/volume'
         - $ref: '#/components/schemas/dataTypes/shipment/containerQty'
         - $ref: '#/components/schemas/dataTypes/shipment/weightDim'
-        - $ref: '#/components/schemas/dataTypes/shipment/chargeableWeight'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightChargeable'
         - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedAct'
         - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedAct'
         - $ref: '#/components/schemas/dataTypes/shipment/pickupAppt'
@@ -3394,8 +3394,8 @@ components:
         allOf:
         - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
         - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
-        - $ref: '#/components/schemas/dataTypes/shipment/shippersWalletId'
-        - $ref: '#/components/schemas/dataTypes/shipment/carriersWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
         - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
         - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
         - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
@@ -3416,7 +3416,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/volume'
         - $ref: '#/components/schemas/dataTypes/shipment/containerQty'
         - $ref: '#/components/schemas/dataTypes/shipment/weightDim'
-        - $ref: '#/components/schemas/dataTypes/shipment/chargeableWeight'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightChargeable'
         - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedAct'
         - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedAct'
         - $ref: '#/components/schemas/dataTypes/shipment/pickupAppt'
