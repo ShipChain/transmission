@@ -101,7 +101,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
 
     class Meta:
         model = Shipment
-        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        exclude = ('owner_id', 'version') if settings.PROFILES_ENABLED else ('version',)
         read_only_fields = ('contract_version',)
 
     class JSONAPIMeta:
@@ -160,7 +160,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     class Meta:
         model = Shipment
-        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        exclude = ('owner_id', 'version') if settings.PROFILES_ENABLED else ('version',)
         read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                             'storage_credentials_id', 'contract_version')
 
@@ -206,7 +206,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shipment
-        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        exclude = ('owner_id', 'version') if settings.PROFILES_ENABLED else ('version',)
         meta_fields = ('async_job_id',)
 
     class JSONAPIMeta:

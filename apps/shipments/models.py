@@ -238,6 +238,7 @@ class Shipment(models.Model):
     us_routed = models.CharField(max_length=255, blank=True, null=True)
     import_customs_mode = models.CharField(max_length=255, blank=True, null=True)
     us_export_port = models.CharField(max_length=255, blank=True, null=True)
+    version = models.CharField(max_length=255, blank=False, null=False, default=settings.SHIPMENT_SCHEMA_VERSION)
 
     customer_fields = JSONField(blank=True, null=True)
 
