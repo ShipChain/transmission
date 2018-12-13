@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import json
+import datetime
 
 import jwt
 import pytest
@@ -25,6 +26,9 @@ from django_mock_queries.mocks import mocked_relations
 from mock import patch
 
 from apps.jobs.models import AsyncJob, JobListener, MessageType
+from apps.shipments.models import Shipment, Device, TrackingData
+
+from apps.shipments.signals import shipment_post_save
 from apps.consumers import EventTypes
 from apps.routing import application
 
@@ -139,5 +143,53 @@ async def test_job_notification(communicator):
             response = await communicator.receive_json_from()
             assert response['event'] == EventTypes.asyncjob_update.name
             assert response['data']['id'] == job.id
+
+    await communicator.disconnect()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_trackingdata_notification(communicator):
+
+    # Disable Shipment post-save signal
+    await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
+
+    shipment = await sync_to_async(Shipment.objects.create)(
+        id='FAKE_SHIPMENT_ID',
+        owner_id=USER_ID,
+        storage_credentials_id='FAKE_STORAGE_CREDENTIALS_ID',
+        shipper_wallet_id='FAKE_SHIPPER_WALLET_ID',
+        carrier_wallet_id='FAKE_CARRIER_WALLET_ID',
+        contract_version='1.0.0'
+    )
+
+    # Re-enable Shipment post-save signal
+    await sync_to_async(models.signals.post_save.connect)(shipment_post_save, sender=Shipment,
+                                                          dispatch_uid='shipment_post_save')
+
+    device = await sync_to_async(Device.objects.create)(id='FAKE_DEVICE_ID')
+
+    tracking_data = await sync_to_async(TrackingData.objects.create)(
+        id='FAKE_TRACKING_DATA_ID',
+        device_id=device,
+        shipment=shipment,
+        latitude=75.65,
+        longitude=84.36,
+        altitude=36.65,
+        source='gps',
+        uncertainty=66,
+        speed=36,
+        version='1.1.0',
+        timestamp=datetime.datetime.now(tz=None)
+    )
+
+    response = await communicator.receive_json_from()
+
+    assert response['event'] == EventTypes.new_tracking_data.name
+    assert response['data']['type'] == 'Feature'
+    assert response['data']['geometry']['coordinates'][0] == tracking_data.longitude
+
+    t_data = await sync_to_async(TrackingData.objects.get)(id='FAKE_TRACKING_DATA_ID')
+    await sync_to_async(t_data.delete)()
 
     await communicator.disconnect()
