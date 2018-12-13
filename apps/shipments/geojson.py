@@ -16,8 +16,8 @@ def build_line_string_feature(shipment, tracking_data):
     :param tracking_data: queryset of TrackingData objects
     :return: All tracking coordinates in a single GeoJSON LineString Feature
     """
-    begin = (shipment.pickup_actual or datetime.min).replace(tzinfo=None)
-    end = (shipment.delivery_actual or datetime.max).replace(tzinfo=None)
+    begin = (shipment.pickup_act or datetime.min).replace(tzinfo=None)
+    end = (shipment.delivery_act or datetime.max).replace(tzinfo=None)
     LOG.debug(f'Building line string feature for shipment {shipment.id}.')
     log_metric('transmission.info', tags={'method': 'build_line_string_feature', 'module': __name__})
 
@@ -40,8 +40,8 @@ def build_point_features(shipment, tracking_data):
     :param tracking_data: queryset of TrackingData objects
     :return: All tracking coordinates each in their own GeoJSON Point Feature
     """
-    begin = (shipment.pickup_actual or datetime.min).replace(tzinfo=None)
-    end = (shipment.delivery_actual or datetime.max).replace(tzinfo=None)
+    begin = (shipment.pickup_act or datetime.min).replace(tzinfo=None)
+    end = (shipment.delivery_act or datetime.max).replace(tzinfo=None)
     LOG.debug(f'Build point features with tracking_data {tracking_data}.')
     log_metric('transmission.info', tags={'method': 'build_point_features', 'module': __name__})
 

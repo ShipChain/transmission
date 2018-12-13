@@ -1449,28 +1449,28 @@ components:
             shipper_wallet_id:
               <<: *uuid
               title: shipper_wallet_id
-              description: Shipper Wallet UUID associated with the shipment
+              description: Shipper's Wallet UUID associated with the shipment
 
         carrierWalletId:
           properties:
             carrier_wallet_id:
               <<: *uuid
               title: carrier_wallet_id
-              description: Carrier Wallet UUID associated with the shipment
+              description: Carrier's Wallet UUID associated with the shipment
 
-        carrierScac:
+        carriersScac:
           properties:
-            carrier_scac:
-              title: carrier_scac
-              description: SCAC code of the carrier
+            carriers_scac:
+              title: carriers_scac
+              description: Standard Carrier Alpha Code used for the carrier
               type: string
               example: 'SCAC'
 
-        forwarderScac:
+        forwardersScac:
           properties:
-            forwarder_scac:
-              title: forwarder_scac
-              description: SCAC code of the frieght forwarder
+            forwarders_scac:
+              title: forwarders_scac
+              description: Standard Carrier Alpha Code used for the forwarder
               type: string
               example: 'SCAC'
 
@@ -1478,22 +1478,22 @@ components:
           properties:
             nvocc_scac:
               title: nvocc_scac
-              description: SCAC code of the Non-Vessel Operating Common Carrier (NVOCC)
+              description: Standard Carrier Alpha Code used for the Non-Vessel Operating Common Carrier (NVOCC)
               type: string
               example: 'SCAC'
 
-        shipperReference:
+        shippersReference:
           properties:
-            shipper_reference:
-              title: shipper_reference
+            shippers_reference:
+              title: shippers_reference
               description: Reference number of this shipment assigned by the Shipper
               type: string
               example: 'Shipper Reference'
 
-        forwarderReference:
+        forwardersReference:
           properties:
-            forwarder_reference:
-              title: forwarder_reference
+            forwarders_reference:
+              title: forwarders_reference
               description: Reference number of this shipment assigned by the Forwarder
               type: string
               example: 'Forwarder Reference'
@@ -1506,11 +1506,11 @@ components:
               type: string
               example: 'Forwarder ID'
 
-        carrierInstructions:
+        carriersInstructions:
           properties:
-            carrier_instructions:
-              title: carrier_instructions
-              description: Shipper's instructions to the carrier
+            carriers_instructions:
+              title: carriers_instructions
+              description: Instructions for Carrier
               type: string
               example: 'deliver to dock #2'
 
@@ -1518,39 +1518,39 @@ components:
           properties:
             pro_number:
               title: pro_number
-              description: Progressive Number for shipment tracking
+              description: PRO number for LTL shipments
               type: string
               example: '12345678'
 
-        masterBill:
+        billMaster:
           properties:
-            master_bill:
-              title: master_bill
-              description: The Master Bill of Lading Number
+            bill_master:
+              title: bill_master
+              description: Master bill number
               type: string
               example: 'MBLN12345'
 
-        houseBill:
+        billHouse:
           properties:
-            house_bill:
-              title: house_bill
-              description: The House Bill of Lading Number
+            bill_house:
+              title: bill_house
+              description: House bill Number
               type: string
               example: 'HBLN12345'
 
-        subhouseBill:
+        billSubhouse:
           properties:
-            subhouse_bill:
-              title: subhouse_bill
-              description: The Sub-House Bill of Lading Number
+            bill_subhouse:
+              title: bill_subhouse
+              description: Sub-House bill Number
               type: string
               example: 'SHBLN12345'
 
-        freightPaymentTerms:
+        paymentTerms:
           properties:
-            freight_payment_terms:
-              title: freight_payment_terms
-              description: The payment terms for the Shipment
+            payment_terms:
+              title: payment_terms
+              description: Shipment payment terms
               type: string
               example: 'Paid'
 
@@ -1558,7 +1558,7 @@ components:
           properties:
             vessel_name:
               title: vessel_name
-              description: The name of the vessel
+              description: Vessel or ship name carrying shipment
               type: string
               example: 'Shippy'
 
@@ -1566,281 +1566,273 @@ components:
           properties:
             voyage_number:
               title: voyage_number
-              description: The voyage number
+              description: Unique voyage number
               type: string
               example: 'A113'
 
-        mode:
+        packageQty:
           properties:
-            mode:
-              title: mode
-              description: The mode of transportation for the shipment
-              type: string
-              example: 'AIR'
-
-        numberOfPackages:
-          properties:
-            number_of_packages:
-              title: number_of_packages
-              description: Total number of packages in shipment
+            package_qty:
+              title: package_qty
+              description: Number of packages in shipment
               type: integer
               format: int32
               example: 123
 
-        grossWeightKgs:
+        weightGross:
           properties:
-            gross_weight_kgs:
-              title: gross_weight_kgs
-              description: Gross weight of the shipment in Kilograms
+            weight_gross:
+              title: weight_gross
+              description: Gross weight in kilograms
               type: number
               example: 12345.67
 
-        volumeCbms:
+        volume:
           properties:
-            volume_cbms:
-              title: volume_cbms
-              description: The shipment's volume in cubic meters
+            volume:
+              title: volume
+              description: Volume in cubic meters
               type: number
               example: 12345.67
 
-        containerCount:
+        containerQty:
           properties:
-            container_count:
-              title: container_count
-              description: The amount of containers in the shipment
+            container_qty:
+              title: container_qty
+              description: Number of containers in the shipment
               type: integer
               format: int32
               example: 12345
 
-        dimensionalWeight:
+        weightDim:
           properties:
-            dimensional_weight:
-              title: dimensional_weight
-              description: Dimensional weight of the shipment as determined by the carrier's formula
+            weight_dim:
+              title: weight_dim
+              description: Estimated weight that is calculated from the length, width, and height of shipment
               type: number
               example: 12345.67
 
-        chargeableWeight:
+        weightChargeable:
           properties:
-            chargeable_weight:
-              title: chargeable_weight
+            weight_chargeable:
+              title: weight_chargeable
               description: Weight of the shipment used for billing
               type: number
               example: 12345.67
 
-        docsReceivedActual:
+        docsReceivedAct:
           properties:
-            docs_received_actual:
-              title: docs_received_actual
+            docs_received_act:
+              title: docs_received_act
               description: Timestamp of when the transporter received the shipment
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        docsApprovedActual:
+        docsApprovedAct:
           properties:
-            docs_approved_actual:
-              title: docs_approved_actual
+            docs_approved_act:
+              title: docs_approved_act
               description: Timestamp of when the transporter confirmed the shipment's details were complete and valid
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        pickupAppointmentActual:
+        pickupAppt:
           properties:
-            pickup_appointment_actual:
-              title: pickup_appointment_actual
-              description: Timestamp of the transporter's appointment to pick up the shipment
+            pickup_appt:
+              title: pickup_appt
+              description: Appointment timestamp for pickup from origin
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        pickupEstimated:
+        pickupEst:
           properties:
-            pickup_estimated:
-              title: pickup_estimated
-              description: Timestamp of the transporter's estimate of when they will pick up the shipment
+            pickup_est:
+              title: pickup_est
+              description: Estimated timestamp for pickup from origin
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        pickupActual:
+        pickupAct:
           properties:
-            pickup_actual:
-              title: pickup_actual
-              description: Timestamp of when the transporter picked up the shipment
+            pickup_act:
+              title: pickup_act
+              description: Actual timestamp pickup occured at point of origin
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        loadingEstimated:
+        loadingEst:
           properties:
-            loading_estimated:
-              title: loading_estimated
-              description: Timestamp of when the shipment is estimated to be loaded on the first mode of transportation
+            loading_est:
+              title: loading_est
+              description: Estimated timestamp for loading to begin
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        loadingActual:
+        loadingAct:
           properties:
-            loading_actual:
-              title: loading_actual
-              description: Timestamp of when the shipment is loaded on the first mode of transportation
+            loading_act:
+              title: loading_act
+              description: Actual timestamp that loading began
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        departureEstimated:
+        departureEst:
           properties:
-            departure_estimated:
-              title: departure_estimated
-              description: Timestamp of the shipment's estimated departure
+            departure_est:
+              title: departure_est
+              description: Estimated timestamp of departure
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        departureActual:
+        departureAct:
           properties:
-            departure_actual:
-              title: departure_actual
-              description: Timestamp of the shipment's departure
+            departure_act:
+              title: departure_act
+              description: Actual timestamp of departure
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        deliveryAppointmentActual:
+        deliveryAppt:
           properties:
-            delivery_appointment_actual:
-              title: delivery_appointment_actual
-              description: Timestamp of the shipment's delivery appointment
+            delivery_appt:
+              title: delivery_appt
+              description: Delivery appointment timestamp
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        arrivalPortEstimated:
+        arrivalPortEst:
           properties:
-            arrival_port_estimated:
-              title: arrival_port_estimated
-              description: Timestamp of the shipment's estimated arrival at the final port
+            arrival_port_est:
+              title: arrival_port_est
+              description: Estimated timestamp of arrival at destination port
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        arrivalPortActual:
+        arrivalPortAct:
           properties:
-            arrival_port_actual:
-              title: arrival_port_actual
-              description: Timestamp of the shipment's arrival at the final port
+            arrival_port_act:
+              title: arrival_port_act
+              description: Timestamp of actual arrival at destination port
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        deliveryEstimated:
+        deliveryEst:
           properties:
-            delivery_estimated:
-              title: delivery_estimated
-              description: Estimated timestamp of the shipment's final delivery
+            delivery_est:
+              title: delivery_est
+              description: Estimated timestamp of delivery
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        deliveryActual:
+        deliveryAct:
           properties:
-            delivery_actual:
-              title: delivery_actual
-              description: Estimated timestamp of the shipment's final delivery
+            delivery_act:
+              title: delivery_act
+              description: Actual timestamp of delivery
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        lastAttemptedDeliveryActual:
+        deliveryAttempt:
           properties:
-            last_attempted_delivery_actual:
-              title: last_attempted_delivery_actual
-              description: Timestamp of the most recent delivery attempt
+            delivery_attempt:
+              title: delivery_attempt
+              description: Timestamp of last attempted delivery
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        cancelRequestedDateActual:
+        cancelRequestedDateAct:
           properties:
-            cancel_requested_date_actual:
-              title: cancel_requested_date_actual
-              description: Timestamp of when the shipper requested the transporter to cancel the shipment
+            cancel_requested_date_act:
+              title: cancel_requested_date_act
+              description: Timestamp for cancellation request
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        cancelConfirmedDateActual:
+        cancelConfirmedDateAct:
           properties:
-            cancel_confirmed_date_actual:
-              title: cancel_confirmed_date_actual
-              description: Timestamp of when the transporter confirmed the shipment cancellation
+            cancel_confirmed_date_act:
+              title: cancel_confirmed_date_act
+              description: Timestamp for cancellation confirmation
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        customsFiledDateActual:
+        customsFiledDateAct:
           properties:
-            customs_filed_date_actual:
-              title: customs_filed_date_actual
-              description: Timestamp of the shipment's import custom's entry was presented for approval and release
+            customs_filed_date_act:
+              title: customs_filed_date_act
+              description: Timestamp of actual customs filed date
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        customsHoldDateActual:
+        customsHoldDateAct:
           properties:
-            customs_hold_date_actual:
-              title: customs_hold_date_actual
-              description: Timestamp of the shipment's import custom's entry was held for approval and release
+            customs_hold_date_act:
+              title: customs_hold_date_act
+              description: Timestamp of hold by customs
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        customsReleaseDateActual:
+        customsReleaseDateAct:
           properties:
-            customs_release_date_actual:
-              title: customs_release_date_actual
-              description: Timestamp of when customs, and all other agencies, release the shipment
+            customs_release_date_act:
+              title: customs_release_date_act
+              description: Timestamp of release by customs
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        containerizationType:
+        containerType:
           properties:
-            containerization_type:
-              title: containerization_type
-              description: How the shipment is containerized
+            container_type:
+              title: container_type
+              description: Type of container being used for the shipment
               type: string
               example: 'BULK'
 
-        arrivalUnlocode:
+        arrivalLocode:
           properties:
-            arrival_unlocode:
-              title: arrival_unlocode
-              description: UN/LOCODE for the port the shipment will arrive at, for international shipment
+            arrival_locode:
+              title: arrival_locode
+              description: UN/LOCODE for destination port
               type: string
               example: 'USCHI'
 
-        finalPortUnlocode:
+        finalPortLocode:
           properties:
-            final_port_unlocode:
-              title: final_port_unlocode
-              description: UN/LOCODE for the port the shipment will terminate, for international shipment
+            final_port_locode:
+              title: final_port_locode
+              description: UN/LOCODE for final destination port
               type: string
               example: 'USCHI'
 
-        importUnlocode:
+        importLocode:
           properties:
-            import_unlocode:
-              title: import_unlocode
-              description: UN/LOCODE for the port the shipment will be declared to import customs, for international shipment
+            import_locode:
+              title: import_locode
+              description: UN/LOCODE for import
               type: string
               example: 'USCHI'
 
-        ladingUnlocode:
+        ladingLocode:
           properties:
-            lading_unlocode:
-              title: lading_unlocode
-              description: UN/LOCODE for the lading port, for international shipment
+            lading_locode:
+              title: lading_locode
+              description: UN/LOCODE for lading
               type: string
               example: 'USCHI'
 
-        originUnlocode:
+        originLocode:
           properties:
-            origin_unlocode:
-              title: origin_unlocode
-              description: UN/LOCODE for the original location of the shipment, for international shipment
+            origin_locode:
+              title: origin_locode
+              description: UN/LOCODE for origin
               type: string
               example: 'USCHI'
 
-        usRoutedExport:
+        usRouted:
           properties:
-            us_routed_export:
-              title: us_routed_export
-              description: UN/LOCODE for the original location of the shipment, for international shipment
+            us_routed:
+              title: us_routed
+              description: Whether the US export is routed
               type: boolean
               example: true
 
@@ -1852,21 +1844,29 @@ components:
               type: string
               example: '29601'
 
-        usCustomsExportPort:
+        modeOfTransportCode:
           properties:
-            us_customs_export_port:
-              title: us_customs_export_port
-              description: Export port code used by United States customs
+            mode_of_transport_code:
+              title: mode_of_transport_code
+              description: Type of transport shipment will be using
+              type: string
+              example: '29601'
+
+        usExportPort:
+          properties:
+            us_export_port:
+              title: us_export_port
+              description: US Customs code for port of export
               type: string
               example: '29601'
 
         customerFields:
           properties:
-            us_customs_export_port:
-              title: us_customs_export_port
-              description: Export port code used by United States customs
-              type: string
-              example: '29601'
+            customer_fields:
+              title: customer_fields
+              description: Customer fields for shipment
+              type: JSON object
+              example: {}
 
         locationData:
           properties:
@@ -2689,56 +2689,56 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
         - $ref: '#/components/schemas/dataTypes/createdAt'
         - $ref: '#/components/schemas/dataTypes/updatedAt'
-        - $ref: '#/components/schemas/dataTypes/shipment/carrierScac'
-        - $ref: '#/components/schemas/dataTypes/shipment/forwarderScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
         - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
-        - $ref: '#/components/schemas/dataTypes/shipment/shipperReference'
-        - $ref: '#/components/schemas/dataTypes/shipment/forwarderReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/shippersReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersReference'
         - $ref: '#/components/schemas/dataTypes/shipment/forwardersShipperId'
-        - $ref: '#/components/schemas/dataTypes/shipment/carrierInstructions'
+        - $ref: '#/components/schemas/dataTypes/shipment/carriersInstructions'
         - $ref: '#/components/schemas/dataTypes/shipment/proNumber'
-        - $ref: '#/components/schemas/dataTypes/shipment/masterBill'
-        - $ref: '#/components/schemas/dataTypes/shipment/houseBill'
-        - $ref: '#/components/schemas/dataTypes/shipment/subhouseBill'
-        - $ref: '#/components/schemas/dataTypes/shipment/freightPaymentTerms'
+        - $ref: '#/components/schemas/dataTypes/shipment/billMaster'
+        - $ref: '#/components/schemas/dataTypes/shipment/billHouse'
+        - $ref: '#/components/schemas/dataTypes/shipment/billSubhouse'
+        - $ref: '#/components/schemas/dataTypes/shipment/paymentTerms'
         - $ref: '#/components/schemas/dataTypes/shipment/vesselName'
         - $ref: '#/components/schemas/dataTypes/shipment/voyageNumber'
-        - $ref: '#/components/schemas/dataTypes/shipment/mode'
-        - $ref: '#/components/schemas/dataTypes/shipment/numberOfPackages'
-        - $ref: '#/components/schemas/dataTypes/shipment/grossWeightKgs'
-        - $ref: '#/components/schemas/dataTypes/shipment/volumeCbms'
-        - $ref: '#/components/schemas/dataTypes/shipment/containerCount'
-        - $ref: '#/components/schemas/dataTypes/shipment/dimensionalWeight'
-        - $ref: '#/components/schemas/dataTypes/shipment/chargeableWeight'
-        - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/pickupAppointmentActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/pickupEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/pickupActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/loadingEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/loadingActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/departureEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/departureActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppointmentActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/lastAttemptedDeliveryActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/containerizationType'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/finalPortUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/importUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/ladingUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/originUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/usRoutedExport'
+        - $ref: '#/components/schemas/dataTypes/shipment/modeOfTransportCode'
+        - $ref: '#/components/schemas/dataTypes/shipment/packageQty'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightGross'
+        - $ref: '#/components/schemas/dataTypes/shipment/volume'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerQty'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightDim'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightChargeable'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupAppt'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppt'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAttempt'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerType'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/finalPortLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/importLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/originLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/usRouted'
         - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
-        - $ref: '#/components/schemas/dataTypes/shipment/usCustomsExportPort'
+        - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
         - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
 
       meta:
@@ -2815,56 +2815,56 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
         - $ref: '#/components/schemas/dataTypes/createdAt'
         - $ref: '#/components/schemas/dataTypes/updatedAt'
-        - $ref: '#/components/schemas/dataTypes/shipment/carrierScac'
-        - $ref: '#/components/schemas/dataTypes/shipment/forwarderScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
         - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
-        - $ref: '#/components/schemas/dataTypes/shipment/shipperReference'
-        - $ref: '#/components/schemas/dataTypes/shipment/forwarderReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/shippersReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersReference'
         - $ref: '#/components/schemas/dataTypes/shipment/forwardersShipperId'
-        - $ref: '#/components/schemas/dataTypes/shipment/carrierInstructions'
+        - $ref: '#/components/schemas/dataTypes/shipment/carriersInstructions'
         - $ref: '#/components/schemas/dataTypes/shipment/proNumber'
-        - $ref: '#/components/schemas/dataTypes/shipment/masterBill'
-        - $ref: '#/components/schemas/dataTypes/shipment/houseBill'
-        - $ref: '#/components/schemas/dataTypes/shipment/subhouseBill'
-        - $ref: '#/components/schemas/dataTypes/shipment/freightPaymentTerms'
+        - $ref: '#/components/schemas/dataTypes/shipment/billMaster'
+        - $ref: '#/components/schemas/dataTypes/shipment/billHouse'
+        - $ref: '#/components/schemas/dataTypes/shipment/billSubhouse'
+        - $ref: '#/components/schemas/dataTypes/shipment/paymentTerms'
         - $ref: '#/components/schemas/dataTypes/shipment/vesselName'
         - $ref: '#/components/schemas/dataTypes/shipment/voyageNumber'
-        - $ref: '#/components/schemas/dataTypes/shipment/mode'
-        - $ref: '#/components/schemas/dataTypes/shipment/numberOfPackages'
-        - $ref: '#/components/schemas/dataTypes/shipment/grossWeightKgs'
-        - $ref: '#/components/schemas/dataTypes/shipment/volumeCbms'
-        - $ref: '#/components/schemas/dataTypes/shipment/containerCount'
-        - $ref: '#/components/schemas/dataTypes/shipment/dimensionalWeight'
-        - $ref: '#/components/schemas/dataTypes/shipment/chargeableWeight'
-        - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/pickupAppointmentActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/pickupEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/pickupActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/loadingEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/loadingActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/departureEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/departureActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppointmentActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/lastAttemptedDeliveryActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/containerizationType'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/finalPortUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/importUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/ladingUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/originUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/usRoutedExport'
+        - $ref: '#/components/schemas/dataTypes/shipment/modeOfTransportCode'
+        - $ref: '#/components/schemas/dataTypes/shipment/packageQty'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightGross'
+        - $ref: '#/components/schemas/dataTypes/shipment/volume'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerQty'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightDim'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightChargeable'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupAppt'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppt'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAttempt'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerType'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/finalPortLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/importLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/originLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/usRouted'
         - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
-        - $ref: '#/components/schemas/dataTypes/shipment/usCustomsExportPort'
+        - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
         - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
 
       createResource:
@@ -3406,56 +3406,56 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
         - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
         - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
-        - $ref: '#/components/schemas/dataTypes/shipment/carrierScac'
-        - $ref: '#/components/schemas/dataTypes/shipment/forwarderScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
         - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
-        - $ref: '#/components/schemas/dataTypes/shipment/shipperReference'
-        - $ref: '#/components/schemas/dataTypes/shipment/forwarderReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/shippersReference'
+        - $ref: '#/components/schemas/dataTypes/shipment/forwardersReference'
         - $ref: '#/components/schemas/dataTypes/shipment/forwardersShipperId'
-        - $ref: '#/components/schemas/dataTypes/shipment/carrierInstructions'
+        - $ref: '#/components/schemas/dataTypes/shipment/carriersInstructions'
         - $ref: '#/components/schemas/dataTypes/shipment/proNumber'
-        - $ref: '#/components/schemas/dataTypes/shipment/masterBill'
-        - $ref: '#/components/schemas/dataTypes/shipment/houseBill'
-        - $ref: '#/components/schemas/dataTypes/shipment/subhouseBill'
-        - $ref: '#/components/schemas/dataTypes/shipment/freightPaymentTerms'
+        - $ref: '#/components/schemas/dataTypes/shipment/billMaster'
+        - $ref: '#/components/schemas/dataTypes/shipment/billHouse'
+        - $ref: '#/components/schemas/dataTypes/shipment/billSubhouse'
+        - $ref: '#/components/schemas/dataTypes/shipment/paymentTerms'
         - $ref: '#/components/schemas/dataTypes/shipment/vesselName'
         - $ref: '#/components/schemas/dataTypes/shipment/voyageNumber'
-        - $ref: '#/components/schemas/dataTypes/shipment/mode'
-        - $ref: '#/components/schemas/dataTypes/shipment/numberOfPackages'
-        - $ref: '#/components/schemas/dataTypes/shipment/grossWeightKgs'
-        - $ref: '#/components/schemas/dataTypes/shipment/volumeCbms'
-        - $ref: '#/components/schemas/dataTypes/shipment/containerCount'
-        - $ref: '#/components/schemas/dataTypes/shipment/dimensionalWeight'
-        - $ref: '#/components/schemas/dataTypes/shipment/chargeableWeight'
-        - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/pickupAppointmentActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/pickupEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/pickupActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/loadingEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/loadingActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/departureEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/departureActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppointmentActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryEstimated'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/lastAttemptedDeliveryActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateActual'
-        - $ref: '#/components/schemas/dataTypes/shipment/containerizationType'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/finalPortUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/importUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/ladingUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/originUnlocode'
-        - $ref: '#/components/schemas/dataTypes/shipment/usRoutedExport'
+        - $ref: '#/components/schemas/dataTypes/shipment/modeOfTransportCode'
+        - $ref: '#/components/schemas/dataTypes/shipment/packageQty'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightGross'
+        - $ref: '#/components/schemas/dataTypes/shipment/volume'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerQty'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightDim'
+        - $ref: '#/components/schemas/dataTypes/shipment/weightChargeable'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupAppt'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/pickupAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/loadingAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/departureAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppt'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAttempt'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/containerType'
+        - $ref: '#/components/schemas/dataTypes/shipment/arrivalLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/finalPortLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/importLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/originLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/usRouted'
         - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
-        - $ref: '#/components/schemas/dataTypes/shipment/usCustomsExportPort'
+        - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
         - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
 
       createRequest:

@@ -82,14 +82,14 @@ class ShipmentAPITests(APITestCase):
                                                       carrier_wallet_id=CARRIER_WALLET_ID,
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
-                                                      pickup_estimated="2018-11-10T17:57:05.070419Z",
+                                                      pickup_est="2018-11-10T17:57:05.070419Z",
                                                       owner_id=self.user_1.id))
         self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
                                                       carrier_wallet_id=CARRIER_WALLET_ID,
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
-                                                      pickup_estimated="2018-11-05T17:57:05.070419Z",
-                                                      mode='mode',
+                                                      pickup_est="2018-11-05T17:57:05.070419Z",
+                                                      mode_of_transport_code='mode',
                                                       owner_id=self.user_1.id))
 
     def test_list_empty(self):
@@ -150,7 +150,7 @@ class ShipmentAPITests(APITestCase):
         # Authenticated request should succeed
         self.set_user(self.user_1)
 
-        response = self.client.get(f'{url}?mode=mode')
+        response = self.client.get(f'{url}?mode_of_transport_code=mode')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
         self.assertEqual(len(response_data['data']), 1)
@@ -183,12 +183,12 @@ class ShipmentAPITests(APITestCase):
         # Authenticated request should succeed
         self.set_user(self.user_1)
 
-        response = self.client.get(f'{url}?ordering=pickup_estimated')
+        response = self.client.get(f'{url}?ordering=pickup_est')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
         self.assertEqual(response_data['data'][0]['id'], self.shipments[1].id)
 
-        response = self.client.get(f'{url}?ordering=-pickup_estimated')
+        response = self.client.get(f'{url}?ordering=-pickup_est')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
         self.assertEqual(response_data['data'][0]['id'], self.shipments[0].id)
@@ -854,7 +854,7 @@ class ShipmentAPITests(APITestCase):
             '_storage_credentials_id': STORAGE_CRED_ID,
             '_async_hash': 'txHash',
             '_shipment_id': self.shipments[0].id,
-            '_carrier_scac': 'test_scac'
+            '_carriers_scac': 'test_scac'
         }
 
         post_data = '''
@@ -863,7 +863,7 @@ class ShipmentAPITests(APITestCase):
                         "type": "Shipment",
                         "id": "<<_shipment_id>>",
                         "attributes": {
-                          "carrier_scac": "test_scac"
+                          "carriers_scac": "test_scac"
                         }
                       }
                     }
@@ -907,7 +907,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response_data['attributes']['shipper_wallet_id'], parameters['_shipper_wallet_id'])
         self.assertEqual(response_data['attributes']['storage_credentials_id'],
                          parameters['_storage_credentials_id'])
-        self.assertEqual(response_data['attributes']['carrier_scac'], parameters['_carrier_scac'])
+        self.assertEqual(response_data['attributes']['carriers_scac'], parameters['_carriers_scac'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
         self.assertIsNotNone(response_data['meta']['async_job_id'])
 
