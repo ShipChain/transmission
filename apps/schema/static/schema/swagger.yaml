@@ -1534,7 +1534,7 @@ components:
           properties:
             bill_house:
               title: bill_house
-              description: House Bill Number
+              description: House bill Number
               type: string
               example: 'HBLN12345'
 
@@ -1542,7 +1542,7 @@ components:
           properties:
             bill_subhouse:
               title: bill_subhouse
-              description: Sub-House BillNumber
+              description: Sub-House bill Number
               type: string
               example: 'SHBLN12345'
 
@@ -1662,7 +1662,7 @@ components:
 
         loadingEst:
           properties:
-            loading_estd:
+            loading_est:
               title: loading_est
               description: Estimated time for loading to begin
               type: string
@@ -1835,6 +1835,14 @@ components:
               description: Whether the US export is routed
               type: boolean
               example: true
+
+        importCustomsMode:
+          properties:
+            import_customs_mode:
+              title: import_customs_mode
+              description: Mode of Transportation code used by the customs authority for the country where the shipment's import declaration will be filed
+              type: string
+              example: '29601'
 
         modeOfTransportCode:
           properties:
@@ -2729,6 +2737,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/originLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/usRouted'
+        - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
         - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
         - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
 
@@ -2854,6 +2863,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/originLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/usRouted'
+        - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
         - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
         - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
 
@@ -3444,6 +3454,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/originLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/usRouted'
+        - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
         - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
         - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
 
