@@ -1449,20 +1449,20 @@ components:
             shipper_wallet_id:
               <<: *uuid
               title: shipper_wallet_id
-              description: Shippers Wallet UUID associated with the shipment
+              description: Shipper's Wallet UUID associated with the shipment
 
         carrierWalletId:
           properties:
             carrier_wallet_id:
               <<: *uuid
               title: carrier_wallet_id
-              description: Carriers Wallet UUID associated with the shipment
+              description: Carrier's Wallet UUID associated with the shipment
 
         carriersScac:
           properties:
             carriers_scac:
               title: carriers_scac
-              description: Standard Carrier Alpha code used for the carrier
+              description: Standard Carrier Alpha Code used for the carrier
               type: string
               example: 'SCAC'
 
@@ -1470,7 +1470,7 @@ components:
           properties:
             forwarders_scac:
               title: forwarders_scac
-              description: Standard Carrier Alpha code used for the forwarder
+              description: Standard Carrier Alpha Code used for the forwarder
               type: string
               example: 'SCAC'
 
@@ -1478,7 +1478,7 @@ components:
           properties:
             nvocc_scac:
               title: nvocc_scac
-              description: Standard Carrier Alpha code used for the Non-Vessel Operating Common Carrier (NVOCC)
+              description: Standard Carrier Alpha Code used for the Non-Vessel Operating Common Carrier (NVOCC)
               type: string
               example: 'SCAC'
 
@@ -1583,7 +1583,7 @@ components:
           properties:
             weight_gross:
               title: weight_gross
-              description: Gross weight in Kilograms
+              description: Gross weight in kilograms
               type: number
               example: 12345.67
 
@@ -1608,7 +1608,7 @@ components:
           properties:
             weight_dim:
               title: weight_dim
-              description: Estimated weight that is calculated from the length, width and height of shipment
+              description: Estimated weight that is calculated from the length, width, and height of shipment
               type: number
               example: 12345.67
 
