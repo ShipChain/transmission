@@ -1,20 +1,23 @@
 import logging
 
+from django.conf import settings
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_save
+from fieldsignals import post_save_changed
 
-from apps.eth.signals import event_update
 from apps.eth.models import TransactionReceipt
+from apps.eth.signals import event_update
+from apps.iot_client import AWSIoTError
 from apps.jobs.models import JobState, MessageType, AsyncJob
 from apps.jobs.signals import job_update
 from .events import LoadEventHandler
+from .iot_client import DeviceAWSIoTClient
 from .models import Shipment, LoadShipment, Location, TrackingData
 from .rpc import RPCClientFactory
 from .serializers import ShipmentVaultSerializer
-
 
 LOG = logging.getLogger('transmission')
 
@@ -102,3 +105,20 @@ def trackingdata_post_save(sender, **kwargs):
     LOG.debug(f'New tracking_data committed to db and will be pushed to the UI. Tracking_data: {instance.id}.')
     async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})
+
+
+@receiver(post_save_changed, sender=Shipment, fields=['device'], dispatch_uid='shipment_device_id_post_save')
+def shipment_device_id_changed(sender, instance, changed_fields, **kwargs):
+    if settings.IOT_THING_INTEGRATION:
+        old, new = changed_fields[Shipment.device.field]
+
+        logging.info(f'Device ID changed from {old} to {new} for Shipment {instance.id}, updating shadow')
+
+        try:
+            iot_client = DeviceAWSIoTClient()
+            if old:
+                iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': None})
+            if new:
+                iot_client.update_shadow(new, {'deviceId': new, 'shipmentId': instance.id})
+        except AWSIoTError as exc:
+            logging.error(f'Error communicating with AWS IoT during Device shadow shipmentId update: {exc}')

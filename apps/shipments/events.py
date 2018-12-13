@@ -67,6 +67,9 @@ class LoadEventHandler:
         shipment.loadshipment.shipment_state = ShipmentState.COMPLETE
         shipment.loadshipment.save()
 
+        shipment.device_id = None
+        shipment.save()
+
     @staticmethod
     def shipment_canceled(event, shipment):
         shipment.loadshipment.shipment_state = ShipmentState.CANCELED

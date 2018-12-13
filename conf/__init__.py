@@ -9,3 +9,5 @@ from .requests import *
 from .apps import *
 
 from .s3 import *
+
+from .iot import *
