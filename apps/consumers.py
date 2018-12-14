@@ -19,16 +19,20 @@ from enumfields import Enum
 from rest_framework.renderers import JSONRenderer
 
 from apps.authentication import AsyncJsonAuthConsumer
-from .models import AsyncJob
-from .serializers import AsyncJobSerializer
+
+from apps.jobs.models import AsyncJob
+from apps.shipments.models import TrackingData
+
+from apps.jobs.serializers import AsyncJobSerializer
 
 
 class EventTypes(Enum):
     error = 0
     asyncjob_update = 1
+    trackingdata_update = 2
 
 
-class JobsConsumer(AsyncJsonAuthConsumer):
+class AppsConsumer(AsyncJsonAuthConsumer):
     async def jobs_update(self, event):
         job_json = await database_sync_to_async(self.render_async_job)(event['async_job_id'])
         await self.send(job_json)
@@ -37,6 +41,15 @@ class JobsConsumer(AsyncJsonAuthConsumer):
         job = AsyncJob.objects.get(id=job_id)
         return JSONRenderer().render({'event': EventTypes.asyncjob_update.name,
                                       'data': AsyncJobSerializer(job).data}).decode()
+
+    async def tracking_data_save(self, event):
+        tracking_data_json = await database_sync_to_async(self.render_async_tracking_data)(event['tracking_data_id'])
+        await self.send(tracking_data_json)
+
+    def render_async_tracking_data(self, data_id):
+        data = TrackingData.objects.get(id=data_id)
+        return JSONRenderer().render({'event': EventTypes.trackingdata_update.name,
+                                      'data': data.as_point_feature}).decode()
 
     async def receive_json(self, content, **kwargs):
         await self.send_json({

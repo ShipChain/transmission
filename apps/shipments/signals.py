@@ -1,5 +1,8 @@
 import logging
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_save
 
@@ -8,12 +11,15 @@ from apps.eth.models import TransactionReceipt
 from apps.jobs.models import JobState, MessageType, AsyncJob
 from apps.jobs.signals import job_update
 from .events import LoadEventHandler
-from .models import Shipment, LoadShipment, Location
+from .models import Shipment, LoadShipment, Location, TrackingData
 from .rpc import RPCClientFactory
 from .serializers import ShipmentVaultSerializer
 
 
 LOG = logging.getLogger('transmission')
+
+# pylint:disable=invalid-name
+channel_layer = get_channel_layer()
 
 
 @receiver(job_update, sender=Shipment, dispatch_uid='shipment_job_update')
@@ -88,3 +94,11 @@ def location_pre_save(sender, **kwargs):
     instance = kwargs["instance"]
     # Get point info
     instance.get_lat_long_from_address()
+
+
+@receiver(post_save, sender=TrackingData, dispatch_uid='trackingdata_post_save')
+def trackingdata_post_save(sender, **kwargs):
+    instance = kwargs["instance"]
+    LOG.debug(f'New tracking_data committed to db and will be pushed to the UI. Tracking_data: {instance.id}.')
+    async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
+                                            {"type": "tracking_data.save", "tracking_data_id": instance.id})

@@ -15,12 +15,18 @@ limitations under the License.
 """
 
 from channels.routing import ProtocolTypeRouter, URLRouter
-import apps.jobs.routing
+from django.conf.urls import url
+from . import consumers
+
 
 # pylint:disable=invalid-name
+websocket_urlpatterns = [
+    url(r'^ws/(?P<user_id>[^/]+)/notifications$', consumers.AppsConsumer),
+]
+
 application = ProtocolTypeRouter({
     # (http->django views is added by default)
     'websocket': URLRouter(
-        apps.jobs.routing.websocket_urlpatterns
+        websocket_urlpatterns,
     ),
 })
