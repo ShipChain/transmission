@@ -185,7 +185,7 @@ async def test_trackingdata_notification(communicator):
 
     response = await communicator.receive_json_from()
 
-    assert response['event'] == EventTypes.new_tracking_data.name
+    assert response['event'] == EventTypes.trackingdata_update.name
     assert response['data']['type'] == 'Feature'
     assert response['data']['geometry']['coordinates'][0] == tracking_data.longitude
 

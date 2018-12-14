@@ -19,7 +19,6 @@ from .serializers import ShipmentVaultSerializer
 LOG = logging.getLogger('transmission')
 
 # pylint:disable=invalid-name
-# trackingdata_update = Signal(providing_args=["message"])
 channel_layer = get_channel_layer()
 
 
@@ -100,7 +99,6 @@ def location_pre_save(sender, **kwargs):
 @receiver(post_save, sender=TrackingData, dispatch_uid='trackingdata_post_save')
 def trackingdata_post_save(sender, **kwargs):
     instance = kwargs["instance"]
-    # New tracking data will be pushed to the UI
     LOG.debug(f'New tracking_data committed to db and will be pushed to the UI. Tracking_data: {instance.id}.')
     async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})

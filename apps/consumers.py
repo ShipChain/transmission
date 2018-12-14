@@ -29,7 +29,7 @@ from apps.jobs.serializers import AsyncJobSerializer
 class EventTypes(Enum):
     error = 0
     asyncjob_update = 1
-    new_tracking_data = 2
+    trackingdata_update = 2
 
 
 class AppsConsumer(AsyncJsonAuthConsumer):
@@ -48,7 +48,7 @@ class AppsConsumer(AsyncJsonAuthConsumer):
 
     def render_async_tracking_data(self, data_id):
         data = TrackingData.objects.get(id=data_id)
-        return JSONRenderer().render({'event': EventTypes.new_tracking_data.name,
+        return JSONRenderer().render({'event': EventTypes.trackingdata_update.name,
                                       'data': data.as_point_feature}).decode()
 
     async def receive_json(self, content, **kwargs):
