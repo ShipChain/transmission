@@ -1,11 +1,10 @@
 import logging
 
-from django.conf import settings
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-
-from django.dispatch import receiver
+from django.conf import settings
 from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
 from fieldsignals import post_save_changed
 
 from apps.eth.models import TransactionReceipt
@@ -21,8 +20,7 @@ from .serializers import ShipmentVaultSerializer
 
 LOG = logging.getLogger('transmission')
 
-# pylint:disable=invalid-name
-channel_layer = get_channel_layer()
+channel_layer = get_channel_layer()  # pylint:disable=invalid-name
 
 
 @receiver(job_update, sender=Shipment, dispatch_uid='shipment_job_update')
