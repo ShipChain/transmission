@@ -15,7 +15,7 @@ def filter_enum(queryset, name, value):
     # Use case insensitive search (lenient=True, to_internal_value) to convert input string to enum value
     file_type_field = EnumField(enum_class, lenient=True, read_only=True, ints_as_names=True)
     enum_value = file_type_field.to_internal_value(value)
-    queryset = queryset.filter(file_type=enum_value)
+    queryset = queryset.filter(**{name: enum_value})
     return queryset
 
 
@@ -26,4 +26,4 @@ class DocumentFilterSet(filters.FilterSet):
 
     class Meta:
         model = Document
-        fields = ('document_type', 'upload_status',)
+        fields = ('document_type', 'upload_status', 'file_type',)

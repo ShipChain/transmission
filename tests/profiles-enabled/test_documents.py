@@ -213,6 +213,13 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
 
+        # List of all documents attached to a shipment
+        url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipment.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        self.assertEqual(len(data), 2)
+
 
 class DocumentAPITests(APITestCase):
 
