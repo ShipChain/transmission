@@ -26,4 +26,9 @@ class Migration(migrations.Migration):
             name='speed',
             field=models.IntegerField(blank=True, null=True, validators=[django.core.validators.MinValueValidator(0)]),
         ),
+        migrations.AlterField(
+            model_name='trackingdata',
+            name='uncertainty',
+            field=models.IntegerField(blank=True, null=True, validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(100)]),
+        ),
     ]
