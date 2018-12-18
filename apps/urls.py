@@ -17,6 +17,8 @@ from django.conf.urls import url
 from django.views.generic import TemplateView
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework import routers
+from rest_framework_nested import routers as drf_nested_routers
+
 from apps.jobs import views as jobs
 from apps.shipments import views as shipments
 from apps.eth import views as eth
@@ -26,14 +28,16 @@ from apps.documents import views as documents
 API_PREFIX = r'^api/(?P<version>(v1|v2))'
 
 # pylint: disable=invalid-name
-
-router = routers.SimpleRouter()
+router = drf_nested_routers.SimpleRouter()
 router.register(f'{API_PREFIX[1:]}/shipments', shipments.ShipmentViewSet)
 router.register(f'{API_PREFIX[1:]}/locations', shipments.LocationViewSet)
 router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, base_name='job')
 router.register(f'{API_PREFIX[1:]}/events', eth.EventViewSet, base_name='event')
 router.register(f'{API_PREFIX[1:]}/transactions', eth.TransactionViewSet, base_name='transaction')
 router.register(f'{API_PREFIX[1:]}/documents', documents.DocumentViewSet)
+
+nested_router = drf_nested_routers.NestedSimpleRouter(router, f'{API_PREFIX[1:]}/shipments', lookup='shipment')
+nested_router.register(r'documents', documents.DocumentViewSet, base_name='shipment-documents')
 
 urlpatterns = [
     url(
@@ -43,6 +47,8 @@ urlpatterns = [
     ),
 ]
 urlpatterns += router.urls
+
+urlpatterns += nested_router.urls
 
 urlpatterns = format_suffix_patterns(urlpatterns)
 

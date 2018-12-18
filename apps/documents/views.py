@@ -4,6 +4,7 @@ from django.conf import settings
 from django_filters import rest_framework as filters
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from influxdb_metrics.loader import log_metric
 
 from .permissions import UserHasPermission
@@ -59,3 +60,19 @@ class DocumentViewSet(mixins.CreateModelMixin,
         instance = self.get_object()
         serializer = DocumentRetrieveSerializer(instance)
         return Response(serializer.data)
+
+    def list(self, request, *args, **kwargs):
+        if 'shipment_pk' in kwargs.keys():
+            documents = Document.objects.filter(shipment__id=kwargs['shipment_pk']).order_by('updated_at')
+            queryset = self.filter_queryset(documents)
+        else:
+            queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = DocumentRetrieveSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = DocumentRetrieveSerializer(queryset, many=True)
+
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
