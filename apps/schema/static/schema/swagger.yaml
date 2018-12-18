@@ -187,6 +187,33 @@ paths:
               allOf:
               - $ref: '#/components/requestBodies/shipment/createAttributes'
 
+  /api/v1/shipments/{shipment_id}/documents/:
+    get:
+      summary: Get shipment documents
+      description: >
+        Get all `Document`s associated with a `Shipment`.
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/page_size'
+        - $ref: '#/components/parameters/document/fileType'
+        - $ref: '#/components/parameters/document/documentType'
+        - $ref: '#/components/parameters/document/uploadStatus'
+      tags:
+      - Shipments
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/document/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
   /api/v1/documents/:
     get:
       summary: List documents
