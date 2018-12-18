@@ -4,7 +4,6 @@ from django.conf import settings
 from django_filters import rest_framework as filters
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.response import Response
-from rest_framework.decorators import action
 from influxdb_metrics.loader import log_metric
 
 from .permissions import UserHasPermission
