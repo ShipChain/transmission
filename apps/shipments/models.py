@@ -392,10 +392,10 @@ class TrackingData(models.Model):
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
     latitude = models.FloatField(max_length=36)
     longitude = models.FloatField(max_length=36)
-    altitude = models.FloatField(max_length=36)
+    altitude = models.FloatField(max_length=36, null=True, blank=True)
     source = models.CharField(max_length=36)
-    uncertainty = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
-    speed = models.IntegerField(validators=[MinValueValidator(0)])
+    uncertainty = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], null=True, blank=True)
+    speed = models.IntegerField(validators=[MinValueValidator(0)], null=True, blank=True)
     timestamp = models.DateTimeField()
     version = models.CharField(max_length=36)
 

@@ -35,6 +35,7 @@ COPY compose/django/Pipfile* /build/
 COPY compose/django/pip.cache /build/pip.cache
 
 RUN pipenv install --dev --deploy --system
+# At the moment, the django/channels_redis repo is causing security issues, and so we are basing it off our forked branch instead
 RUN pipenv check --system
 
 RUN mkdir /app

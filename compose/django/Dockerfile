@@ -22,6 +22,7 @@ COPY pip.cache /build/pip.cache
 
 # Install dependencies from Pipfile (regenerate lock if necessary) #
 RUN . /opt/pipenv-venv/bin/activate && pipenv install --dev
+# At the moment, the django/channels_redis repo is causing security issues, and so we are basing it off our forked branch instead
 RUN . /opt/pipenv-venv/bin/activate && pipenv check
 
 RUN mkdir /app
