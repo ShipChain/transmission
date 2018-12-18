@@ -28,6 +28,7 @@ API_PREFIX = r'^api/(?P<version>(v1|v2))'
 
 # pylint: disable=invalid-name
 router = drf_nested_routers.SimpleRouter()
+
 router.register(f'{API_PREFIX[1:]}/shipments', shipments.ShipmentViewSet)
 router.register(f'{API_PREFIX[1:]}/locations', shipments.LocationViewSet)
 router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, base_name='job')

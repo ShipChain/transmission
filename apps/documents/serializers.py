@@ -23,9 +23,6 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
         else:
             exclude = ('shipment',)
 
-    # class JSONAPIMeta:
-    #     resource_name = "Document"
-
 
 class DocumentCreateSerializer(DocumentSerializer):
     """
@@ -70,9 +67,6 @@ class DocumentCreateSerializer(DocumentSerializer):
 
 class DocumentRetrieveSerializer(DocumentSerializer):
     presigned_s3 = serializers.SerializerMethodField()
-
-    class JSONAPIMeta:
-        resource_name = "Document"
 
     class Meta:
         model = Document
