@@ -35,7 +35,10 @@ COPY compose/django/Pipfile* /build/
 COPY compose/django/pip.cache /build/pip.cache
 
 RUN pipenv install --dev --deploy --system
-RUN pipenv check --system
+# Ignoring error caused by redis-channel using outdated msgpack versions
+# https://github.com/msgpack/msgpack-python/blob/master/ChangeLog.rst
+# https://github.com/django/channels_redis/blob/b6ef126ff7ece67fcd22feef17eb114a124e63bb/setup.py#L35
+RUN pipenv check --system  --ignore 36700
 
 RUN mkdir /app
 WORKDIR /app
