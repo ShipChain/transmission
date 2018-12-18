@@ -22,10 +22,8 @@ COPY pip.cache /build/pip.cache
 
 # Install dependencies from Pipfile (regenerate lock if necessary) #
 RUN . /opt/pipenv-venv/bin/activate && pipenv install --dev
-# Ignoring error caused by redis-channel using outdated msgpack versions
-# https://github.com/msgpack/msgpack-python/blob/master/ChangeLog.rst
-# https://github.com/django/channels_redis/blob/b6ef126ff7ece67fcd22feef17eb114a124e63bb/setup.py#L35
-RUN . /opt/pipenv-venv/bin/activate && pipenv check --ignore 36700
+# At the moment, the django/channels_redis repo is causing security issues, and so we are basing it off our forked branch instead
+RUN . /opt/pipenv-venv/bin/activate && pipenv check
 
 RUN mkdir /app
 WORKDIR /app
