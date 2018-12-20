@@ -18,5 +18,5 @@ from .base import ENVIRONMENT
 
 # IoT Thing <-> Device Settings
 IOT_THING_INTEGRATION = True
-IOT_AWS_HOST = os.environ.get('IOT_AWS_HOST', 'nm2zva5ied.execute-api.us-east-1.amazonaws.com')
+IOT_AWS_HOST = os.environ.get('IOT_AWS_HOST', 'u78vgi42oe.execute-api.us-east-1.amazonaws.com')
 IOT_GATEWAY_STAGE = ENVIRONMENT.lower()

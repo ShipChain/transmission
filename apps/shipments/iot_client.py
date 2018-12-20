@@ -19,13 +19,13 @@ import logging
 from apps.iot_client import AWSIoTClient, AWSIoTError
 from influxdb_metrics.loader import log_metric
 
-LOG = logging.getLogger('profiles')
+LOG = logging.getLogger('transmission')
 
 
 class DeviceAWSIoTClient(AWSIoTClient):
     def update_shadow(self, device_id, shadow):
         LOG.debug(f'Updating Device Shadow in AWS IoT')
-        log_metric('profiles.info', tags={'method': 'device.aws_iot.update_shadow'})
+        log_metric('transmission.info', tags={'method': 'device.aws_iot.update_shadow'})
 
         payload = {"data": shadow}
 

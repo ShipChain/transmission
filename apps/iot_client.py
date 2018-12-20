@@ -25,7 +25,7 @@ from rest_framework import status
 from rest_framework.exceptions import APIException
 from influxdb_metrics.loader import log_metric, TimingMetric
 
-LOG = logging.getLogger('profiles')
+LOG = logging.getLogger('transmission')
 
 
 class AWSIoTError(APIException):
@@ -71,7 +71,7 @@ class AWSIoTClient:
 
         try:
 
-            with TimingMetric('profiles_aws_iot.call', tags={'method': generic_endpoint}) as timer:
+            with TimingMetric('transmission_aws_iot.call', tags={'method': generic_endpoint}) as timer:
 
                 if http_method == AWSIoTClient.METHOD_POST:
                     response = self.session.post(url, data=payload)
@@ -88,19 +88,19 @@ class AWSIoTClient:
                         self._process_error_object(generic_endpoint, response, response_json)
 
                 else:
-                    log_metric('profiles_aws_iot.error', tags={'method': generic_endpoint, 'code': 'InvalidHTTPMethod'})
+                    log_metric('transmission_aws_iot.error', tags={'method': generic_endpoint, 'code': 'InvalidHTTPMethod'})
                     LOG.error('aws_iot_client(%s) error: %s', generic_endpoint, 'Invalid HTTP Method')
                     raise AWSIoTError(f'Invalid HTTP Method {http_method}')
 
                 LOG.info('aws_iot_client(%s) duration: %.3f', generic_endpoint, timer.elapsed)
 
         except requests.exceptions.ConnectionError:
-            log_metric('profiles_aws_iot.error', tags={'method': generic_endpoint, 'code': 'ConnectionError'})
+            log_metric('transmission_aws_iot.error', tags={'method': generic_endpoint, 'code': 'ConnectionError'})
             raise AWSIoTError("Service temporarily unavailable, try again later", status.HTTP_503_SERVICE_UNAVAILABLE,
                               'service_unavailable')
 
         except Exception as exception:
-            log_metric('profiles_aws_iot.error', tags={'method': generic_endpoint, 'code': 'exception'})
+            log_metric('transmission_aws_iot.error', tags={'method': generic_endpoint, 'code': 'exception'})
             raise AWSIoTError(str(exception))
 
         return response_json
@@ -142,6 +142,6 @@ class AWSIoTClient:
         else:
             message = response_json
 
-        log_metric('profiles_aws_iot.error', tags={'method': endpoint, 'code': error_code})
+        log_metric('transmission_aws_iot.error', tags={'method': endpoint, 'code': error_code})
         LOG.error('aws_iot_client(%s) error: %s', endpoint, message)
         raise AWSIoTError(f'Error in AWS IoT Request: [{error_code}] {message}')
