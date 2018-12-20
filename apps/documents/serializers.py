@@ -15,6 +15,7 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     document_type = UpperEnumField(DocumentType, lenient=True, read_only=True, ints_as_names=True)
     file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
+    presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -22,25 +23,6 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
             exclude = ('owner_id', 'shipment')
         else:
             exclude = ('shipment',)
-
-
-class DocumentCreateSerializer(DocumentSerializer):
-    """
-    Model serializer for documents validation for s3 signing
-    """
-    document_type = UpperEnumField(DocumentType, lenient=True, ints_as_names=True)
-    file_type = UpperEnumField(FileType, lenient=True, ints_as_names=True)
-    upload_status = UpperEnumField(UploadStatus, read_only=True, ints_as_names=True)
-    shipment_id = serializers.CharField(max_length=36)
-    presigned_s3 = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Document
-        if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'shipment',)
-        else:
-            exclude = ('shipment',)
-        meta_fields = ('presigned_s3',)
 
     def get_presigned_s3(self, obj):
         file_extension = obj.file_type.name.lower()
@@ -65,8 +47,25 @@ class DocumentCreateSerializer(DocumentSerializer):
         return pre_signed_post
 
 
+class DocumentCreateSerializer(DocumentSerializer):
+    """
+    Model serializer for documents validation for s3 signing
+    """
+    document_type = UpperEnumField(DocumentType, lenient=True, ints_as_names=True)
+    file_type = UpperEnumField(FileType, lenient=True, ints_as_names=True)
+    upload_status = UpperEnumField(UploadStatus, read_only=True, ints_as_names=True)
+    shipment_id = serializers.CharField(max_length=36)
+
+    class Meta:
+        model = Document
+        if settings.PROFILES_ENABLED:
+            exclude = ('owner_id', 'shipment',)
+        else:
+            exclude = ('shipment',)
+        meta_fields = ('presigned_s3',)
+
+
 class DocumentRetrieveSerializer(DocumentSerializer):
-    presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -79,7 +78,7 @@ class DocumentRetrieveSerializer(DocumentSerializer):
 
     def get_presigned_s3(self, obj):
         if obj.upload_status != UploadStatus.COMPLETE:
-            return None
+            return super().get_presigned_s3(obj)
 
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
@@ -96,13 +95,13 @@ class DocumentRetrieveSerializer(DocumentSerializer):
         return url
 
 
-class DocumentUpdateSerializer(DocumentRetrieveSerializer):
-
-    class Meta:
-        model = Document
-        exclude = ('shipment',)
-        if settings.PROFILES_ENABLED:
-            read_only_fields = ('owner_id', 'document_type', 'file_type', 'name', 'description')
-        else:
-            read_only_fields = ('document_type', 'file_type',)
-        meta_fields = ('presigned_s3',)
+# class DocumentUpdateSerializer(DocumentRetrieveSerializer):
+#
+#     class Meta:
+#         model = Document
+#         exclude = ('shipment',)
+#         if settings.PROFILES_ENABLED:
+#             read_only_fields = ('owner_id', 'document_type', 'file_type',)
+#         else:
+#             read_only_fields = ('document_type', 'file_type',)
+#         meta_fields = ('presigned_s3',)

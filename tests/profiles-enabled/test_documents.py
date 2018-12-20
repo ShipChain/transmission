@@ -140,7 +140,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Update document object upon upload completion
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         file_data, content_type = create_form_content({
-            'upload_status': UploadStatus.COMPLETE,
+            'upload_status': 'COMPLETE',
         })
         response = self.client.patch(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -186,13 +186,13 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Update second uploaded document status to complete
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[1].id})
         file_data, content_type = create_form_content({
-            'upload_status': UploadStatus.COMPLETE,
+            'upload_status': 'Complete',
         })
         response = self.client.patch(url, file_data, content_type=content_type)
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(document[1].upload_status, UploadStatus.COMPLETE)
-        self.assertTrue(data['meta']['presigned_s3'])
+        self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
 
         # Get list of documents
         url = reverse('document-list', kwargs={'version': 'v1'})
@@ -367,15 +367,27 @@ class ImageDocumentViewSetAPITests(APITestCase):
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
+        # Failed upload document and Pending should have the presigned post meta object
+        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
+        file_data, content_type = create_form_content({
+            'upload_status': 'Failed',
+        })
+        response = self.client.patch(url, file_data, content_type=content_type)
+        data = response.json()['data']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(document[0].upload_status, UploadStatus.FAILED)
+        self.assertTrue(isinstance(data['meta']['presigned_s3'], dict))
+
         # Update document object upon upload completion
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         file_data, content_type = create_form_content({
-            'upload_status': UploadStatus.COMPLETE,
+            'upload_status': 'complete',
         })
         response = self.client.patch(url, file_data, content_type=content_type)
+        data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
-        self.assertTrue(data['meta']['presigned_s3'])
+        self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
 
         # Get a document
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})

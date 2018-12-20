@@ -10,7 +10,6 @@ from .permissions import UserHasPermission
 
 from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
-                          DocumentUpdateSerializer,
                           DocumentRetrieveSerializer,)
 from .models import Document
 from .filters import DocumentFilterSet
@@ -65,8 +64,8 @@ class DocumentViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Updating document {instance.id} with new details.')
         log_metric('transmission.info', tags={'method': 'documents.update', 'module': __name__})
 
-        serializer = DocumentUpdateSerializer(instance, data=request.data, partial=partial,
-                                              context={'auth': request.auth})
+        serializer = DocumentRetrieveSerializer(instance, data=request.data, partial=partial,
+                                                context={'auth': request.auth})
         serializer.is_valid(raise_exception=True)
 
         self.perform_update(serializer)
