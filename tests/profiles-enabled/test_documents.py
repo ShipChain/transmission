@@ -189,8 +189,10 @@ class PdfDocumentViewSetAPITests(APITestCase):
             'upload_status': UploadStatus.COMPLETE,
         })
         response = self.client.patch(url, file_data, content_type=content_type)
+        data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(document[1].upload_status, UploadStatus.COMPLETE)
+        self.assertTrue(data['meta']['presigned_s3'])
 
         # Get list of documents
         url = reverse('document-list', kwargs={'version': 'v1'})
@@ -357,6 +359,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         response = self.client.patch(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
+        self.assertTrue(data['meta']['presigned_s3'])
 
         # Get a document
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
