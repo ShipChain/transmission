@@ -215,6 +215,22 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
 
+        # Get list of BOL documents via query params, it should return 2 elements
+        url = reverse('document-list', kwargs={'version': 'v1'})
+        url += f'?document_type=Bol'
+        response = self.client.get(url)
+        data = response.json()['data']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(data), 2)
+
+        # Querying for file objects with upload_status FAILED, should return an empty list at this stage
+        url = reverse('document-list', kwargs={'version': 'v1'})
+        url += f'?upload_status=FAIled'
+        response = self.client.get(url)
+        data = response.json()['data']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(data), 0)
+
         # List of all documents attached to a shipment
         url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipment.id})
         response = self.client.get(url)
