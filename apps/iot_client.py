@@ -88,7 +88,8 @@ class AWSIoTClient:
                         self._process_error_object(generic_endpoint, response, response_json)
 
                 else:
-                    log_metric('transmission_aws_iot.error', tags={'method': generic_endpoint, 'code': 'InvalidHTTPMethod'})
+                    log_metric('transmission_aws_iot.error', tags={'method': generic_endpoint,
+                                                                   'code': 'InvalidHTTPMethod'})
                     LOG.error('aws_iot_client(%s) error: %s', generic_endpoint, 'Invalid HTTP Method')
                     raise AWSIoTError(f'Invalid HTTP Method {http_method}')
 
