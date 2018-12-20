@@ -156,7 +156,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
-    device_id = serializers.CharField(max_length=36)
+    device_id = serializers.CharField(max_length=36, allow_null=True)
 
     class Meta:
         model = Shipment
@@ -168,7 +168,10 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         auth = self.context['auth']
 
         if 'device_id' in validated_data:
-            instance.device = Device.get_or_create_with_permission(auth, validated_data.pop('device_id'))
+            if validated_data['device_id']:
+                instance.device = Device.get_or_create_with_permission(auth, validated_data.pop('device_id'))
+            else:
+                instance.device = validated_data.pop('device_id')
 
         for location_field in ['ship_from_location', 'ship_to_location']:
             if location_field in validated_data:

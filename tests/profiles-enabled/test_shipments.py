@@ -1,31 +1,26 @@
+import json
 from unittest import mock
 
 import boto3
+import copy
+import httpretty
 import jwt
-import json
-from geocoder.keys import mapbox_access_token
-from dateutil.parser import parse
+import os
+import re
+from jose import jws
+from moto import mock_iot
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient, force_authenticate
-from jose import jws
-from moto import mock_iot
-from geojson import Feature, FeatureCollection, LineString, Point
-import httpretty
-import json
-import os
-import re
-import copy
-from conf import test_settings
-from unittest.mock import patch
 
-from apps.shipments.rpc import Load110RPCClient
-from apps.shipments.models import Shipment, Location, LoadShipment, FundingType, Device, TrackingData
 from apps.authentication import AuthenticatedUser
+from apps.eth.models import EthAction
+from apps.iot_client import BotoAWSRequestsAuth
+from apps.shipments.models import Shipment, Location, Device, TrackingData
+from apps.shipments.rpc import Load110RPCClient
 from apps.utils import random_id
-from tests.utils import replace_variables_in_string, create_form_content
-
-from apps.shipments.views import ShipmentViewSet
+from conf import test_settings
+from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
 
@@ -34,6 +29,7 @@ CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
 STORAGE_CRED_ID = '77b72202-5bcd-49f4-9860-bc4ec4fee07b'
 DEVICE_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
+CERTIFICATE_ID = '230498151c214b788dd97f22b85410a5'
 OWNER_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
 LOCATION_NAME = "Test Location Name"
 LOCATION_NAME_2 = "Second Test Location Name"
@@ -1362,3 +1358,161 @@ class TrackingDataAPITests(APITestCase):
             # Check float data type in db
             self.assertTrue(isinstance(self.tracking_data[0].latitude, float))
             self.assertEqual(self.tracking_data[0].altitude, 335)
+
+
+class FakeBotoAWSRequestsAuth(BotoAWSRequestsAuth):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def get_aws_request_headers_handler(self, r):
+        return {}
+
+
+@mock.patch('apps.iot_client.BotoAWSRequestsAuth', FakeBotoAWSRequestsAuth)
+class ShipmentWithIoTAPITests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user_1 = AuthenticatedUser({
+            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7b',
+            'username': 'user1@shipchain.io',
+            'email': 'user1@shipchain.io',
+        })
+
+        self.device = Device.objects.create(
+            id=DEVICE_ID,
+            certificate_id='FAKE_CERTIFICATE_ID'
+        )
+
+    def set_user(self, user, token=None):
+        self.client.force_authenticate(user=user, token=token)
+
+    def create_shipment(self):
+        url = reverse('shipment-list', kwargs={'version': 'v1'})
+
+        post_data = {
+            'device_id': DEVICE_ID,
+            'vault_id': VAULT_ID,
+            'carrier_wallet_id': CARRIER_WALLET_ID,
+            'shipper_wallet_id': SHIPPER_WALLET_ID,
+            'storage_credentials_id': STORAGE_CRED_ID
+        }
+
+        with mock.patch('apps.shipments.models.Device.get_or_create_with_permission') as mock_device, \
+                mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_shipper_wallet_id') as mock_wallet_validation, \
+                mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_storage_credentials_id') as mock_storage_validation:
+            mock_device.return_value = Device.objects.get_or_create(id=DEVICE_ID, defaults={'certificate_id': CERTIFICATE_ID})[0]
+            mock_wallet_validation.return_value = SHIPPER_WALLET_ID
+            mock_storage_validation.return_value = STORAGE_CRED_ID
+            response = self.client.post(url, post_data, format='json')
+            mock_device.assert_called()
+            mock_wallet_validation.assert_called()
+            mock_storage_validation.assert_called()
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        return response.json()['data']
+
+    def set_device_id(self, shipment_id, device_id, certificate_id):
+        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
+
+        with mock.patch('apps.shipments.models.Device.get_or_create_with_permission') as mock_device:
+            mock_device.return_value = Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})[0]
+            response = self.client.patch(url, {'device_id': device_id}, format='json')
+            if device_id:
+                mock_device.assert_called()
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+
+    @mock_iot
+    def test_shipment_set_shadow(self):
+        token = jwt.encode({'email': self.user_1.email, 'username': self.user_1.username, 'aud': '11111'},
+                           private_key, algorithm='RS256',
+                           headers={'kid': CERTIFICATE_ID, 'aud': '11111'})
+        self.set_user(self.user_1, token)
+
+        iot = boto3.client('iot', region_name='us-east-1')
+        iot.create_thing(
+            thingName=DEVICE_ID
+        )
+        device_2_id = DEVICE_ID[:-1] + '0'
+        device_2_cert_id = CERTIFICATE_ID[:-1] + '0'
+        iot.create_thing(
+            thingName=device_2_id
+        )
+
+        with mock.patch('apps.iot_client.requests.Session.put') as mocked:
+            mocked_call_count = 0
+            mocked.return_value = mocked_rpc_response({'data': {
+                'shipmentId': 'dunno yet'
+            }})
+
+            # Test Shipment create with Device ID updates shadow
+            shipment = self.create_shipment()
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+            mocked.return_value = mocked_rpc_response({'data': {
+                'shipmentId': shipment['id']
+            }})
+
+            # Test Shipment null Device ID updates shadow
+            self.set_device_id(shipment['id'], None, None)
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+
+            # Reset initial DEVICE_ID
+            self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+
+            # Test Shipment update with Device ID updates shadow
+            self.set_device_id(shipment['id'], device_2_id, device_2_cert_id)
+            mocked_call_count += 2  # Expect the old device to have its shipmentId cleared, and the new one has its set
+            assert mocked.call_count == mocked_call_count
+
+            # Test ShipmentComplete event clears Device shadow shipment
+            shipment_obj = Shipment.objects.filter(id=shipment['id']).first()
+            Shipment.objects.filter(id=shipment['id']).update(contract_version='1.1.0')
+            tx_hash = "0x398bb373a52c1d6533820b17d3938e7c19a6a6cf0c965b9923a5b65d34bf7d29"
+            eth_action = EthAction.objects.create(transaction_hash=tx_hash, async_job_id=shipment_obj.asyncjob_set.first().id)
+            eth_action.ethlistener_set.create(listener=shipment_obj)
+            url = reverse('event-list', kwargs={'version': 'v1'})
+            data = {
+                "address": "0x25Ff5dc79A7c4e34254ff0f4a19d69E491201DD3",
+                "blockNumber": 3,
+                "transactionHash": tx_hash,
+                "transactionIndex": 0,
+                "blockHash": "0x62469a8d113b27180c139d88a25f0348bb4939600011d33382b98e10842c85d9",
+                "logIndex": 0,
+                "removed": False,
+                "id": "log_25652065",
+                "returnValues": {
+                    "0": "0xFCaf25bF38E7C86612a25ff18CB8e09aB07c9885",
+                    "shipTokenContractAddress": "0xFCaf25bF38E7C86612a25ff18CB8e09aB07c9885"
+                },
+                "event": "ShipmentComplete",
+                "signature": "0xbbbf32f08c8c0621e580dcf0a8e0024525ec357db61bb4faa1a639d4f958a824",
+                "raw": {
+                    "data": "0x000000000000000000000000fcaf25bf38e7c86612a25ff18cb8e09ab07c9885",
+                    "topics": [
+                        "0xbbbf32f08c8c0621e580dcf0a8e0024525ec357db61bb4faa1a639d4f958a824"
+                    ]
+                }
+            }
+            response = self.client.post(url, data, format='json', X_NGINX_SOURCE='internal',
+                                        X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
+            # Failing at shipment_post_save after device_id is updated
+            assert response.status_code == status.HTTP_204_NO_CONTENT
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+
+            # Reset initial DEVICE_ID
+            self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+
+            # Create second shipment, ensure device can only be attached to one shipment
+            self.create_shipment()
+            mocked_call_count += 2  # Should also clear device from shipment 1
+            assert mocked.call_count == mocked_call_count
+
+            assert Shipment.objects.filter(id=shipment['id']).first().device_id is None

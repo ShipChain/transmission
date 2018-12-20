@@ -130,7 +130,7 @@ class AWSIoTClient:
 
         if 'error' in response_json:
             message = response_json['error']
-            if message.isinstance(dict):
+            if isinstance(message, dict):
                 if 'code' in message:
                     error_code = message['code']
                 if 'message' in message:
