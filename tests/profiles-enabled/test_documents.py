@@ -95,8 +95,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'name': 'Test BOL',
             'description': 'Auto generated file for test purposes',
-            'document_type': DocumentType.BOL,
-            'file_type': FileType.PDF,
+            'document_type': 'Bol',
+            'file_type': 'Pdf',
             'shipment_id': self.shipment.id
         })
 
@@ -173,8 +173,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.make_pdf_file(f_path, message=message)
         file_data, content_type = create_form_content({
             'name': os.path.basename(f_path),
-            'document_type': DocumentType.BOL,
-            'file_type': FileType.PDF,
+            'document_type': 'Bol',
+            'file_type': 'Pdf',
             'shipment_id': self.shipment.id
         })
         url = reverse('document-list', kwargs={'version': 'v1'})
@@ -343,8 +343,8 @@ class ImageDocumentViewSetAPITests(APITestCase):
 
         file_data, content_type = create_form_content({
             'name': os.path.basename(img_path[1]),
-            'document_type': DocumentType.IMAGE,
-            'file_type': FileType.PNG,
+            'document_type': 'Image',
+            'file_type': 'Png',
             'shipment_id': self.shipment.id
         })
 
