@@ -95,8 +95,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'name': 'Test BOL',
             'description': 'Auto generated file for test purposes',
-            'document_type': DocumentType.BOL,
-            'file_type': FileType.PDF,
+            'document_type': 'Bol',
+            'file_type': 'Pdf',
             'shipment_id': self.shipment.id
         })
 
@@ -140,7 +140,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Update document object upon upload completion
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         file_data, content_type = create_form_content({
-            'upload_status': UploadStatus.COMPLETE,
+            'upload_status': 'COMPLETE',
         })
         response = self.client.patch(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -173,8 +173,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.make_pdf_file(f_path, message=message)
         file_data, content_type = create_form_content({
             'name': os.path.basename(f_path),
-            'document_type': DocumentType.BOL,
-            'file_type': FileType.PDF,
+            'document_type': 'Bol',
+            'file_type': 'Pdf',
             'shipment_id': self.shipment.id
         })
         url = reverse('document-list', kwargs={'version': 'v1'})
@@ -186,11 +186,13 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Update second uploaded document status to complete
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[1].id})
         file_data, content_type = create_form_content({
-            'upload_status': UploadStatus.COMPLETE,
+            'upload_status': 'Complete',
         })
         response = self.client.patch(url, file_data, content_type=content_type)
+        data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(document[1].upload_status, UploadStatus.COMPLETE)
+        self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
 
         # Get list of documents
         url = reverse('document-list', kwargs={'version': 'v1'})
@@ -208,6 +210,22 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Querying for png files should return an empty list at this stage
         url = reverse('document-list', kwargs={'version': 'v1'})
         url += f'?file_type=Png'
+        response = self.client.get(url)
+        data = response.json()['data']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(data), 0)
+
+        # Get list of BOL documents via query params, it should return 2 elements
+        url = reverse('document-list', kwargs={'version': 'v1'})
+        url += f'?document_type=Bol'
+        response = self.client.get(url)
+        data = response.json()['data']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(data), 2)
+
+        # Querying for file objects with upload_status FAILED, should return an empty list at this stage
+        url = reverse('document-list', kwargs={'version': 'v1'})
+        url += f'?upload_status=FAIled'
         response = self.client.get(url)
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -325,8 +343,8 @@ class ImageDocumentViewSetAPITests(APITestCase):
 
         file_data, content_type = create_form_content({
             'name': os.path.basename(img_path[1]),
-            'document_type': DocumentType.IMAGE,
-            'file_type': FileType.PNG,
+            'document_type': 'Image',
+            'file_type': 'Png',
             'shipment_id': self.shipment.id
         })
 
@@ -349,14 +367,27 @@ class ImageDocumentViewSetAPITests(APITestCase):
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
+        # Failed upload document and Pending should have the presigned post meta object
+        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
+        file_data, content_type = create_form_content({
+            'upload_status': 'Failed',
+        })
+        response = self.client.patch(url, file_data, content_type=content_type)
+        data = response.json()['data']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(document[0].upload_status, UploadStatus.FAILED)
+        self.assertTrue(isinstance(data['meta']['presigned_s3'], dict))
+
         # Update document object upon upload completion
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         file_data, content_type = create_form_content({
-            'upload_status': UploadStatus.COMPLETE,
+            'upload_status': 'complete',
         })
         response = self.client.patch(url, file_data, content_type=content_type)
+        data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
+        self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
 
         # Get a document
         url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})

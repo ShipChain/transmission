@@ -36,7 +36,7 @@ class FileType(Enum):
         PNG = 'PNG'
 
 
-IMAGE_TYPES = (FileType.JPEG, FileType.PNG)
+IMAGE_TYPES = (FileType.JPEG.name.lower(), FileType.PNG.name.lower())
 
 
 class UploadStatus(Enum):
