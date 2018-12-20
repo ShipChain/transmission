@@ -23,4 +23,4 @@ def tracking_data_update(self, shipment_id, payload):
                                              shipment.shipper_wallet_id,
                                              shipment.vault_id,
                                              payload)
-    shipment.update_vault_hash(signature['hash'], rate_limit=True)
+    shipment.set_vault_hash(signature['hash'], rate_limit=True)
