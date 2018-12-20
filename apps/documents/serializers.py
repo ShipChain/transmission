@@ -93,15 +93,3 @@ class DocumentRetrieveSerializer(DocumentSerializer):
         log_metric('transmission.info', tags={'method': 'documents.generate_presigned_url', 'module': __name__})
 
         return url
-
-
-# class DocumentUpdateSerializer(DocumentRetrieveSerializer):
-#
-#     class Meta:
-#         model = Document
-#         exclude = ('shipment',)
-#         if settings.PROFILES_ENABLED:
-#             read_only_fields = ('owner_id', 'document_type', 'file_type',)
-#         else:
-#             read_only_fields = ('document_type', 'file_type',)
-#         meta_fields = ('presigned_s3',)
