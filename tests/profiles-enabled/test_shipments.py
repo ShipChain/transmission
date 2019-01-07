@@ -253,7 +253,7 @@ class ShipmentAPITests(APITestCase):
                 'version': '1.0.0',
                 'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75',
                 'timestamp': '2018-09-18T15:02:30.563847+00:00'
-           }
+            }
             with open('tests/data/eckey.pem', 'r') as key_file:
                 key_pem = key_file.read()
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
@@ -268,6 +268,15 @@ class ShipmentAPITests(APITestCase):
             self.assertEqual(data_from_db[0].device_id.id, track_dic['device_id'])
             self.assertTrue(isinstance(data_from_db[0].shipment, Shipment))
             self.assertEqual(data_from_db[0].latitude, track_dic['position']['latitude'])
+
+            # Bulk add tracking data
+            track_dic2 = copy.deepcopy(track_dic)
+            track_dic2['position']['speed'] = 30
+            track_dic2['timestamp'] = '2018-09-18T15:02:31.563847+00:00'
+            signed_data2 = jws.sign(track_dic2, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
+            list_payload = [{'payload': signed_data}, {'payload': signed_data2}]
+            response = self.client.post(url, list_payload, format='json')
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
             # Get tracking data
             response = self.client.get(url)
@@ -298,7 +307,7 @@ class ShipmentAPITests(APITestCase):
             response = self.client.get(url)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
             data = response.data
-            self.assertEqual(len(data['features']), 3)
+            self.assertEqual(len(data['features']), 5)
 
             # We expect the second point data to be the first in LineString
             # since it has been  generated first. See timestamp values
