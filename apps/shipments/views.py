@@ -94,30 +94,23 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         shipment = Shipment.objects.get(pk=pk)
 
         data = request.data
-        # is_many = isinstance(data, list)
-
-        # Ensure payload is a valid JWS
-        # if settings.ENVIRONMENT == 'LOCAL':
-        #     serializer = UnvalidatedTrackingDataSerializer(data=data, context={'shipment': shipment})
-        # else:
-        #     serializer = TrackingDataSerializer(data=data, context={'shipment': shipment})
-
         serializer = UnvalidatedTrackingDataSerializer if settings.ENVIRONMENT == 'LOCAL' else TrackingDataSerializer
 
         if not isinstance(data, list):
+            LOG.debug(f'Adding tracking data for shipment: {shipment.id}')
             serializer = serializer(data=data, context={'shipment': shipment})
             serializer.is_valid(raise_exception=True)
             tracking_data = [serializer.validated_data]
         else:
+            LOG.debug(f'Adding bulk tracking data for shipment: {shipment.id}')
             serializer = serializer(data=data, context={'shipment': shipment}, many=True)
             serializer.is_valid(raise_exception=True)
             tracking_data = serializer.validated_data
-        # serializer.is_valid(raise_exception=True)
-        # payload = serializer.validated_data['payload']
 
         from .tasks import tracking_data_update
         for data in tracking_data:
             payload = data['payload']
+
             # Add tracking data to shipment via Engine RPC
             tracking_data_update.delay(shipment.id, payload)
 
@@ -125,10 +118,6 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment})
             tracking_model_serializer.is_valid(raise_exception=True)
             tracking_model_serializer.save()
-
-        # tracking_model_serializer.is_valid(raise_exception=True)
-        # LOG.debug(f'Added tracking data for Shipment: {shipment.id}')
-        # tracking_model_serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
