@@ -246,7 +246,7 @@ class ShipmentAPITests(APITestCase):
                     'latitude': 75.0587610,
                     'longitude': -35.628643,
                     'altitude': 554,
-                    'source': 'gps',
+                    'source': 'Gps',
                     'uncertainty': 92,
                     'speed': 34
                 },
@@ -304,6 +304,23 @@ class ShipmentAPITests(APITestCase):
             # since it has been  generated first. See timestamp values
             pos = track_dic_2['position']
             self.assertEqual(data['features'][0]['geometry']['coordinates'][0], [pos['longitude'], pos['latitude']])
+
+            # Get data as point
+            url_as_point = url + '?as_point'
+            response = self.client.get(url_as_point)
+            self.assertTrue(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertTrue(isinstance(data['features'], list))
+            self.assertEqual(data['features'][0]['geometry']['type'], 'Point')
+            self.assertEqual(data['features'][0]['properties']['has_gps'], True)
+
+            # Get data as line
+            url_as_line = url + '?as_line'
+            response = self.client.get(url_as_line)
+            self.assertTrue(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertTrue(isinstance(data['features'], list))
+            self.assertEqual(data['features'][0]['geometry']['type'], 'LineString')
 
             # Certificate ID not in AWS
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': 'notarealcertificateid'}, algorithm='ES256')
