@@ -124,7 +124,7 @@ class EventSerializer(serializers.ModelSerializer):
         return super(EventSerializer, self).to_internal_value(data)
 
 
-class EthActionSerializer(serializers.ModelSerializer):
+class EthActionBaseSerializer(serializers.ModelSerializer):
     transaction = serializers.ResourceRelatedField(queryset=Transaction.objects.all())
     transaction_receipt = serializers.ResourceRelatedField(source='transactionreceipt',
                                                            queryset=TransactionReceipt.objects.all())
@@ -138,6 +138,22 @@ class EthActionSerializer(serializers.ModelSerializer):
         'transaction_receipt': TransactionReceiptSerializer,
         'async_job': AsyncJobSerializer
     }
+
+
+class EthActionSerializer(EthActionBaseSerializer):
+    # transaction = serializers.ResourceRelatedField(queryset=Transaction.objects.all())
+    # transaction_receipt = serializers.ResourceRelatedField(source='transactionreceipt',
+    #                                                        queryset=TransactionReceipt.objects.all())
+    #
+    # class Meta:
+    #     model = EthAction
+    #     exclude = ('listeners',)
+    #
+    # included_serializers = {
+    #     'transaction': TransactionSerializer,
+    #     'transaction_receipt': TransactionReceiptSerializer,
+    #     'async_job': AsyncJobSerializer
+    # }
 
     class JSONAPIMeta:
         included_resources = ['transaction', 'transaction_receipt', 'async_job']
