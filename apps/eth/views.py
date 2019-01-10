@@ -104,12 +104,15 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         log_metric('transmission.info', tags={'method': 'transaction.list', 'module': __name__})
-        LOG.debug('Getting tx details filtered by wallet address.')
 
-        if 'shipment_pk' in kwargs.keys():
-            queryset = self.queryset.filter(ethlistener__shipments__id=kwargs['shipment_pk'])
+        shipment_pk = kwargs.get('shipment_pk', None)
+        if shipment_pk:
+            LOG.debug(f'Getting transactions for shipment: {shipment_pk}.')
+
+            queryset = self.queryset.filter(ethlistener__shipments__id=shipment_pk)
             list_serializer = EthActionBaseSerializer
         else:
+            LOG.debug('Getting tx details filtered by wallet address.')
             if not settings.PROFILES_ENABLED:
                 if 'wallet_address' not in self.request.query_params:
                     raise serializers.ValidationError(
@@ -126,7 +129,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
 
                 wallet_response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{wallet_id}/',
                                                                 headers={
-                                                                    'Authorization': 'JWT {}'.format(request.auth.decode())
+                                                                    'Authorization': f'JWT {request.auth.decode()}'
                                                                 })
 
                 if not wallet_response.status_code == status.HTTP_200_OK:

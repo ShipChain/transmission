@@ -215,3 +215,8 @@ class TransactionReceiptTestCase(APITestCase):
         # request for specific eth actions should fail if the profiles request fails
         response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Shipment transactions list
+        url = reverse('shipment-transactions-list', kwargs={'version': 'v1', 'shipment_pk': listener.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
