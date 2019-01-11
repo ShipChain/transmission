@@ -214,6 +214,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
+  /api/v1/shipments/{shipment_id}/transactions/:
+    get:
+      summary: Get shipment transactions
+      description: >
+        Get all `EthAction`s associated with a `Shipment`.
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/page_size'
+      tags:
+        - Shipments
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/transactions/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
   /api/v1/documents/:
     get:
       summary: List documents
@@ -1437,6 +1461,47 @@ components:
 
                - $ref: '#/components/schemas/dataTypes/document/bucketUrl'
                - $ref: '#/components/schemas/dataTypes/document/s3Fields'
+
+      ethaction:
+        transactionHash:
+          properties:
+            transaction_hash:
+              title: transaction_hash
+              description:
+              type: string
+              example: '0x2df28b17cabe1f0c5616b6010908cd1c6602abc109abab2599bc0062754b1d9a'
+
+        transaction:
+          properties:
+            data:
+              title: transaction
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: Name of model
+                  title: type
+                  example: 'Transaction'
+                id:
+                  type: string
+                  title: id
+                  example: '0x2df28b17cabe1f0c5616b6010908cd1c6602abc109abab2599bc0062754b1d9a'
+
+        asyncJob:
+          properties:
+            data:
+              title: async_job
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: Name of model
+                  title: type
+                  example: 'AsyncJob'
+                id:
+                  <<: *uuid
+                  title: id
+                  description: AsyncJob UUID associated with the ethaction
 
       shipment:
         storageCredentialsId:
@@ -2989,6 +3054,58 @@ components:
               data:
                 items:
                   $ref: '#/components/schemas/document/getResource'
+
+    transactions:
+      resource:
+        properties:
+          type:
+            example: EthAction
+
+      transaction:
+        type: object
+        title: transaction
+        properties:
+          transaction:
+            $ref: '#/components/schemas/dataTypes/ethaction/transaction'
+
+      asyncJob:
+        type: object
+        title: async_job
+        properties:
+          async_job:
+            $ref: '#/components/schemas/dataTypes/ethaction/asyncJob'
+
+      attributes:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/ethaction/transactionHash'
+          - $ref: '#/components/schemas/dataTypes/createdAt'
+          - $ref: '#/components/schemas/dataTypes/updatedAt'
+
+      relationships:
+        properties:
+          relationships:
+            allOf:
+              - $ref: '#/components/schemas/transactions/transaction'
+              - $ref: '#/components/schemas/transactions/asyncJob'
+
+      getResource:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/ethereum/resourceId'
+          - $ref: '#/components/schemas/transactions/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/schemas/transactions/attributes'
+              relationships:
+                $ref: '#/components/schemas/transactions/relationships/properties/relationships'
+
+      listResponse:
+        allOf:
+          - $ref: '#/components/schemas/jsonApi/dataArray'
+          - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+          - properties:
+              data:
+                items:
+                  $ref: '#/components/schemas/transactions/getResource'
 
     tracking:
       collectionResource:
