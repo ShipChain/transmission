@@ -42,7 +42,7 @@ websocket-client = "==0.53.0"
 whitenoise = "==3.3.1"
 celery_once = "==2.0.0"
 CMRESHandler = {editable = true, ref = "91b458a58e12ab1e9a8fe16a28d225f610e29183", git = "git://github.com/kusha/python-elasticsearch-logger.git"}
-Django = "==2.0.9"
+Django = "==2.0.10"
 PyJWT = "==1.6.4"
 pyOpenSSL = "==17.5.0"
 uWSGI = "==2.0.17.1"
