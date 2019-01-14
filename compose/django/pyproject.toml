@@ -1,0 +1,84 @@
+[tool.poetry]
+name = "transmission"
+version = "0.8.0"
+description = "A Django REST API built to proxy Ethereum requests via ShipChain Engine."
+
+license = "Apache-2.0"
+
+authors = [
+    "Adam Hodges <ahodges@shipchain.io>"
+]
+
+readme = 'README.md'  # Markdown files are supported
+
+repository = "https://github.com/ShipChain/transmission"
+homepage = "https://transmission.shipchain.io"
+
+keywords = ['transmission', 'shipchain', 'logistics']
+
+[tool.poetry.dependencies]
+python = "~3.6.5"
+
+asn1crypto = "==0.24.0"
+boto3 = "~=1.9"
+bpython = "==0.17.1"
+celery = "==4.2.1"
+channels = "~=2.1"
+channels-redis = {git = "git://github.com/ShipChain/channels_redis.git", rev = "3f8cd28a686d970d4d64e5629dbd04d6e0d7b5a4"}
+cryptography = "==2.3.1"
+django-cors-headers = "==2.2.0"
+django-dotenv = "==1.4.2"
+django-enumfields = "==0.10.0"
+django-environ = "==0.4.4"
+django-extensions = "==2.0.6"
+django-filter = "~=2.0"
+django-gm2m = "==0.6.1"
+django-influxdb-metrics = {git = "git://github.com/lwbco/django-influxdb-tagged-metrics.git", rev = "add895558ed6ab59c621b19beae026f8933d4848"}
+django-redis = "==4.9.0"
+djangorestframework = "==3.8.2"
+djangorestframework-gis = "==0.13"
+djangorestframework-jsonapi = "==2.4.0"
+djangorestframework-jwt = "==1.11.0"
+elasticsearch = "~=6.3"
+geocoder = "==1.38.1"
+geojson = "==2.4.0"
+inflection = ">=0.3.1"
+influxdb = "==5.0.0"
+mapbox = "==0.16.2"
+psycopg2 = ">=2.5.4"
+pycryptodome = "==3.6.6"
+python-jose = "==3.0.1"
+redis = "==2.10.6"
+requests = "==2.20.1"
+retrying = "==1.3.3"
+rsa = "==3.4.2"
+watchdog = "==0.9.0"
+websocket-client = "==0.53.0"
+whitenoise = "==3.3.1"
+celery_once = "==2.0.0"
+CMRESHandler = {git = "git://github.com/kusha/python-elasticsearch-logger.git", rev = "91b458a58e12ab1e9a8fe16a28d225f610e29183"}
+Django = "==2.0.10"
+PyJWT = "==1.6.4"
+pyOpenSSL = "==17.5.0"
+uWSGI = "==2.0.17.1"
+drf-nested-routers = "==0.90.0"
+
+
+[tool.poetry.dev-dependencies]
+bandit = "~=1.5"
+coverage = "==4.5.1"
+django-mock-queries = "~=2.1"
+fpdf = "==1.7.2"
+httpretty = "==0.9.5"
+minio = "==4.0.6"
+mock = "==2.0.0"
+moto = {git = "git://github.com/ShipChain/moto.git", rev = "a0eff24724ce96dc571c65d2c87979d781fa8a8e"}
+pillow = "~=5.2"
+prospector = "==1.1.6.2"
+pylint-celery = "~=0.3"
+pylint-django = "~=2.0"
+pytest-asyncio = "~=0.9"
+pytest-cov = "~=2.6"
+pytest-django = "~=3.4"
+responses = "==0.9.0"
+safety = "^1.8"

@@ -27,16 +27,18 @@ RUN virtualenv /opt/aws
 RUN . /opt/aws/bin/activate && pip3 install --upgrade awscli
 
 # Dependencies installation from Pipfile.lock
-RUN pip3 install --upgrade pip pipenv
+RUN pip3 install --upgrade pip
+RUN curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
 
 # Use pip caching
-ENV PIPENV_CACHE_DIR=/build/pip.cache
-COPY compose/django/Pipfile* /build/
 COPY compose/django/pip.cache /build/pip.cache
+COPY compose/django/pyproject.toml /build/
+COPY compose/django/poetry.lock /build/
 
-RUN pipenv install --dev --deploy --system
-# At the moment, the django/channels_redis repo is causing security issues, and so we are basing it off our forked branch instead
-RUN pipenv check --system
+# Install dependencies from pyproject.toml (regenerate lock if necessary) #
+RUN . $HOME/.poetry/env && poetry config settings.virtualenvs.create false
+RUN . $HOME/.poetry/env && poetry install
+RUN . $HOME/.poetry/env && safety check
 
 RUN mkdir /app
 WORKDIR /app

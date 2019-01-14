@@ -10,20 +10,18 @@ WORKDIR /build
 
 RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin rsync python3-pip
 
-# Virtualenv required for modifying Pipfile.lock #
-RUN pip3 install --upgrade pip pipenv virtualenv
-RUN virtualenv /opt/pipenv-venv
-ENV PATH=/opt/pipenv-venv/bin:$PATH
+# Install poetry #
+RUN curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
 
 # Copy Pipfiles and cache to image #
-ENV PIPENV_CACHE_DIR=/build/pip.cache
-COPY ./Pipfile* /build/
 COPY pip.cache /build/pip.cache
+COPY ./pyproject.toml /build/
+COPY ./poetry.lock /build/
 
-# Install dependencies from Pipfile (regenerate lock if necessary) #
-RUN . /opt/pipenv-venv/bin/activate && pipenv install --dev
-# At the moment, the django/channels_redis repo is causing security issues, and so we are basing it off our forked branch instead
-RUN . /opt/pipenv-venv/bin/activate && pipenv check
+# Install dependencies from pyproject.toml (regenerate lock if necessary) #
+RUN . $HOME/.poetry/env && poetry config settings.virtualenvs.create false
+RUN . $HOME/.poetry/env && poetry lock && poetry install
+RUN . $HOME/.poetry/env && safety check
 
 RUN mkdir /app
 WORKDIR /app
