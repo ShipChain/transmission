@@ -93,24 +93,31 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     def add_tracking_data(self, request, version, pk):
         shipment = Shipment.objects.get(pk=pk)
 
-        # Ensure payload is a valid JWS
-        if settings.ENVIRONMENT == 'LOCAL':
-            serializer = UnvalidatedTrackingDataSerializer(data=request.data, context={'shipment': shipment})
+        data = request.data
+        serializer = UnvalidatedTrackingDataSerializer if settings.ENVIRONMENT == 'LOCAL' else TrackingDataSerializer
+
+        if not isinstance(data, list):
+            LOG.debug(f'Adding tracking data for shipment: {shipment.id}')
+            serializer = serializer(data=data, context={'shipment': shipment})
+            serializer.is_valid(raise_exception=True)
+            tracking_data = [serializer.validated_data]
         else:
-            serializer = TrackingDataSerializer(data=request.data, context={'shipment': shipment})
-        serializer.is_valid(raise_exception=True)
-        payload = serializer.validated_data['payload']
+            LOG.debug(f'Adding bulk tracking data for shipment: {shipment.id}')
+            serializer = serializer(data=data, context={'shipment': shipment}, many=True)
+            serializer.is_valid(raise_exception=True)
+            tracking_data = serializer.validated_data
 
-        # Add tracking data to shipment via Engine RPC
         from .tasks import tracking_data_update
-        tracking_data_update.delay(shipment.id, payload)
+        for data in tracking_data:
+            payload = data['payload']
 
-        # Cache tracking data to db
-        tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment})
+            # Add tracking data to shipment via Engine RPC
+            tracking_data_update.delay(shipment.id, payload)
 
-        tracking_model_serializer.is_valid(raise_exception=True)
-        LOG.debug(f'Added tracking data for Shipment: {shipment.id}')
-        tracking_model_serializer.save()
+            # Cache tracking data to db
+            tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment})
+            tracking_model_serializer.is_valid(raise_exception=True)
+            tracking_model_serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
