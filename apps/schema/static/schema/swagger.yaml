@@ -214,6 +214,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
+  /api/v1/shipments/{shipment_id}/transactions/:
+    get:
+      summary: Get shipment transactions
+      description: >
+        Get all `EthAction`s associated with a `Shipment`.
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/page_size'
+      tags:
+        - Shipments
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ethAction/listResponse'
+#                $ref: '#/components/schemas/transactions/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
   /api/v1/documents/:
     get:
       summary: List documents

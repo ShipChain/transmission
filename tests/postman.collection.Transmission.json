@@ -396,6 +396,34 @@
                 "response": []
               },
               {
+                "name": "List Shipment transactions",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/transactions/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "shipments",
+                      "{{shipment_id}}",
+                      "transactions",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
                 "name": "Get Shipment",
                 "request": {
                   "method": "GET",
@@ -1245,7 +1273,7 @@
                     "path": [
                       "api",
                       "v1",
-                      "transaction",
+                      "transactions",
                       "{{transaction_hash}}",
                       ""
                     ]
@@ -1276,7 +1304,7 @@
                     "path": [
                       "api",
                       "v1",
-                      "transaction",
+                      "transactions",
                       "?wallet_id=<<wallet_id>>"
                     ]
                   }

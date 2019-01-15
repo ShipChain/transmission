@@ -104,34 +104,40 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         log_metric('transmission.info', tags={'method': 'transaction.list', 'module': __name__})
-        LOG.debug('Getting tx details filtered by wallet address.')
 
-        if not settings.PROFILES_ENABLED:
-            if 'wallet_address' not in self.request.query_params:
-                raise serializers.ValidationError(
-                    'wallet_address required in query parameters')
+        shipment_pk = kwargs.get('shipment_pk', None)
+        if shipment_pk:
+            LOG.debug(f'Getting transactions for shipment: {shipment_pk}.')
 
-            from_address = self.request.query_params.get('wallet_address')
-
+            queryset = self.queryset.filter(ethlistener__shipments__id=shipment_pk)
         else:
-            if 'wallet_id' not in self.request.query_params:
-                raise serializers.ValidationError(
-                    'wallet_id required in query parameters')
+            LOG.debug('Getting tx details filtered by wallet address.')
+            if not settings.PROFILES_ENABLED:
+                if 'wallet_address' not in self.request.query_params:
+                    raise serializers.ValidationError(
+                        'wallet_address required in query parameters')
 
-            wallet_id = self.request.query_params.get('wallet_id')
+                from_address = self.request.query_params.get('wallet_address')
 
-            wallet_response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{wallet_id}/',
-                                                            headers={
-                                                                'Authorization': 'JWT {}'.format(request.auth.decode())
-                                                            })
+            else:
+                if 'wallet_id' not in self.request.query_params:
+                    raise serializers.ValidationError(
+                        'wallet_id required in query parameters')
 
-            if not wallet_response.status_code == status.HTTP_200_OK:
-                raise serializers.ValidationError('Error retrieving Wallet from ShipChain Profiles')
+                wallet_id = self.request.query_params.get('wallet_id')
 
-            wallet_details = wallet_response.json()
-            from_address = wallet_details['data']['attributes']['address']
+                wallet_response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{wallet_id}/',
+                                                                headers={
+                                                                    'Authorization': f'JWT {request.auth.decode()}'
+                                                                })
 
-        queryset = queryset.filter(transactionreceipt__from_address__iexact=from_address)
+                if not wallet_response.status_code == status.HTTP_200_OK:
+                    raise serializers.ValidationError('Error retrieving Wallet from ShipChain Profiles')
+
+                wallet_details = wallet_response.json()
+                from_address = wallet_details['data']['attributes']['address']
+
+            queryset = queryset.filter(transactionreceipt__from_address__iexact=from_address)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
