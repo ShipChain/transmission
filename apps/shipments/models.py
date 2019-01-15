@@ -412,7 +412,7 @@ class TrackingData(models.Model):
 
     @property
     def has_gps(self):
-        return True if self.source == 'gps' else False
+        return True if self.source.lower() == 'gps' else False
 
     @property
     def as_point(self):
