@@ -2674,7 +2674,6 @@ components:
 
       getResource:
         allOf:
-        - $ref: '#/components/schemas/dataTypes/resourceId'
         - $ref: '#/components/schemas/job/resource'
         - properties:
             attributes:
@@ -2774,22 +2773,19 @@ components:
 
       getResource:
         allOf:
-        - $ref: '#/components/schemas/dataTypes/resourceId'
         - $ref: '#/components/schemas/shipment/resource'
         - properties:
             attributes:
               $ref: '#/components/schemas/shipment/attributes'
             relationships:
-              $ref: '#/components/schemas/shipment/relationships/properties/relationships'
+              $ref: '#/components/schemas/shipment/relationships'
 
       getResponse:
         allOf:
         - $ref: '#/components/schemas/jsonApi/data'
         - properties:
             data:
-              allOf:
-              - $ref: '#/components/schemas/shipment/getResource'
-              - $ref: '#/components/schemas/shipment/relationships'
+              $ref: '#/components/schemas/shipment/getResource'
             included:
               $ref: '#/components/schemas/shipment/included'
 
@@ -2826,13 +2822,13 @@ components:
             $ref: '#/components/schemas/dataTypes/shipment/locationData'
 
       relationships:
-        properties:
-          relationships:
-            allOf:
-            - $ref: '#/components/schemas/shipment/loadData'
-            - $ref: '#/components/schemas/shipment/shipToLocation'
-            - $ref: '#/components/schemas/shipment/shipFromLocation'
-            - $ref: '#/components/schemas/shipment/finalDestinationLocation'
+        type: array
+        items:
+        - allOf:
+          - $ref: '#/components/schemas/shipment/loadData'
+          - $ref: '#/components/schemas/shipment/shipToLocation'
+          - $ref: '#/components/schemas/shipment/shipFromLocation'
+          - $ref: '#/components/schemas/shipment/finalDestinationLocation'
 
       createAttributes:
         allOf:
@@ -2930,7 +2926,8 @@ components:
               items:
                 $ref: '#/components/schemas/shipment/getResource'
             included:
-              $ref: '#/components/schemas/shipment/included'
+              items:
+                $ref: '#/components/schemas/shipment/included'
 
     document:
       resource:
@@ -2951,7 +2948,6 @@ components:
 
       getResource:
         allOf:
-          - $ref: '#/components/schemas/dataTypes/resourceId'
           - $ref: '#/components/schemas/document/resource'
           - properties:
               attributes:
@@ -3142,7 +3138,6 @@ components:
 
       getResource:
         allOf:
-        - $ref: '#/components/schemas/dataTypes/resourceId'
         - $ref: '#/components/schemas/location/resource'
         - properties:
             attributes:
