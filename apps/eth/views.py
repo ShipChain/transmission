@@ -10,7 +10,7 @@ from influxdb_metrics.loader import log_metric
 
 from apps.authentication import EngineRequest
 from apps.eth.models import EthAction, Event
-from apps.eth.serializers import EventSerializer, EthActionSerializer, EthActionBaseSerializer
+from apps.eth.serializers import EventSerializer, EthActionSerializer
 
 from .permissions import IsOwner
 
@@ -110,7 +110,6 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
             LOG.debug(f'Getting transactions for shipment: {shipment_pk}.')
 
             queryset = self.queryset.filter(ethlistener__shipments__id=shipment_pk)
-            list_serializer = EthActionBaseSerializer
         else:
             LOG.debug('Getting tx details filtered by wallet address.')
             if not settings.PROFILES_ENABLED:
@@ -140,12 +139,10 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
 
             queryset = queryset.filter(transactionreceipt__from_address__iexact=from_address)
 
-            list_serializer = self.serializer_class
-
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = list_serializer(page, many=True)
+            serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = list_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
