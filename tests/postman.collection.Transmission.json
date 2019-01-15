@@ -1273,7 +1273,7 @@
                     "path": [
                       "api",
                       "v1",
-                      "transaction",
+                      "transactions",
                       "{{transaction_hash}}",
                       ""
                     ]
@@ -1304,7 +1304,7 @@
                     "path": [
                       "api",
                       "v1",
-                      "transaction",
+                      "transactions",
                       "?wallet_id=<<wallet_id>>"
                     ]
                   }
