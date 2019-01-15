@@ -1722,8 +1722,8 @@ version = "4.6.0"
 setuptools = "*"
 
 [metadata]
-content-hash = "e1ba77c88d311e140fb5f826a654a8552e5c454bc0f2dcc4f3c6a5727dac09fa"
-python-versions = "~3.6.5"
+content-hash = "b92f80dd19cf68a76b73422c7f5b65c2f45a1c498b196bb428e6fe123dd1c3ed"
+python-versions = "==3.6.5"
 
 [metadata.hashes]
 CMRESHandler = []
