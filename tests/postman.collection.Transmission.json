@@ -41,8 +41,8 @@
                         "disabled": false
                       },
                       {
-                        "key": "device",
-                        "value": "device",
+                        "key": "device_id",
+                        "value": "device_id",
                         "type": "text",
                         "disabled": true
                       },
@@ -454,8 +454,8 @@
                         "disabled": false
                       },
                       {
-                        "key": "device",
-                        "value": "device",
+                        "key": "device_id",
+                        "value": "device_id",
                         "type": "text",
                         "disabled": true
                       },
