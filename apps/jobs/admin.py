@@ -4,12 +4,12 @@ from guardian.admin import GuardedModelAdmin
 from .models import AsyncJob
 
 
-def retry_attempt(JobAdmin, request, queryset):
+def retry_attempt(async_job_admin, request, queryset):
     for job in queryset:
         job.fire(delay=job.delay)
 
 
-class JobAdmin(GuardedModelAdmin):
+class AsyncJobAdmin(GuardedModelAdmin):
     actions = [retry_attempt]
 
     list_display = (
@@ -42,4 +42,4 @@ class JobAdmin(GuardedModelAdmin):
         return False
 
 
-admin.site.register(AsyncJob, JobAdmin)
+admin.site.register(AsyncJob, AsyncJobAdmin)
