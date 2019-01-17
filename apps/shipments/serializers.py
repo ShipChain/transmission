@@ -132,9 +132,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
     def validate_shipper_wallet_id(self, shipper_wallet_id):
         if settings.PROFILES_ENABLED:
-            auth = self.context['auth']
             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
-                                                     headers={'Authorization': 'JWT {}'.format(auth.decode())})
+                                                     headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
 
             if response.status_code != status.HTTP_200_OK:
                 raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
@@ -143,10 +142,9 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
     def validate_storage_credentials_id(self, storage_credentials_id):
         if settings.PROFILES_ENABLED:
-            auth = self.context['auth']
             response = settings.REQUESTS_SESSION.get(
                 f'{settings.PROFILES_URL}/api/v1/storage_credentials/{storage_credentials_id}/',
-                headers={'Authorization': 'JWT {}'.format(auth.decode())})
+                headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
 
             if response.status_code != status.HTTP_200_OK:
                 raise serializers.ValidationError(
@@ -165,11 +163,10 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                             'storage_credentials_id', 'contract_version')
 
     def update(self, instance, validated_data):
-        auth = self.context['auth']
-
         if 'device_id' in validated_data:
             if validated_data['device_id']:
-                instance.device = Device.get_or_create_with_permission(auth, validated_data.pop('device_id'))
+                instance.device = Device.get_or_create_with_permission(self.context['auth'],
+                                                                       validated_data.pop('device_id'))
             else:
                 instance.device = validated_data.pop('device_id')
 

@@ -3,6 +3,7 @@ from unittest.mock import Mock
 
 from django.test.client import encode_multipart
 from requests.models import Response
+from rest_framework.test import APIClient
 
 
 def replace_variables_in_string(string, parameters):
@@ -24,3 +25,15 @@ def mocked_rpc_response(json, code=200):
     response.status_code = code
     response.json.return_value = json
     return response
+
+
+class APIClient(APIClient):
+    def force_authenticate(self, user=None, token=None):
+        """
+        Forcibly authenticates outgoing requests with the given
+        user and/or token.
+        """
+        self.handler._force_user = user
+        self.handler._force_token = token
+        if user is None:
+            self.logout()  # Also clear any possible session info if required

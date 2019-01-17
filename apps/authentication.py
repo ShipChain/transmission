@@ -13,20 +13,93 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
+import warnings
+import uuid
+import datetime
 from collections import namedtuple
+import jwt
+from jwt.exceptions import InvalidTokenError
 
 from asgiref import sync
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
-from jwt.exceptions import InvalidTokenError
+from django.contrib.auth import get_user_model
 from rest_framework import exceptions
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import BasePermission
-from rest_framework_jwt.authentication import JSONWebTokenAuthentication, jwt_decode_handler
-from rest_framework_jwt.settings import api_settings
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from settings import SIMPLE_JWT
 from .utils import parse_dn
+
+
+def get_username_field():
+    try:
+        username_field = get_user_model().USERNAME_FIELD
+    except AttributeError:
+        username_field = 'username'
+
+    return username_field
+
+
+def get_username(user):
+    try:
+        username = user.get_username()
+    except AttributeError:
+        username = user.username
+
+    return username
+
+
+def jwt_decode_handler(token):
+    options = {
+        'verify_exp': True,
+    }
+    # get user from token, BEFORE verification, to get user secret key
+    return jwt.decode(
+        token,
+        SIMPLE_JWT['VERIFYING_KEY'],
+        True,
+        options=options,
+        leeway=0,
+        audience=SIMPLE_JWT['AUDIENCE'],
+        issuer=None,
+        algorithms=[SIMPLE_JWT['ALGORITHM']]
+    )
+
+
+def jwt_payload_handler(user):
+    username_field = get_username_field()
+    username = get_username(user)
+
+    warnings.warn(
+        'The following fields will be removed in the future: '
+        '`email` and `user_id`. ',
+        DeprecationWarning
+    )
+
+    payload = {
+        'user_id': user.pk,
+        'username': username,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=300)
+    }
+    if hasattr(user, 'email'):
+        payload['email'] = user.email
+    if isinstance(user.pk, uuid.UUID):
+        payload['user_id'] = str(user.pk)
+
+    payload[username_field] = username
+    payload['aud'] = SIMPLE_JWT['AUDIENCE']
+
+    return payload
+
+
+def get_token_from_tokenuser(request):
+    """
+    This is for retreiving the decoded JWT from the simplejwt token user request.
+    """
+    return (request.authenticators[-1].get_raw_token(request.authenticators[-1].get_header(request)).decode()
+            if request.authenticators else None)
 
 
 class AuthenticatedUser:
@@ -51,14 +124,23 @@ def passive_credentials_auth(payload):
 
     payload['pk'] = payload['sub']
     payload = namedtuple("User", payload.keys())(*payload.values())
-    payload = api_settings.JWT_PAYLOAD_HANDLER(payload)
+    print(payload)
+    payload = jwt_payload_handler(payload)
 
     user = AuthenticatedUser(payload)
 
     return user
 
 
-class PassiveJSONWebTokenAuthentication(JSONWebTokenAuthentication):
+def get_token_from_tokenuser(request):
+    """
+    This is for retreiving the decoded JWT from the simplejwt token user request.
+    """
+    return (request.authenticators[-1].get_raw_token(request.authenticators[-1].get_header(request)).decode()
+            if request.authenticators else None)
+
+
+class PassiveJSONWebTokenAuthentication(JWTAuthentication):
     def authenticate_credentials(self, payload):
         return passive_credentials_auth(payload)
 
@@ -103,14 +185,14 @@ class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
         return True
 
     async def _get_jwt_from_subprotocols(self):
-        jwt = None
+        jwt_from_protocols = None
 
         # Initially parse jwt out of subprotocols
         for protocol in self.scope['subprotocols']:
             if protocol.startswith('base64.jwt.'):
-                jwt = protocol.split('base64.jwt.')[1]
+                jwt_from_protocols = protocol.split('base64.jwt.')[1]
 
-        return jwt
+        return jwt_from_protocols
 
     async def _get_user(self):
         user = None

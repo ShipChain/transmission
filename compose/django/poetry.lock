@@ -592,15 +592,21 @@ six = "*"
 
 [[package]]
 category = "main"
-description = "JSON Web Token based authentication for Django REST framework"
-name = "djangorestframework-jwt"
+description = "A minimal JSON Web Token authentication plugin for Django REST Framework"
+name = "djangorestframework-simplejwt"
 optional = false
 python-versions = "*"
-version = "1.11.0"
+version = "3.3"
 
 [package.dependencies]
-PyJWT = ">=1.5.2,<2.0.0"
+django = "*"
+djangorestframework = "*"
+pyjwt = "*"
 
+[package.source]
+reference = "88d6930b52f444fa18f4e6c4b0e251ffeaa120bf"
+type = "git"
+url = "git://github.com/ShipChain/django-rest-framework-simplejwt.git"
 [[package]]
 category = "main"
 description = "A Python library for the Docker Engine API."
@@ -1741,7 +1747,7 @@ version = "4.6.0"
 setuptools = "*"
 
 [metadata]
-content-hash = "ec47d3673bcad01b1625f5b80404ec3a5fd2576c865d59669567f6fd6e0e8825"
+content-hash = "6ab8cbf9c46d4f2f9f88bd5dee72a3410e4775e784f61779c489b80e09fb4714"
 python-versions = "==3.6.5"
 
 [metadata.hashes]
@@ -1798,7 +1804,7 @@ django-redis = ["15b47faef6aefaa3f47135a2aeb67372da300e4a4cf06809c66ab392686a215
 djangorestframework = ["b6714c3e4b0f8d524f193c91ecf5f5450092c2145439ac2769711f7eba89a9d9", "c375e4f95a3a64fccac412e36fb42ba36881e52313ec021ef410b40f67cddca4"]
 djangorestframework-gis = ["018200f8ac8e4babd04001e86ce8df5ad86057d1e7438558b7c9ce24b532ea20", "94901389f32f0b8cdd1133e581f81c745c903449a08c2ddff0fcb2645cca846c"]
 djangorestframework-jsonapi = ["599d3f4fa5e4e0479a0ccc68802a1cc21dd2e0b1e6dfe1e9ea5b9c232e83a50b", "a0cdd0ce8ac72b85cd45c8683762117248bc0e6b21b9772b79ef3833181b6033"]
-djangorestframework-jwt = ["5efe33032f3a4518a300dc51a51c92145ad95fb6f4b272e5aa24701db67936a7", "ab15dfbbe535eede8e2e53adaf52ef0cf018ee27dbfad10cbc4cbec2ab63d38c"]
+djangorestframework-simplejwt = []
 docker = ["2840ffb9dc3ef6d00876bde476690278ab13fa1f8ba9127ef855ac33d00c3152", "5831256da3477723362bc71a8df07b8cd8493e4a4a60cebd45580483edbe48ae"]
 docker-pycreds = ["6ce3270bcaf404cc4c3e27e4b6c70d3521deae82fb508767870fdbf772d584d4", "7266112468627868005106ec19cd0d722702d2b7d5912a28e19b826c3d37af49"]
 docutils = ["02aec4bd92ab067f6ff27a38a38a41173bf01bed8f89157768c1573f53e474a6", "51e64ef2ebfb29cae1faa133b3710143496eca21c530f3f71424d77687764274", "7a4bd47eaf6596e1295ecb11361139febe29b084a87bf005bf899f9a42edc3c6"]

@@ -11,7 +11,8 @@ from jose import jws
 from moto import mock_iot
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.test import APITestCase, APIClient, force_authenticate
+from rest_framework.test import APITestCase, force_authenticate, APIClient
+from rest_framework.request import ForcedAuthentication
 
 from apps.authentication import AuthenticatedUser
 from apps.eth.models import EthAction
@@ -58,7 +59,17 @@ U3JjO4tacmUD2UT1rjHXAkEAjpPF0Zdv4Dbf52MfeowoLw/KyreQfRVCIeSG9A4H
 -----END RSA PRIVATE KEY-----"""
 
 
+class token():
+    def decode():
+        return 'JWT token'
+
+
 class ShipmentAPITests(APITestCase):
+    def fake_get_raw_token(self, request):
+        return token
+
+    def fake_get_raw_header(self, request):
+        return 'JWT dummy'
 
     def setUp(self):
         self.client = APIClient()
@@ -68,6 +79,9 @@ class ShipmentAPITests(APITestCase):
             'username': 'user1@shipchain.io',
             'email': 'user1@shipchain.io',
         })
+
+        ForcedAuthentication.get_raw_token = self.fake_get_raw_token
+        ForcedAuthentication.get_header = self.fake_get_raw_header
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
@@ -1278,6 +1292,12 @@ class LocationAPITests(APITestCase):
 
 class TrackingDataAPITests(APITestCase):
 
+    def fake_get_raw_token(self, request):
+        return token
+
+    def fake_get_raw_header(self, request):
+        return 'JWT dummy'
+
     def setUp(self):
         self.client = APIClient()
 
@@ -1286,6 +1306,9 @@ class TrackingDataAPITests(APITestCase):
             'username': 'user1@shipchain.io',
             'email': 'user1@shipchain.io',
         })
+
+        ForcedAuthentication.get_raw_token = self.fake_get_raw_token
+        ForcedAuthentication.get_header = self.fake_get_raw_header
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
@@ -1370,6 +1393,12 @@ class FakeBotoAWSRequestsAuth(BotoAWSRequestsAuth):
 
 @mock.patch('apps.iot_client.BotoAWSRequestsAuth', FakeBotoAWSRequestsAuth)
 class ShipmentWithIoTAPITests(APITestCase):
+    def fake_get_raw_token(self, request):
+        return token
+
+    def fake_get_raw_header(self, request):
+        return 'JWT dummy'
+
     def setUp(self):
         self.client = APIClient()
 
@@ -1383,6 +1412,9 @@ class ShipmentWithIoTAPITests(APITestCase):
             id=DEVICE_ID,
             certificate_id='FAKE_CERTIFICATE_ID'
         )
+
+        ForcedAuthentication.get_raw_token = self.fake_get_raw_token
+        ForcedAuthentication.get_header = self.fake_get_raw_header
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)

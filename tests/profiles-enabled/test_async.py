@@ -37,11 +37,11 @@ USER_ID = '00000000-0000-0000-0000-000000000000'
 
 async def get_jwt(exp=None, sub=USER_ID):
     payload = {'email': 'fake@shipchain.io', 'username': 'fake@shipchain.io', 'sub': sub,
-                        'aud': settings.JWT_AUTH['JWT_AUDIENCE']}
+                        'aud': settings.SIMPLE_JWT['AUDIENCE']}
     if exp:
         payload['exp'] = exp
 
-    return jwt.encode(payload=payload, key=settings.JWT_AUTH['JWT_PRIVATE_KEY'],
+    return jwt.encode(payload=payload, key=settings.SIMPLE_JWT['PRIVATE_KEY'],
                       algorithm='RS256',
                       headers={'kid': '230498151c214b788dd97f22b85410a5'}).decode()
 
