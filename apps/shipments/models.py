@@ -242,6 +242,9 @@ class Shipment(models.Model):
 
     customer_fields = JSONField(blank=True, null=True)
 
+    route_as_point = JSONField(blank=True, null=True)
+    route_as_line = JSONField(blank=True, null=True)
+
     def get_device_request_url(self):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
         return f"{settings.PROFILES_URL}/api/v1/device/?on_shipment={self.vault_id}"
@@ -398,9 +401,10 @@ class TrackingData(models.Model):
     speed = models.IntegerField(validators=[MinValueValidator(0)], null=True, blank=True)
     timestamp = models.DateTimeField()
     version = models.CharField(max_length=36)
+    point = GeometryField(null=True)
 
     class Meta:
-        ordering = ('created_at',)
+        ordering = ('timestamp',)
 
     @property
     def timestamp_no_tz(self):

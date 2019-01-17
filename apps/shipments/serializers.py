@@ -9,6 +9,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from django.conf import settings
 from django.db import transaction
+from django.contrib.gis.geos import Point
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions, status, serializers as rest_serializers
@@ -288,6 +289,8 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
     """
     Serializer for tracking data to be cached in db
     """
+    shipment = ShipmentSerializer(read_only=True)
+
     def __init__(self, *args, **kwargs):
         # Flatten 'position' fields to the parent tracking data payload
         kwargs['data'].update(kwargs['data'].pop('position'))
@@ -301,14 +304,13 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
         super().__init__(*args, **kwargs)
 
-    shipment = ShipmentSerializer(read_only=True)
-
     class Meta:
         model = TrackingData
         fields = '__all__'
 
     def create(self, validated_data):
+        point = Point(validated_data.get('longitude', None), validated_data.get('latitude', None))
+        validated_data.update({'point': point})
         data = TrackingData.objects.create(**validated_data, shipment=self.context['shipment'])
-        data.save()
 
         return data

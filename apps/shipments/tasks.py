@@ -1,12 +1,16 @@
 # pylint:disable=invalid-name
 import logging
+import datetime
+import json
+
+from django.contrib.gis.serializers.geojson import Serializer as GeoSerializer
 
 from celery import shared_task
 from influxdb_metrics.loader import log_metric
 
 from apps.rpc_client import RPCError
 from .rpc import RPCClientFactory
-from .models import Shipment
+from .models import Shipment, TrackingData
 
 LOG = logging.getLogger('transmission')
 
@@ -24,3 +28,31 @@ def tracking_data_update(self, shipment_id, payload):
                                              shipment.vault_id,
                                              payload)
     shipment.set_vault_hash(signature['hash'], rate_limit=True)
+
+
+@shared_task(bind=True, retry_backoff=3, retry_backoff_max=60, max_retries=10)
+def shipment_route_update(self, shipment_id):
+    shipment = Shipment.objects.get(id=shipment_id)
+
+    begin = (shipment.pickup_act or datetime.datetime.min).replace(tzinfo=None)
+    end = (shipment.delivery_act or datetime.datetime.max).replace(tzinfo=None)
+
+    tracking_data = TrackingData.objects.filter(
+        shipment__id=shipment.id,
+        timestamp__range=(begin, end)
+    )
+
+    # tracking_data = tracking_data_queryset.filter(timestamp__range=(begin, end))
+    # tracking_data = tracking_data_queryset
+
+    geo_data = GeoSerializer().serialize(
+        tracking_data,
+        geometry_field='point',
+        fields=('uncertainty', 'source', 'timestamp')
+    )
+
+    shipment.route_as_point = json.loads(geo_data)
+    shipment.save()
+
+    LOG.debug(f'Updated shipment route for shipment: {shipment_id}')
+    log_metric('transmission.info', tags={'method': 'shipments.tasks.shipment_route_update', 'module': __name__})

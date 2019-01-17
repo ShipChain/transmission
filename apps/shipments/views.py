@@ -14,6 +14,8 @@ from .models import Shipment, Location, TrackingData
 from .permissions import IsOwner, IsUserOrDevice
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer
+from .tasks import tracking_data_update, shipment_route_update
+
 
 LOG = logging.getLogger('transmission')
 
@@ -77,16 +79,30 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
 
-        if 'as_line' in request.query_params:
-            all_features = build_line_string_feature(shipment, tracking_data)
-        elif 'as_point' in request.query_params:
-            all_features = build_point_features(shipment, tracking_data)
-        else:
-            all_features = []
-            all_features += build_line_string_feature(shipment, tracking_data)
-            all_features += build_point_features(shipment, tracking_data)
+        if tracking_data.exists() and (not shipment.route_as_point or not shipment.route_as_line):
+            # Update shipment route
+            shipment_route_update.delay(shipment.id)
 
-        feature_collection = build_feature_collection(all_features)
+            if 'as_line' in request.query_params:
+                all_features = build_line_string_feature(shipment, tracking_data)
+            elif 'as_point' in request.query_params:
+                all_features = build_point_features(shipment, tracking_data)
+            else:
+                all_features = []
+                all_features += build_line_string_feature(shipment, tracking_data)
+                all_features += build_point_features(shipment, tracking_data)
+
+            feature_collection = build_feature_collection(all_features)
+        else:
+            if 'as_line' in request.query_params:
+                feature_collection = shipment.route_as_line
+            elif 'as_point' in request.query_params:
+                feature_collection = shipment.route_as_point
+            else:
+                all_features = []
+                all_features += shipment.route_as_point('features', None)
+                all_features += shipment.route_as_line.get('features', None)
+                feature_collection = build_feature_collection(all_features)
 
         return Response(data=feature_collection, status=status.HTTP_200_OK)
 
@@ -107,7 +123,6 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             tracking_data = serializer.validated_data
 
-        from .tasks import tracking_data_update
         for data in tracking_data:
             payload = data['payload']
 
@@ -118,6 +133,9 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment})
             tracking_model_serializer.is_valid(raise_exception=True)
             tracking_model_serializer.save()
+
+        # Update shipment route
+        shipment_route_update.delay(shipment.id)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
