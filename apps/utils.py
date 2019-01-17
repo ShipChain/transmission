@@ -96,4 +96,3 @@ def get_username(user):
         username = user.username
 
     return username
-

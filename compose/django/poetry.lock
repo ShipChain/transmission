@@ -184,10 +184,10 @@ description = "The AWS SDK for Python"
 name = "boto3"
 optional = false
 python-versions = "*"
-version = "1.9.79"
+version = "1.9.80"
 
 [package.dependencies]
-botocore = ">=1.12.79,<1.13.0"
+botocore = ">=1.12.80,<1.13.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.1.10,<0.2.0"
 
@@ -197,7 +197,7 @@ description = "Low-level, data-driven core of boto 3."
 name = "botocore"
 optional = false
 python-versions = "*"
-version = "1.12.79"
+version = "1.12.80"
 
 [package.dependencies]
 docutils = ">=0.10"
@@ -430,8 +430,8 @@ category = "main"
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
 name = "django"
 optional = false
-python-versions = ">=3.4"
-version = "2.0.10"
+python-versions = ">=3.5"
+version = "2.1.5"
 
 [package.dependencies]
 pytz = "*"
@@ -1747,7 +1747,7 @@ version = "4.6.0"
 setuptools = "*"
 
 [metadata]
-content-hash = "6ab8cbf9c46d4f2f9f88bd5dee72a3410e4775e784f61779c489b80e09fb4714"
+content-hash = "bcb29aaa5f7d71c8f4918c2a22a1dbe692f9702965ae3f0d3256fb9650f25c02"
 python-versions = "==3.6.5"
 
 [metadata.hashes]
@@ -1769,8 +1769,8 @@ bandit = ["6102b5d6afd9d966df5054e0bdfc2e73a24d0fea400ec25f2e54c134412158d7", "9
 billiard = ["42d9a227401ac4fba892918bba0a0c409def5435c4b483267ebfe821afaaba0e"]
 blessings = ["98e5854d805f50a5b58ac2333411b0482516a8210f23f43308baeb58d77c157d", "b1fdd7e7a675295630f9ae71527a8ebc10bfefa236b3d6aa4932ee4462c17ba3", "caad5211e7ba5afe04367cdd4cfc68fa886e2e08f6f35e76b7387d2109ccea6e"]
 boto = ["147758d41ae7240dc989f0039f27da8ca0d53734be0eb869ef16e3adcfa462e8", "ea0d3b40a2d852767be77ca343b58a9e3a4b00d9db440efb8da74b4e58025e5a"]
-boto3 = ["2aae5d59a1e463056c1db531c9a26605176a5dbb8c0134c7dfdd288d9d7d2267", "a75462a89808130b0e74dffffe8d9f851f8c5f6f68c016938addc84397ba6953"]
-botocore = ["8d87d5ff0c3ce5515d00579168c61544b735705121d4fdf94291e0b4e9a0339a", "ba2f8c353a3e34cc5c750fef7716d31068c866d4b3b29142b891ce7a55ba7804"]
+boto3 = ["122603b00f8c458236d1bd09850bdea56fc45f271e75ca38e66dbce37f72cada", "99ec19dc4f0aa8a8354db7baebe1ff57bd18aeb6a539b28693b2e8ca8dc3d85b"]
+botocore = ["76a2969278250e010253ddf514f4b54eaa7d2b1430f682874c3c2ab92f25a96d", "8c579bac9abeaff1270a7a25964b01d3db1367f42fa5f826e1303ec8a4b13cef"]
 bpython = ["6cd1b165888c232f2fcdd4313577b6066155d6c94b3d42c0f11649c000394417", "8907c510bca3c4d9bc0a157279bdc5e3b739cc68c0f247167279b6fe4becb02f"]
 cachecontrol = ["cef77effdf51b43178f6a2d3b787e3734f98ade253fa3187f3bb7315aaa42ff7"]
 celery = ["77dab4677e24dc654d42dfbdfed65fa760455b6bb563a0877ecc35f4cfcfc678", "ad7a7411772b80a4d6c64f2f7f723200e39fb66cf614a7fdfab76d345acc7b13"]
@@ -1789,7 +1789,7 @@ cryptography = ["02602e1672b62e803e08617ec286041cc453e8d43f093a5f4162095506bc0be
 curtsies = ["89c802ec051d01dec6fc983e9856a3706e4ea8265d2940b1f6d504a9e26ed3a9"]
 daphne = ["0aafeb5199d564db675d5640bece6072cbd4af8c4f818938f08dac70b31c5841", "d22567197361782736e2031e8ba0bf5aaefbe202f66153fe9c1ac5578c292a97"]
 decorator = ["2c51dff8ef3c447388fe5e4453d24a2bf128d3a4c32af3fabef1f01c6851ab82", "c39efa13fbdeb4506c476c9b3babf6a718da943dab7811c206005a4a956c080c"]
-django = ["0292a7ad7d8ffc9cfc6a77f043d2e81f5bbc360c0c4a1686e130ef3432437d23", "e89f613e3c1f7ff245ffee3560472f9fa9c07060b11f65e1de3cb763f8dcd4b9"]
+django = ["a32c22af23634e1d11425574dce756098e015a165be02e4690179889b207c7a8", "d6393918da830530a9516bbbcbf7f1214c3d733738779f06b0f649f49cc698c3"]
 django-cors-headers = ["0e9532628b3aa8806442d4d0b15e56112e6cfbef3735e13401935c98b842a2b4", "c7ec4816ec49416517b84f317499d1519db62125471922ab78d670474ed9b987"]
 django-dotenv = ["3812bb0f4876cf31f902aad140f0645e120e51ee30eb7c40c22050f58a0e4adb", "a9b1b40a70bd321acd231926acedb9bd2c5e873e33a1873b34a7276d196a765e"]
 django-enumfields = ["fafbf81c1a1707429c3ec5b5c4d4a2ca33bbffb3fa4c777dd35567e164391bf6"]

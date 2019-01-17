@@ -40,8 +40,8 @@ django-filter = "~=2.0"
 django-gm2m = "==0.6.1"
 django-influxdb-metrics = {git = "git://github.com/lwbco/django-influxdb-tagged-metrics.git", rev = "add895558ed6ab59c621b19beae026f8933d4848"}
 django-redis = "==4.9.0"
-djangorestframework = "==3.8.2"
-djangorestframework-gis = "==0.13"
+djangorestframework = "==3.9.1"
+djangorestframework-gis = "==0.14"
 djangorestframework-jsonapi = "==2.4.0"
 djangorestframework-simplejwt = {git = "git://github.com/ShipChain/django-rest-framework-simplejwt.git", rev = "88d6930b52f444fa18f4e6c4b0e251ffeaa120bf"}
 drf-nested-routers = "==0.90.0"
