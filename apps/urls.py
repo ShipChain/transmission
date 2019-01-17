@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.conf.urls import url
+from django.contrib import admin
 from django.views.generic import TemplateView
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework_nested import routers as drf_nested_routers
@@ -46,6 +47,7 @@ urlpatterns = [
         TemplateView.as_view(template_name='apidoc.html'),
         name='api_schema'
     ),
+    url(r'^admin', admin.site.urls)
 ]
 urlpatterns += router.urls
 
