@@ -11,6 +11,7 @@ from influxdb_metrics.loader import log_metric
 from apps.rpc_client import RPCError
 from .rpc import RPCClientFactory
 from .models import Shipment, TrackingData
+from .geojson import FeatureCollection
 
 LOG = logging.getLogger('transmission')
 
@@ -34,24 +35,28 @@ def tracking_data_update(self, shipment_id, payload):
 def shipment_route_update(self, shipment_id):
     shipment = Shipment.objects.get(id=shipment_id)
 
-    begin = (shipment.pickup_act or datetime.datetime.min).replace(tzinfo=None)
-    end = (shipment.delivery_act or datetime.datetime.max).replace(tzinfo=None)
+    begin = (shipment.pickup_act or datetime.datetime.min).replace(tzinfo=datetime.timezone.utc)
+    end = (shipment.delivery_act or datetime.datetime.max).replace(tzinfo=datetime.timezone.utc)
 
     tracking_data = TrackingData.objects.filter(
         shipment__id=shipment.id,
         timestamp__range=(begin, end)
     )
 
-    # tracking_data = tracking_data_queryset.filter(timestamp__range=(begin, end))
-    # tracking_data = tracking_data_queryset
+    # Set geometry point value for tracking data who doesn't have one yet
+    TrackingData.set_geometry_point(tracking_data)
 
-    geo_data = GeoSerializer().serialize(
+    geojson_data_as_point = GeoSerializer().serialize(
         tracking_data,
         geometry_field='point',
         fields=('uncertainty', 'source', 'timestamp')
     )
 
-    shipment.route_as_point = json.loads(geo_data)
+    all_features = [TrackingData.get_linestring_feature(tracking_data)]
+    geojson_data_as_line = FeatureCollection(all_features)
+
+    shipment.route_as_point = json.loads(geojson_data_as_point)
+    shipment.route_as_line = geojson_data_as_line
     shipment.save()
 
     LOG.debug(f'Updated shipment route for shipment: {shipment_id}')

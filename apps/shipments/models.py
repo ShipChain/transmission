@@ -419,6 +419,11 @@ class TrackingData(models.Model):
         return True if self.source.lower() == 'gps' else False
 
     @property
+    def set_point(self):
+        self.point = Point(self.longitude, self.latitude)
+        self.save()
+
+    @property
     def as_point(self):
         LOG.debug(f'Device tracking as_point.')
         log_metric('transmission.info', tags={'method': 'as_point', 'module': __name__})
@@ -472,3 +477,12 @@ class TrackingData(models.Model):
             log_metric('transmission.error', tags={'method': 'get_linestring_feature', 'module': __name__})
 
             raise APIException(detail="Unable to build GeoJSON LineString Feature from tracking data")
+
+    @staticmethod
+    def set_geometry_point(tracking_points):
+        """
+        Set point field value for a list / queryset of TrackingData
+        """
+        for point in tracking_points:
+            if not point.point:
+                point.set_point

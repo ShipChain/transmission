@@ -296,7 +296,6 @@ class ShipmentAPITests(APITestCase):
             data = response.json()['data']
             self.assertTrue(isinstance(data['features'], list))
             self.assertEqual(data['features'][0]['geometry']['type'], 'Point')
-            self.assertEqual(data['features'][0]['properties']['has_gps'], True)
 
             # Get data as line
             url_as_line = url + '?as_line'

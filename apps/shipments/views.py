@@ -93,16 +93,19 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                 all_features += build_point_features(shipment, tracking_data)
 
             feature_collection = build_feature_collection(all_features)
-        else:
+
+        elif tracking_data.exists():
             if 'as_line' in request.query_params:
                 feature_collection = shipment.route_as_line
             elif 'as_point' in request.query_params:
                 feature_collection = shipment.route_as_point
             else:
                 all_features = []
-                all_features += shipment.route_as_point('features', None)
                 all_features += shipment.route_as_line.get('features', None)
+                all_features += shipment.route_as_point.get('features', None)
                 feature_collection = build_feature_collection(all_features)
+        else:
+            feature_collection = None
 
         return Response(data=feature_collection, status=status.HTTP_200_OK)
 
