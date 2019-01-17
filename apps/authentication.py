@@ -23,32 +23,13 @@ from jwt.exceptions import InvalidTokenError
 from asgiref import sync
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from rest_framework import exceptions
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import BasePermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from settings import SIMPLE_JWT
-from .utils import parse_dn
-
-
-def get_username_field():
-    try:
-        username_field = get_user_model().USERNAME_FIELD
-    except AttributeError:
-        username_field = 'username'
-
-    return username_field
-
-
-def get_username(user):
-    try:
-        username = user.get_username()
-    except AttributeError:
-        username = user.username
-
-    return username
+from .utils import parse_dn, get_username_field, get_username
 
 
 def jwt_decode_handler(token):
