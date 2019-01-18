@@ -184,10 +184,10 @@ description = "The AWS SDK for Python"
 name = "boto3"
 optional = false
 python-versions = "*"
-version = "1.9.80"
+version = "1.9.81"
 
 [package.dependencies]
-botocore = ">=1.12.80,<1.13.0"
+botocore = ">=1.12.81,<1.13.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.1.10,<0.2.0"
 
@@ -197,7 +197,7 @@ description = "Low-level, data-driven core of boto 3."
 name = "botocore"
 optional = false
 python-versions = "*"
-version = "1.12.80"
+version = "1.12.81"
 
 [package.dependencies]
 docutils = ">=0.10"
@@ -603,7 +603,7 @@ djangorestframework = "*"
 pyjwt = "*"
 
 [package.source]
-reference = "88d6930b52f444fa18f4e6c4b0e251ffeaa120bf"
+reference = "90e8e959920b71ae9bd22bc9c7a7f5a943f28c10"
 type = "git"
 url = "git://github.com/ShipChain/django-rest-framework-simplejwt.git"
 [[package]]
@@ -1746,7 +1746,7 @@ version = "4.6.0"
 setuptools = "*"
 
 [metadata]
-content-hash = "eae8b8ceeb976db17171c7862dcee258870e38e6ff3b0f98ad5a592815bd802b"
+content-hash = "b6ec4c7fcb58116e23e706316d43e9a806613dc8a17179a12981818460fa83ff"
 python-versions = "==3.6.5"
 
 [metadata.hashes]
@@ -1768,8 +1768,8 @@ bandit = ["6102b5d6afd9d966df5054e0bdfc2e73a24d0fea400ec25f2e54c134412158d7", "9
 billiard = ["42d9a227401ac4fba892918bba0a0c409def5435c4b483267ebfe821afaaba0e"]
 blessings = ["98e5854d805f50a5b58ac2333411b0482516a8210f23f43308baeb58d77c157d", "b1fdd7e7a675295630f9ae71527a8ebc10bfefa236b3d6aa4932ee4462c17ba3", "caad5211e7ba5afe04367cdd4cfc68fa886e2e08f6f35e76b7387d2109ccea6e"]
 boto = ["147758d41ae7240dc989f0039f27da8ca0d53734be0eb869ef16e3adcfa462e8", "ea0d3b40a2d852767be77ca343b58a9e3a4b00d9db440efb8da74b4e58025e5a"]
-boto3 = ["122603b00f8c458236d1bd09850bdea56fc45f271e75ca38e66dbce37f72cada", "99ec19dc4f0aa8a8354db7baebe1ff57bd18aeb6a539b28693b2e8ca8dc3d85b"]
-botocore = ["76a2969278250e010253ddf514f4b54eaa7d2b1430f682874c3c2ab92f25a96d", "8c579bac9abeaff1270a7a25964b01d3db1367f42fa5f826e1303ec8a4b13cef"]
+boto3 = ["31c59a141570e05acca0ed67084b19b5d77055b1d89889d816cdf0152a00ac5d", "a6aac15181ee37ffb4867d07ce3dcf932379a2d5c36b4f6648ad28a610cf51c0"]
+botocore = ["21e4e9d6fbdf583d1c6f0f3f6eb3e1624dd66b515026cfaa8522c44e2130e42e", "783cb25515f59ea191cfe70944d1c69c988911845f3e86b3559b49b52e36ea27"]
 bpython = ["6cd1b165888c232f2fcdd4313577b6066155d6c94b3d42c0f11649c000394417", "8907c510bca3c4d9bc0a157279bdc5e3b739cc68c0f247167279b6fe4becb02f"]
 cachecontrol = ["cef77effdf51b43178f6a2d3b787e3734f98ade253fa3187f3bb7315aaa42ff7"]
 celery = ["77dab4677e24dc654d42dfbdfed65fa760455b6bb563a0877ecc35f4cfcfc678", "ad7a7411772b80a4d6c64f2f7f723200e39fb66cf614a7fdfab76d345acc7b13"]

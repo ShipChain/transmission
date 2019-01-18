@@ -13,37 +13,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import json
 import datetime
+import json
 
-import jwt
 import pytest
 from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
-from django.conf import settings
 from django.db import models
 from django_mock_queries.mocks import mocked_relations
 from mock import patch
 
-from apps.jobs.models import AsyncJob, JobListener, MessageType
-from apps.shipments.models import Shipment, Device, TrackingData
-
-from apps.shipments.signals import shipment_post_save
 from apps.consumers import EventTypes
+from apps.jobs.models import AsyncJob, JobListener, MessageType
 from apps.routing import application
+from apps.shipments.models import Shipment, Device, TrackingData
+from apps.shipments.signals import shipment_post_save
+from tests.utils import get_jwt
 
 USER_ID = '00000000-0000-0000-0000-000000000000'
 
 
-async def get_jwt(exp=None, sub=USER_ID):
-    payload = {'email': 'fake@shipchain.io', 'username': 'fake@shipchain.io', 'sub': sub,
-                        'aud': settings.SIMPLE_JWT['AUDIENCE']}
-    if exp:
-        payload['exp'] = exp
-
-    return jwt.encode(payload=payload, key=settings.SIMPLE_JWT['PRIVATE_KEY'],
-                      algorithm='RS256',
-                      headers={'kid': '230498151c214b788dd97f22b85410a5'}).decode()
+async def async_get_jwt(**kwargs):
+    return await sync_to_async(get_jwt)(**kwargs)
 
 
 async def get_communicator(my_jwt):
@@ -53,7 +44,7 @@ async def get_communicator(my_jwt):
 
 @pytest.fixture
 async def communicator():
-    communicator = await get_communicator(await get_jwt())
+    communicator = await get_communicator(await async_get_jwt())
     connected, subprotocol = await communicator.connect()
     assert connected
     assert subprotocol == "base64.authentication.jwt"
@@ -64,7 +55,7 @@ async def communicator():
 @pytest.mark.asyncio
 async def test_jwt_auth():
     # Expired JWT
-    expired_jwt = await get_jwt(exp='1')
+    expired_jwt = await async_get_jwt(exp='1')
     communicator = await get_communicator(expired_jwt)
     connected, subprotocol = await communicator.connect()
     assert not connected
@@ -72,7 +63,7 @@ async def test_jwt_auth():
     await communicator.disconnect()
 
     # User ID in token doesn't match route
-    unauthorized_jwt = await get_jwt(sub='4686c616-fadf-4261-a2c2-6aaa504a1ae4')
+    unauthorized_jwt = await async_get_jwt(sub='4686c616-fadf-4261-a2c2-6aaa504a1ae4')
     communicator = await get_communicator(unauthorized_jwt)
     connected, subprotocol = await communicator.connect()
     assert not connected
@@ -80,7 +71,7 @@ async def test_jwt_auth():
     await communicator.disconnect()
 
     # Invalid protocols
-    valid_jwt = await get_jwt()
+    valid_jwt = await async_get_jwt()
     communicator = WebsocketCommunicator(application, f"ws/{USER_ID}/notifications",
                                          subprotocols=[f"base64.wat.{valid_jwt}", "base64.authentication.wat"])
     connected, subprotocol = await communicator.connect()
@@ -91,10 +82,10 @@ async def test_jwt_auth():
 
 @pytest.mark.asyncio
 async def test_jwt_refresh():
-    my_jwt = await get_jwt()
+    my_jwt = await async_get_jwt()
     communicator = await get_communicator(my_jwt)
 
-    expired_jwt = await get_jwt(exp='1')
+    expired_jwt = await async_get_jwt(exp='1')
     await communicator.send_to(text_data=json.dumps({"event": "refresh_jwt", "data": expired_jwt}))
 
     await communicator.send_to(json.dumps({"hello": "world"}))

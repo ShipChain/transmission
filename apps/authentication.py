@@ -13,117 +13,31 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import warnings
-import uuid
-import datetime
-from collections import namedtuple
-import jwt
-from jwt.exceptions import InvalidTokenError
-
 from asgiref import sync
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
-from rest_framework import exceptions
-from rest_framework.exceptions import APIException
+from jwt.exceptions import InvalidTokenError
+from rest_framework.exceptions import APIException, AuthenticationFailed
 from rest_framework.permissions import BasePermission
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
 
-from settings import SIMPLE_JWT
-from .utils import parse_dn, get_username_field, get_username
+from .utils import parse_dn
 
-
-def jwt_decode_handler(token):
-    options = {
-        'verify_exp': True,
-    }
-    # get user from token, BEFORE verification, to get user secret key
-    return jwt.decode(
-        token,
-        SIMPLE_JWT['VERIFYING_KEY'],
-        True,
-        options=options,
-        leeway=0,
-        audience=SIMPLE_JWT['AUDIENCE'],
-        issuer=None,
-        algorithms=[SIMPLE_JWT['ALGORITHM']]
-    )
+PASSIVE_JWT_AUTHENTICATION = JWTTokenUserAuthentication()
 
 
-def jwt_payload_handler(user):
-    username_field = get_username_field()
-    username = get_username(user)
-
-    warnings.warn(
-        'The following fields will be removed in the future: '
-        '`email` and `user_id`. ',
-        DeprecationWarning
-    )
-
-    payload = {
-        'user_id': user.pk,
-        'username': username,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=300)
-    }
-    if hasattr(user, 'email'):
-        payload['email'] = user.email
-    if isinstance(user.pk, uuid.UUID):
-        payload['user_id'] = str(user.pk)
-
-    payload[username_field] = username
-    payload['aud'] = SIMPLE_JWT['AUDIENCE']
-
-    return payload
+def passive_credentials_auth(jwt):
+    if jwt == "":
+        raise AuthenticationFailed('No JWT provided with request')
+    return PASSIVE_JWT_AUTHENTICATION.get_user(PASSIVE_JWT_AUTHENTICATION.get_validated_token(jwt))
 
 
-def get_token_from_tokenuser(request):
+def get_jwt_from_request(request):
     """
-    This is for retreiving the decoded JWT from the simplejwt token user request.
+    This is for retrieving the decoded JWT from the a request via the simplejwt authenticator.
     """
     return (request.authenticators[-1].get_raw_token(request.authenticators[-1].get_header(request)).decode()
             if request.authenticators else None)
-
-
-class AuthenticatedUser:
-    def __init__(self, payload):
-        self.id = payload.get('user_id')  # pylint:disable=invalid-name
-        self.username = payload.get('username')
-        self.email = payload.get('email')
-
-    def is_authenticated(self):
-        return True
-
-    def is_staff(self):
-        return False
-
-    def is_superuser(self):
-        return False
-
-
-def passive_credentials_auth(payload):
-    if 'sub' not in payload:
-        raise exceptions.AuthenticationFailed('Invalid payload.')
-
-    payload['pk'] = payload['sub']
-    payload = namedtuple("User", payload.keys())(*payload.values())
-    print(payload)
-    payload = jwt_payload_handler(payload)
-
-    user = AuthenticatedUser(payload)
-
-    return user
-
-
-def get_token_from_tokenuser(request):
-    """
-    This is for retreiving the decoded JWT from the simplejwt token user request.
-    """
-    return (request.authenticators[-1].get_raw_token(request.authenticators[-1].get_header(request)).decode()
-            if request.authenticators else None)
-
-
-class PassiveJSONWebTokenAuthentication(JWTAuthentication):
-    def authenticate_credentials(self, payload):
-        return passive_credentials_auth(payload)
 
 
 class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
@@ -166,22 +80,21 @@ class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
         return True
 
     async def _get_jwt_from_subprotocols(self):
-        jwt_from_protocols = None
+        jwt = None
 
         # Initially parse jwt out of subprotocols
         for protocol in self.scope['subprotocols']:
             if protocol.startswith('base64.jwt.'):
-                jwt_from_protocols = protocol.split('base64.jwt.')[1]
+                jwt = protocol.split('base64.jwt.')[1]
 
-        return jwt_from_protocols
+        return jwt
 
     async def _get_user(self):
         user = None
 
         try:
             if self.scope['jwt']:
-                payload = await sync.sync_to_async(jwt_decode_handler)(self.scope['jwt'])
-                user = await sync.sync_to_async(passive_credentials_auth)(payload)
+                user = await sync.sync_to_async(passive_credentials_auth)(self.scope['jwt'])
         except (APIException, InvalidTokenError):
             # Can ignore JWT auth failures, scope['user'] will not be set.
             pass

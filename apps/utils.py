@@ -2,7 +2,6 @@ import decimal
 import json
 
 import re
-from django.contrib.auth import get_user_model
 from enumfields.drf import EnumField
 
 
@@ -78,21 +77,3 @@ class DecimalEncoder(json.JSONEncoder):
 class UpperEnumField(EnumField):
     def to_representation(self, instance):
         return super(UpperEnumField, self).to_representation(instance).upper()
-
-
-def get_username_field():
-    try:
-        username_field = get_user_model().USERNAME_FIELD
-    except AttributeError:
-        username_field = 'username'
-
-    return username_field
-
-
-def get_username(user):
-    try:
-        username = user.get_username()
-    except AttributeError:
-        username = user.username
-
-    return username

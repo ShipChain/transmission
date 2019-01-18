@@ -1,20 +1,22 @@
-from rest_framework import exceptions
-from django.test import TestCase
 from django.http.request import HttpRequest
+from django.test import TestCase
+from rest_framework import exceptions
 
-from apps.authentication import PassiveJSONWebTokenAuthentication, EngineRequest
+from apps.authentication import EngineRequest, passive_credentials_auth
+from tests.utils import get_jwt
+
+USERNAME = 'fake@shipchain.io'
 
 
 class AuthTests(TestCase):
 
     def test_passive_jwt_auth(self):
-        auth = PassiveJSONWebTokenAuthentication()
-        self.assertRaises(exceptions.AuthenticationFailed, auth.authenticate_credentials, {})
-        user = auth.authenticate_credentials({'sub': '000-000-0000', 'username': 'wat@wat.com', 'email': 'wat@wat.com'})
-        self.assertEqual(user.is_authenticated(), True)
-        self.assertEqual(user.is_staff(), False)
-        self.assertEqual(user.is_superuser(), False)
-        self.assertEqual(user.username, 'wat@wat.com')
+        self.assertRaises(exceptions.AuthenticationFailed, passive_credentials_auth, "")
+        user = passive_credentials_auth(get_jwt(username=USERNAME))
+        self.assertEqual(user.is_authenticated, True)
+        self.assertEqual(user.is_staff, False)
+        self.assertEqual(user.is_superuser, False)
+        self.assertEqual(user.username, USERNAME)
 
     def test_engine_auth_requires_header(self):
         engine_request = EngineRequest()
