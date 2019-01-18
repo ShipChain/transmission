@@ -418,7 +418,6 @@ class TrackingData(models.Model):
     def has_gps(self):
         return True if self.source.lower() == 'gps' else False
 
-    @property
     def set_point(self):
         self.point = Point(self.longitude, self.latitude)
         self.save()
@@ -485,4 +484,4 @@ class TrackingData(models.Model):
         """
         for point in tracking_points:
             if not point.point:
-                point.set_point
+                point.set_point()
