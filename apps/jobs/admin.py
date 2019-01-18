@@ -1,5 +1,4 @@
 from django.contrib import admin
-from guardian.admin import GuardedModelAdmin
 
 from .models import AsyncJob
 
@@ -9,7 +8,7 @@ def retry_attempt(async_job_admin, request, queryset):
         job.fire(delay=job.delay)
 
 
-class AsyncJobAdmin(GuardedModelAdmin):
+class AsyncJobAdmin(admin.ModelAdmin):
     actions = [retry_attempt]
 
     list_display = (
