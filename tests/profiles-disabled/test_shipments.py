@@ -5,7 +5,6 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 
-from apps.authentication import AuthenticatedUser
 from apps.shipments.rpc import ShipmentRPCClient
 from tests.utils import create_form_content
 
@@ -26,12 +25,6 @@ class ShipmentAPITests(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
-
-        self.user_1 = AuthenticatedUser({
-            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7b',
-            'username': 'user1@shipchain.io',
-            'email': 'user1@shipchain.io',
-        })
 
     def test_shipment_create(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})
