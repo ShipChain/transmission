@@ -25,8 +25,8 @@ for name, logger in LOGGING['loggers'].items():
     if logger.get('level') == 'DEBUG':
         logger['level'] = 'INFO'
 
-JWT_AUTH['JWT_PRIVATE_KEY'] = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
-JWT_AUTH['JWT_PUBLIC_KEY'] = JWT_AUTH['JWT_PRIVATE_KEY'].public_key()
+SIMPLE_JWT['PRIVATE_KEY'] = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+SIMPLE_JWT['VERIFYING_KEY'] = SIMPLE_JWT['PRIVATE_KEY'].public_key()
 
 S3_RESOURCE = boto3.resource(
     's3',

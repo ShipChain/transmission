@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework_json_api import renderers as jsapi_renderers, serializers
 from influxdb_metrics.loader import log_metric
 
-from apps.authentication import EngineRequest
+from apps.authentication import EngineRequest, get_jwt_from_request
 from apps.eth.models import EthAction, Event
 from apps.eth.serializers import EventSerializer, EthActionSerializer
 
@@ -128,7 +128,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
 
                 wallet_response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{wallet_id}/',
                                                                 headers={
-                                                                    'Authorization': f'JWT {request.auth.decode()}'
+                                                                    'Authorization': get_jwt_from_request(request)
                                                                 })
 
                 if not wallet_response.status_code == status.HTTP_200_OK:

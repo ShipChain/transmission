@@ -1,25 +1,25 @@
+import copy
 import json
+import os
+import re
 from unittest import mock
 
 import boto3
-import copy
 import httpretty
-import jwt
-import os
-import re
+from django.conf import settings as test_settings
 from jose import jws
 from moto import mock_iot
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.test import APITestCase, APIClient, force_authenticate
+from rest_framework.test import APITestCase, force_authenticate, APIClient
 
-from apps.authentication import AuthenticatedUser
+from apps.authentication import passive_credentials_auth
 from apps.eth.models import EthAction
 from apps.iot_client import BotoAWSRequestsAuth
 from apps.shipments.models import Shipment, Location, Device, TrackingData
 from apps.shipments.rpc import Load110RPCClient
 from apps.utils import random_id
-from conf import test_settings
+from tests.utils import get_jwt
 from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
@@ -41,33 +41,12 @@ mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$
 google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
 
 
-private_key = b"""-----BEGIN RSA PRIVATE KEY-----
-MIICXgIBAAKBgQDtAMh97vXP8KnZUEUrnUT8nz0+8oLrOfBB19+eLIDfNvACNA2D
-swOK9gCY+/QcOCR+c5yGTe8lCNwlwW42ingABeM5PigYZ1AfNHVPatcLzO9u3dZG
-WMsAB6Un9xmaJfIuKv85jX7Wu9Pkq7EaZbr8pbbMNcYiX1amCrXggZDWOQIDAQAB
-AoGBAINMQsZZov5+8mm86YUfDH/zbAe6bEMKhwrDIFRNjVub4N0nnzEN9HGAlZYr
-RvJ3O+h9/gH9nPXkcanM/lTi41T27Vn2TZ9Fp71BwOVgnaisjwtY01AIASTl8gWA
-rwleIhGY3Kbw6D7V5lqyr8UWsi20SBc9+EILF+ugpUZoXbWtAkEA/GikOeojxPJa
-L3MPD+Bc6pz570VpYYtkDUHH9gJgVSb/xohNWoA4zT71rxjD0yjA06mhgxWqg3PP
-WAZ9276gkwJBAPBgB2SaibmtP7efiWZfMNUGo2J6t47g7B5wv2C/YmSO2twlaik6
-SL2wXVzLnU/Phmjb+bbjYE5hVASlenRSiYMCQGl1dxhTgXpqH9AvbJ2finLj/3E/
-ORZuXPFFCLz6pTEuyDM1A8zKQfFPWus7l6YEIvzMpRTV2pZtrrYCkFddwE0CQQCi
-IHL8FQuts7/VLwKyjKPYGukaZCDoeqZnha5fJ9bKclwFviqTch9b6dee3irViOhk
-U3JjO4tacmUD2UT1rjHXAkEAjpPF0Zdv4Dbf52MfeowoLw/KyreQfRVCIeSG9A4H
-3xlhpEJUcgzUV1E2BJRitz2w6ItAFm9Lhx7EPO4ZPHPylQ==
------END RSA PRIVATE KEY-----"""
-
-
 class ShipmentAPITests(APITestCase):
-
     def setUp(self):
         self.client = APIClient()
 
-        self.user_1 = AuthenticatedUser({
-            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7b',
-            'username': 'user1@shipchain.io',
-            'email': 'user1@shipchain.io',
-        })
+        self.token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID)
+        self.user_1 = passive_credentials_auth(self.token)
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
@@ -435,10 +414,7 @@ class ShipmentAPITests(APITestCase):
         })
 
         # Authenticated request should succeed
-        token = jwt.encode({'email': 'a@domain.com', 'username': 'a@domain.com', 'aud': '11111'},
-                           private_key, algorithm='RS256',
-                           headers={'kid': '230498151c214b788dd97f22b85410a5', 'aud': '11111'})
-        self.set_user(self.user_1, token)
+        self.set_user(self.user_1, self.token)
 
         post_data = replace_variables_in_string(post_data, parameters)
 
@@ -451,7 +427,7 @@ class ShipmentAPITests(APITestCase):
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
-        force_authenticate(response, user=self.user_1, token=token)
+        force_authenticate(response, user=self.user_1, token=self.token)
 
         response_data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -571,14 +547,11 @@ class ShipmentAPITests(APITestCase):
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
 
         # Authenticated request should succeed using mapbox (if exists)
-        token = jwt.encode({'email': 'a@domain.com', 'username': 'a@domain.com', 'aud': '11111'},
-                           private_key, algorithm='RS256',
-                           headers={'kid': '230498151c214b788dd97f22b85410a5', 'aud': '11111'})
-        self.set_user(self.user_1, token)
+        self.set_user(self.user_1, self.token)
 
         response = self.client.post(url, one_location, content_type=content_type)
 
-        force_authenticate(response, user=self.user_1, token=token)
+        force_authenticate(response, user=self.user_1, token=self.token)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -599,7 +572,7 @@ class ShipmentAPITests(APITestCase):
 
         # Authenticated request should succeed using mapbox in creating two locations (if exists)
         response = self.client.post(url, two_locations, content_type=content_type)
-        force_authenticate(response, token=token)
+        force_authenticate(response, token=self.token)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -629,7 +602,7 @@ class ShipmentAPITests(APITestCase):
         mapbox_access_token = None
 
         response = self.client.post(url, one_location, content_type=content_type)
-        force_authenticate(response, user=self.user_1, token=token)
+        force_authenticate(response, user=self.user_1, token=self.token)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -650,7 +623,7 @@ class ShipmentAPITests(APITestCase):
 
         # Authenticated request should succeed using google in creating two locations
         response = self.client.post(url, two_locations, content_type=content_type)
-        force_authenticate(response, user=self.user_1, token=token)
+        force_authenticate(response, user=self.user_1, token=self.token)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -1109,11 +1082,8 @@ class LocationAPITests(APITestCase):
 
         os.environ['MAPBOX_ACCESS_TOKEN'] = 'pk.test'
 
-        self.user_1 = AuthenticatedUser({
-            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7b',
-            'username': 'user1@shipchain.io',
-            'email': 'user1@shipchain.io',
-        })
+        self.token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID)
+        self.user_1 = passive_credentials_auth(self.token)
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
@@ -1121,7 +1091,7 @@ class LocationAPITests(APITestCase):
     def create_location(self):
         self.locations = []
         self.locations.append(Location.objects.create(name=LOCATION_NAME,
-                                                      owner_id='5e8f1d76-162d-4f21-9b71-2ca97306ef7b'))
+                                                      owner_id=OWNER_ID))
 
     def test_list_empty(self):
         """
@@ -1135,7 +1105,7 @@ class LocationAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Authenticated request should succeed
-        self.set_user(self.user_1)
+        self.set_user(self.user_1, self.token)
 
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1277,15 +1247,10 @@ class LocationAPITests(APITestCase):
 
 
 class TrackingDataAPITests(APITestCase):
-
     def setUp(self):
         self.client = APIClient()
 
-        self.user_1 = AuthenticatedUser({
-            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7b',
-            'username': 'user1@shipchain.io',
-            'email': 'user1@shipchain.io',
-        })
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io', sub=OWNER_ID))
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
@@ -1370,14 +1335,12 @@ class FakeBotoAWSRequestsAuth(BotoAWSRequestsAuth):
 
 @mock.patch('apps.iot_client.BotoAWSRequestsAuth', FakeBotoAWSRequestsAuth)
 class ShipmentWithIoTAPITests(APITestCase):
+
     def setUp(self):
         self.client = APIClient()
 
-        self.user_1 = AuthenticatedUser({
-            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7b',
-            'username': 'user1@shipchain.io',
-            'email': 'user1@shipchain.io',
-        })
+        self.token = get_jwt(username='user1@shipchain.io')
+        self.user_1 = passive_credentials_auth(self.token)
 
         self.device = Device.objects.create(
             id=DEVICE_ID,
@@ -1425,10 +1388,7 @@ class ShipmentWithIoTAPITests(APITestCase):
 
     @mock_iot
     def test_shipment_set_shadow(self):
-        token = jwt.encode({'email': self.user_1.email, 'username': self.user_1.username, 'aud': '11111'},
-                           private_key, algorithm='RS256',
-                           headers={'kid': CERTIFICATE_ID, 'aud': '11111'})
-        self.set_user(self.user_1, token)
+        self.set_user(self.user_1, self.token)
 
         iot = boto3.client('iot', region_name='us-east-1')
         iot.create_thing(

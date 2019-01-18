@@ -1,14 +1,16 @@
 import json
+from unittest import mock
+
+from moto import mock_iot
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
-from unittest import mock
-from moto import mock_iot
 
-from apps.shipments.models import Shipment
+from apps.authentication import passive_credentials_auth
 from apps.jobs.models import AsyncJob, Message, MessageType, JobState
+from apps.shipments.models import Shipment
 from apps.shipments.rpc import Load110RPCClient
-from apps.authentication import AuthenticatedUser
+from tests.utils import get_jwt
 
 MESSAGE = [
     {'type': 'message'}
@@ -50,11 +52,7 @@ class JobsAPITests(APITestCase):
     def setUp(self):
         self.client = APIClient()
 
-        self.user_1 = AuthenticatedUser({
-            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7b',
-            'username': 'user1@shipchain.io',
-            'email': 'user1@shipchain.io',
-        })
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io'))
 
         self.create_shipment()
 

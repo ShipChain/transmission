@@ -13,11 +13,14 @@ QTBHQ1NxR1NJYjNEUUVCQVFVQUE0R05BRENCaVFLQmdRQ2FmTDBXVVRObFdteTJJdlRPQ2xpNHdqZFMN
 aVzAwakw0V0lXM0YzOHZjNThQSzExNzB3OG9maGF1TEJSMEgNCjBsRTZoTTlsV2l3TjZOODFNVWZ5cG1HME9ReG1vYW5XN2Y1ano2Z2tCRkNzc21pQWZxSF\
 Z1TTJtSmlJdGJZTVUNCm8vcmtxcm9zQnVadmFKSnJEUUlEQVFBQg0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t')
 
-JWT_AUTH = {
-    'JWT_PUBLIC_KEY': load_pem_public_key(
+SIMPLE_JWT = {
+    'VERIFYING_KEY': load_pem_public_key(
         data=base64.b64decode(OIDC_PUBLIC_KEY_PEM_BASE64.strip()),
         backend=default_backend()
     ),
-    'JWT_ALGORITHM': 'RS256',
-    'JWT_AUDIENCE': os.environ.get('OIDC_RP_CLIENT_ID', '892633'),
+    'ALGORITHM': 'RS256',
+    'AUDIENCE': os.environ.get('OIDC_RP_CLIENT_ID', '892633'),
+    'AUTH_HEADER_TYPES': ('JWT',),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.UntypedToken',),
+    'USER_ID_CLAIM': 'sub',
 }

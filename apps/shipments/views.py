@@ -7,13 +7,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
+from apps.authentication import get_jwt_from_request
+from .filters import ShipmentFilter
 from .geojson import build_line_string_feature, build_point_features, build_feature_collection
 from .models import Shipment, Location, TrackingData
 from .permissions import IsOwner, IsUserOrDevice
-from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer,\
+from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer
-from .filters import ShipmentFilter
-
 
 LOG = logging.getLogger('transmission')
 
@@ -52,7 +52,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         LOG.debug(f'Creating a shipment object.')
         log_metric('transmission.info', tags={'method': 'shipments.create', 'module': __name__})
         # Create Shipment
-        serializer = ShipmentCreateSerializer(data=request.data, context={'auth': request.auth})
+        serializer = ShipmentCreateSerializer(data=request.data, context={'auth': get_jwt_from_request(request)})
         serializer.is_valid(raise_exception=True)
 
         shipment = self.perform_create(serializer)
@@ -139,7 +139,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         log_metric('transmission.info', tags={'method': 'shipments.update', 'module': __name__})
 
         serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial,
-                                              context={'auth': request.auth})
+                                              context={'auth': get_jwt_from_request(request)})
         serializer.is_valid(raise_exception=True)
 
         shipment = self.perform_update(serializer)

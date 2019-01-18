@@ -1,18 +1,18 @@
-from apps.eth.models import TransactionReceipt, EthAction
-from apps.jobs.models import AsyncJob
-from apps.shipments.models import Shipment
+import json
 from unittest import mock
-from apps.shipments.rpc import Load110RPCClient
 
+import httpretty
+from django.conf import settings as test_settings
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient, force_authenticate
-from apps.authentication import AuthenticatedUser
-from conf import test_settings
-import httpretty
-import json
-import jwt
 
+from apps.authentication import passive_credentials_auth
+from apps.eth.models import TransactionReceipt, EthAction
+from apps.jobs.models import AsyncJob
+from apps.shipments.models import Shipment
+from apps.shipments.rpc import Load110RPCClient
+from tests.utils import get_jwt
 
 BLOCK_HASH = "0x38823cb26b528867c8dbea4146292908f55e1ee7f293685db1df0851d1b93b24"
 BLOCK_NUMBER = 14
@@ -30,32 +30,14 @@ TRANSACTION_INDEX = 0
 WALLET_ID = "1243d23b-e2fc-475a-8290-0e4f53479553"
 USER_ID = '00000000-0000-0000-0000-000000000000'
 
-private_key = b"""-----BEGIN RSA PRIVATE KEY-----
-MIICXgIBAAKBgQDtAMh97vXP8KnZUEUrnUT8nz0+8oLrOfBB19+eLIDfNvACNA2D
-swOK9gCY+/QcOCR+c5yGTe8lCNwlwW42ingABeM5PigYZ1AfNHVPatcLzO9u3dZG
-WMsAB6Un9xmaJfIuKv85jX7Wu9Pkq7EaZbr8pbbMNcYiX1amCrXggZDWOQIDAQAB
-AoGBAINMQsZZov5+8mm86YUfDH/zbAe6bEMKhwrDIFRNjVub4N0nnzEN9HGAlZYr
-RvJ3O+h9/gH9nPXkcanM/lTi41T27Vn2TZ9Fp71BwOVgnaisjwtY01AIASTl8gWA
-rwleIhGY3Kbw6D7V5lqyr8UWsi20SBc9+EILF+ugpUZoXbWtAkEA/GikOeojxPJa
-L3MPD+Bc6pz570VpYYtkDUHH9gJgVSb/xohNWoA4zT71rxjD0yjA06mhgxWqg3PP
-WAZ9276gkwJBAPBgB2SaibmtP7efiWZfMNUGo2J6t47g7B5wv2C/YmSO2twlaik6
-SL2wXVzLnU/Phmjb+bbjYE5hVASlenRSiYMCQGl1dxhTgXpqH9AvbJ2finLj/3E/
-ORZuXPFFCLz6pTEuyDM1A8zKQfFPWus7l6YEIvzMpRTV2pZtrrYCkFddwE0CQQCi
-IHL8FQuts7/VLwKyjKPYGukaZCDoeqZnha5fJ9bKclwFviqTch9b6dee3irViOhk
-U3JjO4tacmUD2UT1rjHXAkEAjpPF0Zdv4Dbf52MfeowoLw/KyreQfRVCIeSG9A4H
-3xlhpEJUcgzUV1E2BJRitz2w6ItAFm9Lhx7EPO4ZPHPylQ==
------END RSA PRIVATE KEY-----"""
-
 
 class TransactionReceiptTestCase(APITestCase):
+
     def setUp(self):
         self.client = APIClient()
 
-        self.user_1 = AuthenticatedUser({
-            'user_id': USER_ID,
-            'username': 'user1@shipchain.io',
-            'email': 'user1@shipchain.io',
-        })
+        self.token = get_jwt(username='user1@shipchain.io')
+        self.user_1 = passive_credentials_auth(self.token)
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
@@ -177,11 +159,7 @@ class TransactionReceiptTestCase(APITestCase):
         self.createEthAction(listener)
         self.createTransactionReceipts()
 
-        token = jwt.encode({'email': 'a@domain.com', 'username': 'a@domain.com', 'aud': '11111'},
-                           private_key, algorithm='RS256',
-                           headers={'kid': '230498151c214b788dd97f22b85410a5', 'aud': '11111'})
-
-        self.set_user(self.user_1, token=token)
+        self.set_user(self.user_1, token=self.token)
 
         # Ensure two different transaction receipts were created
         self.assertEqual(TransactionReceipt.objects.count(), 2)
@@ -203,7 +181,7 @@ class TransactionReceiptTestCase(APITestCase):
 
         # request for specific eth actions should only return ones with that from_address
         response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
-        force_authenticate(response, user=self.user_1, token=token)
+        force_authenticate(response, user=self.user_1, token=self.token)
         response_json = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response_json['data']), 1)

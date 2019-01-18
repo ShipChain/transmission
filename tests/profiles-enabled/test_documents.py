@@ -1,24 +1,22 @@
-from pathlib import Path
 import datetime
+import glob
+import os
+from pathlib import Path
 
 import requests
-from fpdf import FPDF
 from PIL import Image, ImageDraw, ImageFont
-
-from django.db.models import signals
 from django.conf import settings
+from django.db.models import signals
+from fpdf import FPDF
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 
-import os
-import glob
-
+from apps.authentication import passive_credentials_auth
+from apps.documents.models import Document, UploadStatus, DocumentType, FileType
 from apps.shipments.models import Shipment
 from apps.shipments.signals import shipment_post_save
-from apps.documents.models import Document, UploadStatus, DocumentType, FileType
-from apps.authentication import AuthenticatedUser
-from tests.utils import create_form_content
+from tests.utils import create_form_content, get_jwt
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
@@ -38,11 +36,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Disable Shipment post save signal
         signals.post_save.disconnect(sender=Shipment, dispatch_uid='shipment_post_save')
 
-        self.user_1 = AuthenticatedUser({
-            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7c',
-            'username': 'user1@shipchain.io',
-            'email': 'user1@shipchain.io',
-        })
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io'))
 
         self.shipment = Shipment.objects.create(
             id=SHIPMENT_ID,
@@ -246,11 +240,7 @@ class DocumentAPITests(APITestCase):
         # Disable Shipment post save signal
         signals.post_save.disconnect(sender=Shipment, dispatch_uid='shipment_post_save')
 
-        self.user_1 = AuthenticatedUser({
-            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7c',
-            'username': 'user1@shipchain.io',
-            'email': 'user1@shipchain.io',
-        })
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io'))
 
         shipment = Shipment.objects.create(
             vault_id=VAULT_ID,
@@ -288,11 +278,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         # Disable Shipment post save signal
         signals.post_save.disconnect(sender=Shipment, dispatch_uid='shipment_post_save')
 
-        self.user_1 = AuthenticatedUser({
-            'user_id': '5e8f1d76-162d-4f21-9b71-2ca97306ef7c',
-            'username': 'user1@shipchain.io',
-            'email': 'user1@shipchain.io',
-        })
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io'))
 
         self.shipment = Shipment.objects.create(
             id=SHIPMENT_ID,
