@@ -112,7 +112,6 @@ INSTALLED_APPS = [
     'apps.schema',
     'apps.documents',
     'channels',
-    'guardian',
 ]
 
 REST_FRAMEWORK = {
