@@ -1,10 +1,10 @@
 import logging
 from datetime import datetime, timedelta
 import pytz
+import geojson
 
 import geocoder
 from geocoder.keys import mapbox_access_token
-import geojson
 
 import boto3
 
@@ -242,9 +242,6 @@ class Shipment(models.Model):
 
     customer_fields = JSONField(blank=True, null=True)
 
-    route_as_point = JSONField(blank=True, null=True)
-    route_as_line = JSONField(blank=True, null=True)
-
     def get_device_request_url(self):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
         return f"{settings.PROFILES_URL}/api/v1/device/?on_shipment={self.vault_id}"
@@ -407,22 +404,6 @@ class TrackingData(models.Model):
         ordering = ('timestamp',)
 
     @property
-    def timestamp_no_tz(self):
-        return self.timestamp.replace(tzinfo=None)
-
-    @property
-    def timestamp_str(self):
-        return self.timestamp_no_tz.isoformat()
-
-    @property
-    def has_gps(self):
-        return True if self.source.lower() == 'gps' else False
-
-    def set_point(self):
-        self.point = Point(self.longitude, self.latitude)
-        self.save()
-
-    @property
     def as_point(self):
         LOG.debug(f'Device tracking as_point.')
         log_metric('transmission.info', tags={'method': 'as_point', 'module': __name__})
@@ -443,9 +424,8 @@ class TrackingData(models.Model):
 
         try:
             return geojson.Feature(geometry=self.as_point, properties={
-                "time": self.timestamp_str,
+                "time": self.timestamp,
                 "uncertainty": self.uncertainty,
-                "has_gps": self.has_gps,
                 "source": self.source,
             })
         except Exception as exception:
@@ -454,34 +434,3 @@ class TrackingData(models.Model):
                                                    'module': __name__, 'code': 'as_point_feature'})
 
             raise APIException(detail="Unable to build GeoJSON Point Feature from tracking data")
-
-    @staticmethod
-    def get_linestring_list(tracking_points):
-        linestring = geojson.LineString([(point.longitude, point.latitude) for point in tracking_points])
-        linestring_timestamps = [point.timestamp_str for point in tracking_points]
-
-        return linestring, linestring_timestamps
-
-    @staticmethod
-    def get_linestring_feature(tracking_points):
-        try:
-            LOG.debug(f'Device tracking get_linestring_list with tracking points {tracking_points}.')
-            log_metric('transmission.info', tags={'method': 'get_linestring_list', 'module': __name__})
-
-            linestring, linestring_timestamps = TrackingData.get_linestring_list(tracking_points)
-            return geojson.Feature(geometry=linestring, properties={"linestringTimestamps": linestring_timestamps})
-
-        except Exception as exception:
-            LOG.error(f'Device tracking get_linestring_feature exception {exception}.')
-            log_metric('transmission.error', tags={'method': 'get_linestring_feature', 'module': __name__})
-
-            raise APIException(detail="Unable to build GeoJSON LineString Feature from tracking data")
-
-    @staticmethod
-    def set_geometry_point(tracking_points):
-        """
-        Set point field value for a list / queryset of TrackingData
-        """
-        for point in tracking_points:
-            if not point.point:
-                point.set_point()

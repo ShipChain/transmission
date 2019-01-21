@@ -20,6 +20,7 @@ import pytest
 from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.db import models
+from django.contrib.gis.geos import Point
 from django_mock_queries.mocks import mocked_relations
 from mock import patch
 
@@ -171,6 +172,7 @@ async def test_trackingdata_notification(communicator):
         uncertainty=66,
         speed=36,
         version='1.1.0',
+        point=Point(84.36, 75.65),
         timestamp=datetime.datetime.now(tz=None)
     )
 

@@ -8,13 +8,13 @@ from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import get_jwt_from_request
-from .filters import ShipmentFilter
-from .geojson import build_line_string_feature, build_point_features, build_feature_collection
+from .geojson import build_point_features
 from .models import Shipment, Location, TrackingData
 from .permissions import IsOwner, IsUserOrDevice
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer
-from .tasks import tracking_data_update, shipment_route_update
+from .filters import ShipmentFilter
+from .tasks import tracking_data_update
 
 
 LOG = logging.getLogger('transmission')
@@ -79,31 +79,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
 
-        if tracking_data.exists() and (not shipment.route_as_point or not shipment.route_as_line):
-            # Update shipment route
-            shipment_route_update.delay(shipment.id)
-
-            if 'as_line' in request.query_params:
-                all_features = build_line_string_feature(shipment, tracking_data)
-            elif 'as_point' in request.query_params:
-                all_features = build_point_features(shipment, tracking_data)
-            else:
-                all_features = []
-                all_features += build_line_string_feature(shipment, tracking_data)
-                all_features += build_point_features(shipment, tracking_data)
-
-            feature_collection = build_feature_collection(all_features)
-
-        elif tracking_data.exists():
-            if 'as_line' in request.query_params:
-                feature_collection = shipment.route_as_line
-            elif 'as_point' in request.query_params:
-                feature_collection = shipment.route_as_point
-            else:
-                all_features = []
-                all_features += shipment.route_as_line.get('features', None)
-                all_features += shipment.route_as_point.get('features', None)
-                feature_collection = build_feature_collection(all_features)
+        if tracking_data.exists():
+            feature_collection = build_point_features(shipment, tracking_data)
         else:
             feature_collection = None
 
@@ -138,7 +115,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             tracking_model_serializer.save()
 
         # Update shipment route
-        shipment_route_update.delay(shipment.id)
+        # shipment_route_update.delay(shipment.id)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

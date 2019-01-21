@@ -1,17 +1,12 @@
 # pylint:disable=invalid-name
 import logging
-import datetime
-import json
-
-from django.contrib.gis.serializers.geojson import Serializer as GeoSerializer
 
 from celery import shared_task
 from influxdb_metrics.loader import log_metric
 
 from apps.rpc_client import RPCError
 from .rpc import RPCClientFactory
-from .models import Shipment, TrackingData
-from .geojson import FeatureCollection
+from .models import Shipment
 
 LOG = logging.getLogger('transmission')
 
@@ -29,35 +24,3 @@ def tracking_data_update(self, shipment_id, payload):
                                              shipment.vault_id,
                                              payload)
     shipment.set_vault_hash(signature['hash'], rate_limit=True)
-
-
-@shared_task(bind=True, retry_backoff=3, retry_backoff_max=60, max_retries=10)
-def shipment_route_update(self, shipment_id):
-    shipment = Shipment.objects.get(id=shipment_id)
-
-    begin = (shipment.pickup_act or datetime.datetime.min).replace(tzinfo=datetime.timezone.utc)
-    end = (shipment.delivery_act or datetime.datetime.max).replace(tzinfo=datetime.timezone.utc)
-
-    tracking_data = TrackingData.objects.filter(
-        shipment__id=shipment.id,
-        timestamp__range=(begin, end)
-    )
-
-    # Set geometry point value for tracking data who doesn't have one yet
-    TrackingData.set_geometry_point(tracking_data)
-
-    geojson_data_as_point = GeoSerializer().serialize(
-        tracking_data,
-        geometry_field='point',
-        fields=('uncertainty', 'source', 'timestamp')
-    )
-
-    all_features = [TrackingData.get_linestring_feature(tracking_data)]
-    geojson_data_as_line = FeatureCollection(all_features)
-
-    shipment.route_as_point = json.loads(geojson_data_as_point)
-    shipment.route_as_line = geojson_data_as_line
-    shipment.save()
-
-    LOG.debug(f'Updated shipment route for shipment: {shipment_id}')
-    log_metric('transmission.info', tags={'method': 'shipments.tasks.shipment_route_update', 'module': __name__})
