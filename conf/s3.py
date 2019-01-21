@@ -1,6 +1,6 @@
 import boto3
 from botocore.client import Config
-from .base import ENVIRONMENT
+from .base import ENVIRONMENT, BOTO3_SESSION
 
 
 # s3 buckets names
@@ -11,7 +11,7 @@ S3_URL_LIFE = 1800
 S3_MAX_BYTES = 12500000
 
 if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
-    S3_CLIENT = boto3.client('s3', region_name='us-east-1')
+    S3_CLIENT = BOTO3_SESSION.client('s3')
 else:
     S3_CLIENT = boto3.client(
         's3',

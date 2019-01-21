@@ -26,8 +26,7 @@ bpython = "==0.17.1"
 celery = "==4.2.1"
 celery_once = "==2.0.0"
 channels = "~=2.1"
-channels-redis = {git = "git://github.com/ShipChain/channels_redis.git", rev = "3f8cd28a686d970d4d64e5629dbd04d6e0d7b5a4"}
-CMRESHandler = {git = "git://github.com/kusha/python-elasticsearch-logger.git", rev = "91b458a58e12ab1e9a8fe16a28d225f610e29183"}
+channels-redis = "~=2.3.3"
 cryptography = "==2.3.1"
 Django = "==2.1.5"
 django-cors-headers = "==2.2.0"
@@ -65,6 +64,7 @@ uWSGI = "==2.0.17.1"
 watchdog = "==0.9.0"
 websocket-client = "==0.53.0"
 whitenoise = "==3.3.1"
+watchtower = {git = "git://github.com/ShipChain/watchtower.git", rev = "621a8cea0285f4f090f752fdf351ab0b80bc1c1e"}
 
 
 [tool.poetry.dev-dependencies]
