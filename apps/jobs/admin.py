@@ -14,11 +14,15 @@ class AsyncJobAdmin(admin.ModelAdmin):
     list_display = (
         'state',
         'last_try',
+        'created_at',
+        'updated_at',
     )
 
     list_filter = (
         'state',
         'last_try',
+        'created_at',
+        'updated_at',
     )
 
     readonly_fields = (
@@ -26,6 +30,7 @@ class AsyncJobAdmin(admin.ModelAdmin):
         'state',
         'wallet_lock_token',
         'last_try',
+        'delay',
     )
 
     def get_actions(self, request):
