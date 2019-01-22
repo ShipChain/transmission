@@ -15,6 +15,7 @@ from django.contrib.gis.geos import Point
 from django.contrib.postgres.fields import JSONField
 from django.core.validators import RegexValidator, MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.functional import cached_property
 from enumfields import Enum
 from enumfields import EnumField
 from rest_framework.exceptions import ValidationError, Throttled, PermissionDenied, APIException
@@ -398,32 +399,18 @@ class TrackingData(models.Model):
     speed = models.IntegerField(validators=[MinValueValidator(0)], null=True, blank=True)
     timestamp = models.DateTimeField()
     version = models.CharField(max_length=36)
-    point = GeometryField(null=True)
+    point = GeometryField()
 
     class Meta:
         ordering = ('timestamp',)
 
-    @property
-    def as_point(self):
-        LOG.debug(f'Device tracking as_point.')
-        log_metric('transmission.info', tags={'method': 'as_point', 'module': __name__})
-
-        try:
-            return geojson.Point((self.longitude, self.latitude))
-        except Exception as exception:
-            LOG.error(f'Device tracking as_point exception {exception}.')
-            log_metric('transmission.error', tags={'method': 'as_point_exception',
-                                                   'module': __name__, 'code': 'as_point'})
-
-            raise APIException(detail="Unable to build GeoJSON Point from tracking data")
-
-    @property
+    @cached_property
     def as_point_feature(self):
         LOG.debug(f'Device tracking as_point.')
         log_metric('transmission.info', tags={'method': 'as_point_feature', 'module': __name__})
 
         try:
-            return geojson.Feature(geometry=self.as_point, properties={
+            return geojson.Feature(geometry=geojson.Point((self.longitude, self.latitude)), properties={
                 "time": self.timestamp,
                 "uncertainty": self.uncertainty,
                 "source": self.source,

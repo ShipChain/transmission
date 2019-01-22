@@ -1,25 +1,24 @@
+import json
 from collections import OrderedDict
 
-import json
 import boto3
-from dateutil.parser import parse
 from botocore.exceptions import ClientError
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from dateutil.parser import parse
 from django.conf import settings
 from django.db import transaction
-from django.contrib.gis.geos import Point
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions, status, serializers as rest_serializers
-from rest_framework.utils import model_meta
 from rest_framework.fields import SkipField
+from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
 
-from apps.utils import UpperEnumField
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData
+from apps.utils import UpperEnumField
 
 
 class NullableFieldsMixin:
@@ -306,11 +305,7 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
     class Meta:
         model = TrackingData
-        fields = '__all__'
+        exclude = ('point',)
 
     def create(self, validated_data):
-        point = Point(validated_data.get('longitude', None), validated_data.get('latitude', None))
-        validated_data.update({'point': point})
-        data = TrackingData.objects.create(**validated_data, shipment=self.context['shipment'])
-
-        return data
+        return TrackingData.objects.create(**validated_data, shipment=self.context['shipment'])

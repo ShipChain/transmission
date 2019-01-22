@@ -263,7 +263,7 @@ class ShipmentAPITests(APITestCase):
             self.set_user(self.user_1)
             response = self.client.get(url)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
-            data = response.data
+            data = json.loads(response.content)['data']
             self.assertEqual(data['type'], 'FeatureCollection')
 
             # Add second tracking data
@@ -281,7 +281,7 @@ class ShipmentAPITests(APITestCase):
             # Test second tracking data
             response = self.client.get(url)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
-            data = response.data
+            data = json.loads(response.content)['data']
             self.assertEqual(len(data['features']), 4)
 
             # We expect the second point data to be the first in LineString
@@ -293,7 +293,7 @@ class ShipmentAPITests(APITestCase):
             url_as_point = url + '?as_point'
             response = self.client.get(url_as_point)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
-            data = response.json()['data']
+            data = json.loads(response.content)['data']
             self.assertTrue(isinstance(data['features'], list))
             self.assertEqual(data['features'][0]['geometry']['type'], 'Point')
 

@@ -1,14 +1,16 @@
 import logging
 
+from string import Template
 from django.conf import settings
+from django.http import HttpResponse, HttpResponseNotFound
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status, exceptions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
+from .geojson import render_point_features
 from apps.authentication import get_jwt_from_request
-from .geojson import build_point_features
 from .models import Shipment, Location, TrackingData
 from .permissions import IsOwner, IsUserOrDevice
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
@@ -80,11 +82,11 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
 
         if tracking_data.exists():
-            feature_collection = build_point_features(shipment, tracking_data)
-        else:
-            feature_collection = None
+            response = Template('{"data": $geojson}').substitute(geojson=render_point_features(shipment, tracking_data))
+            return HttpResponse(content=response,
+                                content_type='application/vnd.api+json')
 
-        return Response(data=feature_collection, status=status.HTTP_200_OK)
+        return HttpResponseNotFound()
 
     def add_tracking_data(self, request, version, pk):
         shipment = Shipment.objects.get(pk=pk)
@@ -113,9 +115,6 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment})
             tracking_model_serializer.is_valid(raise_exception=True)
             tracking_model_serializer.save()
-
-        # Update shipment route
-        # shipment_route_update.delay(shipment.id)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
