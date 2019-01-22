@@ -18,6 +18,7 @@ def set_tracking_data_point_field(apps, schema_editor):
 
     for data in trackingdata.objects.all():
         data.point = Point(data.longitude, data.latitude)
+        data.save()
 
 
 class Migration(migrations.Migration):
