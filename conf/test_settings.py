@@ -34,3 +34,5 @@ S3_RESOURCE = boto3.resource(
     config=Config(signature_version='s3v4'),
     region_name='us-east-1'
 )
+
+CACHES['page'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}

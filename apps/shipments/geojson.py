@@ -3,8 +3,13 @@ import logging
 
 from django.contrib.gis.serializers.geojson import Serializer as GeoSerializer
 from influxdb_metrics.loader import log_metric
+from apps.utils import AliasSerializerMixin
 
 LOG = logging.getLogger('transmission')
+
+
+class TrackingDataSerializer(AliasSerializerMixin, GeoSerializer):
+    pass
 
 
 def render_point_features(shipment, tracking_data):
@@ -21,10 +26,10 @@ def render_point_features(shipment, tracking_data):
 
     tracking_data = tracking_data.filter(timestamp__range=(begin, end))
 
-    geojson_data_as_point = GeoSerializer().serialize(
+    geojson_data_as_point = TrackingDataSerializer().serialize(
         tracking_data,
         geometry_field='point',
-        fields=('uncertainty', 'source', 'timestamp')
+        fields=('uncertainty', 'source', 'time')
     )
 
     return geojson_data_as_point

@@ -3,6 +3,8 @@ import logging
 from string import Template
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotFound
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status, exceptions, filters
 from rest_framework.decorators import action
@@ -118,6 +120,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @method_decorator(cache_page(60 * 10, cache='page'))  # Cache responses for 10 minutes
     @action(detail=True, methods=['get', 'post'], permission_classes=(IsUserOrDevice,))
     def tracking(self, request, version, pk):
         if request.method == 'GET':

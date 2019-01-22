@@ -25,3 +25,5 @@ for name, logger in LOGGING['loggers'].items():
 
 SIMPLE_JWT['VERIFYING_KEY'] = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 SIMPLE_JWT['VERIFYING_KEY'] = SIMPLE_JWT['VERIFYING_KEY'].public_key()
+
+CACHES['page'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}

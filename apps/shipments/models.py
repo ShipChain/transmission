@@ -25,7 +25,7 @@ from influxdb_metrics.loader import log_metric
 from apps.eth.fields import AddressField, HashField
 from apps.eth.models import EthListener
 from apps.jobs.models import JobListener, AsyncJob, JobState
-from apps.utils import random_id
+from apps.utils import random_id, AliasField
 from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')
@@ -398,6 +398,7 @@ class TrackingData(models.Model):
     uncertainty = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], null=True, blank=True)
     speed = models.IntegerField(validators=[MinValueValidator(0)], null=True, blank=True)
     timestamp = models.DateTimeField()
+    time = AliasField(db_column='timestamp')
     version = models.CharField(max_length=36)
     point = GeometryField()
 
