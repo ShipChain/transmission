@@ -99,6 +99,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.gis',
     'django_extensions',
     'django_filters',
     'rest_framework',
@@ -195,7 +196,8 @@ DATABASES = {
 
 # Caching
 CACHES = {
-    'default': ENV.cache('REDIS_URL', default='redis://:redis_pass@redis_db:6379/1')
+    'default': ENV.cache('REDIS_URL', default='redis://:redis_pass@redis_db:6379/1'),
+    'page': ENV.cache('REDIS_URL', default='redis://:redis_pass@redis_db:6379/1'),
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"

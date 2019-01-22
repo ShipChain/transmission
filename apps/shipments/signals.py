@@ -3,6 +3,7 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
+from django.contrib.gis.geos import Point
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from fieldsignals import post_save_changed
@@ -96,6 +97,12 @@ def location_pre_save(sender, **kwargs):
     instance = kwargs["instance"]
     # Get point info
     instance.get_lat_long_from_address()
+
+
+@receiver(pre_save, sender=TrackingData, dispatch_uid='trackingdata_pre_save')
+def trackingdata_pre_save(sender, **kwargs):
+    instance = kwargs["instance"]
+    instance.point = Point(instance.longitude, instance.latitude)
 
 
 @receiver(post_save, sender=TrackingData, dispatch_uid='trackingdata_post_save')

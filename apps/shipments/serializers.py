@@ -1,24 +1,24 @@
+import json
 from collections import OrderedDict
 
-import json
 import boto3
-from dateutil.parser import parse
 from botocore.exceptions import ClientError
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+from dateutil.parser import parse
 from django.conf import settings
 from django.db import transaction
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions, status, serializers as rest_serializers
-from rest_framework.utils import model_meta
 from rest_framework.fields import SkipField
+from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
 
-from apps.utils import UpperEnumField
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData
+from apps.utils import UpperEnumField
 
 
 class NullableFieldsMixin:
@@ -288,6 +288,8 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
     """
     Serializer for tracking data to be cached in db
     """
+    shipment = ShipmentSerializer(read_only=True)
+
     def __init__(self, *args, **kwargs):
         # Flatten 'position' fields to the parent tracking data payload
         kwargs['data'].update(kwargs['data'].pop('position'))
@@ -301,14 +303,9 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
         super().__init__(*args, **kwargs)
 
-    shipment = ShipmentSerializer(read_only=True)
-
     class Meta:
         model = TrackingData
-        fields = '__all__'
+        exclude = ('point', 'time')
 
     def create(self, validated_data):
-        data = TrackingData.objects.create(**validated_data, shipment=self.context['shipment'])
-        data.save()
-
-        return data
+        return TrackingData.objects.create(**validated_data, shipment=self.context['shipment'])

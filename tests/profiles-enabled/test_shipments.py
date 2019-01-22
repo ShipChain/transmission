@@ -263,7 +263,7 @@ class ShipmentAPITests(APITestCase):
             self.set_user(self.user_1)
             response = self.client.get(url)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
-            data = response.data
+            data = json.loads(response.content)['data']
             self.assertEqual(data['type'], 'FeatureCollection')
 
             # Add second tracking data
@@ -281,30 +281,21 @@ class ShipmentAPITests(APITestCase):
             # Test second tracking data
             response = self.client.get(url)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
-            data = response.data
-            self.assertEqual(len(data['features']), 5)
+            data = json.loads(response.content)['data']
+            self.assertEqual(len(data['features']), 4)
 
             # We expect the second point data to be the first in LineString
             # since it has been  generated first. See timestamp values
             pos = track_dic_2['position']
-            self.assertEqual(data['features'][0]['geometry']['coordinates'][0], [pos['longitude'], pos['latitude']])
+            self.assertEqual(data['features'][0]['geometry']['coordinates'], [pos['longitude'], pos['latitude']])
 
             # Get data as point
             url_as_point = url + '?as_point'
             response = self.client.get(url_as_point)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
-            data = response.json()['data']
+            data = json.loads(response.content)['data']
             self.assertTrue(isinstance(data['features'], list))
             self.assertEqual(data['features'][0]['geometry']['type'], 'Point')
-            self.assertEqual(data['features'][0]['properties']['has_gps'], True)
-
-            # Get data as line
-            url_as_line = url + '?as_line'
-            response = self.client.get(url_as_line)
-            self.assertTrue(response.status_code, status.HTTP_200_OK)
-            data = response.json()['data']
-            self.assertTrue(isinstance(data['features'], list))
-            self.assertEqual(data['features'][0]['geometry']['type'], 'LineString')
 
             # Certificate ID not in AWS
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': 'notarealcertificateid'}, algorithm='ES256')

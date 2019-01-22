@@ -1,6 +1,10 @@
 import logging
 
+from string import Template
 from django.conf import settings
+from django.http import HttpResponse, HttpResponseNotFound
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status, exceptions, filters
 from rest_framework.decorators import action
@@ -8,12 +12,14 @@ from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import get_jwt_from_request
-from .filters import ShipmentFilter
-from .geojson import build_line_string_feature, build_point_features, build_feature_collection
+from .geojson import render_point_features
 from .models import Shipment, Location, TrackingData
 from .permissions import IsOwner, IsUserOrDevice
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer
+from .filters import ShipmentFilter
+from .tasks import tracking_data_update
+
 
 LOG = logging.getLogger('transmission')
 
@@ -77,18 +83,12 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
 
-        if 'as_line' in request.query_params:
-            all_features = build_line_string_feature(shipment, tracking_data)
-        elif 'as_point' in request.query_params:
-            all_features = build_point_features(shipment, tracking_data)
-        else:
-            all_features = []
-            all_features += build_line_string_feature(shipment, tracking_data)
-            all_features += build_point_features(shipment, tracking_data)
+        if tracking_data.exists():
+            response = Template('{"data": $geojson}').substitute(geojson=render_point_features(shipment, tracking_data))
+            return HttpResponse(content=response,
+                                content_type='application/vnd.api+json')
 
-        feature_collection = build_feature_collection(all_features)
-
-        return Response(data=feature_collection, status=status.HTTP_200_OK)
+        return HttpResponseNotFound()
 
     def add_tracking_data(self, request, version, pk):
         shipment = Shipment.objects.get(pk=pk)
@@ -107,7 +107,6 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             tracking_data = serializer.validated_data
 
-        from .tasks import tracking_data_update
         for data in tracking_data:
             payload = data['payload']
 
@@ -121,6 +120,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @method_decorator(cache_page(60 * 10, cache='page'))  # Cache responses for 10 minutes
     @action(detail=True, methods=['get', 'post'], permission_classes=(IsUserOrDevice,))
     def tracking(self, request, version, pk):
         if request.method == 'GET':
