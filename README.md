@@ -44,7 +44,7 @@ You must first run `docker network create portal` to create a local network for
 other ShipChain services to communicate on (like the Profiles and Engine services).
 
 The dev environment uses a seperate Dockerfile located at
-[compose/django/Dockerfile](compose/django/Dockerfile); please note, this file *doesn't* use the docker
+[Dockerfile.local](Dockerfile.local); please note, this file *doesn't* use the docker
 `CP` directive to copy the project code into the container, instead the code is
 mounted as a volume (so that as you save files, they update inside the container).
 
@@ -81,13 +81,15 @@ The scripts provided in the [bin](bin) directory allow for easier interaction wi
 
 ### Dependencies
 
-Transmission uses [Pipenv](https://pipenv.readthedocs.io/en/latest/) for dependency management. Hard dependencies are specified
-in the [Pipfile](compose/django/Pipfile) and then resolved at build-time into [Pipfile.lock](compose/django/Pipfile.lock). The
-Pipfile.lock file enumerates every version of every dependency used in a build; this file is checked-in and versioned.
+Transmission uses [Poetry](https://poetry.eustace.io/docs/) for dependency management. Hard dependencies are specified
+in the [pyproject.toml](pyproject.toml) and then resolved into [poetry.lock](poetry.lock) by manually calling `bin/ddo poetry lock`.
+The poetry.lock file enumerates every version of every dependency used in a build; this file is checked-in and versioned.
 
-When using the `bin/dc build` command to build your local environment, `pipenv install --dev` will be run as part of the 
-[Dockerfile](compose/django/Dockerfile). **NOTE**: The generated Pipfile.lock will not be copied over to the local working 
-directory until the next time the entrypoint script is run, e.g. during the execution of `bin/dc up` or `bin/docker_tests`.
+After using the `bin/dc build` command to build your local environment, `bin/ddo poetry install` needs to be run in order
+to install the dependencies inside the virtualenv of the docker container. This virtualenv is cached locally in the .virtualenv
+folder.
+
+After making a change to pyproject.toml, you will need to run `bin/ddo poetry lock` to update the poetry.lock file.
 
 ### Configuration
 
@@ -168,7 +170,7 @@ The service runs as a Django server (uwsgi) and is designed to be deployed behin
 nginx reverse proxy container, along with an additional Celery worker container. 
 We currently use Amazon ECS (FARGATE) for deployment by way of CircleCi and AWS Lambda.
 
-The Dockerfile to build for deployment is the root Dockerfile; `docker build`
+The [Dockerfile.deploy](Dockerfile.deploy) file to build for deployment is the Docker; `docker build -f Dockerfile.deploy .`
 should generate the image as expected.
 
 ## Running the tests
@@ -234,11 +236,12 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 ## Authors
 
 * **Adam Hodges** - [ajhodges](https://github.com/ajhodges)
+* **Clovis Djiometsa** - [clovisdj](https://github.com/ClovisDj)
+* **James Neyer** - [jamesfneyer](https://github.com/jamesfneyer)
 * **Lucas Clay** - [mlclay](https://github.com/mlclay)
 * **Leeward Bound** - [leewardbound](https://github.com/leewardbound)
-* **James Neyer** - [jamesfneyer](https://github.com/jamesfneyer)
 
-<!--See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.-->
+See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
 
 ## License
 
