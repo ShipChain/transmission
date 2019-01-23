@@ -6,7 +6,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.6.5
+      - image: circleci/python:3.6.8
         user: root
 
     working_directory: ~/repo
@@ -23,7 +23,7 @@ jobs:
             - virtualenv-cache
 
       - run:
-          name: Build application Docker image
+          name: Build testing Docker image
           command: |
             docker-compose -f compose/circleci.yml up --build -d
 
@@ -65,6 +65,11 @@ jobs:
           key: virtualenv-cache-{{ checksum "poetry.lock" }}
           paths:
             - .virtualenv
+
+      - run:
+          name: Build production Docker image
+          command: |
+            docker build --target=deploy -t transmission-django .
 
       - run:
           name: Save docker image

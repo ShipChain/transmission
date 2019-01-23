@@ -17,7 +17,7 @@ homepage = "https://transmission.shipchain.io"
 keywords = ['transmission', 'shipchain', 'logistics']
 
 [tool.poetry.dependencies]
-python = "==3.6.5"
+python = "==3.6.8"
 
 asn1crypto = "==0.24.0"
 aws-requests-auth = "~=0.4"
