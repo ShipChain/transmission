@@ -18,12 +18,19 @@ jobs:
           docker_layer_caching: true
 
       - restore_cache:
-          key: virtualenv-cache
+          keys:
+            - virtualenv-cache-{{ checksum "poetry.lock" }}
+            - virtualenv-cache
 
       - run:
           name: Build application Docker image
           command: |
             docker-compose -f compose/circleci.yml up --build -d
+
+      - run:
+          name: Package safety check
+          command: |
+            docker-compose -f compose/circleci.yml exec -T runserver safety check
 
       - run:
           name: PEP8 Lint check
@@ -55,7 +62,7 @@ jobs:
             docker cp $(docker-compose -f compose/circleci.yml ps -q runserver):/app/.virtualenv .virtualenv
 
       - save_cache:
-          key: virtualenv-cache
+          key: virtualenv-cache-{{ checksum "poetry.lock" }}
           paths:
             - .virtualenv
 
@@ -65,19 +72,18 @@ jobs:
             mkdir -p docker-cache
             docker save -o docker-cache/built-image.tar transmission-django
 
-      - save_cache:
-          key: docker-cache-{{ .Branch }}-{{ .Revision }}
+      - persist_to_workspace:
+          root: docker-cache
           paths:
-            - docker-cache
+            - built-image.tar
 
   push-to-ecr:
     docker:
       - image: docker:stable-git
 
     steps:
-      - restore_cache:
-          keys:
-            - docker-cache-{{ .Branch }}-{{ .Revision }}
+      - attach_workspace:
+          at: docker-cache
 
       - setup_remote_docker:
           docker_layer_caching: true
@@ -218,9 +224,9 @@ workflows:
     jobs:
       - build
       - push-to-ecr:
-          filters:
-            branches:
-              only: master
+#          filters:
+#            branches:
+#              only: master
           requires:
             - build
       - deploy-to-dev:

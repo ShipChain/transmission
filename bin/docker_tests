@@ -13,6 +13,8 @@ bin/dc build
 
 bin/dc up -d
 
+bin/dc exec -T runserver safety check
+
 bin/dc exec -T runserver prospector -o pylint
 
 bin/dc exec -T runserver bandit -r apps
