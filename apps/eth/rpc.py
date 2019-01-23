@@ -1,9 +1,9 @@
 import logging
 
-from apps.eth.models import Event
-from apps.rpc_client import RPCClient, RPCError
 from influxdb_metrics.loader import log_metric
 
+from apps.eth.models import Event
+from apps.rpc_client import RPCClient, RPCError
 
 LOG = logging.getLogger('transmission')
 
