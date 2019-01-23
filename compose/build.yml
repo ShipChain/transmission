@@ -2,10 +2,11 @@ version: "2.1"
 services:
   transmission-django-dev:
     build:
-      context: ./django
+      context: ../
+      dockerfile: Dockerfile.local
     image: transmission-django-dev
   transmission-django:
     build:
       context: ../
+      dockerfile: Dockerfile.deploy
     image: transmission-django
-

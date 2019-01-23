@@ -1,2 +1,2 @@
 #!/bin/bash
-bin/dc run --rm django_shell $*
+bin/dc run --rm --entrypoint /entrypoint.sh -e IS_DDO=1 django_shell $*

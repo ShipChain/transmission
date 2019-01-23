@@ -17,12 +17,12 @@ jobs:
           docker_layer_caching: true
 
       - restore_cache:
-          key: pip-cache
+          key: virtualenv-cache
 
       - run:
           name: Build application Docker image
           command: |
-            docker-compose -f compose/circleci.yml up -d
+            docker-compose -f compose/circleci.yml up --build -d
 
       - run:
           name: PEP8 Lint check
@@ -49,14 +49,14 @@ jobs:
           path: test-results
 
       - run:
-          name: Copy pip cache from Docker
+          name: Copy virtualenv cache from Docker
           command: |
-            docker cp $(docker-compose -f compose/circleci.yml ps -q runserver):/build/pip.cache compose/django/pip.cache
+            docker cp $(docker-compose -f compose/circleci.yml ps -q runserver):/app/.virtualenv .virtualenv
 
       - save_cache:
-          key: pip-cache
+          key: virtualenv-cache
           paths:
-            - compose/django/pip.cache
+            - .virtualenv
 
       - run:
           name: Save docker image

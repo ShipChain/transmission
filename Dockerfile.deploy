@@ -1,0 +1,43 @@
+FROM python:3.6.5
+
+LABEL maintainer="Adam Hodges <ahodges@shipchain.io>"
+
+ENV LANG C.UTF-8
+ENV PYTHONUNBUFFERED 1
+
+RUN apt-get update -y && apt-get -y install binutils libproj-dev gdal-bin jq openssh-server
+
+# SUPPORT SSH FOR IAM USERS #
+RUN mkdir /var/run/sshd /etc/cron.d
+RUN pip install keymaker
+RUN keymaker install
+
+# Configure public key SSH
+RUN echo "AllowAgentForwarding yes" >> /etc/ssh/sshd_config
+RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
+# ------------------------- #
+
+RUN pip install virtualenv
+RUN virtualenv /opt/aws
+RUN . /opt/aws/bin/activate && pip install --upgrade awscli
+
+RUN curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+
+ENV VIRTUAL_ENV=/app/.virtualenv
+ENV PATH=$VIRTUAL_ENV/bin:/root/.poetry/bin:$PATH
+
+RUN mkdir /app
+WORKDIR /app
+
+COPY ./compose/django/*.sh /
+RUN chmod +x /*.sh
+ENTRYPOINT ["/entrypoint.sh"]
+
+COPY . /app/
+
+RUN \[ -d $VIRTUAL_ENV \] || virtualenv $VIRTUAL_ENV
+RUN . $VIRTUAL_ENV/bin/activate && poetry install
+RUN . $VIRTUAL_ENV/bin/activate && safety check
+
+# Generate static assets
+RUN python manage.py collectstatic -c --noinput

@@ -39,9 +39,7 @@ services:
       - /data/shipchain/transmission/postgresql:/var/lib/postgresql
 
   django_shell: # This is a one-shot command runner service, for manage.py or bash, it dies immediately
-    extends:
-      service: transmission-django-dev
-      file: build.yml
+    image: transmission-django-dev
     volumes:
       - ../:/app
     links:
@@ -97,9 +95,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
 
   celery:
-    extends:
-      service: transmission-django-dev
-      file: build.yml
+    image: transmission-django-dev
     command: ["watchmedo", "auto-restart", "-d", ".", "-p", "'*.py'", "--", "celery", "worker", "-A", "apps"]
     networks:
       default:
