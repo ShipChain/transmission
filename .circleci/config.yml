@@ -6,7 +6,8 @@ version: 2
 jobs:
   build:
     docker:
-      - image: docker/compose:1.19.0
+      - image: circleci/python:3.6.5
+        user: root
 
     working_directory: ~/repo
 
