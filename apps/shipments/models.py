@@ -369,6 +369,7 @@ class PermissionLink(models.Model):
     expiration_date = models.DateTimeField(blank=True, null=True)
     name = models.CharField(null=False, max_length=255)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class LoadShipment(models.Model):
