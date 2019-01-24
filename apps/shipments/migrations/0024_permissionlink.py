@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0021_change_unrequired_TD_fields'),
+        ('shipments', '0023_trackingdata_point_not_null'),
     ]
 
     operations = [
@@ -20,6 +20,7 @@ class Migration(migrations.Migration):
                 ('expiration_date', models.DateTimeField(blank=True, null=True)),
                 ('name', models.CharField(max_length=255)),
                 ('shipment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shipments.Shipment')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
             ],
         ),
     ]
