@@ -26,7 +26,6 @@ class IsShipmentOwner(permissions.BasePermission):
         return shipment.owner_id == request.user.id
 
 
-#pylint:disable=inconsistent-return-statements
 class IsSharedOrOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if obj.owner_id == request.user.id:
