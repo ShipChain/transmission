@@ -6,6 +6,8 @@ from unittest import mock
 
 import boto3
 import httpretty
+from datetime import datetime, timezone
+from dateutil import parser
 from django.conf import settings as test_settings
 from jose import jws
 from moto import mock_iot
@@ -16,7 +18,7 @@ from rest_framework.test import APITestCase, force_authenticate, APIClient
 from apps.authentication import passive_credentials_auth
 from apps.eth.models import EthAction
 from apps.iot_client import BotoAWSRequestsAuth
-from apps.shipments.models import Shipment, Location, Device, TrackingData
+from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
 from apps.shipments.rpc import Load110RPCClient
 from apps.utils import random_id
 from tests.utils import get_jwt
@@ -31,6 +33,7 @@ STORAGE_CRED_ID = '77b72202-5bcd-49f4-9860-bc4ec4fee07b'
 DEVICE_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
 CERTIFICATE_ID = '230498151c214b788dd97f22b85410a5'
 OWNER_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
+OWNER_ID_2 = '48381c16-432b-493f-9f8b-54e88a84ec0a'
 LOCATION_NAME = "Test Location Name"
 LOCATION_NAME_2 = "Second Test Location Name"
 LOCATION_CITY = 'City'
@@ -46,7 +49,9 @@ class ShipmentAPITests(APITestCase):
         self.client = APIClient()
 
         self.token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID)
+        self.token2 = get_jwt(username='user2@shipchain.io', sub=OWNER_ID_2)
         self.user_1 = passive_credentials_auth(self.token)
+        self.user_2 = passive_credentials_auth(self.token2)
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
@@ -66,6 +71,13 @@ class ShipmentAPITests(APITestCase):
                                                       pickup_est="2018-11-05T17:57:05.070419Z",
                                                       mode_of_transport_code='mode',
                                                       owner_id=self.user_1.id))
+        self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
+                                                      carrier_wallet_id=CARRIER_WALLET_ID,
+                                                      shipper_wallet_id=SHIPPER_WALLET_ID,
+                                                      storage_credentials_id=STORAGE_CRED_ID,
+                                                      pickup_est="2018-11-05T17:57:05.070419Z",
+                                                      mode_of_transport_code='mode',
+                                                      owner_id=self.user_2.id))
 
     def test_list_empty(self):
         """
@@ -1065,6 +1077,119 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_to_location.geometry.coords, (12.0, 23.0))
 
+    def test_permission_link(self):
+        self.create_shipment()
+        url = reverse('shipment-permissions-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
+
+        valid_permission_no_exp, content_type = create_form_content({
+            'name': 'test'
+        })
+
+        valid_permission_past_exp, content_type = create_form_content({
+            'name': 'test',
+            'expiration_date': '2018-08-22T17:44:39.874352'
+        })
+
+        valid_permission_with_exp, content_type = create_form_content({
+            'name': 'test',
+            'expiration_date': '2118-08-22T17:44:39.874352'
+        })
+
+        shipment_update_info, content_type = create_form_content({
+            'carrier_scac': 'test'
+        })
+
+        # Unauthenticated request should fail with 403
+        response = self.client.post(url, valid_permission_no_exp, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.set_user(self.user_1)
+
+        # Authenticated request should succeed
+        response = self.client.post(url, valid_permission_no_exp, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response_json = response.json()
+        self.assertEqual(response_json['data']['attributes']['shipment_id'], self.shipments[0].id)
+        self.assertIsNone(response_json['data']['attributes']['expiration_date'])
+        valid_permission_id = response_json['data']['id']
+
+        # Authenticated request should succeed
+        response = self.client.post(url, valid_permission_past_exp, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response_json = response.json()
+        self.assertEqual(response_json['data']['attributes']['shipment_id'], self.shipments[0].id)
+        self.assertTrue(datetime.now(timezone.utc) > parser.parse(response_json['data']['attributes']['expiration_date']))
+        valid_permission_id_past_exp = response_json['data']['id']
+
+        # Authenticated request should succeed
+        response = self.client.post(url, valid_permission_with_exp, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response_json = response.json()
+        self.assertEqual(response_json['data']['attributes']['shipment_id'], self.shipments[0].id)
+        self.assertTrue(datetime.now(timezone.utc) < parser.parse(response_json['data']['attributes']['expiration_date']))
+        valid_permission_id_with_exp = response_json['data']['id']
+
+        # Another user with valid permission should be able to access that shipment only with permission link
+        shipment_url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+        other_shipment_url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
+
+        # The primary user with an invalid/expired code should still succeed
+        response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_past_exp}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(shipment_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.set_user(self.user_2)
+
+        response = self.client.get(shipment_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Assert that users cannot update or delete shipments when using a permission link
+        response = self.client.patch(f'{shipment_url}?permission_link={valid_permission_id}', shipment_update_info, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Assert that users cannot update or delete shipments when using a permission link
+        response = self.client.delete(f'{shipment_url}?permission_link={valid_permission_id}')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Assert that users cannot access shipment with expired date but can before expiration date
+        response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_past_exp}')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Assert that users cannot access shipment with expired date but can before expiration date
+        response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_with_exp}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Can only access shipment with permission link associated
+        response = self.client.get(f'{other_shipment_url}?permission_link={valid_permission_id}')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # An invalid code should result in a 404
+        response = self.client.get(f'{shipment_url}?permission_link={self.shipments[0].id}')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Assert that users cannot update or delete shipments when using a permission link
+        response = self.client.patch(f'{shipment_url}?permission_link={valid_permission_id}', shipment_update_info, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Assert that users with empty permission link cannot access shipment
+        response = self.client.patch(f'{shipment_url}?permission_link=', shipment_update_info, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Cannot make a permission link to a shipment not owned
+        response = self.client.post(url, valid_permission_with_exp, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Assert owner can delete their permission link
+        self.set_user(self.user_1)
+        response = self.client.delete(f'{url}{valid_permission_id}/', valid_permission_with_exp, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(PermissionLink.objects.all().count(), 2)
+
 
 class LocationAPITests(APITestCase):
 
@@ -1151,7 +1276,6 @@ class LocationAPITests(APITestCase):
 
         with self.settings(PROFILES_ENABLED=False, PROFILES_URL='DISABLED'):
             response = self.client.post(url, valid_data_profiles_disabled, content_type=content_type)
-            print(response.content)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     @httpretty.activate
