@@ -17,14 +17,18 @@ then
 
     echo "Deactivating AWS CLI virtualenv"
     deactivate
-elif [[ -z "$IS_DDO" ]];
-then
+
+    python manage.py migrate
+else
     echo "Waiting for dependencies to come up in the stack"
     /wait-for-it.sh ${REDIS_NAME:-redis_db}:6379
     /wait-for-it.sh ${PSQL_NAME:-psql}:5432
     /wait-for-it.sh ${MINIO_NAME:-minio}:9000
 
-    python manage.py migrate
+    if [[ -z "$IS_DDO" ]];
+    then
+        python manage.py migrate
+    fi
 fi
 
 exec "$@"
