@@ -1158,7 +1158,7 @@ class ShipmentAPITests(APITestCase):
 
         # Assert that users cannot access shipment with expired date but can before expiration date
         response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_past_exp}')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
         # Assert that users cannot access shipment with expired date but can before expiration date
         response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_with_exp}')
@@ -1170,10 +1170,7 @@ class ShipmentAPITests(APITestCase):
 
         # An invalid code should result in a 404
         response = self.client.get(f'{shipment_url}?permission_link={self.shipments[0].id}')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-        # Assert that users cannot update or delete shipments when using a permission link
-        response = self.client.patch(f'{shipment_url}?permission_link={valid_permission_id}', shipment_update_info, content_type=content_type)
+        print(response.content)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Assert that users with empty permission link cannot access shipment
@@ -1189,6 +1186,11 @@ class ShipmentAPITests(APITestCase):
         response = self.client.delete(f'{url}{valid_permission_id}/', valid_permission_with_exp, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(PermissionLink.objects.all().count(), 2)
+
+        # Assert that a non authenticated user can view the shipment
+        self.set_user(None)
+        response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_with_exp}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class LocationAPITests(APITestCase):

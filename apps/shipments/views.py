@@ -1,7 +1,9 @@
 import logging
 
 from string import Template
+from datetime import datetime, timezone
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseNotFound
 from django.utils.decorators import method_decorator
@@ -29,7 +31,7 @@ LOG = logging.getLogger('transmission')
 class ShipmentViewSet(viewsets.ModelViewSet):
     queryset = Shipment.objects.all()
     serializer_class = ShipmentSerializer
-    permission_classes = ((permissions.IsAuthenticated, IsSharedOrOwner) if settings.PROFILES_ENABLED
+    permission_classes = ((IsSharedOrOwner, ) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     filterset_class = ShipmentFilter
@@ -41,7 +43,12 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
             if 'permission_link' in self.request.query_params and self.request.query_params['permission_link']:
-                permission_link = PermissionLink.objects.get(pk=self.request.query_params['permission_link'])
+                try:
+                    permission_link = PermissionLink.objects.get(pk=self.request.query_params['permission_link'])
+                    if permission_link.expiration_date and permission_link.expiration_date < datetime.now(timezone.utc):
+                        queryset = queryset.filter(owner_id=self.request.user.id)
+                except ObjectDoesNotExist:
+                    raise PermissionDenied('No permission link found.')
                 queryset = queryset.filter(Q(owner_id=self.request.user.id) | Q(pk=permission_link.shipment.pk))
             else:
                 queryset = queryset.filter(owner_id=self.request.user.id)

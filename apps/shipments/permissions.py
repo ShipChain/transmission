@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import permissions
 from .models import PermissionLink, Shipment
 
@@ -27,11 +28,19 @@ class IsShipmentOwner(permissions.BasePermission):
 
 
 class IsSharedOrOwner(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        return ((request.user and request.user.is_authenticated) or
+                ('permission_link' in request.query_params and request.query_params['permission_link']))
+
     def has_object_permission(self, request, view, obj):
         if obj.owner_id == request.user.id:
             return True
         if 'permission_link' in request.query_params and request.query_params['permission_link']:
-            permission_link = PermissionLink.objects.get(pk=request.query_params['permission_link'])
+            try:
+                permission_link = PermissionLink.objects.get(pk=request.query_params['permission_link'])
+            except ObjectDoesNotExist:
+                return False
             if permission_link.expiration_date:
                 return (datetime.now(timezone.utc) < permission_link.expiration_date
                         and obj.pk == permission_link.shipment.pk and request.method == 'GET')
