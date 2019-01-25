@@ -19,13 +19,19 @@ jobs:
 
       - restore_cache:
           keys:
-            - virtualenv-cache-{{ checksum "poetry.lock" }}
-            - virtualenv-cache
+            - virtualenv-alpine-cache-{{ checksum "poetry.lock" }}
+            - virtualenv-alpine-cache
 
       - run:
           name: Build Docker images
           command: |
-            docker-compose -f compose/circleci.yml up --build -d
+            docker build --target test   --tag transmission-django-test .
+            docker build --target deploy --tag transmission-django --cache-from transmission-django-test .
+
+      - run:
+          name: Start compose services
+          command: |
+            docker-compose -f compose/circleci.yml up -d
 
       - run:
           name: Package safety check
@@ -62,7 +68,7 @@ jobs:
             docker cp $(docker-compose -f compose/circleci.yml ps -q runserver):/app/.virtualenv .virtualenv
 
       - save_cache:
-          key: virtualenv-cache-{{ checksum "poetry.lock" }}
+          key: virtualenv-alpine-cache-{{ checksum "poetry.lock" }}
           paths:
             - .virtualenv
 
@@ -70,7 +76,7 @@ jobs:
           name: Save docker image
           command: |
             mkdir -p docker-cache
-            docker save -o docker-cache/built-image.tar transmission-django-test
+            docker save -o docker-cache/built-image.tar transmission-django
 
       - persist_to_workspace:
           root: docker-cache

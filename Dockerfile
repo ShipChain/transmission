@@ -1,4 +1,6 @@
-FROM python:3.6.8-slim AS base
+## Base image with python and entrypoint scripts ##
+## ============================================= ##
+FROM python:3.6.8-alpine AS base
 
 LABEL maintainer="Adam Hodges <ahodges@shipchain.io>"
 
@@ -6,12 +8,12 @@ ENV LANG C.UTF-8
 ENV PYTHONUNBUFFERED 1
 
 # Essential packages for our app environment
-RUN apt-get update && \
-    apt-get -y --no-install-recommends install binutils libproj-dev gdal-bin curl && \
+RUN apk add --no-cache bash curl binutils && \
+    apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/main/ libcrypto1.1 && \
+    apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj4-dev gdal geos && \
     curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && \
-    apt-get remove -y curl && \
-    apt-get autoremove --purge -y && \
-    rm -rf /var/lib/apt/lists/*
+    apk del curl
+RUN ln -s /usr/lib/libgeos_c.so.1 /usr/local/lib/libgeos_c.so && ln -s /usr/lib/libgdal.so.20 /usr/lib/libgdal.so
 
 # Install and configure virtualenv
 RUN pip install virtualenv
@@ -25,16 +27,27 @@ COPY ./compose/django/*.sh /
 RUN chmod +x /*.sh
 ENTRYPOINT ["/entrypoint.sh"]
 
-## Image only used for production building ##
+## Image with system dependencies for building ##
+## =========================================== ##
 FROM base AS build
 
 # Essential packages for building python packages
-RUN apt-get update && \
-    apt-get -y --no-install-recommends install build-essential git  && \
-    apt-get autoremove --purge -y && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache build-base git libffi-dev linux-headers libressl-dev jpeg-dev freetype-dev postgresql-dev
 
-# Install dependencies
+
+## Image with dev-dependencies ##
+## =========================== ##
+FROM build AS test
+
+COPY . /app/
+RUN \[ -d $VIRTUAL_ENV \] || virtualenv $VIRTUAL_ENV
+RUN . $VIRTUAL_ENV/bin/activate && poetry install
+
+
+## Image only used for production building ##
+## ======================================= ##
+FROM build AS prod
+
 COPY . /app/
 RUN \[ -d $VIRTUAL_ENV \] || virtualenv $VIRTUAL_ENV
 RUN . $VIRTUAL_ENV/bin/activate && poetry install --no-dev
@@ -42,21 +55,22 @@ RUN . $VIRTUAL_ENV/bin/activate && poetry install --no-dev
 # Generate static assets
 RUN python manage.py collectstatic -c --noinput
 
+
 ## Image to be deployed to ECS with additional utils and no build tools ##
+## ==================================================================== ##
 FROM base AS deploy
 
 # Install openssh for ECS management container
-RUN apt-get update && \
-    apt-get -y --no-install-recommends install jq openssh-server  && \
-    apt-get autoremove --purge -y && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache jq openssl openssh-server-pam shadow nano
+RUN sed -i 's/^CREATE_MAIL_SPOOL=yes/CREATE_MAIL_SPOOL=no/' /etc/default/useradd
 
 # Keymaker for SSH auth via IAM
-RUN mkdir /var/run/sshd /etc/cron.d
+RUN mkdir /var/run/sshd /etc/cron.d && touch /etc/pam.d/sshd
 RUN pip install keymaker
-RUN keymaker install
 
 # Configure public key SSH
+RUN echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config
+RUN echo "UsePAM yes" >> /etc/ssh/sshd_config
 RUN echo "AllowAgentForwarding yes" >> /etc/ssh/sshd_config
 RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
 
@@ -65,9 +79,4 @@ RUN virtualenv /opt/aws
 RUN . /opt/aws/bin/activate && pip install --upgrade awscli
 
 # Copy built virtualenv without having to install build-essentials, etc
-COPY --from=build /app /app
-
-## Image with dev-dependencies ##
-FROM build AS test
-
-RUN . $VIRTUAL_ENV/bin/activate && poetry install
+COPY --from=prod /app /app
