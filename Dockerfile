@@ -8,6 +8,7 @@ ENV LANG C.UTF-8
 ENV PYTHONUNBUFFERED 1
 
 # Essential packages for our app environment
+SHELL ["/bin/sh", "-o", "pipefail", "-c"]
 RUN apk add --no-cache bash curl binutils && \
     apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/main/ libcrypto1.1 && \
     apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj4-dev gdal geos && \
@@ -40,8 +41,8 @@ RUN apk add --no-cache build-base git libffi-dev linux-headers libressl-dev jpeg
 FROM build AS test
 
 COPY . /app/
-RUN \[ -d $VIRTUAL_ENV \] || virtualenv $VIRTUAL_ENV
-RUN . $VIRTUAL_ENV/bin/activate && poetry install
+RUN \[ -d "$VIRTUAL_ENV" \] || virtualenv "$VIRTUAL_ENV"
+RUN . "$VIRTUAL_ENV/bin/activate" && poetry install
 
 
 ## Image only used for production building ##
@@ -49,8 +50,8 @@ RUN . $VIRTUAL_ENV/bin/activate && poetry install
 FROM build AS prod
 
 COPY . /app/
-RUN \[ -d $VIRTUAL_ENV \] || virtualenv $VIRTUAL_ENV
-RUN . $VIRTUAL_ENV/bin/activate && poetry install --no-dev
+RUN \[ -d "$VIRTUAL_ENV" \] || virtualenv "$VIRTUAL_ENV"
+RUN . "$VIRTUAL_ENV/bin/activate" && poetry install --no-dev
 
 # Generate static assets
 RUN python manage.py collectstatic -c --noinput
