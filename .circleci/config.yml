@@ -34,6 +34,11 @@ jobs:
             docker-compose -f compose/circleci.yml up -d
 
       - run:
+          name: Check for valid poetry.lock
+          command: |
+            docker-compose -f compose/circleci.yml exec -T runserver /bin/bash -c '! poetry install --dry-run | grep "Warning: The lock file is not up to date"'
+
+      - run:
           name: Package safety check
           command: |
             docker-compose -f compose/circleci.yml exec -T runserver safety check

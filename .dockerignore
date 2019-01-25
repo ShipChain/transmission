@@ -19,6 +19,7 @@ coverage.xml
 *,cover
 *.log
 .git
+.githooks
 
 .idea
 .circleci
