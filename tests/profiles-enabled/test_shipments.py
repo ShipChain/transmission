@@ -149,15 +149,15 @@ class ShipmentAPITests(APITestCase):
         setattr(self.shipments[1], 'ship_to_location', Location.objects.create(name="locat"))
         self.shipments[1].save()
 
-        response = self.client.get(f'{url}?ship_to_location__name=locat')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        response_data = response.json()
-        self.assertEqual(len(response_data['data']), 1)
+        # response = self.client.get(f'{url}?ship_to_location__name=locat')
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # response_data = response.json()
+        # self.assertEqual(len(response_data['data']), 1)
 
-        response = self.client.get(f'{url}?has_ship_to_location=true')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        response_data = response.json()
-        self.assertEqual(len(response_data['data']), 1)
+        # response = self.client.get(f'{url}?has_ship_to_location=true')
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # response_data = response.json()
+        # self.assertEqual(len(response_data['data']), 1)
 
     def test_ordering(self):
         """
@@ -527,6 +527,21 @@ class ShipmentAPITests(APITestCase):
         response = self.client.post(url, '{}', content_type='application/vnd.api+json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+        google_obj = {
+            'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
+        mapbox_obj = {'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [23, 12]}}]}
+
+        httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
+        httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
+
+        # Authenticated request should succeed using mapbox (if exists)
+        self.set_user(self.user_1, self.token)
+
+        location_one = Location.objects.create(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
+                                               state=LOCATION_STATE)
+        location_two = Location.objects.create(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
+                                               state=LOCATION_STATE)
+
         parameters = {
             '_vault_id': VAULT_ID,
             '_vault_uri': 's3://bucket/' + VAULT_ID,
@@ -542,33 +557,19 @@ class ShipmentAPITests(APITestCase):
             '_ship_to_location_state': LOCATION_STATE,
         }
 
-        one_location, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
-                                                          'ship_from_location.city': LOCATION_CITY,
-                                                          'ship_from_location.state': LOCATION_STATE,
+        one_location, content_type = create_form_content({
                                                           'carrier_wallet_id': CARRIER_WALLET_ID,
                                                           'shipper_wallet_id': SHIPPER_WALLET_ID,
-                                                          'storage_credentials_id': STORAGE_CRED_ID
+                                                          'storage_credentials_id': STORAGE_CRED_ID,
+                                                          'ship_from_location_id': location_one.id
                                                           })
 
-        one_location_profiles_disabled, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
-                                                                            'ship_from_location.city': LOCATION_CITY,
-                                                                            'ship_from_location.state': LOCATION_STATE,
-                                                                            'ship_from_location.owner_id': OWNER_ID,
-                                                                            'carrier_wallet_id': CARRIER_WALLET_ID,
-                                                                            'shipper_wallet_id': SHIPPER_WALLET_ID,
-                                                                            'storage_credentials_id': STORAGE_CRED_ID,
-                                                                            'owner_id': OWNER_ID
-                                                                           })
-
-        two_locations, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
-                                                           'ship_from_location.city': LOCATION_CITY,
-                                                           'ship_from_location.state': LOCATION_STATE,
-                                                           'ship_to_location.name': LOCATION_NAME_2,
-                                                           'ship_to_location.city': LOCATION_CITY,
-                                                           'ship_to_location.state': LOCATION_STATE,
+        two_locations, content_type = create_form_content({
                                                            'carrier_wallet_id': CARRIER_WALLET_ID,
                                                            'shipper_wallet_id': SHIPPER_WALLET_ID,
-                                                           'storage_credentials_id': STORAGE_CRED_ID
+                                                           'storage_credentials_id': STORAGE_CRED_ID,
+                                                           'ship_from_location_id': location_one.id,
+                                                           'ship_to_location_id': location_two.id,
                                                            })
 
         # Mock RPC calls
@@ -596,20 +597,12 @@ class ShipmentAPITests(APITestCase):
             "transactionIndex": 0
         })
 
-        google_obj = {'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
-        mapbox_obj = {'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [23, 12]}}]}
-
-        httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
-        httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-
-        # Authenticated request should succeed using mapbox (if exists)
-        self.set_user(self.user_1, self.token)
 
         response = self.client.post(url, one_location, content_type=content_type)
 
@@ -731,6 +724,18 @@ class ShipmentAPITests(APITestCase):
         response = self.client.post(url, one_location, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+        # Test query parameters
+        response = self.client.get(f'{url}?ship_to_location__name={LOCATION_NAME_2}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 2)
+
+        response = self.client.get(f'{url}?has_ship_to_location=true')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+
+        self.assertEqual(len(response_data['data']), 2)
+
     def test_get_device_request_url(self):
 
         _shipment_id = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
@@ -742,159 +747,6 @@ class ShipmentAPITests(APITestCase):
         # http://INTENTIONALLY_DISCONNECTED:9999/api/v1/device/?on_shipment=b715a8ff-9299-4c87-96de-a4b0a4a54509
         self.assertIn(test_settings.PROFILES_URL, profiles_url)
         self.assertIn(f"?on_shipment={_shipment_id}", profiles_url)
-
-    # def test_get_tracking(self):
-    #     from datetime import datetime
-    #
-    #     print('Datetime: ', datetime.now())
-    #
-    #     self.create_shipment()
-    #
-    #     url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
-    #
-    #     class DeviceForShipmentResponse(object):
-    #         status_code = status.HTTP_200_OK
-    #
-    #         @staticmethod
-    #         def json():
-    #             return {
-    #                 'data': [
-    #                     {
-    #                         'type': 'Device'
-    #                     }
-    #                 ]
-    #             }
-    #
-    #     tracking_data = [
-    #                 {
-    #                     "position":
-    #                         {
-    #                             "latitude": -80.123635,
-    #                             "longitude": 33.018413333333335,
-    #                             "altitude": 924,
-    #                             "source": "gps",
-    #                             "certainty": 95,
-    #                             "speed": 34
-    #
-    #                         },
-    #                     "version": "1.0.0",
-    #                     "device_id": DEVICE_ID
-    #                 },
-    #                 {
-    #                     "position":
-    #                         {
-    #                             "latitude": -81.123635,
-    #                             "longitude": 33.018413333333335,
-    #                             "altitude": 924,
-    #                             "source": "gps",
-    #                             "certainty": 95,
-    #                             "speed": 34
-    #
-    #                         },
-    #                     "version": "1.0.0",
-    #                     "device_id": DEVICE_ID
-    #                 }
-    #             ]
-    #
-    #     geo_json = {
-    #         'type': 'FeatureCollection',
-    #         'features': [
-    #             {
-    #                 'type': 'Feature',
-    #                 'geometry': {
-    #                     'type': 'LineString',
-    #                     'coordinates': [
-    #                         [
-    #                             -80.123635,
-    #                             33.018413333333335
-    #                         ],
-    #                         [
-    #                             -81.123635,
-    #                             34.018413333333335
-    #                         ]
-    #                     ]
-    #                 },
-    #                 'properties': {
-    #                     'linestringTimestamps': [
-    #                         '2018-07-27T21:07:14',
-    #                         '2018-07-28T21:07:14'
-    #                     ]
-    #                 }
-    #             },
-    #             {
-    #                 'type': 'Feature',
-    #                 'geometry': {
-    #                     'type': 'Point',
-    #                     'coordinates': [
-    #                         -80.123635,
-    #                         33.018413333333335
-    #                     ]
-    #                 },
-    #                 'properties': {
-    #                     'time': '2018-07-27T21:07:14',
-    #                     'uncertainty': 0,
-    #                     'has_gps': 'A',
-    #                     'source': 'gps'
-    #                 }
-    #             },
-    #             {
-    #                 'type': 'Feature',
-    #                 'geometry': {
-    #                     'type': 'Point',
-    #                     'coordinates': [
-    #                         -81.123635,
-    #                         34.018413333333335
-    #                     ]
-    #                 },
-    #                 'properties': {
-    #                     'time': '2018-07-28T21:07:14',
-    #                     'uncertainty': 0,
-    #                     'has_gps': None,
-    #                     'source': 'gps'
-    #                 }
-    #             }
-    #         ]
-    #     }
-    #
-    #     # Unauthenticated request should fail with 403
-    #     response = self.client.get(url)
-    #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-    #
-    #     # Mock Requests calls
-    #     mock_requests = requests
-    #     mock_requests.get = mock.Mock(return_value=DeviceForShipmentResponse)
-    #
-    #     # Mock RPC calls
-    #     mock_rpc_client = ShipmentRPCClient
-    #     mock_rpc_client.get_tracking_data = mock.Mock(return_value=tracking_data)
-    #
-    #     # Authenticated request should succeed, pass in token so we can pull it from request.auth
-    #     self.set_user(self.user_1, b'a1234567890b1234567890')
-    #
-    #     response = self.client.get(url)
-    #     print(response.content)
-    #     response_data = response.json()['data']
-    #
-    #     self.assertEqual(response_data, geo_json)
-    #
-    #     # Test ?as_point
-    #     response = self.client.get(f'{url}?as_point')
-    #     response_json = response.json()
-    #
-    #     geo_json_point = copy.deepcopy(geo_json)
-    #     del geo_json_point['features'][0]
-    #
-    #     self.assertEqual(response_json['data'], geo_json_point)
-    #
-    #     # Test ?as_line
-    #     response = self.client.get(f'{url}?as_line')
-    #     response_data = response.json()['data']
-    #
-    #     geo_json_line = copy.deepcopy(geo_json)
-    #     del geo_json_line['features'][2]
-    #     del geo_json_line['features'][1]
-    #
-    #     self.assertEqual(response_data, geo_json_line)
 
     def test_shipment_update(self):
         self.create_shipment()
@@ -977,6 +829,18 @@ class ShipmentAPITests(APITestCase):
         response = self.client.patch(url, '{}', content_type='application/vnd.api+json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+        google_obj = {
+            'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
+        mapbox_obj = {'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [23, 12]}}]}
+
+        httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
+        httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
+
+        location_one = Location.objects.create(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
+                                               state=LOCATION_STATE)
+        location_two = Location.objects.create(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
+                                               state=LOCATION_STATE)
+
         parameters = {
             '_vault_id': VAULT_ID,
             '_carrier_wallet_id': CARRIER_WALLET_ID,
@@ -991,17 +855,13 @@ class ShipmentAPITests(APITestCase):
             '_ship_to_location_state': LOCATION_STATE,
         }
 
-        one_location, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
-                                                          'ship_from_location.city': LOCATION_CITY,
-                                                          'ship_from_location.state': LOCATION_STATE
+        one_location, content_type = create_form_content({
+                                                          'ship_from_location_id': location_one.id
                                                           })
 
-        two_locations, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
-                                                           'ship_from_location.city': LOCATION_CITY,
-                                                           'ship_from_location.state': LOCATION_STATE,
-                                                           'ship_to_location.name': LOCATION_NAME_2,
-                                                           'ship_to_location.city': LOCATION_CITY,
-                                                           'ship_to_location.state': LOCATION_STATE
+        two_locations, content_type = create_form_content({
+                                                           'ship_from_location_id': location_one.id,
+                                                           'ship_to_location_id': location_two.id,
                                                            })
 
         # Mock RPC calls
@@ -1025,12 +885,6 @@ class ShipmentAPITests(APITestCase):
             "transactionHash": parameters['_async_hash'],
             "transactionIndex": 0
         })
-
-        google_obj = {'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
-        mapbox_obj = {'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [23, 12]}}]}
-
-        httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
-        httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
 
         # Authenticated request should succeed using mapbox (if exists)
         self.set_user(self.user_1)

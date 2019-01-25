@@ -23,7 +23,8 @@ from .models import Shipment, Location, TrackingData, PermissionLink
 from .permissions import IsAuthenticatedOrDevice, IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer
+    ShipmentListSerializer, PermissionLinkSerializer
+from .filters import ShipmentFilter
 from .tasks import tracking_data_update
 
 LOG = logging.getLogger('transmission')
@@ -164,6 +165,17 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         response.instance.async_job_id = async_jobs.latest('created_at').id if async_jobs else None
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = ShipmentListSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = ShipmentListSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class PermissionLinkViewSet(mixins.CreateModelMixin,

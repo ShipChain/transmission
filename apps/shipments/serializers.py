@@ -93,7 +93,12 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
     bill_to_location = LocationSerializer(required=False)
+    # ship_from_location = LocationSerializer(required=False)
+    # ship_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
+    # device_id = serializers.CharField(max_length=36, required=False)
+    # ship_from_location_id = serializers.CharField(max_length=36, required=False)
+    # ship_to_location_id = serializers.CharField(max_length=36, required=False)
 
     class Meta:
         model = Shipment
@@ -107,6 +112,8 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
 
 class ShipmentCreateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, required=False)
+    ship_from_location_id = serializers.CharField(max_length=36, required=False)
+    ship_to_location_id = serializers.CharField(max_length=36, required=False)
 
     def create(self, validated_data):
         extra_args = {}
@@ -121,6 +128,26 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
             if 'device' in self.context:
                 extra_args['device'] = self.context['device']
+
+            ship_from_location_id = validated_data.get('ship_from_location_id', None)
+            ship_to_location_id = validated_data.get('ship_to_location_id', None)
+            ship_from_location = None
+            ship_to_location = None
+
+            if ship_from_location_id:
+                try:
+                    ship_from_location = Location.objects.get(id=ship_from_location_id)
+                except Location.DoesNotExist:
+                    raise serializers.ValidationError('Ship from location object does not exist')
+
+            if ship_to_location_id:
+                try:
+                    ship_to_location = Location.objects.get(id=ship_to_location_id)
+                except Location.DoesNotExist:
+                    raise serializers.ValidationError('Ship to location object does not exist')
+
+            extra_args['ship_from_location'] = ship_from_location
+            extra_args['ship_to_location'] = ship_to_location
 
             return Shipment.objects.create(**validated_data, **extra_args)
 
@@ -162,6 +189,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, allow_null=True)
+    ship_from_location_id = serializers.CharField(max_length=36, required=False)
+    ship_to_location_id = serializers.CharField(max_length=36, required=False)
 
     class Meta:
         model = Shipment
@@ -176,19 +205,30 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 instance.device = validated_data.pop('device_id')
 
-        for location_field in ['ship_from_location', 'ship_to_location', 'bill_to_location']:
-            if location_field in validated_data:
-                location = getattr(instance, location_field)
-                data = validated_data.pop(location_field)
+        ship_from_location_id = validated_data.get('ship_from_location_id', None)
+        ship_to_location_id = validated_data.get('ship_to_location_id', None)
+        ship_from_location = None
+        ship_to_location = None
 
-                if location:
-                    for attr, value in data.items():
-                        setattr(location, attr, value)
-                    location.save()
+        if ship_from_location_id:
+            try:
+                ship_from_location = Location.objects.get(id=ship_from_location_id)
+            except Location.DoesNotExist:
+                raise serializers.ValidationError('Ship from location object does not exist')
 
-                else:
-                    location, _ = Location.objects.get_or_create(**data)
-                    setattr(instance, location_field, location)
+        if ship_to_location_id:
+            try:
+                ship_to_location = Location.objects.get(id=ship_to_location_id)
+            except Location.DoesNotExist:
+                raise serializers.ValidationError('Ship to location object does not exist')
+
+        if ship_from_location:
+            instance.ship_from_location = ship_from_location
+            instance.save()
+
+        if ship_to_location:
+            instance.ship_to_location = ship_to_location
+            instance.save()
 
         info = model_meta.get_field_info(instance)
         for attr, value in validated_data.items():
@@ -244,6 +284,11 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data', 'device']
+
+
+class ShipmentListSerializer(ShipmentSerializer):
+    ship_from_location = LocationSerializer(required=False)
+    ship_to_location = LocationSerializer(required=False)
 
 
 class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
