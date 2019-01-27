@@ -27,7 +27,7 @@ Deployment of these containers is handled through the use of Docker Compose with
 
 See the official Docker documentation for installation information:
 
- * [Install Docker](https://docs.docker.com/engine/installation/)
+ * [Install Docker](https://docs.docker.com/engine/installation/) version > 17.09.0
  * [Install Docker Compose](https://docs.docker.com/compose/install/) version > 1.21.0
   
 Transmission also relies heavily on the [ShipChain Engine](https://github.com/shipchain/engine) project for interaction 
@@ -43,9 +43,8 @@ necessary for running everything locally.
 You must first run `docker network create portal` to create a local network for
 other ShipChain services to communicate on (like the Profiles and Engine services).
 
-The dev environment uses a seperate Dockerfile located at
-[Dockerfile.local](Dockerfile.local); please note, this file *doesn't* use the docker
-`CP` directive to copy the project code into the container, instead the code is
+The dev environment uses the `base` stage present in the [Dockerfile](Dockerfile); please note, this file *doesn't* use 
+the docker `CP` directive to copy the project code into the container, instead the code is
 mounted as a volume (so that as you save files, they update inside the container).
 
 #### Scripts
@@ -170,7 +169,7 @@ The service runs as a Django server (uwsgi) and is designed to be deployed behin
 nginx reverse proxy container, along with an additional Celery worker container. 
 We currently use Amazon ECS (FARGATE) for deployment by way of CircleCi and AWS Lambda.
 
-The [Dockerfile.deploy](Dockerfile.deploy) file to build for deployment is the Docker; `docker build -f Dockerfile.deploy .`
+The [Dockerfile](Dockerfile) stage to build for deployment is `deploy`; `docker build --target=deploy .`
 should generate the image as expected.
 
 ## Running the tests

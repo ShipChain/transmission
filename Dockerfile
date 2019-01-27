@@ -8,7 +8,6 @@ ENV LANG C.UTF-8
 ENV PYTHONUNBUFFERED 1
 
 # Essential packages for our app environment
-SHELL ["/bin/sh", "-o", "pipefail", "-c"]
 RUN apk add --no-cache bash curl binutils && \
     apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/main/ libcrypto1.1 && \
     apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj4-dev gdal geos && \
@@ -17,7 +16,7 @@ RUN apk add --no-cache bash curl binutils && \
 RUN ln -s /usr/lib/libgeos_c.so.1 /usr/local/lib/libgeos_c.so && ln -s /usr/lib/libgdal.so.20 /usr/lib/libgdal.so
 
 # Install and configure virtualenv
-RUN pip install virtualenv
+RUN pip install virtualenv==16.3.*
 ENV VIRTUAL_ENV=/app/.virtualenv
 ENV PATH=$VIRTUAL_ENV/bin:/root/.poetry/bin:$PATH
 
@@ -67,7 +66,7 @@ RUN sed -i 's/^CREATE_MAIL_SPOOL=yes/CREATE_MAIL_SPOOL=no/' /etc/default/useradd
 
 # Keymaker for SSH auth via IAM
 RUN mkdir /var/run/sshd /etc/cron.d && touch /etc/pam.d/sshd
-RUN pip install keymaker
+RUN pip install keymaker==1.0.8
 
 # Configure public key SSH
 RUN echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config
@@ -77,7 +76,7 @@ RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
 
 # Create virtualenv for using awscli in entrypoint scripts
 RUN virtualenv /opt/aws
-RUN . /opt/aws/bin/activate && pip install --upgrade awscli
+RUN . /opt/aws/bin/activate && pip install awscli==1.9.*
 
 # Copy built virtualenv without having to install build-essentials, etc
 COPY --from=prod /app /app
