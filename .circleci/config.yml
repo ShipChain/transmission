@@ -8,6 +8,8 @@ jobs:
     docker:
       - image: circleci/python:3.6.8
         user: root
+    environment:
+      ROLE: circleci
 
     working_directory: ~/repo
 
@@ -31,38 +33,38 @@ jobs:
       - run:
           name: Start compose services
           command: |
-            docker-compose -f compose/circleci.yml up -d
+            bin/dc up -d
 
       - run:
           name: Check for valid poetry.lock
           command: |
-            docker-compose -f compose/circleci.yml exec -T runserver /bin/bash -c '! poetry install --dry-run | grep "Warning: The lock file is not up to date"'
+            bin/dc exec -T runserver /bin/bash -c '! poetry install --dry-run | grep "Warning: The lock file is not up to date"'
 
       - run:
           name: Package safety check
           command: |
-            docker-compose -f compose/circleci.yml exec -T runserver safety check
+            bin/dc exec -T runserver safety check
 
       - run:
           name: PEP8 Lint check
           command: |
-            docker-compose -f compose/circleci.yml exec -T runserver prospector -o pylint
+            bin/dc exec -T runserver prospector -o pylint
 
       - run:
           name: Bandit SAST tool
           command: |
-            docker-compose -f compose/circleci.yml exec -T runserver bandit -r apps
+            bin/dc exec -T runserver bandit -r apps
 
       - run:
           name: Run unit tests and coverage report
           command: |
-            docker-compose -f compose/circleci.yml exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled
-            docker-compose -f compose/circleci.yml exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report=xml:test-results/coverage.xml --cov-append --ds=conf/test_settings_profiles_disabled tests/profiles-disabled
+            bin/dc exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled
+            bin/dc exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report=xml:test-results/coverage.xml --cov-append --ds=conf/test_settings_profiles_disabled tests/profiles-disabled
 
       - run:
           name: Copy artifacts from Docker
           command: |
-            docker cp $(docker-compose -f compose/circleci.yml ps -q runserver):/app/test-results test-results
+            docker cp $(bin/dc ps -q runserver):/app/test-results test-results
 
       - store_test_results:
           path: test-results
@@ -70,7 +72,7 @@ jobs:
       - run:
           name: Copy virtualenv cache from Docker
           command: |
-            docker cp $(docker-compose -f compose/circleci.yml ps -q runserver):/app/.virtualenv .virtualenv
+            docker cp $(bin/dc ps -q runserver):/app/.virtualenv .virtualenv
 
       - save_cache:
           key: virtualenv-alpine-cache-{{ checksum "poetry.lock" }}
