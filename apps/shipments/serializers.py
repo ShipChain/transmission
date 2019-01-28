@@ -97,9 +97,6 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     # ship_from_location = LocationSerializer(required=False)
     # ship_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
-    # device_id = serializers.CharField(max_length=36, required=False)
-    # ship_from_location_id = serializers.CharField(max_length=36, required=False)
-    # ship_to_location_id = serializers.CharField(max_length=36, required=False)
 
     class Meta:
         model = Shipment

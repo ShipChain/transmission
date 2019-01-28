@@ -151,7 +151,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        LOG.debug(f'Updating shipment {instance} with new details.')
+        LOG.debug(f'Updating shipment {instance.id} with new details.')
         log_metric('transmission.info', tags={'method': 'shipments.update', 'module': __name__})
 
         serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial,
