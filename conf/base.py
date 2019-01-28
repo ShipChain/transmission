@@ -263,6 +263,10 @@ LOGGING = {
     'formatters': {
         'celery-style': {
             'format': "[%(asctime)s: %(levelname)s/%(processName)s %(filename)s:%(lineno)d] %(message)s",
+        },
+        'logstash-style': {
+            '()': 'logstash_formatter.LogstashFormatter',
+            'fmt': f'{{"extra": {{"environment": "{ENVIRONMENT}", "service": "{SERVICE}"}}}}',
         }
     },
     'handlers': {
@@ -288,9 +292,9 @@ if BOTO3_SESSION:
         'class': 'watchtower.CloudWatchLogHandler',
         'boto3_session': BOTO3_SESSION,
         'log_group': f'transmission-django-{ENVIRONMENT}',
-        'create_log_group': False,
-        'stream_name': 'logs-{strftime:%m-%d-%y}-' + SERVICE,
-        'formatter': 'celery-style',
+        'create_log_group': True,
+        'stream_name': 'logs-' + SERVICE + '-{strftime:%Y-%m-%d}',
+        'formatter': 'logstash-style',
         'use_queues': False,
     }
     LOGGING['loggers']['django']['handlers'].append('cloudwatch')
