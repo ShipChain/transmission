@@ -58,15 +58,25 @@ jobs:
       - run:
           name: Run unit tests and coverage report
           command: |
-            bin/dc exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled
-            bin/dc exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report=xml:test-results/coverage.xml --cov-append --ds=conf/test_settings_profiles_disabled tests/profiles-disabled
+            bin/dc exec -T runserver pytest --junitxml=test-results/junit-pe.xml --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled
+            bin/dc exec -T runserver pytest --junitxml=test-results/junit-pd.xml --cov=apps --cov-config=.coveragerc --cov-report=html:test-results/coverage.html --cov-append --ds=conf/test_settings_profiles_disabled tests/profiles-disabled
 
       - run:
           name: Copy artifacts from Docker
           command: |
             docker cp $(bin/dc ps -q runserver):/app/test-results test-results
 
+      - run:
+          name: Merge junit results
+          command: |
+            pip install junitparser
+            junitparser merge test-results/junit-pe.xml test-results/junit-pd.xml test-results/junit.xml
+            rm test-results/junit-*.xml
+
       - store_test_results:
+          path: test-results
+
+      - store_artifacts:
           path: test-results
 
       - run:
