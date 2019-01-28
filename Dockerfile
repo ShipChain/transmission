@@ -76,7 +76,7 @@ RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
 
 # Create virtualenv for using awscli in entrypoint scripts
 RUN virtualenv /opt/aws
-RUN . /opt/aws/bin/activate && pip install awscli==1.9.*
+RUN . /opt/aws/bin/activate && pip install awscli==1.16.*
 
 # Copy built virtualenv without having to install build-essentials, etc
 COPY --from=prod /app /app
