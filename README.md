@@ -240,7 +240,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * **Lucas Clay** - [mlclay](https://github.com/mlclay)
 * **Leeward Bound** - [leewardbound](https://github.com/leewardbound)
 
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/ShipChain/transmission/contributors) who participated in this project.
 
 ## License
 
