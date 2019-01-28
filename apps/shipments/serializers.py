@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from dateutil.parser import parse
 from django.conf import settings
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions, status, serializers as rest_serializers
@@ -205,30 +206,12 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 instance.device = validated_data.pop('device_id')
 
-        ship_from_location_id = validated_data.get('ship_from_location_id', None)
-        ship_to_location_id = validated_data.get('ship_to_location_id', None)
-        ship_from_location = None
-        ship_to_location = None
-
-        if ship_from_location_id:
-            try:
-                ship_from_location = Location.objects.get(id=ship_from_location_id)
-            except Location.DoesNotExist:
-                raise serializers.ValidationError('Ship from location object does not exist')
-
-        if ship_to_location_id:
-            try:
-                ship_to_location = Location.objects.get(id=ship_to_location_id)
-            except Location.DoesNotExist:
-                raise serializers.ValidationError('Ship to location object does not exist')
-
-        if ship_from_location:
-            instance.ship_from_location = ship_from_location
-            instance.save()
-
-        if ship_to_location:
-            instance.ship_to_location = ship_to_location
-            instance.save()
+        location_id_names = ['ship_from_location_id', 'ship_to_location_id']
+        for location_id_name in location_id_names:
+            location_id = validated_data.get(location_id_name, None)
+            if location_id:
+                location = get_object_or_404(Location, id=location_id)
+                setattr(instance, location_id_name, location)
 
         info = model_meta.get_field_info(instance)
         for attr, value in validated_data.items():
