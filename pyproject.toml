@@ -64,7 +64,7 @@ uWSGI = "==2.0.17.1"
 watchdog = "==0.9.0"
 websocket-client = "==0.53.0"
 whitenoise = "==3.3.1"
-watchtower = {git = "git://github.com/ShipChain/watchtower.git", rev = "621a8cea0285f4f090f752fdf351ab0b80bc1c1e"}
+watchtower = "==0.5.5"
 
 
 [tool.poetry.dev-dependencies]
