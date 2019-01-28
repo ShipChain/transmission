@@ -13,6 +13,10 @@ bin/dc build
 
 bin/dc up -d
 
+bin/dc exec -T runserver /bin/bash -c '! poetry install --dry-run | grep "Warning: The lock file is not up to date" || (echo "poetry.lock does not match pyproject.toml" && exit 1)'
+
+bin/dc exec -T runserver safety check
+
 bin/dc exec -T runserver prospector -o pylint
 
 bin/dc exec -T runserver bandit -r apps

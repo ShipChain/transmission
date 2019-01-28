@@ -16,8 +16,9 @@ limitations under the License.
 
 import logging
 
-from apps.iot_client import AWSIoTClient, AWSIoTError
 from influxdb_metrics.loader import log_metric
+
+from apps.iot_client import AWSIoTClient, AWSIoTError
 
 LOG = logging.getLogger('transmission')
 

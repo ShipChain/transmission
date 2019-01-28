@@ -1,4 +1,4 @@
-version: '2.1'
+version: '3.4'
 services:
 
   minio:
@@ -38,10 +38,11 @@ services:
       - ALLOW_IP_RANGE=0.0.0.0/0
 
   runserver:
-    extends:
-      service: transmission-django
-      file: build.yml
-    command: sleep infinity
+    build:
+      context: ../
+      target: test
+    image: transmission-django-test
+    command: sh -c 'while sleep 3600; do :; done'
     ports:
       - "8000:8000"
     networks:

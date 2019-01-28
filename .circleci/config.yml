@@ -6,7 +6,10 @@ version: 2
 jobs:
   build:
     docker:
-      - image: docker/compose:1.19.0
+      - image: circleci/python:3.6.8
+        user: root
+    environment:
+      ROLE: circleci
 
     working_directory: ~/repo
 
@@ -17,46 +20,74 @@ jobs:
           docker_layer_caching: true
 
       - restore_cache:
-          key: pip-cache
+          keys:
+            - virtualenv-alpine-cache-{{ checksum "poetry.lock" }}
+            - virtualenv-alpine-cache
 
       - run:
-          name: Build application Docker image
+          name: Build Docker images
           command: |
-            docker-compose -f compose/circleci.yml up -d
+            docker build --target test   --tag transmission-django-test .
+            docker build --target deploy --tag transmission-django --cache-from transmission-django-test .
+
+      - run:
+          name: Start compose services
+          command: |
+            bin/dc up -d
+
+      - run:
+          name: Check for valid poetry.lock
+          command: |
+            bin/dc exec -T runserver /bin/bash -c '! poetry install --dry-run | grep "Warning: The lock file is not up to date"'
+
+      - run:
+          name: Package safety check
+          command: |
+            bin/dc exec -T runserver safety check
 
       - run:
           name: PEP8 Lint check
           command: |
-            docker-compose -f compose/circleci.yml exec -T runserver prospector -o pylint
+            bin/dc exec -T runserver prospector -o pylint
 
       - run:
           name: Bandit SAST tool
           command: |
-            docker-compose -f compose/circleci.yml exec -T runserver bandit -r apps
+            bin/dc exec -T runserver bandit -r apps
 
       - run:
           name: Run unit tests and coverage report
           command: |
-            docker-compose -f compose/circleci.yml exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled
-            docker-compose -f compose/circleci.yml exec -T runserver pytest --junitxml=test-results/junit.xml --cov=apps --cov-config=.coveragerc --cov-report=xml:test-results/coverage.xml --cov-append --ds=conf/test_settings_profiles_disabled tests/profiles-disabled
+            bin/dc exec -T runserver pytest --junitxml=test-results/pytest/results-pe.xml --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled
+            bin/dc exec -T runserver pytest --junitxml=test-results/pytest/results-pd.xml --cov=apps --cov-config=.coveragerc --cov-report=html:test-results/coverage.html --cov-append --ds=conf/test_settings_profiles_disabled tests/profiles-disabled
 
       - run:
           name: Copy artifacts from Docker
           command: |
-            docker cp $(docker-compose -f compose/circleci.yml ps -q runserver):/app/test-results test-results
+            docker cp $(bin/dc ps -q runserver):/app/test-results test-results
+
+      - run:
+          name: Merge junit results
+          command: |
+            pip install junitparser
+            junitparser merge test-results/pytest/results-pe.xml test-results/pytest/results-pd.xml test-results/pytest/results.xml
+            rm test-results/pytest/results-*.xml
 
       - store_test_results:
           path: test-results
 
+      - store_artifacts:
+          path: test-results
+
       - run:
-          name: Copy pip cache from Docker
+          name: Copy virtualenv cache from Docker
           command: |
-            docker cp $(docker-compose -f compose/circleci.yml ps -q runserver):/build/pip.cache compose/django/pip.cache
+            docker cp $(bin/dc ps -q runserver):/app/.virtualenv .virtualenv
 
       - save_cache:
-          key: pip-cache
+          key: virtualenv-alpine-cache-{{ checksum "poetry.lock" }}
           paths:
-            - compose/django/pip.cache
+            - .virtualenv
 
       - run:
           name: Save docker image
@@ -64,19 +95,18 @@ jobs:
             mkdir -p docker-cache
             docker save -o docker-cache/built-image.tar transmission-django
 
-      - save_cache:
-          key: docker-cache-{{ .Branch }}-{{ .Revision }}
+      - persist_to_workspace:
+          root: docker-cache
           paths:
-            - docker-cache
+            - built-image.tar
 
   push-to-ecr:
     docker:
       - image: docker:stable-git
 
     steps:
-      - restore_cache:
-          keys:
-            - docker-cache-{{ .Branch }}-{{ .Revision }}
+      - attach_workspace:
+          at: docker-cache
 
       - setup_remote_docker:
           docker_layer_caching: true
@@ -95,7 +125,7 @@ jobs:
       - run:
           name: Load docker image
           command: |
-            docker load < /root/repo/docker-cache/built-image.tar
+            docker load < /root/project/docker-cache/built-image.tar
 
       - run:
           name: Push image to ECR
