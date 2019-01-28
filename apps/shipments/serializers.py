@@ -130,25 +130,13 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             if 'device' in self.context:
                 extra_args['device'] = self.context['device']
 
-            ship_from_location_id = validated_data.get('ship_from_location_id', None)
-            ship_to_location_id = validated_data.get('ship_to_location_id', None)
-            ship_from_location = None
-            ship_to_location = None
-
-            if ship_from_location_id:
-                try:
-                    ship_from_location = Location.objects.get(id=ship_from_location_id)
-                except Location.DoesNotExist:
-                    raise serializers.ValidationError('Ship from location object does not exist')
-
-            if ship_to_location_id:
-                try:
-                    ship_to_location = Location.objects.get(id=ship_to_location_id)
-                except Location.DoesNotExist:
-                    raise serializers.ValidationError('Ship to location object does not exist')
-
-            extra_args['ship_from_location'] = ship_from_location
-            extra_args['ship_to_location'] = ship_to_location
+            location_id_names = ['ship_from_location_id', 'ship_to_location_id']
+            for location_id_name in location_id_names:
+                location_id = validated_data.get(location_id_name, None)
+                if location_id:
+                    location = get_object_or_404(Location, pk=location_id)
+                    location_field = '_'.join(location_id_name.split('_')[:3])
+                    extra_args[location_field] = location
 
             return Shipment.objects.create(**validated_data, **extra_args)
 
