@@ -76,7 +76,7 @@ fpdf = "==1.7.2"
 httpretty = "==0.9.5"
 minio = "==4.0.6"
 mock = "==2.0.0"
-moto = {git = "git://github.com/ShipChain/moto.git", rev = "a0eff24724ce96dc571c65d2c87979d781fa8a8e"}
+moto = {git = "git://github.com/ShipChain/moto.git", rev = "b0e6f5e98f6be8c0d23bcee9a29c09f7565f09e7"}
 pillow = "~=5.2"
 prospector = "==1.1.6.2"
 pylint-celery = "~=0.3"
