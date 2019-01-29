@@ -12,6 +12,7 @@ class AsyncJobAdmin(admin.ModelAdmin):
     actions = [retry_attempt]
 
     list_display = (
+        'id',
         'state',
         'last_try',
         'created_at',
