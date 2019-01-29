@@ -3,7 +3,7 @@ servers:
 - url: https://transmission.shipchain.io/
   description: ShipChain Transmission API
 info:
-  version: 0.8.0-beta
+  version: 1.0.0
   title: ShipChain Transmission API
   description: |
     The ShipChain Transmission API is a microservice developed to provide a traditional REST abstraction for interactions with

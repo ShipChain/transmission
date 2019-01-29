@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "transmission"
-version = "0.8.0"
+version = "1.0.0"
 description = "A Django REST API built to proxy Ethereum requests via ShipChain Engine."
 
 license = "Apache-2.0"
