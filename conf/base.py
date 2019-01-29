@@ -16,7 +16,6 @@ import sys
 from urllib.parse import urlparse
 
 import environ
-from cmreslogging.handlers import CMRESHandler
 
 ENV = environ.Env()
 
@@ -55,6 +54,8 @@ CSRF_USE_SESSIONS = True
 
 CORS_ORIGIN_ALLOW_ALL = True
 
+BOTO3_SESSION = None
+
 if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
     if ENVIRONMENT in ('PROD', 'DEMO'):
         DEBUG = False
@@ -64,7 +65,8 @@ if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
         LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
 
     import boto3
-    SECRETS_MANAGER = boto3.client('secretsmanager', region_name='us-east-1')
+    BOTO3_SESSION = boto3.Session(region_name='us-east-1')
+    SECRETS_MANAGER = BOTO3_SESSION.client('secretsmanager')
 
     SECRET_KEY = json.loads(SECRETS_MANAGER.get_secret_value(
         SecretId=f'TRANSMISSION_SECRET_KEY_{ENVIRONMENT}'
@@ -261,6 +263,10 @@ LOGGING = {
     'formatters': {
         'celery-style': {
             'format': "[%(asctime)s: %(levelname)s/%(processName)s %(filename)s:%(lineno)d] %(message)s",
+        },
+        'logstash-style': {
+            '()': 'logstash_formatter.LogstashFormatter',
+            'fmt': f'{{"extra": {{"environment": "{ENVIRONMENT}", "service": "{SERVICE}"}}}}',
         }
     },
     'handlers': {
@@ -270,36 +276,29 @@ LOGGING = {
         }
     },
     'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': LOG_LEVEL,
+        },
         'transmission': {
             'handlers': ['console'],
             'level': LOG_LEVEL,
         },
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-    },
+    }
 }
 
-if ELASTICSEARCH_URL:
-    ELASTICSEARCH_HOST = urlparse(ELASTICSEARCH_URL).netloc
-    LOGGING['handlers']['elasticsearch'] = {
-        'class': 'cmreslogging.handlers.NonBlockingCMRESHandler',
-        'hosts': [{
-            'host': ELASTICSEARCH_HOST,
-            'port': 443
-        }],
-        'es_index_name': 'django-logs',
-        'es_additional_fields': {
-            'Service': SERVICE,
-            'Environment': ENVIRONMENT,
-            'Project': PROJECT_MODULE
-        },
-        'auth_type': CMRESHandler.AuthType.NO_AUTH,
-        'use_ssl': True,
+if BOTO3_SESSION:
+    LOGGING['handlers']['cloudwatch'] = {
+        'class': 'watchtower.CloudWatchLogHandler',
+        'boto3_session': BOTO3_SESSION,
+        'log_group': f'transmission-django-{ENVIRONMENT}',
+        'create_log_group': True,
+        'stream_name': 'logs-' + SERVICE + '-{strftime:%Y-%m-%d}',
+        'formatter': 'logstash-style',
+        'use_queues': False,
     }
-    LOGGING['loggers']['transmission']['handlers'].append('elasticsearch')
-    LOGGING['loggers']['django']['handlers'].append('elasticsearch')
+    LOGGING['loggers']['django']['handlers'].append('cloudwatch')
+    LOGGING['loggers']['transmission']['handlers'].append('cloudwatch')
 
 INFLUXDB_DISABLED = True
 INFLUXDB_URL = os.environ.get('INFLUXDB_URL')
