@@ -15,6 +15,7 @@ from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import get_jwt_from_request
+from apps.jobs.models import JobState
 from .filters import ShipmentFilter
 from .geojson import render_point_features
 from .models import Shipment, Location, TrackingData, PermissionLink
@@ -156,11 +157,10 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         shipment = self.perform_update(serializer)
-        async_job = shipment.asyncjob_set.latest('created_at')
+        async_jobs = shipment.asyncjob_set.filter(state__in=[JobState.PENDING, JobState.RUNNING])
         response = ShipmentTxSerializer(shipment)
-        LOG.debug(f'Asyncjob created with id {async_job.id}.')
-        if async_job:
-            response.instance.async_job_id = async_job.id
+
+        response.instance.async_job_id = async_jobs.latest('created_at').id if async_jobs else None
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
 
