@@ -1,2 +1,2 @@
 #!/bin/bash
-docker-compose -f compose/dev.yml run django_shell prospector -o pylint
+bin/dc run django_shell prospector -o pylint
