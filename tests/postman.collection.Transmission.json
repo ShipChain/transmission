@@ -1148,6 +1148,105 @@
                   }
                 },
                 "response": []
+              },
+              {
+                "name": "Create Permission Link",
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "name",
+                        "value": "name",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "expiration_date",
+                        "value": "2018-08-22T17:44:39.874352",
+                        "type": "text",
+                        "disabled": true
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/permission_links/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      "{{shipment_id}}",
+                      "permission_links",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Get Permission Link List",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/permission_links/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      "{{shipment_id}}",
+                      "permission_links",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Delete Permission Link",
+                "request": {
+                  "method": "DELETE",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/permission_links/{{permission_link_id}}/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      "{{shipment_id}}",
+                      "permission_links",
+                      "{{permission_link_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
               }
             ]
           },

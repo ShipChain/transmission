@@ -17,7 +17,7 @@ from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
-    TrackingData
+    TrackingData, PermissionLink
 from apps.utils import UpperEnumField
 
 
@@ -194,6 +194,18 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
         instance.save()
         return instance
+
+
+class PermissionLinkSerializer(serializers.ModelSerializer):
+    shipment_id = serializers.CharField(max_length=36, required=False)
+
+    class Meta:
+        model = PermissionLink
+        exclude = ('shipment', )
+
+    def validate(self, attrs):
+        attrs['shipment_id'] = self.context['shipment_id']
+        return attrs
 
 
 class ShipmentTxSerializer(serializers.ModelSerializer):

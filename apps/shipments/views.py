@@ -1,23 +1,27 @@
 import logging
 
 from string import Template
+from datetime import datetime, timezone
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseNotFound
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, permissions, status, exceptions, filters
+from rest_framework import viewsets, permissions, status, exceptions, filters, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import get_jwt_from_request
-from .geojson import render_point_features
-from .models import Shipment, Location, TrackingData
-from .permissions import IsOwner, IsUserOrDevice
-from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
-    LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer
 from .filters import ShipmentFilter
+from .geojson import render_point_features
+from .models import Shipment, Location, TrackingData, PermissionLink
+from .permissions import IsOwner, IsUserOrDevice, IsSharedOrOwner, IsShipmentOwner
+from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
+    LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
+    PermissionLinkSerializer
 from .tasks import tracking_data_update
 
 
@@ -27,7 +31,7 @@ LOG = logging.getLogger('transmission')
 class ShipmentViewSet(viewsets.ModelViewSet):
     queryset = Shipment.objects.all()
     serializer_class = ShipmentSerializer
-    permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
+    permission_classes = ((IsSharedOrOwner, ) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     filterset_class = ShipmentFilter
@@ -38,7 +42,16 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(owner_id=self.request.user.id)
+            if 'permission_link' in self.request.query_params and self.request.query_params['permission_link']:
+                try:
+                    permission_link = PermissionLink.objects.get(pk=self.request.query_params['permission_link'])
+                    if permission_link.expiration_date and permission_link.expiration_date < datetime.now(timezone.utc):
+                        queryset = queryset.filter(owner_id=self.request.user.id)
+                except ObjectDoesNotExist:
+                    raise PermissionDenied('No permission link found.')
+                queryset = queryset.filter(Q(owner_id=self.request.user.id) | Q(pk=permission_link.shipment.pk))
+            else:
+                queryset = queryset.filter(owner_id=self.request.user.id)
         return queryset
 
     def perform_create(self, serializer):
@@ -150,6 +163,38 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             response.instance.async_job_id = async_job.id
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
+
+
+class PermissionLinkViewSet(mixins.CreateModelMixin,
+                            mixins.DestroyModelMixin,
+                            mixins.ListModelMixin,
+                            viewsets.GenericViewSet):
+
+    queryset = PermissionLink.objects.all()
+    permission_classes = ((permissions.IsAuthenticated, IsShipmentOwner) if settings.PROFILES_ENABLED
+                          else (permissions.AllowAny,))
+    serializer_class = PermissionLinkSerializer
+    resource_name = 'PermissionLink'
+
+    def get_queryset(self):
+        queryset = self.queryset
+        if settings.PROFILES_ENABLED:
+            queryset.filter(shipment__owner_id=self.request.user.id)
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        """
+        Creates a link to grant permission to read shipments
+        """
+        LOG.debug('Creating permission link for shipment.')
+        log_metric('transmission.info', tags={'method': 'shipments.create_permission_link', 'module': __name__})
+
+        serializer = PermissionLinkSerializer(data=request.data, context={'shipment_id': kwargs['shipment_pk']})
+        serializer.is_valid(raise_exception=True)
+
+        permission_link = PermissionLink.objects.create(**serializer.validated_data)
+
+        return Response(PermissionLinkSerializer(permission_link).data, status=status.HTTP_201_CREATED)
 
 
 class LocationViewSet(viewsets.ModelViewSet):

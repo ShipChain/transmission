@@ -66,6 +66,7 @@ paths:
       - $ref: '#/components/parameters/shipment/final_destination_location__state'
       - $ref: '#/components/parameters/shipment/final_destination_location__postal_code'
       - $ref: '#/components/parameters/shipment/final_destination_location__country'
+      - $ref: '#/components/parameters/shipment/permissionLinkId'
       tags:
       - Shipments
       responses:
@@ -120,6 +121,8 @@ paths:
       summary: Get shipment details
       description: >
         Get additional info about a `Shipment`.
+      parameters:
+        - $ref: '#/components/parameters/shipment/permissionLinkId'
       tags:
       - Shipments
       responses:
@@ -207,6 +210,81 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/document/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+  /api/v1/shipments/{shipment_id}/permission_links/:
+    get:
+      summary: List permission links
+      description: >
+        Get list of `PermissionLinks` associated with the `Shipment`.
+      tags:
+        - Shipments
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/permissionLinks/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+    post:
+      summary: Create permission link
+      description: |
+        Create a new `PermissionLinks` associated with the `Shipment`.
+
+        This `PermissionLinks` can be used to get details about the `Shipment`. It cannot be used to modify the shipment in anyway.
+      tags:
+        - Shipments
+      responses:
+        '202':
+          description: *response_202
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/permissionLinks/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/permissionLinks/createRequest'
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/requestBodies/permissionLinks/createAttributes'
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: '#/components/requestBodies/permissionLinks/createAttributes'
+
+  /api/v1/shipments/{shipment_id}/permission_links/{permission_links_id}/:
+    delete:
+      summary: Delete a permission link
+      description: >
+        Delete the `PermissionLinks` object from Transmission.
+      parameters:
+      - $ref: '#/components/parameters/permissionLinks/path'
+      tags:
+      - Shipments
+      responses:
+        '204':
+          description: *response_204
         '401':
           description: *response_401
           content:
@@ -823,6 +901,22 @@ components:
         description: Returns shipments with associated final_destination_location state.
         schema:
           type: string
+
+      permissionLinkId:
+        name: permission_link
+        in: query
+        description: Grants permission to obtain details associated with the shipment
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
+
+    permissionLinks:
+      path:
+        required: true
+        name: permission_links_id
+        in: path
+        description: ID of the Permission Link
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
 
     location:
       path:
@@ -2459,6 +2553,32 @@ components:
               type: string
               example: 'Point'
 
+      # General Permission Links Parameters
+      permissionLinks:
+        name:
+          properties:
+            name:
+              title: name
+              description: Name of the Permission Link
+              type: string
+              example: 'Permission Link Name'
+
+        shipmentId:
+          properties:
+            shipment_id:
+              <<: *uuid
+              title: shipment_id
+              description: Shipment UUID associated with the permission
+
+        expirationDate:
+          properties:
+            expiration_date:
+              title: expiration_date
+              description: Timestamp of when the permission link will expire and be unusable
+              type: string
+              example: '2018-08-22T17:44:39.874352'
+
+
     # Models
     jsonApi:
       resource:
@@ -2954,6 +3074,62 @@ components:
               items:
                 $ref: '#/components/schemas/shipment/included'
 
+    permissionLinks:
+      resource:
+        properties:
+          type:
+            example: PermissionLink
+
+      attributes:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/permissionLinks/name'
+          - $ref: '#/components/schemas/dataTypes/permissionLinks/expirationDate'
+          - $ref: '#/components/schemas/dataTypes/permissionLinks/shipmentId'
+          - $ref: '#/components/schemas/dataTypes/createdAt'
+
+      createAttributes:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/permissionLinks/name'
+          - $ref: '#/components/schemas/dataTypes/permissionLinks/expirationDate'
+
+      getResource:
+        allOf:
+          - $ref: '#/components/schemas/permissionLinks/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/schemas/permissionLinks/attributes'
+
+      getResponse:
+        allOf:
+          - $ref: '#/components/schemas/jsonApi/data'
+          - properties:
+              data:
+                $ref: '#/components/schemas/permissionLinks/getResource'
+
+      listResponse:
+        allOf:
+          - $ref: '#/components/schemas/jsonApi/dataArray'
+          - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+          - properties:
+              data:
+                items:
+                  $ref: '#/components/schemas/permissionLinks/getResource'
+
+      createRequest:
+        allOf:
+          - $ref: '#/components/requestBodies/jsonApi/createData'
+          - properties:
+              data:
+                $ref: '#/components/requestBodies/permissionLinks/createResource'
+
+      createResource:
+        allOf:
+          - $ref: '#/components/schemas/permissionLinks/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/schemas/permissionLinks/createAttributes'
+
+
     document:
       resource:
         properties:
@@ -3301,7 +3477,6 @@ components:
               items:
                 $ref: '#/components/schemas/ethAction/included'
 
-
     errors:
       401:
         allOf:
@@ -3525,6 +3700,7 @@ components:
                 HRpdHVkZSI6MjcxLjAsImxhdGl0dWRlIjozNC44NTIwNTU1LCJsb25naXR1ZGUiOi04Mi40MDAwOTQ3LCJzb3VyY2UiOiJHUFMiLCJzc
                 GVlZCI6MC4wLCJ1bmNlcnRhaW50eSI6OTl9LCJ0aW1lc3RhbXAiOiIyMDE4LTExLTI5VDIwOjI4OjA3WiIsInZlcnNpb24iOiIxLjAuM
                 SJ9.jNWQj7kC8iacZwpEYlWexcDsP8ed-wIaebwSwOsrB7nTIoMOmbMWVHL3JC5dMzs8yCA3rReSkqbOu3TG0ACudw
+
     location:
       createResource:
         allOf:
@@ -3553,6 +3729,28 @@ components:
         - properties:
             data:
               $ref: '#/components/requestBodies/location/createResource'
+
+    permissionLinks:
+      createResource:
+        allOf:
+          - $ref: '#/components/schemas/permissionLinks/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/requestBodies/permissionLinks/createAttributes'
+
+      createAttributes:
+        required:
+          - name
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/permissionLinks/name'
+          - $ref: '#/components/schemas/dataTypes/permissionLinks/expirationDate'
+
+      createRequest:
+        allOf:
+          - $ref: '#/components/requestBodies/jsonApi/createData'
+          - properties:
+              data:
+                $ref: '#/components/requestBodies/permissionLinks/createResource'
 
   securitySchemes:
     JWT:

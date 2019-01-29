@@ -364,6 +364,14 @@ class Shipment(models.Model):
     SHIPMENT_AMOUNT = 0
 
 
+class PermissionLink(models.Model):
+    id = models.CharField(primary_key=True, default=random_id, max_length=36)
+    expiration_date = models.DateTimeField(blank=True, null=True)
+    name = models.CharField(null=False, max_length=255)
+    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 class LoadShipment(models.Model):
     shipment = models.OneToOneField(Shipment, primary_key=True, on_delete=models.CASCADE)
 
