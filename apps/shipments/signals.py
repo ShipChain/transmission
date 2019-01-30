@@ -56,6 +56,10 @@ def shipment_post_save(sender, **kwargs):
         instance.vault_id = vault_id
         LOG.debug(f'Created vault with vault_id {instance.vault_id}.')
 
+        LOG.debug(f'Adding initial data for shipment: {instance.id}, to vault.')
+        rpc_client.add_shipment_data(instance.storage_credentials_id, instance.shipper_wallet_id,
+                                     instance.vault_id, ShipmentVaultSerializer(instance).data)
+
         # Create LoadShipment entities
         # TODO: Get FundingType,ShipmentAmount for use in LOAD Contract/LoadShipment
         LoadShipment.objects.create(shipment=instance,
