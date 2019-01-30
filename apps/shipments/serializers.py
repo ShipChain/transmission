@@ -58,6 +58,12 @@ class LocationSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     Serializer for a location, used nested in a Shipment
     """
 
+    def __init__(self, *args, **kwargs):
+        country = kwargs.get('country', None)
+        if country:
+            kwargs['country'] = country.upper()
+        super().__init__(*args, **kwargs)
+
     class Meta:
         model = Location
         exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
