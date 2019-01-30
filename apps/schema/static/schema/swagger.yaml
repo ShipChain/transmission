@@ -3,7 +3,7 @@ servers:
 - url: https://transmission.shipchain.io/
   description: ShipChain Transmission API
 info:
-  version: 0.8.0-beta
+  version: 1.0.0
   title: ShipChain Transmission API
   description: |
     The ShipChain Transmission API is a microservice developed to provide a traditional REST abstraction for interactions with
@@ -66,7 +66,6 @@ paths:
       - $ref: '#/components/parameters/shipment/final_destination_location__state'
       - $ref: '#/components/parameters/shipment/final_destination_location__postal_code'
       - $ref: '#/components/parameters/shipment/final_destination_location__country'
-      - $ref: '#/components/parameters/shipment/permissionLinkId'
       tags:
       - Shipments
       responses:
@@ -217,11 +216,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
+  /api/v1/shipments/{shipment_id}/transactions/:
+    get:
+      summary: Get shipment transactions
+      description: >
+        Retrieve an array of `EthAction`s (association between an Eth `Transaction` and `TransactionReceipt`) associated with a `Shipment`.
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/page_size'
+      tags:
+        - Shipments
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ethAction/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
   /api/v1/shipments/{shipment_id}/permission_links/:
     get:
       summary: List permission links
       description: >
-        Get list of `PermissionLinks` associated with the `Shipment`.
+        Get list of `PermissionLink`s associated with the `Shipment`.
       tags:
         - Shipments
       responses:
@@ -241,9 +264,9 @@ paths:
     post:
       summary: Create permission link
       description: |
-        Create a new `PermissionLinks` associated with the `Shipment`.
+        Create a new `PermissionLink` associated with the `Shipment`.
 
-        This `PermissionLinks` can be used to get details about the `Shipment`. It cannot be used to modify the shipment in anyway.
+        This `PermissionLink` provides read-only access to the `Shipment`.
       tags:
         - Shipments
       responses:
@@ -277,7 +300,7 @@ paths:
     delete:
       summary: Delete a permission link
       description: >
-        Delete the `PermissionLinks` object from Transmission.
+        Delete the `PermissionLink` object from Transmission.
       parameters:
       - $ref: '#/components/parameters/permissionLinks/path'
       tags:
@@ -292,30 +315,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
-  /api/v1/shipments/{shipment_id}/transactions/:
-    get:
-      summary: Get shipment transactions
-      description: >
-        Get all `EthAction`s associated with a `Shipment`.
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/page_size'
-      tags:
-        - Shipments
-      responses:
-        '200':
-          description: *response_200
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/ethAction/listResponse'
-#                $ref: '#/components/schemas/transactions/listResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
 
   /api/v1/documents/:
     get:
@@ -491,11 +490,11 @@ paths:
     get:
       summary: Get tracking data
       description: >
-        Retrieve GPS tracking data associated with a `Shipment` as points or line or both (content returned in 'data' attribute conforms to the [GeoJSON](https://tools.ietf.org/html/rfc7946) spec).
+        Retrieve GPS tracking data associated with a `Shipment` as a GeoJSON FeatureCollection of points (content returned in 'data' attribute conforms to the [GeoJSON](https://tools.ietf.org/html/rfc7946) spec).
       parameters:
       - $ref: '#/components/parameters/shipment/path'
-      - $ref: '#/components/parameters/shipment/asPoint'
-      - $ref: '#/components/parameters/shipment/asLine'
+#      - $ref: '#/components/parameters/shipment/asPoint'
+#      - $ref: '#/components/parameters/shipment/asLine'
       tags:
       - Shipments
       responses:
@@ -506,8 +505,8 @@ paths:
               schema:
                 oneOf:
                 - $ref: '#/components/schemas/tracking/pointResponse'
-                - $ref: '#/components/schemas/tracking/lineResponse'
-                - $ref: '#/components/schemas/tracking/getResponse'
+#                - $ref: '#/components/schemas/tracking/lineResponse'
+#                - $ref: '#/components/schemas/tracking/getResponse'
         '401':
           description: *response_401
           content:
@@ -543,7 +542,7 @@ paths:
     get:
       summary: Get job
       description: >
-        Get more details about an `AsyncJob` and its associated `Transactions`.
+        Get more details about an `AsyncJob` and its associated `Transaction`s.
       parameters:
       - $ref: '#/components/parameters/job/path'
       tags:
@@ -905,7 +904,7 @@ components:
       permissionLinkId:
         name: permission_link
         in: query
-        description: Grants permission to obtain details associated with the shipment
+        description: When included and valid, a permission link parameter provides unauthenticated read-only access to a shipment.
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
@@ -914,7 +913,7 @@ components:
         required: true
         name: permission_links_id
         in: path
-        description: ID of the Permission Link
+        description: ID of the PermissionLink
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
 
@@ -1017,7 +1016,7 @@ components:
           async_job_id:
             <<: *uuid
             title: async_job_id
-            description: Async Job's UUID
+            description: AsyncJob's UUID
 
       walletId:
         properties:
@@ -1266,15 +1265,6 @@ components:
       # General Shipment Parameters
 
       tracking:
-        hasGPS:
-          properties:
-            has_gps:
-              title: has_gps
-              description: Was the location obtained via GPS
-              type: boolean
-              example: True
-
-
         walletId:
           properties:
             wallet_id:
@@ -2559,9 +2549,9 @@ components:
           properties:
             name:
               title: name
-              description: Name of the Permission Link
+              description: Name of the PermissionLink
               type: string
-              example: 'Permission Link Name'
+              example: 'Public Access Link #1'
 
         shipmentId:
           properties:
@@ -2574,7 +2564,7 @@ components:
           properties:
             expiration_date:
               title: expiration_date
-              description: Timestamp of when the permission link will expire and be unusable
+              description: Timestamp of when the PermissionLink will expire and be unusable
               type: string
               example: '2018-08-22T17:44:39.874352'
 
@@ -3209,7 +3199,6 @@ components:
             allOf:
             - $ref: '#/components/schemas/dataTypes/tracking/time'
             - $ref: '#/components/schemas/dataTypes/tracking/uncertainty'
-            - $ref: '#/components/schemas/dataTypes/tracking/hasGPS'
             - $ref: '#/components/schemas/dataTypes/tracking/source'
 
       lineProperties:

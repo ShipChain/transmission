@@ -276,6 +276,12 @@ LOGGING = {
         }
     },
     'loggers': {
+        'django.template': {
+            # Get rid of noisy debug messages
+            'handlers': ['console'],
+            'level': 'INFO' if LOG_LEVEL == 'DEBUG' else LOG_LEVEL,
+            'propagate': False,
+        },
         'django': {
             'handlers': ['console'],
             'level': LOG_LEVEL,

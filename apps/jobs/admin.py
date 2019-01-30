@@ -1,10 +1,12 @@
 from django.contrib import admin
 
-from .models import AsyncJob
+from .models import AsyncJob, JobState
 
 
 def retry_attempt(async_job_admin, request, queryset):
     for job in queryset:
+        job.state = JobState.PENDING
+        job.save()
         job.fire(delay=job.delay)
 
 
@@ -12,6 +14,7 @@ class AsyncJobAdmin(admin.ModelAdmin):
     actions = [retry_attempt]
 
     list_display = (
+        'id',
         'state',
         'last_try',
         'created_at',

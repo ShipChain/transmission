@@ -127,9 +127,6 @@ The default Python console logging level is configurable by way of environment v
 [valid Python logging level](https://docs.python.org/3.6/library/logging.html#logging-levels), and defaults to `DEBUG`:
 * `LOG_LEVEL`
 
-If you want to also log messages to ElasticSearch, the URL of your ElasticSearch instance is configurable with the following environment variable:
-* `ELASTICSEARCH_URL`
-
 ##### Metrics
 
 Transmission supports the reporting of application metrics to an InfluxDB instance. We use this internally in combination with 
