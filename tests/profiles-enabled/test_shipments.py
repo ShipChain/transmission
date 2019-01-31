@@ -85,6 +85,9 @@ class ShipmentAPITests(APITestCase):
                                                       mode_of_transport_code='mode',
                                                       owner_id=self.user_2.id))
 
+    def create_location(self, **data):
+        return Location.objects.create(**data)
+
     def test_list_empty(self):
         """
         Test listing requires authentication
@@ -150,16 +153,6 @@ class ShipmentAPITests(APITestCase):
 
         setattr(self.shipments[1], 'ship_to_location', Location.objects.create(name="locat"))
         self.shipments[1].save()
-
-        # response = self.client.get(f'{url}?ship_to_location__name=locat')
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # response_data = response.json()
-        # self.assertEqual(len(response_data['data']), 1)
-
-        # response = self.client.get(f'{url}?has_ship_to_location=true')
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # response_data = response.json()
-        # self.assertEqual(len(response_data['data']), 1)
 
     def test_ordering(self):
         """
@@ -539,10 +532,22 @@ class ShipmentAPITests(APITestCase):
         # Authenticated request should succeed using mapbox (if exists)
         self.set_user(self.user_1, self.token)
 
-        location_one = Location.objects.create(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
+        location_one = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
                                                state=LOCATION_STATE)
-        location_two = Location.objects.create(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
+        location_two = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
                                                state=LOCATION_STATE)
+
+        location_3 = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
+                                            state=LOCATION_STATE)
+
+        location_4 = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
+                                          state=LOCATION_STATE)
+
+        location_5 = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
+                                          state=LOCATION_STATE)
+
+        location_6 = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
+                                          state=LOCATION_STATE)
 
         parameters = {
             '_vault_id': VAULT_ID,
@@ -570,9 +575,24 @@ class ShipmentAPITests(APITestCase):
                                                            'carrier_wallet_id': CARRIER_WALLET_ID,
                                                            'shipper_wallet_id': SHIPPER_WALLET_ID,
                                                            'storage_credentials_id': STORAGE_CRED_ID,
-                                                           'ship_from_location_id': location_one.id,
-                                                           'ship_to_location_id': location_two.id,
+                                                           'ship_from_location_id': location_two.id,
+                                                           'ship_to_location_id': location_3.id,
                                                            })
+
+        three_location, content_type = create_form_content({
+            'carrier_wallet_id': CARRIER_WALLET_ID,
+            'shipper_wallet_id': SHIPPER_WALLET_ID,
+            'storage_credentials_id': STORAGE_CRED_ID,
+            'ship_from_location_id': location_4.id
+        })
+
+        four_location, content_type = create_form_content({
+            'carrier_wallet_id': CARRIER_WALLET_ID,
+            'shipper_wallet_id': SHIPPER_WALLET_ID,
+            'storage_credentials_id': STORAGE_CRED_ID,
+            'ship_from_location_id': location_5.id,
+            'ship_to_location_id': location_6.id
+        })
 
         # Mock RPC calls
         mock_shipment_rpc_client = Load110RPCClient
@@ -644,7 +664,7 @@ class ShipmentAPITests(APITestCase):
         ship_from_location = Location.objects.get(id=response_data['relationships']['ship_from_location']['data']['id'])
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
-        self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
+        self.assertEqual(ship_from_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         self.assertIsNotNone(response_data['relationships']['ship_to_location']['data'])
@@ -658,7 +678,7 @@ class ShipmentAPITests(APITestCase):
         # Authenticated request should succeed using google
         mapbox_access_token = None
 
-        response = self.client.post(url, one_location, content_type=content_type)
+        response = self.client.post(url, three_location, content_type=content_type)
         force_authenticate(response, user=self.user_1, token=self.token)
         response_data = response.json()['data']
         response_included = response.json()['included']
@@ -675,11 +695,11 @@ class ShipmentAPITests(APITestCase):
         ship_from_location = Location.objects.get(id=response_data['relationships']['ship_from_location']['data']['id'])
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
-        self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
+        self.assertEqual(ship_from_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         # Authenticated request should succeed using google in creating two locations
-        response = self.client.post(url, two_locations, content_type=content_type)
+        response = self.client.post(url, four_location, content_type=content_type)
         force_authenticate(response, user=self.user_1, token=self.token)
         response_data = response.json()['data']
         response_included = response.json()['included']
@@ -695,7 +715,7 @@ class ShipmentAPITests(APITestCase):
         ship_from_location = Location.objects.get(id=response_data['relationships']['ship_from_location']['data']['id'])
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
-        self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
+        self.assertEqual(ship_from_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         self.assertIsNotNone(response_data['relationships']['ship_to_location']['data'])
@@ -838,10 +858,19 @@ class ShipmentAPITests(APITestCase):
         httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
         httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
 
-        location_one = Location.objects.create(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
+        location_one = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
                                                state=LOCATION_STATE)
-        location_two = Location.objects.create(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
+        location_two = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
                                                state=LOCATION_STATE)
+
+        location_three = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
+                                            state=LOCATION_STATE)
+
+        location_four = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
+                                              state=LOCATION_STATE)
+
+        location_five = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
+                                             state=LOCATION_STATE)
 
         parameters = {
             '_vault_id': VAULT_ID,
@@ -862,9 +891,14 @@ class ShipmentAPITests(APITestCase):
                                                           })
 
         two_locations, content_type = create_form_content({
-                                                           'ship_from_location_id': location_one.id,
+                                                           'ship_from_location_id': location_three.id,
                                                            'ship_to_location_id': location_two.id,
                                                            })
+
+        three_locations, content_type = create_form_content({
+            'ship_from_location_id': location_four.id,
+            'ship_to_location_id': location_five.id,
+        })
 
         # Mock RPC calls
         mock_shipment_rpc_client = Load110RPCClient
@@ -966,7 +1000,7 @@ class ShipmentAPITests(APITestCase):
         # Authenticated request should succeed using google in creating two locations
         self.set_user(self.user_1)
 
-        response = self.client.patch(url, two_locations, content_type=content_type)
+        response = self.client.patch(url, three_locations, content_type=content_type)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -989,7 +1023,7 @@ class ShipmentAPITests(APITestCase):
         ship_to_location = Location.objects.get(id=response_data['relationships']['ship_to_location']['data']['id'])
         self.assertEqual(ship_to_location.city, parameters['_ship_to_location_city'])
         self.assertEqual(ship_to_location.state, parameters['_ship_to_location_state'])
-        self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
+        self.assertEqual(ship_to_location.name, parameters['_ship_from_location_name'])
         self.assertEqual(ship_to_location.geometry.coords, (23.0, 12.0))
 
     def test_permission_link(self):

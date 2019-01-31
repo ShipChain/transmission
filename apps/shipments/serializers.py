@@ -209,6 +209,8 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             if location_id:
                 location = get_object_or_404(Location, id=location_id)
                 setattr(instance, location_id_name, location)
+            else:
+                setattr(instance, location_id_name, None)
 
         info = model_meta.get_field_info(instance)
         for attr, value in validated_data.items():
