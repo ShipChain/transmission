@@ -40,6 +40,8 @@ LOCATION_NAME = "Test Location Name"
 LOCATION_NAME_2 = "Second Test Location Name"
 LOCATION_CITY = 'City'
 LOCATION_STATE = 'State'
+LOCATION_COUNTRY = 'us'
+BAD_COUNTRY_CODE = 'XY'
 LOCATION_NUMBER = '555-555-5555'
 
 mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
@@ -1151,11 +1153,14 @@ class LocationAPITests(APITestCase):
     def test_create_location(self):
         url = reverse('location-list', kwargs={'version': 'v1'})
         valid_data, content_type = create_form_content({'name': LOCATION_NAME, 'city': LOCATION_CITY,
-                                                        'state': LOCATION_STATE})
+                                                        'state': LOCATION_STATE, 'country': LOCATION_COUNTRY})
 
         valid_data_profiles_disabled, content_type = create_form_content({'name': LOCATION_NAME, 'city': LOCATION_CITY,
                                                                           'state': LOCATION_STATE,
                                                                           'owner_id': OWNER_ID})
+
+        bad_country_code, content_type = create_form_content({'name': LOCATION_NAME, 'city': LOCATION_CITY,
+                                                              'state': LOCATION_STATE, 'country': BAD_COUNTRY_CODE})
 
         google_obj = {'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
         mapbox_obj = {'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [23, 12]}}]}
@@ -1179,6 +1184,13 @@ class LocationAPITests(APITestCase):
         response_data = response.json()
         self.assertEqual(response_data['data']['attributes']['name'], LOCATION_NAME)
         self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [23.0, 12.0])
+
+        # The Api should return the uppercase country code
+        self.assertEqual(response_data['data']['attributes']['country'], LOCATION_COUNTRY.upper())
+
+        # Requests with a bad country code should fail
+        response = self.client.post(url, bad_country_code, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         mapbox_access_token = None
 

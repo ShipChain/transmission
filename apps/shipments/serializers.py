@@ -59,9 +59,15 @@ class LocationSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     """
 
     def __init__(self, *args, **kwargs):
-        country = kwargs.get('country', None)
-        if country:
-            kwargs['country'] = country.upper()
+        # We ensure that the country value is uppercase
+        try:
+            data = kwargs['data'].copy()
+            country = data.get('country', None)
+            if country:
+                data.update({'country': country.upper()})
+                kwargs['data'] = data
+        except KeyError:
+            pass
         super().__init__(*args, **kwargs)
 
     class Meta:
