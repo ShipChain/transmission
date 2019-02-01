@@ -41,7 +41,7 @@ django-influxdb-metrics = {git = "git://github.com/lwbco/django-influxdb-tagged-
 django-redis = "==4.10.0"
 djangorestframework = "==3.9.1"
 djangorestframework-gis = "==0.14"
-djangorestframework-jsonapi = "~2.7"
+djangorestframework-jsonapi = "~2.5"
 djangorestframework-simplejwt = {git = "git://github.com/ShipChain/django-rest-framework-simplejwt.git", rev = "90e8e959920b71ae9bd22bc9c7a7f5a943f28c10"}
 drf-nested-routers = "==0.90.0"
 geocoder = "==1.38.1"
