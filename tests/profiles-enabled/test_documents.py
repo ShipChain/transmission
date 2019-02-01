@@ -1,8 +1,10 @@
 import datetime
 import glob
-import os
+import json
 from pathlib import Path
+from unittest import mock
 
+import os
 import requests
 from PIL import Image, ImageDraw, ImageFont
 from django.conf import settings
@@ -14,11 +16,13 @@ from rest_framework.test import APITestCase, APIClient
 
 from apps.authentication import passive_credentials_auth
 from apps.documents.models import Document, UploadStatus, DocumentType, FileType
+from apps.documents.rpc import DocumentRPCClient
 from apps.shipments.models import Shipment
 from apps.shipments.signals import shipment_post_save
 from tests.utils import create_form_content, get_jwt
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'
+FAKE_ID = '00000000-0000-0000-0000-000000000000'
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
@@ -257,6 +261,9 @@ class DocumentAPITests(APITestCase):
             {'document_type': DocumentType.BOL, 'file_type': FileType.PDF, 'shipment': shipment},
         ]
 
+    def set_user(self, user, token=None):
+        self.client.force_authenticate(user=user, token=token)
+
     def create_docs_data(self):
 
         self.pdf_docs = []
@@ -268,6 +275,49 @@ class DocumentAPITests(APITestCase):
     def test_create_objects(self):
         self.create_docs_data()
         self.assertEqual(Document.objects.all().count(), 1)
+
+    def test_s3_notification(self):
+        mock_shipment_rpc_client = DocumentRPCClient
+        mock_shipment_rpc_client.add_document_from_s3 = mock.Mock(return_value=None)
+
+        url = reverse('document-events', kwargs={'version': 'v1'})
+
+        self.set_user(None)
+
+        # S3 Lambda PutObject event: https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-s3-put
+        s3_event = {"Records": [{"s3": {
+            "bucket": {"name": "document-management-s3-local"}, "object": {"key": "api-cloudfront.json"}
+        }}]}
+
+        # Bad auth
+        response = self.client.post(url, json.dumps(s3_event), content_type="application/json")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+        # Test improper key formatting
+        response = self.client.post(url, json.dumps(s3_event), content_type="application/json",
+                                    X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                    X_SSL_CLIENT_DN='/CN=document-management-s3-hook.test-internal')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        # Test 'good' key with no document
+        "sc_uuid/wallet_uuid/vault_uuid/document_uuid.ext"
+        s3_event["Records"][0]["s3"]["object"]["key"] = f"{FAKE_ID}/{FAKE_ID}/{FAKE_ID}/{FAKE_ID}.png"
+        response = self.client.post(url, json.dumps(s3_event), content_type="application/json",
+                                    X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                    X_SSL_CLIENT_DN='/CN=document-management-s3-hook.test-internal')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        # Test that a real document has its upload status updated
+        doc = Document.objects.create(**self.data[0])
+        assert doc.upload_status == UploadStatus.PENDING
+        s3_event["Records"][0]["s3"]["object"]["key"] = f"{FAKE_ID}/{FAKE_ID}/{FAKE_ID}/{doc.id}.png"
+        response = self.client.post(url, json.dumps(s3_event), content_type="application/json",
+                                    X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                    X_SSL_CLIENT_DN='/CN=document-management-s3-hook.test-internal')
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        doc.refresh_from_db()
+        mock_shipment_rpc_client.add_document_from_s3.assert_called_once()
+        assert doc.upload_status == UploadStatus.COMPLETE
 
 
 class ImageDocumentViewSetAPITests(APITestCase):
