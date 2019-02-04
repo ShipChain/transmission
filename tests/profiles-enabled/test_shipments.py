@@ -1026,6 +1026,11 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.name, parameters['_ship_from_location_name'])
         self.assertEqual(ship_to_location.geometry.coords, (23.0, 12.0))
 
+        # Trying to delete a location object attached to a shipment should fail
+        url = reverse('location-detail', kwargs={'version': 'v1', 'pk': location_one.id})
+        response = self.client.delete(url)
+        self.assertTrue(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_permission_link(self):
         self.create_shipment()
         url = reverse('shipment-permissions-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})

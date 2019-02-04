@@ -192,11 +192,11 @@ class Shipment(models.Model):
     forwarders_reference = models.CharField(max_length=255, blank=True, null=True)
     forwarders_shipper_id = models.CharField(max_length=255, blank=True, null=True)
 
-    ship_from_location = models.OneToOneField(Location, on_delete=models.CASCADE,
+    ship_from_location = models.OneToOneField(Location, on_delete=models.PROTECT,
                                               related_name='shipments_from', null=True)
-    ship_to_location = models.OneToOneField(Location, on_delete=models.CASCADE,
+    ship_to_location = models.OneToOneField(Location, on_delete=models.PROTECT,
                                             related_name='shipments_to', null=True)
-    final_destination_location = models.OneToOneField(Location, on_delete=models.CASCADE,
+    final_destination_location = models.OneToOneField(Location, on_delete=models.PROTECT,
                                                       related_name='shipments_dest', null=True)
     bill_to_location = models.ForeignKey(Location, on_delete=models.PROTECT,
                                          related_name='bill_to', null=True)
