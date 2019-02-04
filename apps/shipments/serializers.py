@@ -205,12 +205,13 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
         location_id_names = ['ship_from_location_id', 'ship_to_location_id']
         for location_id_name in location_id_names:
-            location_id = validated_data.get(location_id_name, None)
-            if location_id:
-                location = get_object_or_404(Location, id=location_id)
-                setattr(instance, location_id_name, location)
-            else:
-                setattr(instance, location_id_name, None)
+            if location_id_name in validated_data:
+                location_id = validated_data.get(location_id_name, None)
+                if location_id:
+                    location = get_object_or_404(Location, id=location_id)
+                    setattr(instance, location_id_name, location)
+                else:
+                    setattr(instance, location_id_name, None)
 
         info = model_meta.get_field_info(instance)
         for attr, value in validated_data.items():

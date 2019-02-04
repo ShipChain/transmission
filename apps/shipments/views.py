@@ -216,7 +216,7 @@ class LocationViewSet(viewsets.ModelViewSet):
     # TODO: Clarify/Solidify the permissions for Locations w/ respect to owner_id
     permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
-    http_method_names = ['get', 'post', 'delete', 'patch']
+    http_method_names = ['get', 'post', 'patch']
 
     def get_queryset(self):
         queryset = self.queryset

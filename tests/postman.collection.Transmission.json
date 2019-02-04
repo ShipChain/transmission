@@ -389,6 +389,18 @@
                         "disabled": true
                       },
                       {
+                        "key": "ship_from_location_id",
+                        "value": "location_object_id",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "ship_to_location_id",
+                        "value": "location_object_id",
+                        "type": "text",
+                        "disabled": true
+                      }
+                      {
                         "key": "bill_to_location.name",
                         "value": "85b",
                         "type": "text",
@@ -832,6 +844,18 @@
                       {
                         "key": "us_export_port",
                         "value": "29601",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "ship_from_location_id",
+                        "value": "location_object_id",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "ship_to_location_id",
+                        "value": "location_object_id",
                         "type": "text",
                         "disabled": true
                       },
