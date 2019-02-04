@@ -179,15 +179,15 @@ paths:
         content:
           application/vnd.api+json:
             schema:
-              $ref: '#/components/requestBodies/shipment/createRequest'
+              $ref: '#/components/requestBodies/shipment/patchRequest'
           application/json:
             schema:
               allOf:
-              - $ref: '#/components/requestBodies/shipment/createAttributes'
+              - $ref: '#/components/requestBodies/shipment/patchAttributes'
           multipart/form-data:
             schema:
               allOf:
-              - $ref: '#/components/requestBodies/shipment/createAttributes'
+              - $ref: '#/components/requestBodies/shipment/patchAttributes'
 
   /api/v1/shipments/{shipment_id}/documents/:
     get:
@@ -1593,6 +1593,28 @@ components:
               <<: *uuid
               title: carrier_wallet_id
               description: Carrier's Wallet UUID associated with the shipment
+
+        shipFromLocationId:
+          properties:
+            ship_from_location_id:
+              <<: *uuid
+              title: ship_from_location_id
+              description: Location object UUID to associate to the shipment as departure location
+
+        shipToLocationId:
+          properties:
+            ship_to_location_id:
+              <<: *uuid
+              title: ship_to_location_id
+              description: Location object UUID to associate to the shipment as arrival location
+
+        finalDestinationLocationId:
+          properties:
+            final_destination_location_id:
+              <<: *uuid
+              title: final_destination_location_id
+              description: Location object UUID to associate to the shipment as final location
+
 
         carriersScac:
           properties:
@@ -3673,6 +3695,13 @@ components:
             attributes:
               $ref: '#/components/requestBodies/shipment/createAttributes'
 
+      patchResource:
+        allOf:
+          - $ref: '#/components/schemas/shipment/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/requestBodies/shipment/patchAttributes'
+
       createAttributes:
         required:
         - shipper_wallet_id
@@ -3683,6 +3712,9 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
         - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
         - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipFromLocationId'
+        - $ref: '#/components/schemas/dataTypes/shipment/shipToLocationId'
+        - $ref: '#/components/schemas/dataTypes/shipment/finalDestinationLocationId'
         - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
         - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
         - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
@@ -3741,12 +3773,84 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/nmfcClass'
         - $ref: '#/components/schemas/dataTypes/shipment/isHazmat'
 
+      patchAttributes:
+#        required:
+#          - shipper_wallet_id
+#          - carrier_wallet_id
+#          - storage_credentials_id
+        allOf:
+#          - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
+#          - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
+#          - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
+#          - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
+          - $ref: '#/components/schemas/dataTypes/shipment/shipFromLocationId'
+          - $ref: '#/components/schemas/dataTypes/shipment/shipToLocationId'
+          - $ref: '#/components/schemas/dataTypes/shipment/finalDestinationLocationId'
+          - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
+          - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
+          - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
+          - $ref: '#/components/schemas/dataTypes/shipment/shippersReference'
+          - $ref: '#/components/schemas/dataTypes/shipment/forwardersReference'
+          - $ref: '#/components/schemas/dataTypes/shipment/forwardersShipperId'
+          - $ref: '#/components/schemas/dataTypes/shipment/carriersInstructions'
+          - $ref: '#/components/schemas/dataTypes/shipment/proNumber'
+          - $ref: '#/components/schemas/dataTypes/shipment/billMaster'
+          - $ref: '#/components/schemas/dataTypes/shipment/billHouse'
+          - $ref: '#/components/schemas/dataTypes/shipment/billSubhouse'
+          - $ref: '#/components/schemas/dataTypes/shipment/paymentTerms'
+          - $ref: '#/components/schemas/dataTypes/shipment/vesselName'
+          - $ref: '#/components/schemas/dataTypes/shipment/voyageNumber'
+          - $ref: '#/components/schemas/dataTypes/shipment/modeOfTransportCode'
+          - $ref: '#/components/schemas/dataTypes/shipment/packageQty'
+          - $ref: '#/components/schemas/dataTypes/shipment/weightGross'
+          - $ref: '#/components/schemas/dataTypes/shipment/volume'
+          - $ref: '#/components/schemas/dataTypes/shipment/containerQty'
+          - $ref: '#/components/schemas/dataTypes/shipment/weightDim'
+          - $ref: '#/components/schemas/dataTypes/shipment/weightChargeable'
+          - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/pickupAppt'
+          - $ref: '#/components/schemas/dataTypes/shipment/pickupEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/pickupAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/loadingEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/loadingAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/departureEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/departureAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppt'
+          - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/deliveryEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/deliveryAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/deliveryAttempt'
+          - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/containerType'
+          - $ref: '#/components/schemas/dataTypes/shipment/arrivalLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/finalPortLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/importLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/originLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/usRouted'
+          - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
+          - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
+          - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
+
       createRequest:
         allOf:
         - $ref: '#/components/requestBodies/jsonApi/createData'
         - properties:
             data:
               $ref: '#/components/requestBodies/shipment/createResource'
+
+      patchRequest:
+        allOf:
+          - $ref: '#/components/requestBodies/jsonApi/createData'
+          - properties:
+              data:
+                $ref: '#/components/requestBodies/shipment/patchResource'
 
       tracking:
         payload:

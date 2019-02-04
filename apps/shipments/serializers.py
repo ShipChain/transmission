@@ -203,7 +203,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 instance.device = validated_data.pop('device_id')
 
-        location_id_names = ['ship_from_location_id', 'ship_to_location_id']
+        location_id_names = ['ship_from_location_id', 'ship_to_location_id', 'final_destination_location_id']
         for location_id_name in location_id_names:
             if location_id_name in validated_data:
                 location_id = validated_data.get(location_id_name, None)
