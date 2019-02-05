@@ -24,7 +24,6 @@ from .permissions import IsAuthenticatedOrDevice, IsOwnerOrShared, IsShipmentOwn
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
     ShipmentListSerializer, PermissionLinkSerializer
-from .filters import ShipmentFilter
 from .tasks import tracking_data_update
 
 LOG = logging.getLogger('transmission')

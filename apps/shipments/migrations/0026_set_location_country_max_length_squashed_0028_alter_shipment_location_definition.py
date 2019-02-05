@@ -7,10 +7,10 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    replaces = [('shipments', '0025_set_location_country_max_length'), ('shipments', '0026_shipment_locations_to_one_to_one_field'), ('shipments', '0027_alter_shipment_location_definition')]
+    replaces = [('shipments', '0026_set_location_country_max_length'), ('shipments', '0027_shipment_locations_to_one_to_one_field'), ('shipments', '0028_alter_shipment_location_definition')]
 
     dependencies = [
-        ('shipments', '0024_location_country_data_migration'),
+        ('shipments', '0025_location_country_data_migration'),
     ]
 
     operations = [
