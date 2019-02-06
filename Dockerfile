@@ -1,6 +1,6 @@
 ## Base image with python and entrypoint scripts ##
 ## ============================================= ##
-FROM python:3.6.8-alpine3.8 AS base
+FROM python:3.6.8-alpine3.9 AS base
 
 LABEL maintainer="Adam Hodges <ahodges@shipchain.io>"
 
@@ -32,7 +32,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 FROM base AS build
 
 # Essential packages for building python packages
-RUN apk add --no-cache build-base git libffi-dev linux-headers libressl-dev jpeg-dev freetype-dev postgresql-dev
+RUN apk add --no-cache build-base git libffi-dev linux-headers jpeg-dev libressl2.7-libssl freetype-dev postgresql-dev
 
 
 ## Image with dev-dependencies ##
@@ -61,7 +61,7 @@ RUN python manage.py collectstatic -c --noinput
 FROM base AS deploy
 
 # Install openssh for ECS management container
-RUN apk add --no-cache jq openssl openssh-server-pam shadow nano
+RUN apk add --no-cache jq openssh-server-pam shadow nano
 RUN sed -i 's/^CREATE_MAIL_SPOOL=yes/CREATE_MAIL_SPOOL=no/' /etc/default/useradd
 
 # Keymaker for SSH auth via IAM
