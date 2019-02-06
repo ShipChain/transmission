@@ -48,7 +48,8 @@ urlpatterns = [
         TemplateView.as_view(template_name='apidoc.html'),
         name='api_schema'
     ),
-    url(r'^admin', admin.site.urls)
+    url(r'^admin', admin.site.urls),
+    url(f'{API_PREFIX[1:]}/documents/events', documents.S3Events.as_view(), name='document-events')
 ]
 urlpatterns += router.urls
 

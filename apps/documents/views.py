@@ -1,19 +1,23 @@
 import logging
+from urllib.parse import unquote_plus
 
+import re
 from django.conf import settings
 from django_filters import rest_framework as filters
-from rest_framework import viewsets, permissions, status, mixins
+from rest_framework import viewsets, permissions, status, mixins, exceptions
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from influxdb_metrics.loader import log_metric
 
+from apps.authentication import DocsLambdaRequest
+from .filters import DocumentFilterSet
+from .models import Document
+from .models import UploadStatus
 from .permissions import UserHasPermission
-
+from .rpc import DocumentRPCClient
 from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
-                          DocumentRetrieveSerializer,)
-from .models import Document
-from .filters import DocumentFilterSet
-
+                          DocumentRetrieveSerializer, )
 
 LOG = logging.getLogger('transmission')
 
@@ -92,3 +96,42 @@ class DocumentViewSet(mixins.CreateModelMixin,
         serializer = DocumentRetrieveSerializer(queryset, many=True)
 
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+
+class S3Events(APIView):
+    S3_PATH_REGEX = r'[\w]{8}(-[\w]{4}){3}-[\w]{12}\/[\w]{8}(-[\w]{4}){3}-[\w]{12}\/[\w]{8}(-[\w]{4}){3}-[\w]{12}\/' \
+                    r'[\w\-_]+\.\w{3,4}'
+    permission_classes = (DocsLambdaRequest,)
+
+    def post(self, request, version, format=None):
+        # Get bucket and key from PUT event
+        for record in request.data['Records']:
+            bucket = record['s3']['bucket']['name']
+            key = unquote_plus(record['s3']['object']['key'])
+
+            LOG.info(f'Found new object {key} in bucket {bucket}')
+
+            if re.match(self.S3_PATH_REGEX, key):
+                # Parse IDs from key, "sc_uuid/wallet_uuid/vault_uuid/document_uuid.ext"
+                storage_credentials_id, wallet_uuid, vault_id, filename = key.split('/', 3)
+
+                document_id = filename.split('.')[0]
+                document = Document.objects.filter(id=document_id).first()
+                if document:
+                    # Save document to vault
+                    DocumentRPCClient().add_document_from_s3(bucket, key, wallet_uuid,
+                                                             storage_credentials_id, vault_id, filename)
+
+                    # Update upload status
+                    document.upload_status = UploadStatus.COMPLETE
+                    document.save()
+                else:
+                    message = f'Document not found with ID {document_id}, for {key} uploaded to {bucket}'
+                    LOG.warning(message)
+                    raise exceptions.ParseError(detail=message)
+            else:
+                message = f'Document uploaded to {bucket} with key {key} does not match expected key regex'
+                LOG.warning(message)
+                raise exceptions.ParseError(detail=message)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -102,12 +102,20 @@ class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
         return user
 
 
-class EngineRequest(BasePermission):
+class InternalRequest(BasePermission):
     def has_permission(self, request, view):
         if settings.ENVIRONMENT in ('LOCAL',):
             return True
         if ('X_NGINX_SOURCE' in request.META and request.META['X_NGINX_SOURCE'] == 'internal'
                 and request.META['X_SSL_CLIENT_VERIFY'] == 'SUCCESS'):
             certificate_cn = parse_dn(request.META['X_SSL_CLIENT_DN'])['CN']
-            return certificate_cn == f'engine.{settings.ENVIRONMENT.lower()}-internal'
+            return certificate_cn == f'{self.SERVICE_NAME}.{settings.ENVIRONMENT.lower()}-internal'
         return False
+
+
+class EngineRequest(InternalRequest):
+    SERVICE_NAME = 'engine'
+
+
+class DocsLambdaRequest(InternalRequest):
+    SERVICE_NAME = 'document-management-s3-hook'

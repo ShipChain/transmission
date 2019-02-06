@@ -1,0 +1,11 @@
+#!/bin/bash
+
+BIN="$( cd "$( dirname "${BASH_SOURCE[0]}"  )" && cd .. && pwd  )"
+PROJECT_DIR="$( cd $BIN/.. && pwd  )"
+
+[[ -z "$COMPOSE_PROJECT" ]] && COMPOSE_PROJECT=$(basename $PROJECT_DIR)
+
+docker run -it --rm --network ${COMPOSE_PROJECT}_default --entrypoint sh minio/mc -c "apk add jq && \
+mc config host add minio http://minio:9000 TEST-DEV-KEY NON-TRIVIAL-SECRETKEY && \
+mc admin config get minio/ | jq -r '.notify.webhook.\"1\".enable = true | .notify.webhook.\"1\".endpoint = \"http://runserver:8000/api/v1/documents/events/\"' | mc admin config set minio && \
+mc event add minio/document-management-s3-local arn:minio:sqs::1:webhook --event put"
