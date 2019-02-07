@@ -20,7 +20,6 @@ coverage.xml
 *.log
 .git
 .githooks
-
 .idea
 .circleci
 bin/dev-tools
