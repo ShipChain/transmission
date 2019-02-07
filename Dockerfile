@@ -61,7 +61,7 @@ RUN python manage.py collectstatic -c --noinput
 FROM base AS deploy
 
 # Install openssh for ECS management container
-RUN apk add --no-cache jq openssh-server-pam shadow nano
+RUN apk add --no-cache jq openssl openssh-server-pam shadow nano
 RUN sed -i 's/^CREATE_MAIL_SPOOL=yes/CREATE_MAIL_SPOOL=no/' /etc/default/useradd
 
 # Keymaker for SSH auth via IAM
