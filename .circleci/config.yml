@@ -6,7 +6,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python@sha256:415aecafc0bde92a37b6b7f6a5b2c9082c23e9073eb90f8158665dabbf8eedf1
+      - image: circleci/python:3.6.8
         user: root
     environment:
       ROLE: circleci
@@ -21,8 +21,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - virtualenv-alpine-cache-{{ checksum "poetry.lock" }}
-            - virtualenv-alpine-cache
+            - virtualenv-alpine-cache-v2-{{ checksum "poetry.lock" }}
+            - virtualenv-alpine-cache-v2
 
       - run:
           name: Build Docker images
@@ -82,10 +82,10 @@ jobs:
       - run:
           name: Copy virtualenv cache from Docker
           command: |
-            docker cp $(bin/dc ps -q runserver):/app/.virtualenv .virtualenv
+            docker cp $(bin/dc ps -q runserver):/app/.virtualenv/. .virtualenv
 
       - save_cache:
-          key: virtualenv-alpine-cache-{{ checksum "poetry.lock" }}
+          key: virtualenv-alpine-cache-v2-{{ checksum "poetry.lock" }}
           paths:
             - .virtualenv
 
