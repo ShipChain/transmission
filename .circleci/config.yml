@@ -6,7 +6,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.6.8
+      - image: circleci/python@sha256:415aecafc0bde92a37b6b7f6a5b2c9082c23e9073eb90f8158665dabbf8eedf1
         user: root
     environment:
       ROLE: circleci
