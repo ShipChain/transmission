@@ -1,8 +1,6 @@
-# Python CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-python/ for more details
-#
-version: 2
+version: 2.1
+orbs:
+  deploy: shipchain/ecs-deploy@1
 jobs:
   build:
     docker:
@@ -10,237 +8,115 @@ jobs:
         user: root
     environment:
       ROLE: circleci
-
     working_directory: ~/repo
-
     steps:
       - checkout
-
       - setup_remote_docker:
           docker_layer_caching: true
-
       - restore_cache:
           keys:
             - virtualenv-alpine-cache-v2-{{ checksum "poetry.lock" }}
             - virtualenv-alpine-cache-v2
-
       - run:
           name: Build Docker images
           command: |
             docker build --target test   --tag transmission-django-test .
             docker build --target deploy --tag transmission-django --cache-from transmission-django-test .
-
       - run:
           name: Start compose services
           command: |
             bin/dc up -d
-
       - run:
           name: Check for valid poetry.lock
           command: |
             bin/dc exec -T runserver /bin/bash -c '! poetry install --dry-run | grep "Warning: The lock file is not up to date"'
-
       - run:
           name: Package safety check
           command: |
             bin/dc exec -T runserver safety check
-
       - run:
           name: PEP8 Lint check
           command: |
             bin/dc exec -T runserver prospector -o pylint
-
       - run:
           name: Bandit SAST tool
           command: |
             bin/dc exec -T runserver bandit -r apps
-
       - run:
           name: Run unit tests and coverage report
           command: |
             bin/dc exec -T runserver pytest --junitxml=test-results/pytest/results-pe.xml --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled
             bin/dc exec -T runserver pytest --junitxml=test-results/pytest/results-pd.xml --cov=apps --cov-config=.coveragerc --cov-report=html:test-results/coverage.html --cov-append --ds=conf/test_settings_profiles_disabled tests/profiles-disabled
-
       - run:
           name: Copy artifacts from Docker
           command: |
             docker cp $(bin/dc ps -q runserver):/app/test-results test-results
-
       - run:
           name: Merge junit results
           command: |
             pip install junitparser
             junitparser merge test-results/pytest/results-pe.xml test-results/pytest/results-pd.xml test-results/pytest/results.xml
             rm test-results/pytest/results-*.xml
-
       - store_test_results:
           path: test-results
 
       - store_artifacts:
           path: test-results
-
       - run:
           name: Copy virtualenv cache from Docker
           command: |
             docker cp $(bin/dc ps -q runserver):/app/.virtualenv/. .virtualenv
-
       - save_cache:
           key: virtualenv-alpine-cache-v2-{{ checksum "poetry.lock" }}
           paths:
             - .virtualenv
-
       - run:
           name: Save docker image
           command: |
             mkdir -p docker-cache
             docker save -o docker-cache/built-image.tar transmission-django
-
       - persist_to_workspace:
           root: docker-cache
           paths:
             - built-image.tar
-
   push-to-ecr:
     docker:
       - image: docker:stable-git
-
     steps:
-      - attach_workspace:
-          at: docker-cache
-
-      - setup_remote_docker:
-          docker_layer_caching: true
-
-      - run:
-          name: Set dynamic ENV variables
-          command: |
-            echo 'export SHORT_GIT_HASH=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
-
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --no-cache py-pip
-            pip install awscli
-
-      - run:
-          name: Load docker image
-          command: |
-            docker load < /root/project/docker-cache/built-image.tar
-
-      - run:
-          name: Push image to ECR
-          command: |
-            source $BASH_ENV
-            docker tag transmission-django $ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH
-            docker tag transmission-django $ECR_ENDPOINT/transmission-django:latest
-            $(aws ecr get-login --no-include-email)
-            docker push $ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH
-            docker push $ECR_ENDPOINT/transmission-django:latest
-
+      - deploy/push:
+          image: transmission-django
   deploy-to-dev:
     docker:
       - image: docker:stable-git
-
     steps:
-      - run:
-          name: Set dynamic ENV variables
-          command: |
-            echo 'export SHORT_GIT_HASH=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
-
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --no-cache py-pip
-            pip install awscli
-
-      - run:
-          name: Deploy new Task Revision to ECS
-          command: |
-            source $BASH_ENV
-            aws lambda invoke --function-name DeployImageToECS --payload "{
-                \"app\": \"transmission\",
-                \"env\": \"DEV\",
-                \"image\": \"$ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH\"
-              }" outputfile.txt && cat outputfile.txt
-
+      - deploy/promote:
+          app: transmission
+          env: DEV
+          image: transmission-django
   deploy-to-stage:
     docker:
       - image: docker:stable-git
-
     steps:
-      - run:
-          name: Set dynamic ENV variables
-          command: |
-            echo 'export SHORT_GIT_HASH=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
-
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --no-cache py-pip
-            pip install awscli
-
-      - run:
-          name: Deploy new Task Revision to ECS
-          command: |
-            source $BASH_ENV
-            aws lambda invoke --function-name DeployImageToECS --payload "{
-                \"app\": \"transmission\",
-                \"env\": \"STAGE\",
-                \"image\": \"$ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH\"
-              }" outputfile.txt && cat outputfile.txt
-
+      - deploy/promote:
+          app: transmission
+          env: STAGE
+          image: transmission-django
   deploy-to-demo:
     docker:
-    - image: docker:stable-git
-
+      - image: docker:stable-git
     steps:
-    - run:
-        name: Set dynamic ENV variables
-        command: |
-          echo 'export SHORT_GIT_HASH=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
-
-    - run:
-        name: Install dependencies
-        command: |
-          apk add --no-cache py-pip
-          pip install awscli
-
-    - run:
-        name: Deploy new Task Revision to ECS
-        command: |
-          source $BASH_ENV
-          aws lambda invoke --function-name DeployImageToECS --payload "{
-              \"app\": \"transmission\",
-              \"env\": \"DEMO\",
-              \"image\": \"$ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH\"
-            }" outputfile.txt && cat outputfile.txt
-
+      - deploy/promote:
+          app: transmission
+          env: DEMO
+          image: transmission-django
   deploy-to-prod:
     docker:
       - image: docker:stable-git
-
     steps:
-      - run:
-          name: Set dynamic ENV variables
-          command: |
-            echo 'export SHORT_GIT_HASH=$(echo $CIRCLE_SHA1 | cut -c -7)' >> $BASH_ENV
-
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --no-cache py-pip
-            pip install awscli
-
-      - run:
-          name: Deploy new Task Revision to ECS
-          command: |
-            source $BASH_ENV
-            aws lambda invoke --function-name DeployImageToECS --payload "{
-                \"app\": \"transmission\",
-                \"env\": \"PROD\",
-                \"image\": \"$ECR_ENDPOINT/transmission-django:$SHORT_GIT_HASH\"
-              }" outputfile.txt && cat outputfile.txt
-
+      - deploy/promote:
+          app: transmission
+          env: PROD
+          image: transmission-django
 workflows:
   version: 2
   build-and-deploy:
@@ -277,13 +153,13 @@ workflows:
               only: master
           type: approval
           requires:
-          - deploy-to-dev
+            - deploy-to-dev
       - deploy-to-demo:
           filters:
             branches:
               only: master
           requires:
-          - hold-deploy-demo
+            - hold-deploy-demo
       - hold-deploy-prod:
           filters:
             branches:
