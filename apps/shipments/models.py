@@ -111,7 +111,7 @@ class Device(models.Model):
         if settings.PROFILES_ENABLED:
             # Make a request to Profiles /api/v1/devices/{device_id} with the user's JWT
             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/device/{device_id}/',
-                                                     headers={'Authorization': jwt})
+                                                     headers={'Authorization': f'JWT {jwt}'})
             if response.status_code != HTTP_200_OK:
                 raise PermissionDenied("User does not have access to this device in ShipChain Profiles")
 
