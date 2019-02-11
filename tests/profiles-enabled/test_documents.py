@@ -3,7 +3,6 @@ import glob
 import json
 from pathlib import Path
 from unittest import mock
-from pytest import mark
 
 import os
 import requests
@@ -19,7 +18,6 @@ from rest_framework.test import APITestCase, APIClient
 from apps.authentication import passive_credentials_auth
 from apps.documents.models import Document, UploadStatus, DocumentType, FileType
 from apps.documents.rpc import DocumentRPCClient
-from apps.documents.tasks import get_document_from_vault
 from apps.shipments.models import Shipment
 from apps.shipments.signals import shipment_post_save
 from tests.utils import create_form_content, get_jwt
@@ -342,17 +340,17 @@ class DocumentAPITests(APITestCase):
 
         self.set_user(self.user_1)
 
-        # The last accessed date from vault is exactly the last day before expiration date.
+        # The last accessed from vault date is exactly the last day before expiration date.
         # We should still have access without need to fetch it from vault.
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertEqual(len(data), 1)
-        # The last accessed date from vault hasn't changed
+        # The last accessed from date vault hasn't changed
         self.pdf_docs[1].refresh_from_db()
         self.assertEqual(self.pdf_docs[1].accessed_from_vault_at, self.data[1]["accessed_from_vault_at"])
 
-        # The last accessed date from vault is 1 day before expiration date.
+        # The last accessed from vault date is 1 day before expiration date.
         self.pdf_docs[1].accessed_from_vault_at = self.today - datetime.timedelta(days=self.expiration_delta - 1)
         self.pdf_docs[1].save()
         # We should still have access without need to fetch it from vault.
@@ -360,11 +358,11 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertEqual(len(data), 1)
-        # The last accessed date from vault shouldn't have changed
+        # The last accessed from vault date shouldn't have changed
         self.pdf_docs[1].refresh_from_db()
         self.assertNotEqual(self.pdf_docs[1].accessed_from_vault_at, self.today)
 
-        # The last accessed date from vault is 1 day after expiration date.
+        # The last accessed from vault date is 1 day after expiration date.
         self.pdf_docs[1].accessed_from_vault_at = self.today - datetime.timedelta(days=self.expiration_delta + 1)
         self.pdf_docs[1].save()
         # The document should be accessed through vault
@@ -372,7 +370,7 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertEqual(len(data), 1)
-        # The last accessed date from vault should be set to the current date.
+        # The last accessed from vault date should be set to the current date.
         self.pdf_docs[1].refresh_from_db()
         self.assertEqual(self.pdf_docs[1].accessed_from_vault_at, self.today)
 
@@ -399,7 +397,7 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertEqual(len(data), 1)
-        # The accessed date from vault is still None
+        # The accessed from vault date is still None
         self.pdf_docs[1].refresh_from_db()
         self.assertIsNone(self.pdf_docs[1].accessed_from_vault_at)
 
@@ -410,7 +408,7 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertEqual(len(data), 1)
-        # The last accessed date from vault should be set to the current date.
+        # The last accessed from vault date should be set to the current date.
         self.pdf_docs[1].refresh_from_db()
         self.assertEqual(self.pdf_docs[1].accessed_from_vault_at, self.today)
 
