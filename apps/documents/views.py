@@ -14,6 +14,7 @@ from .filters import DocumentFilterSet
 from .models import Document
 from .models import UploadStatus
 from .permissions import UserHasPermission
+from .tasks import get_document_from_vault
 from .rpc import DocumentRPCClient
 from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
@@ -87,6 +88,9 @@ class DocumentViewSet(mixins.CreateModelMixin,
             queryset = self.filter_queryset(documents)
         else:
             queryset = self.filter_queryset(self.get_queryset())
+
+        for document in queryset:
+            get_document_from_vault.delay(document.id)
 
         page = self.paginate_queryset(queryset)
         if page is not None:

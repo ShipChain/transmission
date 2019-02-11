@@ -92,6 +92,9 @@ else:
     DEV_SECRET_KEY = 'devsecretkey' * 19  # noqa
     SECRET_KEY = os.environ.get('SECRET_KEY', DEV_SECRET_KEY)
 
+# s3 Document expiration time in days
+S3_DOCUMENT_EXPIRATION = os.environ.get('S3_DOC_EXPIRATION', 10)
+
 # Application definition
 
 INSTALLED_APPS = [
