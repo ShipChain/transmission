@@ -26,10 +26,10 @@ def get_document_from_vault(self, document_id):
 
     today = datetime.datetime.now().date()
     delta_days = settings.S3_DOCUMENT_EXPIRATION
-    from_vault_date = doc.accessed_from_vault_at
+    from_vault_date = doc.accessed_from_vault_on
 
     fetch_from_vault = (from_vault_date and from_vault_date + datetime.timedelta(days=delta_days) < today) or \
-                       (doc.updated_at.date() + datetime.timedelta(days=delta_days) < today)
+                       (doc.created_at.date() + datetime.timedelta(days=delta_days) < today)
 
     if doc.upload_status == UploadStatus.COMPLETE and fetch_from_vault:
 
@@ -41,5 +41,5 @@ def get_document_from_vault(self, document_id):
                                                storage_credentials_id,
                                                vault_id, filename)
 
-        doc.accessed_from_vault_at = today
+        doc.accessed_from_vault_on = today
         doc.save()

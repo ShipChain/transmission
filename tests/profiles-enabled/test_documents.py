@@ -268,7 +268,7 @@ class DocumentAPITests(APITestCase):
              'shipment': shipment,
              'upload_status': UploadStatus.COMPLETE,
              'owner_id': self.user_1.id,
-             'accessed_from_vault_at': self.today - datetime.timedelta(days=self.expiration_delta)},
+             'accessed_from_vault_on': self.today - datetime.timedelta(days=self.expiration_delta)},
         ]
 
     def set_user(self, user, token=None):
@@ -329,7 +329,7 @@ class DocumentAPITests(APITestCase):
         mock_shipment_rpc_client.add_document_from_s3.assert_called_once()
         assert doc.upload_status == UploadStatus.COMPLETE
 
-    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True,)
     def test_get_document_from_vault(self):
         self.create_docs_data()
 
@@ -340,7 +340,7 @@ class DocumentAPITests(APITestCase):
 
         self.set_user(self.user_1)
 
-        # The last accessed from vault date is exactly the last day before expiration date.
+        # The last accessed from vault date plus delta expiration  is exactly the expiration day.
         # We should still have access without need to fetch it from vault.
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -348,10 +348,10 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(len(data), 1)
         # The last accessed from date vault hasn't changed
         self.pdf_docs[1].refresh_from_db()
-        self.assertEqual(self.pdf_docs[1].accessed_from_vault_at, self.data[1]["accessed_from_vault_at"])
+        self.assertEqual(self.pdf_docs[1].accessed_from_vault_on, self.data[1]["accessed_from_vault_on"])
 
-        # The last accessed from vault date is 1 day before expiration date.
-        self.pdf_docs[1].accessed_from_vault_at = self.today - datetime.timedelta(days=self.expiration_delta - 1)
+        # The last accessed from vault date plus delta expiration  is 1 day before expiration date.
+        self.pdf_docs[1].accessed_from_vault_on = self.today - datetime.timedelta(days=self.expiration_delta - 1)
         self.pdf_docs[1].save()
         # We should still have access without need to fetch it from vault.
         response = self.client.get(url)
@@ -360,10 +360,10 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(len(data), 1)
         # The last accessed from vault date shouldn't have changed
         self.pdf_docs[1].refresh_from_db()
-        self.assertNotEqual(self.pdf_docs[1].accessed_from_vault_at, self.today)
+        self.assertNotEqual(self.pdf_docs[1].accessed_from_vault_on, self.today)
 
-        # The last accessed from vault date is 1 day after expiration date.
-        self.pdf_docs[1].accessed_from_vault_at = self.today - datetime.timedelta(days=self.expiration_delta + 1)
+        # The last accessed from vault date plus delta expiration is 1 day after expiration date.
+        self.pdf_docs[1].accessed_from_vault_on = self.today - datetime.timedelta(days=self.expiration_delta + 1)
         self.pdf_docs[1].save()
         # The document should be accessed through vault
         response = self.client.get(url)
@@ -372,14 +372,14 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(len(data), 1)
         # The last accessed from vault date should be set to the current date.
         self.pdf_docs[1].refresh_from_db()
-        self.assertEqual(self.pdf_docs[1].accessed_from_vault_at, self.today)
+        self.assertEqual(self.pdf_docs[1].accessed_from_vault_on, self.today)
 
         doc = Document.objects.filter(id=self.pdf_docs[1].id)
 
-        # The document has never been accessed via vault and its updated date is
-        # exactly the last day before expiration date.
-        doc.update(updated_at=datetime.datetime.now() - datetime.timedelta(days=self.expiration_delta),
-                   accessed_from_vault_at=None)
+        # The document has never been accessed via vault and its creation date plus delta expiration is
+        # exactly the expiration day.
+        doc.update(created_at=datetime.datetime.now() - datetime.timedelta(days=self.expiration_delta),
+                   accessed_from_vault_on=None)
         # The document shouldn't be accessed via vault
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -387,11 +387,11 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(len(data), 1)
         self.pdf_docs[1].refresh_from_db()
         # The vault accessed date is still None
-        self.assertIsNone(self.pdf_docs[1].accessed_from_vault_at)
+        self.assertIsNone(self.pdf_docs[1].accessed_from_vault_on)
 
-        # The document has never been accessed via vault and its updated date is 1 day before expiration date.
-        doc.update(updated_at=datetime.datetime.now() - datetime.timedelta(days=self.expiration_delta - 1))
-        # self.pdf_docs[1].save()
+        # The document has never been accessed via vault and its creation date plus delta expiration
+        # is 1 day before expiration day.
+        doc.update(created_at=datetime.datetime.now() - datetime.timedelta(days=self.expiration_delta - 1))
         # The document shouldn't be accessed via vault
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -399,18 +399,19 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(len(data), 1)
         # The accessed from vault date is still None
         self.pdf_docs[1].refresh_from_db()
-        self.assertIsNone(self.pdf_docs[1].accessed_from_vault_at)
+        self.assertIsNone(self.pdf_docs[1].accessed_from_vault_on)
 
-        # The document has never been accessed via vault and its updated date is 1 day after expiration date.
-        doc.update(updated_at=datetime.datetime.now() - datetime.timedelta(days=self.expiration_delta + 1))
-        # The document should be accessed via vault
+        # The document has never been accessed via vault and its creation date plus delta expiration
+        # is 1 day after expiration day.
+        doc.update(created_at=datetime.datetime.now() - datetime.timedelta(days=self.expiration_delta + 1))
+        # We should access the  document via vault
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertEqual(len(data), 1)
         # The last accessed from vault date should be set to the current date.
         self.pdf_docs[1].refresh_from_db()
-        self.assertEqual(self.pdf_docs[1].accessed_from_vault_at, self.today)
+        self.assertEqual(self.pdf_docs[1].accessed_from_vault_on, self.today)
 
 
 class ImageDocumentViewSetAPITests(APITestCase):

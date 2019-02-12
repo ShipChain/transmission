@@ -15,4 +15,9 @@ class Migration(migrations.Migration):
             name='accessed_from_vault_at',
             field=models.DateField(blank=True, null=True),
         ),
+        migrations.RenameField(
+            model_name='document',
+            old_name='accessed_from_vault_at',
+            new_name='accessed_from_vault_on',
+        ),
     ]

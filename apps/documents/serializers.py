@@ -20,7 +20,7 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     class Meta:
         model = Document
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'shipment', 'accessed_from_vault_at',)
+            exclude = ('owner_id', 'shipment', 'accessed_from_vault_on',)
         else:
             exclude = ('shipment',)
 
@@ -59,7 +59,7 @@ class DocumentCreateSerializer(DocumentSerializer):
     class Meta:
         model = Document
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'shipment', 'accessed_from_vault_at',)
+            exclude = ('owner_id', 'shipment', 'accessed_from_vault_on',)
         else:
             exclude = ('shipment',)
         meta_fields = ('presigned_s3',)
@@ -69,7 +69,7 @@ class DocumentRetrieveSerializer(DocumentSerializer):
 
     class Meta:
         model = Document
-        exclude = ('shipment', 'accessed_from_vault_at',)
+        exclude = ('shipment', 'accessed_from_vault_on',)
         if settings.PROFILES_ENABLED:
             read_only_fields = ('owner_id', 'document_type', 'file_type',)
         else:
