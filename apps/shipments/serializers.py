@@ -118,7 +118,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
         auth = self.context['auth']
 
         with transaction.atomic():
-            for location_field in ['ship_from_location', 'ship_to_location']:
+            for location_field in ['ship_from_location', 'ship_to_location', 'bill_to_location']:
                 if location_field in validated_data:
                     data = validated_data.pop(location_field)
                     if 'owner_id' not in data:
@@ -170,7 +170,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 instance.device = validated_data.pop('device_id')
 
-        for location_field in ['ship_from_location', 'ship_to_location']:
+        for location_field in ['ship_from_location', 'ship_to_location', 'bill_to_location']:
             if location_field in validated_data:
                 location = getattr(instance, location_field)
                 data = validated_data.pop(location_field)

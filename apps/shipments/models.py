@@ -191,8 +191,11 @@ class Shipment(models.Model):
                                          related_name='shipments_to', null=True)
     final_destination_location = models.ForeignKey(Location, on_delete=models.PROTECT,
                                                    related_name='shipments_dest', null=True)
+    bill_to_location = models.ForeignKey(Location, on_delete=models.PROTECT,
+                                         related_name='bill_to', null=True)
 
     carriers_instructions = models.CharField(max_length=255, blank=True, null=True)
+    special_instructions = models.CharField(max_length=255, blank=True, null=True)
     pro_number = models.CharField(max_length=255, blank=True, null=True)
     bill_master = models.CharField(max_length=255, blank=True, null=True)
     bill_house = models.CharField(max_length=255, blank=True, null=True)
@@ -240,6 +243,15 @@ class Shipment(models.Model):
     import_customs_mode = models.CharField(max_length=255, blank=True, null=True)
     us_export_port = models.CharField(max_length=255, blank=True, null=True)
     version = models.CharField(max_length=255, blank=False, null=False, default=settings.SHIPMENT_SCHEMA_VERSION)
+
+    trailer_number = models.CharField(max_length=255, blank=True, null=True)
+    seal_number = models.CharField(max_length=255, blank=True, null=True)
+    is_master_bol = models.BooleanField(default=False)
+
+    nmfc_number = models.CharField(max_length=255, blank=True, null=True)
+    nmfc_class = models.CharField(max_length=255, blank=True, null=True)
+
+    is_hazmat = models.BooleanField(default=False)
 
     customer_fields = JSONField(blank=True, null=True)
 
