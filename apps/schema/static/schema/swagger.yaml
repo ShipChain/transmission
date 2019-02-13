@@ -2036,14 +2036,6 @@ components:
               type: boolean
               example: false
 
-        nmfcNumber:
-          properties:
-            nmfc_number:
-              title: nmfc_number
-              description: National Motor Freight Traffic Association (nmfc) classification
-              type: string
-              example: '29601'
-
         nmfcClass:
           properties:
             nmfc_class:
@@ -2960,7 +2952,6 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/trailerNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/sealNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/isMasterBOL'
-        - $ref: '#/components/schemas/dataTypes/shipment/nmfcNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/nmfcClass'
         - $ref: '#/components/schemas/dataTypes/shipment/isHazmat'
 
@@ -3098,7 +3089,6 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/trailerNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/sealNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/isMasterBOL'
-        - $ref: '#/components/schemas/dataTypes/shipment/nmfcNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/nmfcClass'
         - $ref: '#/components/schemas/dataTypes/shipment/isHazmat'
 
@@ -3746,7 +3736,6 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/trailerNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/sealNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/isMasterBOL'
-        - $ref: '#/components/schemas/dataTypes/shipment/nmfcNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/nmfcClass'
         - $ref: '#/components/schemas/dataTypes/shipment/isHazmat'
 
