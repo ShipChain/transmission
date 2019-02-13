@@ -35,7 +35,7 @@ def get_document_from_vault(self, document_id):
 
         storage_credentials_id, wallet_id, vault_id, filename = doc.s3_key.split('/', 3)
 
-        DocumentRPCClient().put_document_to_s3(settings.S3_BUCKET,
+        DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET,
                                                doc.s3_key,
                                                wallet_id,
                                                storage_credentials_id,

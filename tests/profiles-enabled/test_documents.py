@@ -334,7 +334,7 @@ class DocumentAPITests(APITestCase):
         self.create_docs_data()
 
         mock_document_rpc_client = DocumentRPCClient
-        mock_document_rpc_client.put_document_to_s3 = mock.Mock(return_value=None)
+        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=None)
 
         url = reverse('document-list', kwargs={'version': 'v1'})
 
