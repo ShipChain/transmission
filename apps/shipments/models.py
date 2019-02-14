@@ -249,7 +249,7 @@ class Shipment(models.Model):
     is_master_bol = models.BooleanField(default=False)
 
     nmfc_regex = RegexValidator(regex=r'^1[015]0$|^1[27]5$|^2[05]0$|^[345]00$|^[567]0$|^[568]5$|^92\.5$|^77\.5$',
-                                message="Invalid phone number.")
+                                message="Invalid nmfc class number.")
     nmfc_class = models.CharField(validators=[nmfc_regex], max_length=4, blank=True, null=True)
 
     is_hazmat = models.BooleanField(default=False)

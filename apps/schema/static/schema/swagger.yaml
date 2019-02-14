@@ -2009,8 +2009,8 @@ components:
             special_instructions:
               title: special_instructions
               description: General instructions or information about the shipment
-              type: JSON object
-              example: {}
+              type: string
+              example: 'Keep refrigerated'
 
         trailerNumber:
           properties:
@@ -2949,6 +2949,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
         - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
         - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
+        - $ref: '#/components/schemas/dataTypes/shipment/specialInstructions'
         - $ref: '#/components/schemas/dataTypes/shipment/trailerNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/sealNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/isMasterBOL'
@@ -3014,7 +3015,7 @@ components:
         title: bill_to_location
         description: bill_to_location associated with the shipment
         properties:
-          final_destination_location:
+          bill_to_location:
             $ref: '#/components/schemas/dataTypes/shipment/locationData'
 
       relationships:
@@ -3086,6 +3087,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
         - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
         - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
+        - $ref: '#/components/schemas/dataTypes/shipment/specialInstructions'
         - $ref: '#/components/schemas/dataTypes/shipment/trailerNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/sealNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/isMasterBOL'
@@ -3733,6 +3735,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
         - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
         - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
+        - $ref: '#/components/schemas/dataTypes/shipment/specialInstructions'
         - $ref: '#/components/schemas/dataTypes/shipment/trailerNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/sealNumber'
         - $ref: '#/components/schemas/dataTypes/shipment/isMasterBOL'

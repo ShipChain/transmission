@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             model_name='shipment',
             name='nmfc_class',
             field=models.CharField(blank=True, max_length=4, null=True, validators=[
-                django.core.validators.RegexValidator(message='Invalid phone number.',
+                django.core.validators.RegexValidator(message='Invalid nmfc class number.',
                                                       regex='^1[015]0$|^1[27]5$|^2[05]0$|^[345]00$|^[567]0$|^[568]5$|^92\\.5$|^77\\.5$')]),
         ),
         migrations.AddField(
