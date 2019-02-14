@@ -61,7 +61,6 @@ class Document(models.Model):
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    accessed_from_vault_on = models.DateField(null=True, blank=True)
 
     @property
     def s3_key(self):

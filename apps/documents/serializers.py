@@ -1,4 +1,7 @@
 import logging
+
+from botocore.errorfactory import ClientError
+
 from django.conf import settings
 
 from enumfields.drf import EnumSupportSerializerMixin
@@ -7,6 +10,7 @@ from influxdb_metrics.loader import log_metric
 
 from apps.utils import UpperEnumField
 from .models import Document, DocumentType, FileType, UploadStatus, IMAGE_TYPES
+from .rpc import DocumentRPCClient
 
 LOG = logging.getLogger('transmission')
 
@@ -20,7 +24,7 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     class Meta:
         model = Document
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'shipment', 'accessed_from_vault_on',)
+            exclude = ('owner_id', 'shipment',)
         else:
             exclude = ('shipment',)
 
@@ -59,7 +63,7 @@ class DocumentCreateSerializer(DocumentSerializer):
     class Meta:
         model = Document
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'shipment', 'accessed_from_vault_on',)
+            exclude = ('owner_id', 'shipment',)
         else:
             exclude = ('shipment',)
         meta_fields = ('presigned_s3',)
@@ -69,7 +73,7 @@ class DocumentRetrieveSerializer(DocumentSerializer):
 
     class Meta:
         model = Document
-        exclude = ('shipment', 'accessed_from_vault_on',)
+        exclude = ('shipment',)
         if settings.PROFILES_ENABLED:
             read_only_fields = ('owner_id', 'document_type', 'file_type',)
         else:
@@ -80,11 +84,22 @@ class DocumentRetrieveSerializer(DocumentSerializer):
         if obj.upload_status != UploadStatus.COMPLETE:
             return super().get_presigned_s3(obj)
 
+        key = '/'.join(obj.s3_path.split('/')[3:])
+
+        try:
+            settings.S3_CLIENT.head_object(Bucket=settings.S3_BUCKET, Key=key)
+        except ClientError:
+            # The document doesn't exist anymore in the bucket. The bucket is going to be repopulated from vault
+            storage_credentials_id, wallet_id, vault_id, filename = key.split('/', 3)
+
+            DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, key, wallet_id, storage_credentials_id, vault_id,
+                                                   filename)
+
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
             Params={
                 'Bucket': f"{settings.S3_BUCKET}",
-                'Key': '/'.join(obj.s3_path.split('/')[3:])
+                'Key': key
             },
             ExpiresIn=settings.S3_URL_LIFE
         )
