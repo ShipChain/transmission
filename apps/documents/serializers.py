@@ -92,8 +92,8 @@ class DocumentRetrieveSerializer(DocumentSerializer):
             # The document doesn't exist anymore in the bucket. The bucket is going to be repopulated from vault
             storage_credentials_id, wallet_id, vault_id, filename = key.split('/', 3)
 
-            DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, key, wallet_id, storage_credentials_id, vault_id,
-                                                   filename)
+            DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, key, wallet_id, storage_credentials_id,
+                                                   vault_id, filename)
 
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
