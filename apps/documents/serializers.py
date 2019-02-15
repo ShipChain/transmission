@@ -84,22 +84,20 @@ class DocumentRetrieveSerializer(DocumentSerializer):
         if obj.upload_status != UploadStatus.COMPLETE:
             return super().get_presigned_s3(obj)
 
-        key = '/'.join(obj.s3_path.split('/')[3:])
-
         try:
-            settings.S3_CLIENT.head_object(Bucket=settings.S3_BUCKET, Key=key)
+            settings.S3_CLIENT.head_object(Bucket=settings.S3_BUCKET, Key=obj.s3_key)
         except ClientError:
             # The document doesn't exist anymore in the bucket. The bucket is going to be repopulated from vault
-            storage_credentials_id, wallet_id, vault_id, filename = key.split('/', 3)
+            storage_credentials_id, wallet_id, vault_id, filename = obj.s3_key.split('/', 3)
 
-            DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, key, wallet_id, storage_credentials_id,
+            DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, obj.s3_key, wallet_id, storage_credentials_id,
                                                    vault_id, filename)
 
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
             Params={
                 'Bucket': f"{settings.S3_BUCKET}",
-                'Key': key
+                'Key': obj.s3_key
             },
             ExpiresIn=settings.S3_URL_LIFE
         )

@@ -43,7 +43,7 @@ class DocumentRPCClient(RPCClient):
             if 'vault_signed' in result:
                 return
 
-        log_metric('transmission.error', tags={'method': 'event_rpcclient.subscribe', 'code': 'RPCError',
+        log_metric('transmission.error', tags={'method': 'document_rpcclient.add_document_from_s3', 'code': 'RPCError',
                                                'module': __name__})
         raise RPCError("Invalid response from Engine")
 
@@ -64,6 +64,6 @@ class DocumentRPCClient(RPCClient):
         if result.get('success', None):
             return
 
-        log_metric('transmission.error', tags={'method': 'event_rpcclient.subscribe', 'code': 'RPCError',
+        log_metric('transmission.error', tags={'method': 'document_rpcclient.put_document_in_s3', 'code': 'RPCError',
                                                'module': __name__})
         raise RPCError("Invalid response from Engine")
