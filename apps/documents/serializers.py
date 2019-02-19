@@ -1,4 +1,7 @@
 import logging
+
+from botocore.errorfactory import ClientError
+
 from django.conf import settings
 
 from enumfields.drf import EnumSupportSerializerMixin
@@ -7,6 +10,7 @@ from influxdb_metrics.loader import log_metric
 
 from apps.utils import UpperEnumField
 from .models import Document, DocumentType, FileType, UploadStatus, IMAGE_TYPES
+from .rpc import DocumentRPCClient
 
 LOG = logging.getLogger('transmission')
 
@@ -20,7 +24,7 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     class Meta:
         model = Document
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'shipment')
+            exclude = ('owner_id', 'shipment',)
         else:
             exclude = ('shipment',)
 
@@ -80,11 +84,20 @@ class DocumentRetrieveSerializer(DocumentSerializer):
         if obj.upload_status != UploadStatus.COMPLETE:
             return super().get_presigned_s3(obj)
 
+        try:
+            settings.S3_CLIENT.head_object(Bucket=settings.S3_BUCKET, Key=obj.s3_key)
+        except ClientError:
+            # The document doesn't exist anymore in the bucket. The bucket is going to be repopulated from vault
+            result = DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, obj.s3_key, obj.shipper_wallet_id,
+                                                            obj.storage_id, obj.vault_id, obj.filename)
+            if not result:
+                return None
+
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
             Params={
                 'Bucket': f"{settings.S3_BUCKET}",
-                'Key': '/'.join(obj.s3_path.split('/')[3:])
+                'Key': obj.s3_key
             },
             ExpiresIn=settings.S3_URL_LIFE
         )

@@ -85,6 +85,9 @@ class PdfDocumentViewSetAPITests(APITestCase):
         pdf.output(file_path, 'F')
 
     def test_sign_to_s3(self):
+        mock_document_rpc_client = DocumentRPCClient
+        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=True)
+
         url = reverse('document-list', kwargs={'version': 'v1'})
 
         f_path = './tests/tmp/test_upload.pdf'
@@ -343,10 +346,16 @@ class ImageDocumentViewSetAPITests(APITestCase):
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
         # Upload bucket creation
-        s3_resource = settings.S3_RESOURCE
+        self.s3_resource = settings.S3_RESOURCE
+
+        # Buckets clean up
+        for bucket in self.s3_resource.buckets.all():
+            for key in bucket.objects.all():
+                key.delete()
+            bucket.delete()
 
         try:
-            s3_resource.create_bucket(Bucket=settings.S3_BUCKET)
+            self.s3_resource.create_bucket(Bucket=settings.S3_BUCKET)
         except Exception as exc:
             pass
 
@@ -453,3 +462,95 @@ class ImageDocumentViewSetAPITests(APITestCase):
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
+
+    def test_get_document_from_vault(self):
+        img_path = './tests/tmp/png_img.png'
+
+        self.make_image(img_path)
+
+        url = reverse('document-list', kwargs={'version': 'v1'})
+
+        file_data, content_type = create_form_content({
+            'name': os.path.basename(img_path),
+            'document_type': 'Image',
+            'file_type': 'Png',
+            'shipment_id': self.shipment.id
+        })
+
+        mock_document_rpc_client = DocumentRPCClient
+        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=True)
+
+        self.set_user(self.user_1)
+        # png image object creation
+        response = self.client.post(url, file_data, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # The document status is pending, we won't try to retrieved from vault
+        data = response.json()['data']
+        self.assertEqual(data['attributes']['upload_status'], 'PENDING')
+        # The rpc_client.put_document_in_s3 is not csalled
+        mock_document_rpc_client.put_document_in_s3.assert_not_called()
+
+        document = Document.objects.get(id=data['id'])
+        document.upload_status = UploadStatus.COMPLETE
+        document.save()
+
+        # Document upload
+        put_url = data['meta']['presigned_s3']['url']
+        fields = data['meta']['presigned_s3']['fields']
+        with open(img_path, 'rb') as png:
+            res = requests.post(put_url, data=fields, files={'file': png})
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+        # The document has been uploaded and its status is COMPLETE.
+        # the rpc_client.put_document_in_s3 should not be called
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_document_rpc_client.put_document_in_s3.assert_not_called()
+
+        doc = Document.objects.all().first()
+        self.s3_resource.Object(settings.S3_BUCKET, doc.s3_key).delete()
+
+        # The file has been deleted from the bucket.
+        self.assertEqual(len(list(self.s3_resource.Bucket(settings.S3_BUCKET).objects.filter(Prefix=doc.s3_key))), 0)
+
+        # The file object status is COMPLETE but the file is no longueur in the bucket.
+        # the rpc_client.put_document_in_s3 should be invoked
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_document_rpc_client.put_document_in_s3.assert_called_once()
+
+        # trying to access a list of documents, the rpc method should be called for each of the COMPLETE objects
+        # with file missing from s3. Here twice exactly
+        file_data = {
+            'name': 'Second file',
+            'document_type': DocumentType.BOL,
+            'file_type': FileType.PDF,
+            'shipment_id': self.shipment.id,
+            'upload_status': UploadStatus.COMPLETE,
+            'owner_id': self.user_1.id
+        }
+        Document.objects.create(**file_data)
+
+        mock_document_rpc_client.put_document_in_s3.reset_mock()
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(mock_document_rpc_client.put_document_in_s3.call_count, 2)
+
+        # Trying to access the COMPLETE document detail the rpc method should be called
+        mock_document_rpc_client.put_document_in_s3.reset_mock()
+        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': doc.id})
+        response = self.client.patch(url, {}, content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_document_rpc_client.put_document_in_s3.assert_called_once()
+
+        # In case of rpc error, we should have a null presigned_url
+        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=False)
+        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': doc.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        self.assertIsNone(data['meta']['presigned_s3'])
+
+
