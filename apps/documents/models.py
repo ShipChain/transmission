@@ -64,9 +64,24 @@ class Document(models.Model):
 
     @property
     def s3_key(self):
-        return f"{self.shipment.storage_credentials_id}/{self.shipment.shipper_wallet_id}" \
-            f"/{self.shipment.vault_id}/{self.id}.{self.file_type.name.lower()}"
+        return f"{self.storage_id}/{self.shipper_wallet_id}/{self.vault_id}/{self.filename}"
 
     @property
     def s3_path(self):
         return f"s3://{settings.S3_BUCKET}/{self.s3_key}"
+
+    @property
+    def filename(self):
+        return f"{self.id}.{self.file_type.name.lower()}"
+
+    @property
+    def storage_id(self):
+        return f"{self.shipment.storage_credentials_id}"
+
+    @property
+    def shipper_wallet_id(self):
+        return f"{self.shipment.shipper_wallet_id}"
+
+    @property
+    def vault_id(self):
+        return f"{self.shipment.vault_id}"

@@ -52,18 +52,23 @@ class DocumentRPCClient(RPCClient):
         log_metric('transmission.info', tags={'method': 'document_rpcclient.put_document_in_s3',
                                               'module': __name__})
 
-        result = self.call('vault.put_document_in_s3', {
-            "bucket": bucket,
-            "key": key,
-            "vaultWallet": vault_wallet,
-            "storageCredentials": storage_credentials,
-            "vault": vault,
-            "documentName": document_name,
-        })
+        try:
+            result = self.call('vault.put_document_in_s3', {
+                "bucket": bucket,
+                "key": key,
+                "vaultWallet": vault_wallet,
+                "storageCredentials": storage_credentials,
+                "vault": vault,
+                "documentName": document_name,
+            })
+        except RPCError:
+            result = {'success': False}
 
         if result.get('success', None):
-            return
+            return True
 
-        log_metric('transmission.error', tags={'method': 'document_rpcclient.put_document_in_s3', 'code': 'RPCError',
-                                               'module': __name__})
-        raise RPCError("Invalid response from Engine")
+        LOG.error(f'Encountered an error while retrieving document: {document_name}, from vault: {vault}')
+
+        log_metric('transmission.error', tags={'method': 'document_rpcclient.put_document_in_s3',
+                                               'code': 'RPCError', 'module': __name__})
+        return False

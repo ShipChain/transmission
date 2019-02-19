@@ -86,7 +86,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
 
     def test_sign_to_s3(self):
         mock_document_rpc_client = DocumentRPCClient
-        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=None)
+        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=True)
 
         url = reverse('document-list', kwargs={'version': 'v1'})
 
@@ -478,7 +478,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         })
 
         mock_document_rpc_client = DocumentRPCClient
-        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=None)
+        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=True)
 
         self.set_user(self.user_1)
         # png image object creation
@@ -544,5 +544,13 @@ class ImageDocumentViewSetAPITests(APITestCase):
         response = self.client.patch(url, {}, content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_document_rpc_client.put_document_in_s3.assert_called_once()
+
+        # In case of rpc error, we should have a null presigned_url
+        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=False)
+        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': doc.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        self.assertIsNone(data['meta']['presigned_s3'])
 
 

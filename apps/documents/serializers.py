@@ -88,10 +88,10 @@ class DocumentRetrieveSerializer(DocumentSerializer):
             settings.S3_CLIENT.head_object(Bucket=settings.S3_BUCKET, Key=obj.s3_key)
         except ClientError:
             # The document doesn't exist anymore in the bucket. The bucket is going to be repopulated from vault
-            storage_credentials_id, wallet_id, vault_id, filename = obj.s3_key.split('/', 3)
-
-            DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, obj.s3_key, wallet_id, storage_credentials_id,
-                                                   vault_id, filename)
+            result = DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, obj.s3_key, obj.shipper_wallet_id,
+                                                            obj.storage_id, obj.vault_id, obj.filename)
+            if not result:
+                return None
 
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
