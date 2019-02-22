@@ -123,7 +123,7 @@ def shipment_device_id_changed(sender, instance, changed_fields, **kwargs):
         try:
             iot_client = DeviceAWSIoTClient()
             if old:
-                iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': None})
+                iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': ''})
             if new:
                 # Remove device from previous shipments
                 other_shipments_for_device = Shipment.objects.filter(device_id=new).exclude(id=instance.id)
