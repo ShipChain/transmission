@@ -1,7 +1,7 @@
 import logging
-
-from string import Template
 from datetime import datetime, timezone
+from string import Template
+
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.models import Q
@@ -16,15 +16,15 @@ from influxdb_metrics.loader import log_metric
 
 from apps.authentication import get_jwt_from_request
 from apps.jobs.models import JobState
+from apps.permissions import IsOwner, is_owner_q, get_owner_id
 from .filters import ShipmentFilter
 from .geojson import render_point_features
 from .models import Shipment, Location, TrackingData, PermissionLink
-from .permissions import IsOwner, IsUserOrDevice, IsSharedOrOwner, IsShipmentOwner
+from .permissions import IsAuthenticatedOrDevice, IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
     PermissionLinkSerializer
 from .tasks import tracking_data_update
-
 
 LOG = logging.getLogger('transmission')
 
@@ -32,7 +32,7 @@ LOG = logging.getLogger('transmission')
 class ShipmentViewSet(viewsets.ModelViewSet):
     queryset = Shipment.objects.all()
     serializer_class = ShipmentSerializer
-    permission_classes = ((IsSharedOrOwner, ) if settings.PROFILES_ENABLED
+    permission_classes = ((IsOwnerOrShared,) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     filterset_class = ShipmentFilter
@@ -47,17 +47,17 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                 try:
                     permission_link = PermissionLink.objects.get(pk=self.request.query_params['permission_link'])
                     if permission_link.expiration_date and permission_link.expiration_date < datetime.now(timezone.utc):
-                        queryset = queryset.filter(owner_id=self.request.user.id)
+                        queryset = queryset.filter(is_owner_q(self.request))
                 except ObjectDoesNotExist:
                     raise PermissionDenied('No permission link found.')
-                queryset = queryset.filter(Q(owner_id=self.request.user.id) | Q(pk=permission_link.shipment.pk))
+                queryset = queryset.filter(is_owner_q(self.request) | Q(pk=permission_link.shipment.pk))
             else:
-                queryset = queryset.filter(owner_id=self.request.user.id)
+                queryset = queryset.filter(is_owner_q(self.request))
         return queryset
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=self.request.user.id)
+            created = serializer.save(owner_id=get_owner_id(self.request))
         else:
             created = serializer.save()
         return created
@@ -135,7 +135,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @method_decorator(cache_page(60 * 10, cache='page'))  # Cache responses for 10 minutes
-    @action(detail=True, methods=['get', 'post'], permission_classes=(IsUserOrDevice,))
+    @action(detail=True, methods=['get', 'post'], permission_classes=(IsAuthenticatedOrDevice,))
     def tracking(self, request, version, pk):
         if request.method == 'GET':
             return self.get_tracking_data(request, version, pk)
@@ -179,7 +179,7 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset.filter(shipment__owner_id=self.request.user.id)
+            queryset.filter(shipment__owner_id=get_owner_id(self.request))
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -208,12 +208,12 @@ class LocationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(owner_id=self.request.user.id)
+            queryset = queryset.filter(is_owner_q(self.request))
         return queryset
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=self.request.user.id)
+            created = serializer.save(owner_id=get_owner_id(self.request))
         else:
             created = serializer.save()
         return created

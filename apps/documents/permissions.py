@@ -1,6 +1,7 @@
 from django.conf import settings
 from rest_framework import permissions, status
 from apps.authentication import get_jwt_from_request
+from apps.permissions import is_owner
 
 
 PROFILES_URL = f'{settings.PROFILES_URL}/api/v1/wallet/'
@@ -46,7 +47,4 @@ class UserHasPermission(permissions.BasePermission):
                 return False
             return True
 
-        def is_owner():
-            return obj.owner_id == request.user.id
-
-        return is_owner() or is_shipper() or is_carrier() or is_moderator()
+        return is_owner(request, obj) or is_shipper() or is_carrier() or is_moderator()
