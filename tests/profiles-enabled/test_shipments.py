@@ -9,6 +9,7 @@ import httpretty
 from datetime import datetime, timezone
 from dateutil import parser
 from django.conf import settings as test_settings
+from django.db import transaction
 from jose import jws
 from moto import mock_iot
 from rest_framework import status
@@ -944,9 +945,14 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
         self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
+        # Trying to reuse a location already in used on a different shipment should fail
+        url_2 = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
+        with transaction.atomic():
+            response = self.client.patch(url_2, one_location, content_type=content_type)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
         # Authenticated request should succeed using mapbox in creating two locations (if exists)
         self.set_user(self.user_1)
-
         response = self.client.patch(url, two_locations, content_type=content_type)
         response_data = response.json()['data']
         response_included = response.json()['included']
