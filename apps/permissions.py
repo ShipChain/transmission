@@ -25,7 +25,7 @@ def get_user(request):
 
 def is_owner_q(request):
     user_id, organization_id = get_user(request)
-    return Q(owner_id=organization_id) or Q(owner_id=user_id) if organization_id else Q(owner_id=user_id)
+    return Q(owner_id=organization_id) | Q(owner_id=user_id) if organization_id else Q(owner_id=user_id)
 
 
 def get_owner_id(request):
