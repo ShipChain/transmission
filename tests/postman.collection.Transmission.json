@@ -377,14 +377,8 @@
                         "disabled": true
                       },
                       {
-                        "key": "nmfc_number",
-                        "value": "55",
-                        "type": "text",
-                        "disabled": true
-                      },
-                      {
                         "key": "nmfc_class",
-                        "value": "National Motor Freight Traffic Association classification. Freight class between 50 and 500",
+                        "value": "55",
                         "type": "text",
                         "disabled": true
                       },
@@ -866,14 +860,8 @@
                         "disabled": true
                       },
                       {
-                        "key": "nmfc_number",
-                        "value": "55",
-                        "type": "text",
-                        "disabled": true
-                      },
-                      {
                         "key": "nmfc_class",
-                        "value": "National Motor Freight Traffic Association classification. Freight class between 50 and 500",
+                        "value": "55",
                         "type": "text",
                         "disabled": true
                       },

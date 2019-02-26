@@ -106,7 +106,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
         read_only_fields = ('contract_version',)
 
     class JSONAPIMeta:
-        included_resources = ['ship_from_location', 'ship_to_location',
+        included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data', 'device']
 
 
@@ -215,6 +215,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
+    bill_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
     class Meta:
@@ -223,7 +224,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
         meta_fields = ('async_job_id',)
 
     class JSONAPIMeta:
-        included_resources = ['ship_from_location', 'ship_to_location',
+        included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data', 'device']
 
 
@@ -234,6 +235,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     ship_from_location = LocationVaultSerializer(required=False)
     ship_to_location = LocationVaultSerializer(required=False)
+    bill_to_location = LocationVaultSerializer(required=False)
 
     class Meta:
         model = Shipment
