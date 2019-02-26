@@ -92,6 +92,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
+    bill_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
     transactions = serializers.SerializerMethodField()
