@@ -627,6 +627,54 @@ class ShipmentAPITests(APITestCase):
                 data = response.json()['data']
                 self.assertEqual(device.shipment.id, data['id'])
 
+    @mock_iot
+    def test_shipment_device_history(self):
+        device_id = 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'
+
+        # Create device 'thing'
+        iot = boto3.client('iot', region_name='us-east-1')
+        iot.create_thing(
+            thingName=device_id
+        )
+
+        # Load device cert into AWS
+        with open('tests/data/cert.pem', 'r') as cert_file:
+            cert_pem = cert_file.read()
+        cert_response = iot.register_certificate(
+            certificatePem=cert_pem,
+            status='ACTIVE'
+        )
+        certificate_id = cert_response['certificateId']
+
+        self.create_shipment()
+
+        device = Device.objects.create(id=device_id, certificate_id=certificate_id)
+
+        mock_get_or_create_with_permission = Device
+        mock_get_or_create_with_permission.get_or_create_with_permission = mock.Mock(return_value=device)
+
+        device_content, content_type = create_form_content({'device_id': device.id})
+        no_device_content, content_type = create_form_content({'device_id': None})
+
+        self.set_user(self.user_1)
+
+        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+
+        response = self.client.patch(url, device_content, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
+
+        response = self.client.patch(url, device_content, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
+
+        response = self.client.patch(url, no_device_content, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        history = Shipment.history.all()
+        print(f'>>>>>>>>>>>>>> History: {history}')
+
     @httpretty.activate
     def test_create(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})

@@ -9,6 +9,7 @@ from geocoder.keys import mapbox_access_token
 import boto3
 from botocore.exceptions import ClientError
 
+from simple_history.models import HistoricalRecords
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import GeometryField
@@ -109,6 +110,7 @@ class Location(models.Model):
 class Device(models.Model):
     id = models.CharField(primary_key=True, null=False, max_length=36)
     certificate_id = models.CharField(unique=True, null=True, blank=False, max_length=255)
+    history = HistoricalRecords()
 
     @staticmethod
     def get_or_create_with_permission(jwt, device_id):
@@ -286,6 +288,16 @@ class Shipment(models.Model):
     is_hazmat = models.NullBooleanField()
 
     customer_fields = JSONField(blank=True, null=True)
+
+    history = HistoricalRecords()
+
+    def save_without_historical_record(self, *args, **kwargs):
+        self.skip_history_when_saving = True
+        try:
+            ret = self.save(*args, **kwargs)
+        finally:
+            del self.skip_history_when_saving
+        return ret
 
     def get_device_request_url(self):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')

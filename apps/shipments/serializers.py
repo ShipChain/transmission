@@ -125,6 +125,9 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
             if 'device' in self.context:
                 extra_args['device'] = self.context['device']
+                shipment = Shipment(**validated_data, **extra_args)
+                shipment.save_without_historical_record()
+                return shipment
 
             return Shipment.objects.create(**validated_data, **extra_args)
 
@@ -177,6 +180,9 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         if 'device' in self.context:
             if validated_data['device_id']:
                 instance.device = self.context['device']
+                device = Device.get_or_create_with_permission(self.context['auth'], validated_data.pop('device_id'))
+                instance.device = device
+                instance.save()
             else:
                 instance.device = validated_data.pop('device_id')
 
@@ -203,7 +209,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 setattr(instance, attr, value)
 
-        instance.save()
+        instance.save_without_historical_record()
         return instance
 
     def validate_device_id(self, device_id):

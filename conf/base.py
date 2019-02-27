@@ -127,6 +127,7 @@ INSTALLED_APPS = [
     'apps.schema',
     'apps.documents',
     'channels',
+    'simple_history',
 ]
 
 REST_FRAMEWORK = {

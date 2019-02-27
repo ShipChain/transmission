@@ -575,6 +575,14 @@ redis = ">=2.10.0"
 
 [[package]]
 category = "main"
+description = "Store model history and view/revert changes from admin site."
+name = "django-simple-history"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "2.7.0"
+
+[[package]]
+category = "main"
 description = "Web APIs for Django, made easy."
 name = "djangorestframework"
 optional = false
@@ -1826,6 +1834,7 @@ django-gm2m = ["84a4399269b46fa615f55e16c8288839a6102295180a8228433fdde5d8ed4c45
 django-influxdb-metrics = []
 django-mock-queries = ["d5b6991d1b65c54b272c89f17296a034f7fffd0f4ea78e39104b8c9f0796b4d4"]
 django-redis = ["af0b393864e91228dd30d8c85b5c44d670b5524cb161b7f9e41acc98b6e5ace7", "f46115577063d00a890867c6964ba096057f07cb756e78e0503b89cd18e4e083"]
+django-simple-history = ["2f35bbb2ac37ae726ce4ef4a8cc053ede5f881a6985f5445f438dc297b12e7c5", "7ba6220ed2ef3562ed8de9c66551da2a25d26b969f94226d41342769c3782630"]
 djangorestframework = ["79c6efbb2514bc50cf25906d7c0a5cfead714c7af667ff4bd110312cd380ae66", "a4138613b67e3a223be6c97f53b13d759c5b90d2b433bad670b8ebf95402075f"]
 djangorestframework-gis = ["35527c51e083ccc93f6e6d90a6515c132bbeb2c5648b166ac5b1a48c4ea8e2a4", "e645c6c8aedee53ac0a4851abcdf8121fff66813eebae1b040b1ccb941cb248b"]
 djangorestframework-jsonapi = ["61c3b5ce8b88243b5608254df7f2861cec9cbd933b06b798716c4ad7549710d7", "94cec93546ed48c92ace053562bdd94504d2f396c68d551c6f99277923cebaf4"]

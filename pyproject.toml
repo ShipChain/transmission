@@ -40,6 +40,7 @@ django-fullurl= "==0.5"
 django-gm2m = "==0.6.1"
 django-influxdb-metrics = {git = "git://github.com/lwbco/django-influxdb-tagged-metrics.git", rev = "add895558ed6ab59c621b19beae026f8933d4848"}
 django-redis = "==4.10.0"
+django-simple-history = "==2.7.0"
 djangorestframework = "==3.9.1"
 djangorestframework-gis = "==0.14"
 djangorestframework-jsonapi = "~2.5"
