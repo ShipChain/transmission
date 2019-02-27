@@ -98,7 +98,7 @@ class Location(models.Model):
                 LOG.warning(f'Cannot Geolocalize Address for location: {self.id}')
 
         else:
-            self.geometry = Point(geocoder_response.latlng)
+            self.geometry = Point(geocoder_response.xy)
 
 
 class Device(models.Model):
