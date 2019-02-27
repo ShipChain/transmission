@@ -16,7 +16,7 @@ from influxdb_metrics.loader import log_metric
 
 from apps.authentication import get_jwt_from_request
 from apps.jobs.models import JobState
-from apps.permissions import IsOwner, is_owner_q, get_owner_id
+from apps.permissions import IsOwner, owner_access_filter, get_owner_id
 from .filters import ShipmentFilter
 from .geojson import render_point_features
 from .models import Shipment, Location, TrackingData, PermissionLink
@@ -47,12 +47,12 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                 try:
                     permission_link = PermissionLink.objects.get(pk=self.request.query_params['permission_link'])
                     if permission_link.expiration_date and permission_link.expiration_date < datetime.now(timezone.utc):
-                        queryset = queryset.filter(is_owner_q(self.request))
+                        queryset = queryset.filter(owner_access_filter(self.request))
                 except ObjectDoesNotExist:
                     raise PermissionDenied('No permission link found.')
-                queryset = queryset.filter(is_owner_q(self.request) | Q(pk=permission_link.shipment.pk))
+                queryset = queryset.filter(owner_access_filter(self.request) | Q(pk=permission_link.shipment.pk))
             else:
-                queryset = queryset.filter(is_owner_q(self.request))
+                queryset = queryset.filter(owner_access_filter(self.request))
         return queryset
 
     def perform_create(self, serializer):
@@ -208,7 +208,7 @@ class LocationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(is_owner_q(self.request))
+            queryset = queryset.filter(owner_access_filter(self.request))
         return queryset
 
     def perform_create(self, serializer):

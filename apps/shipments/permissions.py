@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import permissions
 
-from apps.permissions import is_owner
+from apps.permissions import has_owner_access
 from .models import PermissionLink, Shipment
 
 
@@ -13,7 +13,7 @@ class IsShipmentOwner(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         shipment = Shipment.objects.get(pk=view.kwargs['shipment_pk'])
-        return is_owner(request, shipment)
+        return has_owner_access(request, shipment)
 
 
 class IsListenerOwner(permissions.BasePermission):
@@ -23,7 +23,7 @@ class IsListenerOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         # Permissions are allowed to anyone who owns a shipment listening to this job
         for shipment in obj.listeners.filter(Model='shipments.Shipment'):
-            if is_owner(request, shipment):
+            if has_owner_access(request, shipment):
                 return True
         return False
 
@@ -37,7 +37,7 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
                 ('permission_link' in request.query_params and request.query_params['permission_link']))
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_authenticated and is_owner(request, obj):
+        if request.user.is_authenticated and has_owner_access(request, obj):
             return True
         if 'permission_link' in request.query_params and request.query_params['permission_link']:
             try:

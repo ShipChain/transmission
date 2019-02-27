@@ -23,7 +23,7 @@ def get_user(request):
     return None, None
 
 
-def is_owner_q(request):
+def owner_access_filter(request):
     user_id, organization_id = get_user(request)
     return Q(owner_id=organization_id) | Q(owner_id=user_id) if organization_id else Q(owner_id=user_id)
 
@@ -33,7 +33,7 @@ def get_owner_id(request):
     return organization_id if organization_id else user_id
 
 
-def is_owner(request, obj):
+def has_owner_access(request, obj):
     user_id, organization_id = get_user(request)
     return (organization_id and obj.owner_id == organization_id) or obj.owner_id == user_id
 
@@ -44,4 +44,4 @@ class IsOwner(permissions.BasePermission):
     """
     def has_object_permission(self, request, view, obj):
         # Permissions are only allowed to the owner of the shipment.
-        return is_owner(request, obj)
+        return has_owner_access(request, obj)
