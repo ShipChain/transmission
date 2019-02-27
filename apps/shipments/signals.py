@@ -125,12 +125,6 @@ def shipment_device_id_changed(sender, instance, changed_fields, **kwargs):
             if old:
                 iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': ''})
             if new:
-                # Remove device from previous shipments
-                other_shipments_for_device = Shipment.objects.filter(device_id=new).exclude(id=instance.id)
-                for shipment in other_shipments_for_device:
-                    shipment.device_id = None
-                    shipment.save()
-
                 iot_client.update_shadow(new, {'deviceId': new, 'shipmentId': instance.id})
         except AWSIoTError as exc:
             logging.error(f'Error communicating with AWS IoT during Device shadow shipmentId update: {exc}')

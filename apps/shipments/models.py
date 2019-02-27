@@ -161,7 +161,7 @@ class Shipment(models.Model):
     storage_credentials_id = models.CharField(null=False, max_length=36)
     vault_id = models.CharField(null=True, max_length=36)
     vault_uri = models.CharField(null=True, max_length=255)
-    device = models.ForeignKey(Device, on_delete=models.PROTECT, null=True)
+    device = models.OneToOneField(Device, on_delete=models.PROTECT, null=True)
     shipper_wallet_id = models.CharField(null=False, max_length=36)
     carrier_wallet_id = models.CharField(null=False, max_length=36)
     moderator_wallet_id = models.CharField(null=True, max_length=36)

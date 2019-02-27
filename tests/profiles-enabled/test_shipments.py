@@ -1459,11 +1459,6 @@ class ShipmentWithIoTAPITests(APITestCase):
         self.token = get_jwt(username='user1@shipchain.io')
         self.user_1 = passive_credentials_auth(self.token)
 
-        self.device = Device.objects.create(
-            id=DEVICE_ID,
-            certificate_id='FAKE_CERTIFICATE_ID'
-        )
-
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
@@ -1489,8 +1484,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             mock_wallet_validation.assert_called()
             mock_storage_validation.assert_called()
 
-        assert response.status_code == status.HTTP_202_ACCEPTED
-        return response.json()['data']
+        return response
 
     def set_device_id(self, shipment_id, device_id, certificate_id):
         url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
@@ -1524,7 +1518,10 @@ class ShipmentWithIoTAPITests(APITestCase):
             }})
 
             # Test Shipment create with Device ID updates shadow
-            shipment = self.create_shipment()
+            response = self.create_shipment()
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            shipment = response.json()['data']
+
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
             mocked.return_value = mocked_rpc_response({'data': {
@@ -1587,9 +1584,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
 
-            # Create second shipment, ensure device can only be attached to one shipment
-            self.create_shipment()
-            mocked_call_count += 2  # Should also clear device from shipment 1
+            # Create second shipment, (will fail since the device is already in use)
+            response = self.create_shipment()
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
             assert mocked.call_count == mocked_call_count
-
-            assert Shipment.objects.filter(id=shipment['id']).first().device_id is None
