@@ -711,10 +711,11 @@ description = "Geocoder is a simple and consistent geocoding library."
 name = "geocoder"
 optional = false
 python-versions = "*"
-version = "1.5.1"
+version = "1.38.1"
 
 [package.dependencies]
 click = "*"
+future = "*"
 ratelim = "*"
 requests = "*"
 six = "*"
@@ -1746,7 +1747,7 @@ version = "4.6.0"
 setuptools = "*"
 
 [metadata]
-content-hash = "d01bfaf00f7e008060a8d01379ba09645715d1d099b357ba7aef6499ae6c6559"
+content-hash = "294d67e88dbf8f8c83394db07f69dd09c98688ea2ee174506e78afa74e0e5fd4"
 python-versions = "==3.6.8"
 
 [metadata.hashes]
@@ -1814,7 +1815,7 @@ drf-nested-routers = ["3346bcfb151d221d499b3b7932cc6e5cee005ea50f1343a2f5cd2f85e
 ecdsa = ["40d002cf360d0e035cf2cb985e1308d41aaa087cbfc135b2dc2d844296ea546c", "64cf1ee26d1cde3c73c6d7d107f835fed7c6a2904aef9eac223d57ad800c43fa"]
 fpdf = ["0a94eb783ee933e32a44ad949a1aa6c3ca6fb35b608db53f8b216aec52fc1fb5", "125840783289e7d12552b1e86ab692c37322e7a65b96a99e0ea86cca041b6779", "9542f6ad0791d673955da954a0cf3554a0affac79deab87bee06b9b4d4e60990"]
 future = ["67045236dcfd6816dc439556d009594abf643e5eb48992e36beac09c2ca659b8"]
-geocoder = ["1c95117253934178b7d9d235810e78399c4a27097dcadbaaa71f7655475d042c", "3a39b9d68070090869e6bef16e8a3b7c2ffa5d26c20c9622215c2eb392f472dd"]
+geocoder = ["a733e1dfbce3f4e1a526cac03aadcedb8ed1239cf55bd7f3a23c60075121a834", "c9925374c961577d0aee403b09e6f8ea1971d913f011f00ca70c76beaf7a77e7"]
 geojson = ["f2baaa99dad7bb4c8276d5b5ff26d9085866f3b271a3847371b030fb20623765"]
 gitdb2 = ["83361131a1836661a155172932a13c08bda2db3674e4caa32368aa6eb02f38c2", "e3a0141c5f2a3f635c7209d56c496ebe1ad35da82fe4d3ec4aaa36278d70648a"]
 gitpython = ["563221e5a44369c6b79172f455584c9ebbb122a13368cc82cb4b5addff788f82", "8237dc5bfd6f1366abeee5624111b9d6879393d84745a507de0fda86043b65a8"]
