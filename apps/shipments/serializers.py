@@ -134,7 +134,10 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
         device = Device.get_or_create_with_permission(auth, device_id)
         if hasattr(device, 'shipment'):
-            raise serializers.ValidationError('Device is already assigned to another shipment')
+            if not device.shipment.delivery_act:
+                raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
+            else:
+                Shipment.objects.filter(device_id=device.id).update(device=None)
         self.context['device'] = device
 
         return device_id
@@ -172,10 +175,9 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                             'storage_credentials_id', 'contract_version')
 
     def update(self, instance, validated_data):
-        if 'device_id' in validated_data:
+        if 'device_id' in self.context:
             if validated_data['device_id']:
-                instance.device = Device.get_or_create_with_permission(self.context['auth'],
-                                                                       validated_data.pop('device_id'))
+                instance.device = self.context['device']
             else:
                 instance.device = validated_data.pop('device_id')
 
@@ -203,6 +205,19 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
         instance.save()
         return instance
+
+    def validate_device_id(self, device_id):
+        auth = self.context['auth']
+
+        device = Device.get_or_create_with_permission(auth, device_id)
+        if hasattr(device, 'shipment'):
+            if not device.shipment.delivery_act:
+                raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
+            else:
+                Shipment.objects.filter(device_id=device.id).update(device=None)
+        self.context['device'] = device
+
+        return device_id
 
 
 class PermissionLinkSerializer(serializers.ModelSerializer):

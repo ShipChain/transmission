@@ -1495,7 +1495,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             if device_id:
                 mock_device.assert_called()
 
-        assert response.status_code == status.HTTP_202_ACCEPTED
+        return response
 
     @mock_iot
     def test_shipment_set_shadow(self):
@@ -1529,17 +1529,20 @@ class ShipmentWithIoTAPITests(APITestCase):
             }})
 
             # Test Shipment null Device ID updates shadow
-            self.set_device_id(shipment['id'], None, None)
+            response = self.set_device_id(shipment['id'], None, None)
+            assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
 
             # Reset initial DEVICE_ID
-            self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            response = self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
 
             # Test Shipment update with Device ID updates shadow
-            self.set_device_id(shipment['id'], device_2_id, device_2_cert_id)
+            response = self.set_device_id(shipment['id'], device_2_id, device_2_cert_id)
+            assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 2  # Expect the old device to have its shipmentId cleared, and the new one has its set
             assert mocked.call_count == mocked_call_count
 
@@ -1580,7 +1583,8 @@ class ShipmentWithIoTAPITests(APITestCase):
             assert mocked.call_count == mocked_call_count
 
             # Reset initial DEVICE_ID
-            self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            response = self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
 
@@ -1588,3 +1592,17 @@ class ShipmentWithIoTAPITests(APITestCase):
             response = self.create_shipment()
             assert response.status_code == status.HTTP_400_BAD_REQUEST
             assert mocked.call_count == mocked_call_count
+
+            # Devices can be reused after deliveries are complete
+            shipment_obj.refresh_from_db()
+            shipment_obj.delivery_act = datetime.now()
+            shipment_obj.save()
+
+            response = self.create_shipment()
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            mocked_call_count += 3
+            assert mocked.call_count == mocked_call_count
+
+            # Device ID updates for Shipments should fail if the device is already in use
+            response = self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
