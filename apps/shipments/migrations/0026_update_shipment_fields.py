@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0024_permissionlink'),
+        ('shipments', '0025_reversegeometry'),
     ]
 
     operations = [
