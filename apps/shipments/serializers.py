@@ -124,7 +124,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                         data['owner_id'] = validated_data['owner_id']
                     extra_args[location_field], _ = Location.objects.get_or_create(**data)
 
-            if 'device_id' in self.context:
+            if 'device' in self.context:
                 extra_args['device'] = self.context['device']
 
             return Shipment.objects.create(**validated_data, **extra_args)
@@ -175,7 +175,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                             'storage_credentials_id', 'contract_version')
 
     def update(self, instance, validated_data):
-        if 'device_id' in self.context:
+        if 'device' in self.context:
             if validated_data['device_id']:
                 instance.device = self.context['device']
             else:
