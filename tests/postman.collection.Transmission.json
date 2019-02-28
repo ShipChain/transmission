@@ -351,6 +351,48 @@
                         "value": "29601",
                         "type": "text",
                         "disabled": true
+                      },
+                      {
+                        "key": "trailer_number",
+                        "value": "TA664231",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "seal_number",
+                        "value": "Z88654Q63",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "is_master_bol",
+                        "value": "true",
+                        "type": "boolean",
+                        "disabled": true
+                      },
+                      {
+                        "key": "special_instructions",
+                        "value": "General instructions or information about the shipment",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "nmfc_class",
+                        "value": "55",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "is_hazmat",
+                        "value": "true",
+                        "type": "boolean",
+                        "disabled": true
+                      },
+                      {
+                        "key": "bill_to_location.name",
+                        "value": "85b",
+                        "type": "text",
+                        "disabled": true
                       }
                     ]
                   },
@@ -790,6 +832,48 @@
                       {
                         "key": "us_export_port",
                         "value": "29601",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "trailer_number",
+                        "value": "TA664231",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "seal_number",
+                        "value": "Z88654Q63",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "is_master_bol",
+                        "value": "true",
+                        "type": "boolean",
+                        "disabled": true
+                      },
+                      {
+                        "key": "special_instructions",
+                        "value": "General instructions or information about the shipment",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "nmfc_class",
+                        "value": "55",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "is_hazmat",
+                        "value": "true",
+                        "type": "boolean",
+                        "disabled": true
+                      },
+                      {
+                        "key": "bill_to_location.name",
+                        "value": "85b",
                         "type": "text",
                         "disabled": true
                       }

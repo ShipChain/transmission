@@ -92,6 +92,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
+    bill_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
     transactions = serializers.SerializerMethodField()
@@ -105,7 +106,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
         read_only_fields = ('contract_version',)
 
     class JSONAPIMeta:
-        included_resources = ['ship_from_location', 'ship_to_location',
+        included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data', 'device']
 
 
@@ -118,7 +119,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
         auth = self.context['auth']
 
         with transaction.atomic():
-            for location_field in ['ship_from_location', 'ship_to_location']:
+            for location_field in ['ship_from_location', 'ship_to_location', 'bill_to_location']:
                 if location_field in validated_data:
                     data = validated_data.pop(location_field)
                     if 'owner_id' not in data:
@@ -170,7 +171,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 instance.device = validated_data.pop('device_id')
 
-        for location_field in ['ship_from_location', 'ship_to_location']:
+        for location_field in ['ship_from_location', 'ship_to_location', 'bill_to_location']:
             if location_field in validated_data:
                 location = getattr(instance, location_field)
                 data = validated_data.pop(location_field)
@@ -214,6 +215,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
+    bill_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
     class Meta:
@@ -222,7 +224,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
         meta_fields = ('async_job_id',)
 
     class JSONAPIMeta:
-        included_resources = ['ship_from_location', 'ship_to_location',
+        included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data', 'device']
 
 
@@ -233,6 +235,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     ship_from_location = LocationVaultSerializer(required=False)
     ship_to_location = LocationVaultSerializer(required=False)
+    bill_to_location = LocationVaultSerializer(required=False)
 
     class Meta:
         model = Shipment
