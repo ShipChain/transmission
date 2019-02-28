@@ -1518,11 +1518,6 @@ class ShipmentWithIoTAPITests(APITestCase):
         self.token = get_jwt(username='user1@shipchain.io')
         self.user_1 = passive_credentials_auth(self.token)
 
-        self.device = Device.objects.create(
-            id=DEVICE_ID,
-            certificate_id='FAKE_CERTIFICATE_ID'
-        )
-
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
@@ -1548,8 +1543,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             mock_wallet_validation.assert_called()
             mock_storage_validation.assert_called()
 
-        assert response.status_code == status.HTTP_202_ACCEPTED
-        return response.json()['data']
+        return response
 
     def set_device_id(self, shipment_id, device_id, certificate_id):
         url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
@@ -1560,7 +1554,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             if device_id:
                 mock_device.assert_called()
 
-        assert response.status_code == status.HTTP_202_ACCEPTED
+        return response
 
     @mock_iot
     def test_shipment_set_shadow(self):
@@ -1583,7 +1577,10 @@ class ShipmentWithIoTAPITests(APITestCase):
             }})
 
             # Test Shipment create with Device ID updates shadow
-            shipment = self.create_shipment()
+            response = self.create_shipment()
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            shipment = response.json()['data']
+
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
             mocked.return_value = mocked_rpc_response({'data': {
@@ -1591,17 +1588,20 @@ class ShipmentWithIoTAPITests(APITestCase):
             }})
 
             # Test Shipment null Device ID updates shadow
-            self.set_device_id(shipment['id'], None, None)
+            response = self.set_device_id(shipment['id'], None, None)
+            assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
 
             # Reset initial DEVICE_ID
-            self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            response = self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
 
             # Test Shipment update with Device ID updates shadow
-            self.set_device_id(shipment['id'], device_2_id, device_2_cert_id)
+            response = self.set_device_id(shipment['id'], device_2_id, device_2_cert_id)
+            assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 2  # Expect the old device to have its shipmentId cleared, and the new one has its set
             assert mocked.call_count == mocked_call_count
 
@@ -1642,13 +1642,26 @@ class ShipmentWithIoTAPITests(APITestCase):
             assert mocked.call_count == mocked_call_count
 
             # Reset initial DEVICE_ID
-            self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            response = self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
 
-            # Create second shipment, ensure device can only be attached to one shipment
-            self.create_shipment()
-            mocked_call_count += 2  # Should also clear device from shipment 1
+            # Create second shipment, (will fail since the device is already in use)
+            response = self.create_shipment()
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
             assert mocked.call_count == mocked_call_count
 
-            assert Shipment.objects.filter(id=shipment['id']).first().device_id is None
+            # Devices can be reused after deliveries are complete
+            shipment_obj.refresh_from_db()
+            shipment_obj.delivery_act = datetime.now()
+            shipment_obj.save()
+
+            response = self.create_shipment()
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            mocked_call_count += 3
+            assert mocked.call_count == mocked_call_count
+
+            # Device ID updates for Shipments should fail if the device is already in use
+            response = self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
