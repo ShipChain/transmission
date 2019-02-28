@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0024_permissionlink'),
+        ('shipments', '0026_update_shipment_fields'),
     ]
 
     operations = [
