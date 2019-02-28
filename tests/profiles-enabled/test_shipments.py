@@ -571,7 +571,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
         self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
-        self.assertEqual(ship_from_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         # Authenticated request should succeed using mapbox in creating two locations (if exists)
         response = self.client.post(url, two_locations, content_type=content_type)
@@ -591,7 +591,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
         self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
-        self.assertEqual(ship_from_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         self.assertIsNotNone(response_data['relationships']['ship_to_location']['data'])
         self.assertEqual(len(response_included), 3)
@@ -599,7 +599,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.city, parameters['_ship_to_location_city'])
         self.assertEqual(ship_to_location.state, parameters['_ship_to_location_state'])
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
-        self.assertEqual(ship_to_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_to_location.geometry.coords, (23.0, 12.0))
 
         # Authenticated request should succeed using google
         mapbox_access_token = None
@@ -622,7 +622,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
         self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
-        self.assertEqual(ship_from_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         # Authenticated request should succeed using google in creating two locations
         response = self.client.post(url, two_locations, content_type=content_type)
@@ -642,7 +642,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
         self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
-        self.assertEqual(ship_from_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         self.assertIsNotNone(response_data['relationships']['ship_to_location']['data'])
         self.assertEqual(len(response_included), 3)
@@ -650,7 +650,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.city, parameters['_ship_to_location_city'])
         self.assertEqual(ship_to_location.state, parameters['_ship_to_location_state'])
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
-        self.assertEqual(ship_to_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_to_location.geometry.coords, (23.0, 12.0))
 
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
@@ -993,7 +993,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
         self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
-        self.assertEqual(ship_from_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         # Authenticated request should succeed using mapbox in creating two locations (if exists)
         self.set_user(self.user_1)
@@ -1014,7 +1014,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
         self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
-        self.assertEqual(ship_from_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         self.assertIsNotNone(response_data['relationships']['ship_to_location']['data'])
         self.assertEqual(len(response_included), 3)
@@ -1022,7 +1022,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.city, parameters['_ship_to_location_city'])
         self.assertEqual(ship_to_location.state, parameters['_ship_to_location_state'])
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
-        self.assertEqual(ship_to_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_to_location.geometry.coords, (23.0, 12.0))
 
         # Authenticated request should succeed using google
         mapbox_access_token = None
@@ -1046,7 +1046,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
         self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
-        self.assertEqual(ship_from_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         # Authenticated request should succeed using google in creating two locations
         self.set_user(self.user_1)
@@ -1067,7 +1067,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
         self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
-        self.assertEqual(ship_from_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         self.assertIsNotNone(response_data['relationships']['ship_to_location']['data'])
         self.assertEqual(len(response_included), 3)
@@ -1075,7 +1075,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.city, parameters['_ship_to_location_city'])
         self.assertEqual(ship_to_location.state, parameters['_ship_to_location_state'])
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
-        self.assertEqual(ship_to_location.geometry.coords, (12.0, 23.0))
+        self.assertEqual(ship_to_location.geometry.coords, (23.0, 12.0))
 
     def test_permission_link(self):
         self.create_shipment()
@@ -1265,7 +1265,7 @@ class LocationAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         response_data = response.json()
         self.assertEqual(response_data['data']['attributes']['name'], LOCATION_NAME)
-        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [12.0, 23.0])
+        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [23.0, 12.0])
 
         mapbox_access_token = None
 
@@ -1274,7 +1274,7 @@ class LocationAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         response_data = response.json()
         self.assertEqual(response_data['data']['attributes']['name'], LOCATION_NAME)
-        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [12.0, 23.0])
+        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [23.0, 12.0])
 
         with self.settings(PROFILES_ENABLED=False, PROFILES_URL='DISABLED'):
             response = self.client.post(url, valid_data_profiles_disabled, content_type=content_type)
@@ -1305,7 +1305,7 @@ class LocationAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
         self.assertEqual(response_data['data']['attributes']['phone_number'], LOCATION_NUMBER)
-        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [12.0, 23.0])
+        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [23.0, 12.0])
 
         mapbox_access_token = None
 
@@ -1314,7 +1314,7 @@ class LocationAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
         self.assertEqual(response_data['data']['attributes']['phone_number'], LOCATION_NUMBER)
-        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [12.0, 23.0])
+        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [23.0, 12.0])
 
     def test_update_nonexistent_location(self):
         self.create_location()
