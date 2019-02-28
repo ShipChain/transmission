@@ -21,6 +21,7 @@ from apps.authentication import passive_credentials_auth
 from apps.eth.models import EthAction
 from apps.iot_client import BotoAWSRequestsAuth
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
+from apps.shipments.serializers import ShipmentCreateSerializer
 from apps.shipments.rpc import Load110RPCClient
 from apps.utils import random_id
 from tests.utils import get_jwt
@@ -629,6 +630,12 @@ class ShipmentAPITests(APITestCase):
 
     @mock_iot
     def test_shipment_device_history(self):
+        self.create_shipment()
+
+        history = Shipment.history.all()
+        history.delete()
+        self.assertEqual(history.count(), 0)
+
         device_id = 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'
 
         # Create device 'thing'
@@ -646,34 +653,58 @@ class ShipmentAPITests(APITestCase):
         )
         certificate_id = cert_response['certificateId']
 
-        self.create_shipment()
-
         device = Device.objects.create(id=device_id, certificate_id=certificate_id)
 
+        # Mock device validation call
         mock_get_or_create_with_permission = Device
         mock_get_or_create_with_permission.get_or_create_with_permission = mock.Mock(return_value=device)
+
+        # Mock wallet and storage validation
+        mock_validation = ShipmentCreateSerializer
+        mock_validation.validate_shipper_wallet_id = mock.Mock(return_value=SHIPPER_WALLET_ID)
+        mock_validation.validate_storage_credentials_id = mock.Mock(return_value=STORAGE_CRED_ID)
 
         device_content, content_type = create_form_content({'device_id': device.id})
         no_device_content, content_type = create_form_content({'device_id': None})
 
         self.set_user(self.user_1)
 
-        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+        create_shipment_data = {
+            'vault_id': VAULT_ID,
+            'carrier_wallet_id': CARRIER_WALLET_ID,
+            'shipper_wallet_id': SHIPPER_WALLET_ID,
+            'storage_credentials_id': STORAGE_CRED_ID
+        }
 
-        response = self.client.patch(url, device_content, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        url = reverse('shipment-list', kwargs={'version': 'v1'})
 
-        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
-
-        response = self.client.patch(url, device_content, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-
-        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
-
-        response = self.client.patch(url, no_device_content, content_type=content_type)
+        # A shipment created without a device shouldn't have history.
+        response = self.client.post(url, create_shipment_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         history = Shipment.history.all()
-        print(f'>>>>>>>>>>>>>> History: {history}')
+        self.assertEqual(history.count(), 0)
+
+        # A shipment created with device should have an initial history.
+        create_shipment_data['device_id'] = device.id
+        response = self.client.post(url, create_shipment_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        history = Shipment.history.all()
+        self.assertEqual(history.count(), 1)
+        data = response.json()['data']
+
+        # Adding the device to an existing shipment should account to history
+        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+        response = self.client.patch(url, {'device_id': device.id}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        history = Shipment.history.all()
+        self.assertEqual(history.count(), 2)
+
+        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
+
+        response = self.client.patch(url, {'device_id': None}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        history = Shipment.history.all()
+        self.assertEqual(history.count(), 2)
 
     @httpretty.activate
     def test_create(self):

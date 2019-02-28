@@ -27,7 +27,7 @@ from influxdb_metrics.loader import log_metric
 from apps.eth.fields import AddressField, HashField
 from apps.eth.models import EthListener
 from apps.jobs.models import JobListener, AsyncJob, JobState
-from apps.utils import random_id, AliasField
+from apps.utils import random_id, AliasField, ShipHistory
 from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')
@@ -289,15 +289,7 @@ class Shipment(models.Model):
 
     customer_fields = JSONField(blank=True, null=True)
 
-    history = HistoricalRecords()
-
-    def save_without_historical_record(self, *args, **kwargs):
-        self.skip_history_when_saving = True
-        try:
-            ret = self.save(*args, **kwargs)
-        finally:
-            del self.skip_history_when_saving
-        return ret
+    history = ShipHistory()
 
     def get_device_request_url(self):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')

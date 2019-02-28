@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from enumfields.drf import EnumField
+from simple_history.models import HistoricalRecords
 
 
 def random_id():
@@ -148,3 +149,12 @@ def send_templated_email(template, subject, context, recipients, sender=None):
     email = EmailMessage(subject, email_body, send_by, recipients)
     email.content_subtype = 'html'
     email.send()
+
+
+class ShipHistory(HistoricalRecords):
+    def post_save(self, instance, created, using=None, **kwargs):
+        if not created and hasattr(instance, "skip_history_when_saving") or \
+                created and hasattr(instance, "skip_history_when_saving"):
+            return
+        if not kwargs.get("raw", False):
+            self.create_historical_record(instance, created and "+" or "~", using=using)
