@@ -95,11 +95,6 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     bill_to_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
-    transactions = serializers.SerializerMethodField()
-
-    def get_transactions(self, obj):
-        return [eth_action.transaction_hash for eth_action in obj.ethaction_set.all()]
-
     class Meta:
         model = Shipment
         exclude = ('owner_id', 'version') if settings.PROFILES_ENABLED else ('version',)

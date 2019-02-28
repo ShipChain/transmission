@@ -1569,17 +1569,6 @@ components:
               title: device_id
               description: Device UUID associated with the shipment
 
-        transactions:
-          properties:
-            transactions:
-              type: array
-              title: transactions
-              description: Aray of transaction hashes
-              items:
-                type: string
-                description: Transaction Hashes associated with the shipment
-                example: '0xf53ffac288474d65dc7ad79ea484ab742cc452ccc119053a8274b29f4bdfc888'
-
         shipperWalletId:
           properties:
             shipper_wallet_id:
@@ -2891,7 +2880,6 @@ components:
 
       attributes:
         allOf:
-        - $ref: '#/components/schemas/dataTypes/shipment/transactions'
         - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
         - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
         - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
