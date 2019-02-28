@@ -11,8 +11,7 @@ from influxdb_metrics.loader import log_metric
 from apps.authentication import EngineRequest, get_jwt_from_request
 from apps.eth.models import EthAction, Event
 from apps.eth.serializers import EventSerializer, EthActionSerializer
-
-from .permissions import IsOwner
+from apps.shipments.permissions import IsListenerOwner
 
 LOG = logging.getLogger('transmission')
 
@@ -80,7 +79,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
     """
     queryset = EthAction.objects.all()
     serializer_class = EthActionSerializer
-    permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
+    permission_classes = ((permissions.IsAuthenticated, IsListenerOwner) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
 
     def get_queryset(self):

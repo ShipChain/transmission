@@ -6,6 +6,7 @@ from apps.authentication import EngineRequest, passive_credentials_auth
 from tests.utils import get_jwt
 
 USERNAME = 'fake@shipchain.io'
+ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001'
 
 
 class AuthTests(TestCase):
@@ -17,6 +18,12 @@ class AuthTests(TestCase):
         self.assertEqual(user.is_staff, False)
         self.assertEqual(user.is_superuser, False)
         self.assertEqual(user.username, USERNAME)
+        self.assertEqual(user.token.get('organization_id', None), None)
+
+    def test_organization_jwt_auth(self):
+        self.assertRaises(exceptions.AuthenticationFailed, passive_credentials_auth, "")
+        user = passive_credentials_auth(get_jwt(username=USERNAME, organization_id=ORGANIZATION_ID))
+        self.assertEqual(user.token.get('organization_id', None), ORGANIZATION_ID)
 
     def test_engine_auth_requires_header(self):
         engine_request = EngineRequest()

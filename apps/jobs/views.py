@@ -8,8 +8,8 @@ from rest_framework_json_api import parsers as jsapi_parsers
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import EngineRequest
+from apps.shipments.permissions import IsListenerOwner
 from .models import AsyncJob
-from .permissions import IsOwner
 from .serializers import AsyncJobSerializer, MessageSerializer
 
 LOG = logging.getLogger('transmission')
@@ -23,7 +23,7 @@ class JobsViewSet(mixins.ListModelMixin,
     """
     queryset = AsyncJob.objects.all()
     serializer_class = AsyncJobSerializer
-    permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
+    permission_classes = ((permissions.IsAuthenticated, IsListenerOwner) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
     parser_classes = (parsers.JSONParser, jsapi_parsers.JSONParser)
 

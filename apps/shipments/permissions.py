@@ -1,40 +1,43 @@
 from datetime import datetime, timezone
+
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import permissions
+
+from apps.permissions import has_owner_access
 from .models import PermissionLink, Shipment
-
-
-class IsOwner(permissions.BasePermission):
-    """
-    Custom permission to only allow owners of an object to edit it
-    """
-
-    def has_object_permission(self, request, view, obj):
-
-        # Permissions are only allowed to the owner of the shipment.
-        return obj.owner_id == request.user.id
 
 
 class IsShipmentOwner(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object to edit it
+    Custom permission to only allow owners of an object to edit it (for use in related querysets)
     """
-
     def has_permission(self, request, view):
         shipment = Shipment.objects.get(pk=view.kwargs['shipment_pk'])
-
-        # Permissions are only allowed to the owner of the shipment.
-        return shipment.owner_id == request.user.id
+        return has_owner_access(request, shipment)
 
 
-class IsSharedOrOwner(permissions.BasePermission):
+class IsListenerOwner(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it
+    """
+    def has_object_permission(self, request, view, obj):
+        # Permissions are allowed to anyone who owns a shipment listening to this job
+        for shipment in obj.listeners.filter(Model='shipments.Shipment'):
+            if has_owner_access(request, shipment):
+                return True
+        return False
 
+
+class IsOwnerOrShared(permissions.IsAuthenticated):
+    """
+    Custom permission to allow users with a unique link to access a shipment anonymously
+    """
     def has_permission(self, request, view):
-        return ((request.user and request.user.is_authenticated) or
+        return (super(IsOwnerOrShared, self).has_permission(request, view) or
                 ('permission_link' in request.query_params and request.query_params['permission_link']))
 
     def has_object_permission(self, request, view, obj):
-        if obj.owner_id == request.user.id:
+        if request.user.is_authenticated and has_owner_access(request, obj):
             return True
         if 'permission_link' in request.query_params and request.query_params['permission_link']:
             try:
@@ -48,7 +51,7 @@ class IsSharedOrOwner(permissions.BasePermission):
         return False
 
 
-class IsUserOrDevice(permissions.BasePermission):
+class IsAuthenticatedOrDevice(permissions.IsAuthenticated):
     """
     Custom permission to allow users to access tracking data, or update if its a device
     """
@@ -57,4 +60,4 @@ class IsUserOrDevice(permissions.BasePermission):
             # Device authentication is handled during tracking data validation
             return True
 
-        return request.user and request.user.is_authenticated
+        return super(IsAuthenticatedOrDevice, self).has_permission(request, view)
