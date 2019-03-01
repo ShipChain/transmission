@@ -53,8 +53,8 @@ urlpatterns = [
     ),
     url(r'^admin/', admin.site.urls),
     url(f'{API_PREFIX[1:]}/documents/events', documents.S3Events.as_view(), name='document-events'),
-    url(f'{API_PREFIX[1:]}/device-history/(?P<device_id>[0-9a-zA-Z-]+)/', shipments.DeviceShipmentsHistory.as_view(),
-        name='device-shipments-history'),
+    url(f'{API_PREFIX[1:]}/device-history/(?P<device_id>[0-9a-zA-Z-]+)/',
+        shipments.DeviceShipmentsHistoryListView.as_view(), name='device-shipments-history'),
 ]
 urlpatterns += router.urls
 

@@ -706,11 +706,47 @@ class ShipmentAPITests(APITestCase):
         history = Shipment.history.all()
         self.assertEqual(history.count(), 2)
 
+        response = self.client.patch(url, {'device_id': device.id}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        history = Shipment.history.all()
+        self.assertEqual(history.count(), 3)
+
+        self.set_user(self.user_2)
+
+        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[2].id})
+        response = self.client.patch(url, {'device_id': device.id}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        history = Shipment.history.all()
+        self.assertEqual(history.count(), 4)
+
         url = reverse('device-shipments-history', kwargs={'version': 'v1', 'device_id': device.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
-        self.assertEqual(len(data), 2)
+        self.assertEqual(len(data), 4)
+
+        # Test search fields
+        url_search = url + f'?search={self.user_2.id}'
+        response = self.client.get(url_search)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        self.assertEqual(len(data), 1)
+
+        # Test filter date_lesser, for dates lesser than tomorrow should return 4 historical models
+        date = datetime.now().date() + timedelta(days=1)
+        url_filter = url + f'?date_lesser={date.isoformat()}'
+        response = self.client.get(url_filter)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        self.assertEqual(len(data), 4)
+
+        # Test filter date_greater, for dates greater than tomorrow should return 0 historical model
+        date = datetime.now().date() + timedelta(days=1)
+        url_filter = url + f'?date_greater={date.isoformat()}'
+        response = self.client.get(url_filter)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        self.assertEqual(len(data), 0)
 
     @httpretty.activate
     def test_create(self):

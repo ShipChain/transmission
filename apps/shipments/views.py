@@ -18,7 +18,7 @@ from apps.authentication import get_jwt_from_request
 from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id
 from apps.utils import send_templated_email
-from .filters import ShipmentFilter
+from .filters import ShipmentFilter, ShipmentHistoryFilter
 from .geojson import render_point_features
 from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
@@ -231,13 +231,18 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class DeviceShipmentsHistory(generics.ListAPIView):
+class DeviceShipmentsHistoryListView(generics.ListAPIView):
+    resource_name = 'ShipmentHistory'
     serializer_class = DeviceShipmentsHistorySerializer
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
+    search_fields = ('shippers_reference', 'forwarders_reference', 'owner_id',)
+    ordering_fields = ('modified_at', 'created_at', 'pickup_est', 'delivery_est', 'historical_date',)
+    filterset_class = ShipmentHistoryFilter
     queryset = Shipment.history.all()
 
     def get_queryset(self):
         queryset = self.queryset
-        device_id = self.request.query_params.get('device_id', None)
+        device_id = self.kwargs.get('device_id', None)
         if device_id:
             queryset = queryset.filter(device_id=device_id)
 
