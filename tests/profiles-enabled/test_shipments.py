@@ -706,6 +706,12 @@ class ShipmentAPITests(APITestCase):
         history = Shipment.history.all()
         self.assertEqual(history.count(), 2)
 
+        url = reverse('device-shipments-history', kwargs={'version': 'v1', 'device_id': device.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        self.assertEqual(len(data), 2)
+
     @httpretty.activate
     def test_create(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})

@@ -153,8 +153,20 @@ def send_templated_email(template, subject, context, recipients, sender=None):
 
 class ShipHistory(HistoricalRecords):
     def post_save(self, instance, created, using=None, **kwargs):
+        """
+        We override this method to avoid creating a historical record when a Shipment object
+        is newly created and the `skip_history_when_saving` method is called
+        """
         if not created and hasattr(instance, "skip_history_when_saving") or \
                 created and hasattr(instance, "skip_history_when_saving"):
             return
         if not kwargs.get("raw", False):
             self.create_historical_record(instance, created and "+" or "~", using=using)
+
+    def get_extra_fields(self, model, fields):
+        """
+        We override this metgod to set Historical objects pk as our standard UUID
+        """
+        results = super(ShipHistory, self).get_extra_fields(model, fields)
+        results.update({'history_id': models.CharField(primary_key=True, default=random_id, max_length=36)})
+        return results

@@ -392,3 +392,14 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
     def create(self, validated_data):
         return TrackingData.objects.create(**validated_data, **self.context)
+
+
+class DeviceShipmentsHistorySerializer(serializers.ModelSerializer):
+    shipment_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Shipment.history.model
+        fields = '__all__'
+
+    def get_shipment_id(self, obj):
+        return obj.id

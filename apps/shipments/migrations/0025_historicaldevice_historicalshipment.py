@@ -124,4 +124,9 @@ class Migration(migrations.Migration):
         migrations.DeleteModel(
             name='HistoricalDevice',
         ),
+        migrations.AlterField(
+            model_name='historicalshipment',
+            name='history_id',
+            field=models.CharField(default=apps.utils.random_id, max_length=36, primary_key=True, serialize=False),
+        ),
     ]

@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, permissions, status, filters, mixins
+from rest_framework import generics, viewsets, permissions, status, exceptions, filters, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -24,7 +24,8 @@ from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer, PermissionLinkCreateSerializer
+    PermissionLinkSerializer, PermissionLinkCreateSerializer, DeviceShipmentsHistorySerializer
+
 from .tasks import tracking_data_update
 
 LOG = logging.getLogger('transmission')
@@ -228,3 +229,16 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
             send_templated_email('email/shipment_link.html', subject, email_context, emails)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class DeviceShipmentsHistory(generics.ListAPIView):
+    serializer_class = DeviceShipmentsHistorySerializer
+    queryset = Shipment.history.all()
+
+    def get_queryset(self):
+        queryset = self.queryset
+        device_id = self.request.query_params.get('device_id', None)
+        if device_id:
+            queryset = queryset.filter(device_id=device_id)
+
+        return queryset
