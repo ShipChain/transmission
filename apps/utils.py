@@ -165,7 +165,7 @@ class ShipHistory(HistoricalRecords):
 
     def get_extra_fields(self, model, fields):
         """
-        We override this metgod to set Historical objects pk as our standard UUID
+        We override this method to set Historical objects pk as our standard UUID
         """
         results = super(ShipHistory, self).get_extra_fields(model, fields)
         results.update({'history_id': models.CharField(primary_key=True, default=random_id, max_length=36)})

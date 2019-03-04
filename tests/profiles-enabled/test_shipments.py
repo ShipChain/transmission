@@ -22,6 +22,7 @@ from apps.eth.models import EthAction
 from apps.iot_client import BotoAWSRequestsAuth
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
 from apps.shipments.serializers import ShipmentCreateSerializer
+from apps.shipments.permissions import DeviceShipmentHistoryPermission
 from apps.shipments.rpc import Load110RPCClient
 from apps.utils import random_id
 from tests.utils import get_jwt
@@ -638,22 +639,7 @@ class ShipmentAPITests(APITestCase):
 
         device_id = 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'
 
-        # Create device 'thing'
-        iot = boto3.client('iot', region_name='us-east-1')
-        iot.create_thing(
-            thingName=device_id
-        )
-
-        # Load device cert into AWS
-        with open('tests/data/cert.pem', 'r') as cert_file:
-            cert_pem = cert_file.read()
-        cert_response = iot.register_certificate(
-            certificatePem=cert_pem,
-            status='ACTIVE'
-        )
-        certificate_id = cert_response['certificateId']
-
-        device = Device.objects.create(id=device_id, certificate_id=certificate_id)
+        device = Device.objects.create(id=device_id)
 
         # Mock device validation call
         mock_get_or_create_with_permission = Device
@@ -663,9 +649,6 @@ class ShipmentAPITests(APITestCase):
         mock_validation = ShipmentCreateSerializer
         mock_validation.validate_shipper_wallet_id = mock.Mock(return_value=SHIPPER_WALLET_ID)
         mock_validation.validate_storage_credentials_id = mock.Mock(return_value=STORAGE_CRED_ID)
-
-        device_content, content_type = create_form_content({'device_id': device.id})
-        no_device_content, content_type = create_form_content({'device_id': None})
 
         self.set_user(self.user_1)
 
@@ -690,7 +673,6 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         history = Shipment.history.all()
         self.assertEqual(history.count(), 1)
-        data = response.json()['data']
 
         # Adding the device to an existing shipment should account to history
         url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
@@ -711,7 +693,7 @@ class ShipmentAPITests(APITestCase):
         history = Shipment.history.all()
         self.assertEqual(history.count(), 3)
 
-        self.set_user(self.user_2)
+        self.set_user(self.user_2, self.token2)
 
         url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[2].id})
         response = self.client.patch(url, {'device_id': device.id}, format='json')
@@ -719,11 +701,20 @@ class ShipmentAPITests(APITestCase):
         history = Shipment.history.all()
         self.assertEqual(history.count(), 4)
 
+        # -------------------------User_1 context ---------------------------#
+        # Use_1 has access permission to the device, he should have access to the device history
+        self.set_user(self.user_1, self.token)
+        mock_device_permission = DeviceShipmentHistoryPermission
+
+        # Mock device permission
+        mock_device_permission.has_permission = mock.Mock(return_value=True)
+
         url = reverse('device-shipments-history', kwargs={'version': 'v1', 'device_id': device.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertEqual(len(data), 4)
+        mock_device_permission.has_permission.assert_called_once()
 
         # Test search fields
         url_search = url + f'?search={self.user_2.id}'
@@ -733,7 +724,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(len(data), 1)
 
         # Test filter date_lesser, for dates lesser than tomorrow should return 4 historical models
-        date = datetime.now().date() + timedelta(days=1)
+        date = datetime.utcnow().date() + timedelta(days=1)
         url_filter = url + f'?date_lesser={date.isoformat()}'
         response = self.client.get(url_filter)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -741,12 +732,27 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(len(data), 4)
 
         # Test filter date_greater, for dates greater than tomorrow should return 0 historical model
-        date = datetime.now().date() + timedelta(days=1)
+        date = datetime.utcnow().date() + timedelta(days=1)
         url_filter = url + f'?date_greater={date.isoformat()}'
         response = self.client.get(url_filter)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertEqual(len(data), 0)
+
+        # -------------------------User_3 context ---------------------------#
+        # Use_3 doesn't have access permission to the device, he shouldn't have access to the device history
+        self.set_user(self.user_3, self.token3)
+
+        # Reset device's mock values
+        mock_device_permission.has_permission.reset_mock()
+        # Mock device permission
+        mock_device_permission = DeviceShipmentHistoryPermission
+        mock_device_permission.has_permission = mock.Mock(return_value=False)
+
+        url = reverse('device-shipments-history', kwargs={'version': 'v1', 'device_id': device.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        mock_device_permission.has_permission.assert_called_once()
 
     @httpretty.activate
     def test_create(self):
