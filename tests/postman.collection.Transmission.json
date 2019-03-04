@@ -820,7 +820,7 @@
                       {
                         "key": "us_routed",
                         "value": "true",
-                        "type": "text",
+                        "type": "boolean",
                         "disabled": true
                       },
                       {

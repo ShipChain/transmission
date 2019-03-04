@@ -239,7 +239,7 @@ class Shipment(models.Model):
     import_locode = models.CharField(max_length=255, blank=True, null=True)
     lading_locode = models.CharField(max_length=255, blank=True, null=True)
     origin_locode = models.CharField(max_length=255, blank=True, null=True)
-    us_routed = models.CharField(max_length=255, blank=True, null=True)
+    us_routed = models.BooleanField(default=False)
     import_customs_mode = models.CharField(max_length=255, blank=True, null=True)
     us_export_port = models.CharField(max_length=255, blank=True, null=True)
     version = models.CharField(max_length=255, blank=False, null=False, default=settings.SHIPMENT_SCHEMA_VERSION)
