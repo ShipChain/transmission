@@ -629,6 +629,17 @@ class ShipmentAPITests(APITestCase):
                 data = response.json()['data']
                 self.assertEqual(device.shipment.id, data['id'])
 
+    def remove_device_from_shipment(self, device_obj):
+        """
+        Remove device from shipment and save without history
+        """
+        if hasattr(device_obj, 'shipment'):
+            shipment = device_obj.shipment
+            shipment.device = None
+            shipment.save_without_historical_record()
+            device_obj.refresh_from_db()
+        return
+
     @mock_iot
     def test_shipment_device_history(self):
         self.create_shipment()
@@ -674,6 +685,9 @@ class ShipmentAPITests(APITestCase):
         history = Shipment.history.all()
         self.assertEqual(history.count(), 1)
 
+        # Remove device from shipment and save without history
+        self.remove_device_from_shipment(device)
+
         # Adding the device to an existing shipment should account to history
         url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
         response = self.client.patch(url, {'device_id': device.id}, format='json')
@@ -683,10 +697,8 @@ class ShipmentAPITests(APITestCase):
 
         url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
 
-        response = self.client.patch(url, {'device_id': None}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        history = Shipment.history.all()
-        self.assertEqual(history.count(), 2)
+        # Remove device from shipment and save without history
+        self.remove_device_from_shipment(device)
 
         response = self.client.patch(url, {'device_id': device.id}, format='json')
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -694,6 +706,8 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(history.count(), 3)
 
         self.set_user(self.user_2, self.token2)
+        # Remove device from shipment and save without history
+        self.remove_device_from_shipment(device)
 
         url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[2].id})
         response = self.client.patch(url, {'device_id': device.id}, format='json')

@@ -125,11 +125,12 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
             if 'device' in self.context:
                 extra_args['device'] = self.context['device']
-                shipment = Shipment(**validated_data, **extra_args)
-                shipment.save_without_historical_record()
-                return shipment
+                return Shipment.objects.create(**validated_data, **extra_args)
 
-            return Shipment.objects.create(**validated_data, **extra_args)
+            # Shipment creation without history
+            shipment = Shipment(**validated_data, **extra_args)
+            shipment.save_without_historical_record()
+            return shipment
 
     def validate_device_id(self, device_id):
         auth = self.context['auth']
