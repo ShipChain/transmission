@@ -125,6 +125,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
             if 'device' in self.context:
                 extra_args['device'] = self.context['device']
+                # Shipment creation with history
                 return Shipment.objects.create(**validated_data, **extra_args)
 
             # Shipment creation without history
@@ -183,6 +184,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                 instance.device = self.context['device']
                 device = Device.get_or_create_with_permission(self.context['auth'], validated_data.pop('device_id'))
                 instance.device = device
+                # Add device to shipment with history
                 instance.save()
             else:
                 instance.device = validated_data.pop('device_id')
@@ -210,6 +212,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 setattr(instance, attr, value)
 
+        # Update shipment without history
         instance.save_without_historical_record()
         return instance
 

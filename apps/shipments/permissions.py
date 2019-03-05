@@ -128,7 +128,7 @@ class DeviceShipmentHistoryPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         """
-        Check whether the requester has permission access to the device
+        Check whether the requester has access permission to the device
         """
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_DEVICE_URL}/{view.kwargs["device_id"]}/',
                                                  headers={'Authorization': get_jwt_from_request(request)})
