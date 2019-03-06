@@ -239,20 +239,20 @@ class Shipment(models.Model):
     import_locode = models.CharField(max_length=255, blank=True, null=True)
     lading_locode = models.CharField(max_length=255, blank=True, null=True)
     origin_locode = models.CharField(max_length=255, blank=True, null=True)
-    us_routed = models.BooleanField(default=False)
+    us_routed = models.NullBooleanField()
     import_customs_mode = models.CharField(max_length=255, blank=True, null=True)
     us_export_port = models.CharField(max_length=255, blank=True, null=True)
     version = models.CharField(max_length=255, blank=False, null=False, default=settings.SHIPMENT_SCHEMA_VERSION)
 
     trailer_number = models.CharField(max_length=255, blank=True, null=True)
     seal_number = models.CharField(max_length=255, blank=True, null=True)
-    is_master_bol = models.BooleanField(default=False)
+    is_master_bol = models.NullBooleanField()
 
     nmfc_regex = RegexValidator(regex=r'^1[015]0$|^1[27]5$|^2[05]0$|^[345]00$|^[567]0$|^[568]5$|^92\.5$|^77\.5$',
                                 message="Invalid nmfc class number.")
     nmfc_class = models.CharField(validators=[nmfc_regex], max_length=4, blank=True, null=True)
 
-    is_hazmat = models.BooleanField(default=False)
+    is_hazmat = models.NullBooleanField()
 
     customer_fields = JSONField(blank=True, null=True)
 
