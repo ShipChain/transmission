@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='shipment',
             name='version',
-            field=models.CharField(default='1.2.0', max_length=255),
+            field=models.CharField(default='1.2.1', max_length=255),
         ),
     ]

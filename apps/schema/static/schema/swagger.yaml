@@ -448,7 +448,7 @@ paths:
         Associate GPS tracking data with a `Shipment`. The tracking payload must be signed and encoded as a [JWS](https://tools.ietf.org/html/rfc7515).
         An active AXLE certificate must be used to sign this JWS, and the certificate ID must be included in the headers as `kid`.
 
-        A JSON Schema specification for the tracking data payload format is located at [schema.shipchain.io](http://schema.shipchain.io/1.0.1/tracking.json)
+        A JSON Schema specification for the tracking data payload format is located at [schema.shipchain.io](http://schema.shipchain.io/1.2.1/tracking.json)
 
         An example of a raw payload:
         ```
