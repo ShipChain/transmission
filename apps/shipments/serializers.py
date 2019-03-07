@@ -273,17 +273,26 @@ class TrackingDataSerializer(serializers.Serializer):
         except JWSError as exc:
             raise exceptions.ValidationError(f"Invalid JWS: {exc}")
 
+        certificate_id_from_payload = header['kid']
+
         # Ensure that the device is allowed to update the Shipment tracking data
         if not shipment.device:
             raise exceptions.PermissionDenied(f"No device for shipment {shipment.id}")
-        elif header['kid'] != shipment.device.certificate_id:
-            raise exceptions.PermissionDenied(f"Certificate {header['kid']} is "
-                                              f"not associated with shipment {shipment.id}")
+
+        elif certificate_id_from_payload != shipment.device.certificate_id:
+            # We update the shipment's device certificate_id from Aws Iot
+            device = shipment.device
+            device.certificate_id = Device.get_valid_certificate(device.id)
+            device.save()
+
+            if certificate_id_from_payload != device.certificate_id:
+                raise exceptions.PermissionDenied(f"Certificate {certificate_id_from_payload} is "
+                                                  f"not associated with shipment {shipment.id}")
 
         try:
             # Look up JWK for device from AWS IoT
             iot = boto3.client('iot', region_name='us-east-1')
-            cert = iot.describe_certificate(certificateId=header['kid'])
+            cert = iot.describe_certificate(certificateId=certificate_id_from_payload)
 
             if cert['certificateDescription']['status'] == 'ACTIVE':
                 # Get public key PEM from x509 cert
@@ -294,7 +303,7 @@ class TrackingDataSerializer(serializers.Serializer):
                 # Validate authenticity and integrity of message signature
                 attrs['payload'] = json.loads(jws.verify(payload, public_key, header['alg']).decode("utf-8"))
             else:
-                raise exceptions.PermissionDenied(f"Certificate {header['kid']} is "
+                raise exceptions.PermissionDenied(f"Certificate {certificate_id_from_payload} is "
                                                   f"not ACTIVE in IoT for shipment {shipment.id}")
         except ClientError as exc:
             raise exceptions.APIException(f'boto3 error when validating tracking update: {exc}')
