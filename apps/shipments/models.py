@@ -131,11 +131,11 @@ class Device(models.Model):
     @staticmethod
     def get_valid_certificate(device_id):
         certificate_id = None
-        iot = boto3.client('iot')
+        iot = boto3.client('iot', region_name='us-east-1')
 
         try:
             response = iot.list_thing_principals(thingName=device_id)
-            if not response['principals']:
+            if not len(response['principals']) > 0:  # pylint:disable=len-as-condition
                 raise PermissionDenied(f"No certificates found for device {device_id} in AWS IoT")
             for arn in response['principals']:
                 # arn == arn:aws:iot:us-east-1:489745816517:cert/{certificate_id}

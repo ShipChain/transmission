@@ -1,8 +1,9 @@
 import json
+import logging
 from collections import OrderedDict
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, BotoCoreError
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
@@ -19,6 +20,9 @@ from rest_framework_json_api import serializers
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData, PermissionLink
 from apps.utils import UpperEnumField
+
+
+LOG = logging.getLogger('transmission')
 
 
 class NullableFieldsMixin:
@@ -265,7 +269,8 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 class TrackingDataSerializer(serializers.Serializer):
     payload = serializers.RegexField(r'^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$')
 
-    def validate(self, attrs):
+    def validate(self, attrs):  # noqa: MC0001
+        iot = boto3.client('iot', region_name='us-east-1')
         payload = attrs['payload']
         shipment = self.context['shipment']
         try:
@@ -280,7 +285,12 @@ class TrackingDataSerializer(serializers.Serializer):
             raise exceptions.PermissionDenied(f"No device for shipment {shipment.id}")
 
         elif certificate_id_from_payload != shipment.device.certificate_id:
-            # We update the shipment's device certificate_id from Aws Iot
+            try:
+                iot.describe_certificate(certificateId=certificate_id_from_payload)
+            except BotoCoreError as exc:
+                LOG.warning(f'Found dubious certificate: {certificate_id_from_payload}, on shipment: {shipment.id}')
+                raise exceptions.PermissionDenied(f"Certificate: {certificate_id_from_payload}, is invalid: {exc}")
+
             device = shipment.device
             device.certificate_id = Device.get_valid_certificate(device.id)
             device.save()
@@ -291,7 +301,6 @@ class TrackingDataSerializer(serializers.Serializer):
 
         try:
             # Look up JWK for device from AWS IoT
-            iot = boto3.client('iot', region_name='us-east-1')
             cert = iot.describe_certificate(certificateId=certificate_id_from_payload)
 
             if cert['certificateDescription']['status'] == 'ACTIVE':
