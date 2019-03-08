@@ -110,9 +110,9 @@ class DocumentRetrieveSerializer(DocumentSerializer):
 
     def get_presigned_s3_thumbnail(self, obj):
         if obj.upload_status != UploadStatus.COMPLETE:
-            return super().get_presigned_s3(obj)
+            return None
 
-        thumbnail_key = obj.s3_key[:-4] + '-t.jpg'
+        thumbnail_key = obj.s3_key.rsplit('.', 1)[0] + '-t.jpg'
 
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
