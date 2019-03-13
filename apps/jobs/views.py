@@ -8,6 +8,7 @@ from rest_framework_json_api import parsers as jsapi_parsers
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import EngineRequest
+from apps.permissions import get_owner_id
 from apps.shipments.permissions import IsListenerOwner
 from .models import AsyncJob
 from .serializers import AsyncJobSerializer, MessageSerializer
@@ -30,7 +31,7 @@ class JobsViewSet(mixins.ListModelMixin,
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(joblistener__shipments__owner_id=self.request.user.id)
+            queryset = queryset.filter(joblistener__shipments__owner_id=get_owner_id(self.request))
         return queryset
 
     @action(detail=True, methods=['post'],
