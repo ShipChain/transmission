@@ -70,6 +70,7 @@ class DocumentCreateSerializer(DocumentSerializer):
 
 
 class DocumentRetrieveSerializer(DocumentSerializer):
+    presigned_s3_thumbnail = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -78,7 +79,7 @@ class DocumentRetrieveSerializer(DocumentSerializer):
             read_only_fields = ('owner_id', 'document_type', 'file_type',)
         else:
             read_only_fields = ('document_type', 'file_type',)
-        meta_fields = ('presigned_s3',)
+        meta_fields = ('presigned_s3', 'presigned_s3_thumbnail',)
 
     def get_presigned_s3(self, obj):
         if obj.upload_status != UploadStatus.COMPLETE:
@@ -104,5 +105,26 @@ class DocumentRetrieveSerializer(DocumentSerializer):
 
         LOG.debug(f'Generated one time s3 url for: {obj.id}')
         log_metric('transmission.info', tags={'method': 'documents.generate_presigned_url', 'module': __name__})
+
+        return url
+
+    def get_presigned_s3_thumbnail(self, obj):
+        if obj.upload_status != UploadStatus.COMPLETE:
+            return None
+
+        thumbnail_key = obj.s3_key.rsplit('.', 1)[0] + '-t.png'
+
+        url = settings.S3_CLIENT.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': f"{settings.S3_BUCKET}",
+                'Key': thumbnail_key
+            },
+            ExpiresIn=settings.S3_URL_LIFE
+        )
+
+        LOG.debug(f'Generated one time s3 url thumbnail for: {obj.id}')
+        log_metric('transmission.info', tags={'method': 'documents.generate_presigned_s3_thumbnail',
+                                              'module': __name__})
 
         return url
