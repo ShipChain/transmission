@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import DocsLambdaRequest
+from apps.permissions import get_owner_id
 from .filters import DocumentFilterSet
 from .models import Document
 from .models import UploadStatus
@@ -36,12 +37,12 @@ class DocumentViewSet(mixins.CreateModelMixin,
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(owner_id=self.request.user.id)
+            queryset = queryset.filter(owner_id=get_owner_id(self.request))
         return queryset
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=self.request.user.id)
+            created = serializer.save(owner_id=get_owner_id(self.request))
         else:
             created = serializer.save()
         return created
