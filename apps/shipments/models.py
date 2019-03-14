@@ -117,16 +117,15 @@ class Device(models.Model):
                 raise PermissionDenied("User does not have access to this device in ShipChain Profiles")
 
         if settings.ENVIRONMENT != 'LOCAL':
-            certificate_id = Device.get_valid_certificate(device_id)
             # We update the related device with this certificate in case it exists
-            try:
-                device = Device.objects.get(id=device_id)
-                device.certificate_id = certificate_id
-                device.save()
-            except Device.DoesNotExist:
-                pass
+            device, created = Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})
 
-        return Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})[0]
+            if not created:
+                device.certificate_id = Device.get_valid_certificate(device_id)
+                device.save()
+                return device
+
+        return Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})
 
     @staticmethod
     def get_valid_certificate(device_id):
