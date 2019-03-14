@@ -6,6 +6,7 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 
 from apps.shipments.rpc import ShipmentRPCClient
+from apps.shipments.models import Location
 from tests.utils import create_form_content
 
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
@@ -117,13 +118,14 @@ class ShipmentAPITests(APITestCase):
             "transactionIndex": 0
         })
 
-        one_location_profiles_disabled, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
-                                                                            'ship_from_location.owner_id': OWNER_ID,
+        location = Location.objects.create(owner_id=OWNER_ID, name=LOCATION_NAME, city=LOCATION_CITY,
+                                           state=LOCATION_STATE)
+
+        one_location_profiles_disabled, content_type = create_form_content({'ship_from_location_id': location.id,
                                                                             'carrier_wallet_id': CARRIER_WALLET_ID,
                                                                             'shipper_wallet_id': SHIPPER_WALLET_ID,
                                                                             'storage_credentials_id': STORAGE_CRED_ID,
-                                                                            'owner_id': OWNER_ID
-                                                                           })
+                                                                            'owner_id': OWNER_ID})
 
         url = reverse('shipment-list', kwargs={'version': 'v1'})
 

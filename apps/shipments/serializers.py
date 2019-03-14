@@ -106,8 +106,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
     bill_to_location = LocationSerializer(required=False)
-    # ship_from_location = LocationSerializer(required=False)
-    # ship_to_location = LocationSerializer(required=False)
+    final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
     class Meta:
@@ -125,21 +124,23 @@ class ShipmentCreateSerializer(ShipmentSerializer):
     ship_from_location_id = serializers.CharField(max_length=36, required=False)
     ship_to_location_id = serializers.CharField(max_length=36, required=False)
     final_destination_location_id = serializers.CharField(max_length=36, required=False)
+    bill_to_location_id = serializers.CharField(max_length=36, required=False)
 
     def create(self, validated_data):
         extra_args = {}
 
         with transaction.atomic():
-            if 'device_id' in validated_data:
-                extra_args['device'] = Device.get_or_create_with_permission(auth, validated_data.pop('device_id'))
-
-            location_id_names = ['ship_from_location_id', 'ship_to_location_id', 'final_destination_location_id']
+            location_id_names = ['ship_from_location_id', 'ship_to_location_id', 'final_destination_location_id',
+                                 'bill_to_location_id']
             for location_id_name in location_id_names:
                 location_id = validated_data.get(location_id_name, None)
                 if location_id:
                     location = get_object_or_404(Location, pk=location_id)
                     location_field = '_'.join(location_id_name.split('_')[:-1])
                     extra_args[location_field] = location
+
+            if 'device' in self.context:
+                extra_args['device'] = self.context['device']
 
             return Shipment.objects.create(**validated_data, **extra_args)
 
@@ -184,6 +185,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
     ship_from_location_id = serializers.CharField(max_length=36, required=False)
     ship_to_location_id = serializers.CharField(max_length=36, required=False)
     final_destination_location_id = serializers.CharField(max_length=36, required=False)
+    bill_to_location_id = serializers.CharField(max_length=36, required=False)
 
     class Meta:
         model = Shipment
@@ -198,7 +200,8 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 instance.device = validated_data.pop('device_id')
 
-        location_id_names = ['ship_from_location_id', 'ship_to_location_id', 'final_destination_location_id']
+        location_id_names = ['ship_from_location_id', 'ship_to_location_id', 'final_destination_location_id',
+                             'bill_to_location_id']
         for location_id_name in location_id_names:
             if location_id_name in validated_data:
                 location_id = validated_data.get(location_id_name, None)
@@ -266,12 +269,6 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data', 'device']
-
-
-class ShipmentListSerializer(ShipmentSerializer):
-    ship_from_location = LocationSerializer(required=False)
-    ship_to_location = LocationSerializer(required=False)
-    final_destination_location = LocationSerializer(required=False)
 
 
 class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):

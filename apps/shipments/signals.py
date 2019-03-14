@@ -107,19 +107,13 @@ def location_pre_save(sender, **kwargs):
 def location_post_save(sender, **kwargs):
     instance = kwargs["instance"]
 
-    shipment_related_names = ['shipments_from', 'shipments_to', 'shipments_dest']
+    shipment_related_names = ['shipments_from', 'shipments_to', 'shipments_dest', 'bill_to']
     for relate_name in shipment_related_names:
         shipment = getattr(instance, relate_name, None)
         if shipment:
             # We trigger the shipment's post_save signal in order to update the vault with location info
             if isinstance(shipment, Shipment):
                 shipment.save()
-            else:
-                try:
-                    for ship in shipment.all():
-                        ship.save()
-                except AttributeError:
-                    logging.warning(f'Found object: {shipment}, instead of Shipment.')
 
 
 @receiver(pre_save, sender=TrackingData, dispatch_uid='trackingdata_pre_save')
