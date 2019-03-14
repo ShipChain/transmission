@@ -146,7 +146,7 @@ class Device(models.Model):
                     else:
                         break
                 except ClientError as exc:
-                    LOG.debug(f"Encountered error: {exc}, while parsing certificate: {certificate_id}")
+                    LOG.warning(f"Encountered error: {exc}, while parsing certificate: {certificate_id}")
 
         except iot.exceptions.ResourceNotFoundException:
             raise PermissionDenied(f"Specified device {device_id} does not exist in AWS IoT")
