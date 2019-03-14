@@ -1,8 +1,8 @@
 from rest_framework_json_api import serializers
 from enumfields.drf import EnumSupportSerializerMixin
 
-from apps.utils import UpperEnumField
-from .models import AsyncJob, Message, MessageType, JobState
+from apps.utils import UpperEnumField, EnumIntegerFieldLabel
+from .models import AsyncJob, Message, MessageType, JobState, AsyncActionType, AsyncAction
 
 
 class MessageSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
@@ -13,8 +13,17 @@ class MessageSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer)
         exclude = ('async_job',)
 
 
+class ActionSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
+    action_type = EnumIntegerFieldLabel(AsyncActionType)
+
+    class Meta:
+        model = AsyncAction
+        exclude = ('async_job',)
+
+
 class AsyncJobSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
     message_set = serializers.ResourceRelatedField(queryset=Message.objects, many=True)
+    actions = serializers.ResourceRelatedField(queryset=AsyncAction.objects, many=True)
     state = UpperEnumField(JobState, lenient=True, ints_as_names=True)
 
     class Meta:
@@ -22,8 +31,9 @@ class AsyncJobSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
         exclude = ('listeners', 'wallet_lock_token')
 
     included_serializers = {
-        'message_set': MessageSerializer
+        'message_set': MessageSerializer,
+        'actions': ActionSerializer,
     }
 
     class JSONAPIMeta:
-        included_resources = ['message_set']
+        included_resources = ['message_set', 'actions']
