@@ -112,7 +112,7 @@ class DocumentRetrieveSerializer(DocumentSerializer):
         if obj.upload_status != UploadStatus.COMPLETE:
             return None
 
-        thumbnail_key = obj.s3_key.rsplit('.', 1)[0] + '-t.jpg'
+        thumbnail_key = obj.s3_key.rsplit('.', 1)[0] + '-t.png'
 
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
