@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import DocsLambdaRequest
+from apps.jobs.models import AsyncActionType
 from apps.permissions import get_owner_id
 from .filters import DocumentFilterSet
 from .models import Document
@@ -120,12 +121,13 @@ class S3Events(APIView):
                 document = Document.objects.filter(id=document_id).first()
                 if document:
                     # Save document to vault
-                    DocumentRPCClient().add_document_from_s3(bucket, key, wallet_uuid,
-                                                             storage_credentials_id, vault_id, filename)
+                    signature = DocumentRPCClient().add_document_from_s3(bucket, key, wallet_uuid,
+                                                                         storage_credentials_id, vault_id, filename)
 
                     # Update upload status
                     document.upload_status = UploadStatus.COMPLETE
                     document.save()
+                    document.shipment.set_vault_hash(signature['hash'], action_type=AsyncActionType.DOCUMENT)
                 else:
                     message = f'Document not found with ID {document_id}, for {key} uploaded to {bucket}'
                     LOG.warning(message)

@@ -41,7 +41,7 @@ class DocumentRPCClient(RPCClient):
 
         if 'success' in result and result['success']:
             if 'vault_signed' in result:
-                return
+                return result['vault_signed']
 
         log_metric('transmission.error', tags={'method': 'document_rpcclient.add_document_from_s3', 'code': 'RPCError',
                                                'module': __name__})
