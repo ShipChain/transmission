@@ -174,6 +174,8 @@ class Shipment(models.Model):
                                     content_type_field='listener_type', object_id_field='listener_id')
     contract_version = models.CharField(null=False, max_length=36)
 
+    updated_by = models.CharField(null=True, max_length=36)
+
     class Meta:
         ordering = ('created_at',)
 

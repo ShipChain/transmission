@@ -57,13 +57,13 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=get_owner_id(self.request))
+            created = serializer.save(owner_id=get_owner_id(self.request), updated_by=self.request.user.id)
         else:
             created = serializer.save()
         return created
 
     def perform_update(self, serializer):
-        return serializer.save()
+        return serializer.save(updated_by=self.request.user.id)
 
     def create(self, request, *args, **kwargs):
         """

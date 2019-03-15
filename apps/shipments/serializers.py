@@ -259,7 +259,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         model = Shipment
         exclude = ('owner_id', 'storage_credentials_id',
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
-                   'contract_version', 'device')
+                   'contract_version', 'device', 'updated_by')
 
 
 class TrackingDataSerializer(serializers.Serializer):
