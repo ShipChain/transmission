@@ -1,11 +1,11 @@
 import json
 
-from django.contrib.contenttypes.models import ContentType
 from pygments import highlight
 from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 
 from django.contrib import admin
+from django.contrib.contenttypes.models import ContentType
 from django.utils.html import format_html
 
 from apps.admin import admin_change_url
