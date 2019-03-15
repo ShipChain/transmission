@@ -353,6 +353,100 @@ class DocumentAPITests(APITestCase):
         mock_shipment_rpc_client.add_document_from_s3.assert_called_once()
         assert doc.upload_status == UploadStatus.COMPLETE
 
+    def test_document_permission(self):
+
+        url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
+
+        self.create_documents()
+
+        file_data = {
+            'name': 'Test Permission',
+            'document_type': 'Image',
+            'file_type': 'Png',
+            'shipment_id': self.shipments[0].id
+        }
+
+        self.set_user(self.user_1)
+
+        # user_1 is the shipment owner, he should have access to all 4 documents
+        response = self.client.get(url)
+        data = response.json()['data']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(data), 4)
+
+        with mock.patch('apps.documents.permissions.UserHasPermission.is_shipper') as mock_is_shipper, \
+            mock.patch('apps.documents.permissions.UserHasPermission.is_carrier') as mock_is_carrier, \
+            mock.patch('apps.documents.permissions.UserHasPermission.is_moderator') as mock_is_moderator:
+            mock_is_shipper.return_value = True
+            mock_is_carrier.return_value = False
+            mock_is_moderator.return_value = False
+
+            # shipper_user is the  shipment's shipper, he should have access to all 4 shipment's documents
+            self.set_user(self.shipper_user)
+            response = self.client.get(url)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 4)
+            self.assertEqual(mock_is_shipper.call_count, 1)
+            self.assertEqual(mock_is_carrier.call_count, 0)
+            self.assertEqual(mock_is_moderator.call_count, 0)
+
+            # carrier_user is the shipment's carrier, he should have access to all 4 shipment's documents
+            self.set_user(self.carrier_user)
+            mock_is_shipper.return_value = False
+            mock_is_carrier.return_value = True
+            response = self.client.get(url)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 4)
+            self.assertEqual(mock_is_shipper.call_count, 2)
+            self.assertEqual(mock_is_carrier.call_count, 1)
+            self.assertEqual(mock_is_moderator.call_count, 0)
+
+            # moderator_user is the shipment's moderator, he should have access to all 4 shipment's documents
+            self.set_user(self.moderator_user)
+            mock_is_carrier.return_value = False
+            mock_is_moderator.return_value = True
+            response = self.client.get(url)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 4)
+            self.assertEqual(mock_is_shipper.call_count, 3)
+            self.assertEqual(mock_is_carrier.call_count, 2)
+            self.assertEqual(mock_is_moderator.call_count, 1)
+
+            # another_user is none of shipment owner, shipper, carrier or moderator.
+            # He shouldn't have access to the shipment's documents
+            self.set_user(self.another_user)
+            mock_is_moderator.return_value = False
+            response = self.client.get(url)
+            # data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            # self.assertEqual(len(data), 4)
+            self.assertEqual(mock_is_shipper.call_count, 4)
+            self.assertEqual(mock_is_carrier.call_count, 3)
+            self.assertEqual(mock_is_moderator.call_count, 2)
+
+            mock_is_shipper.reset_mock()
+            mock_is_carrier.reset_mock()
+            mock_is_moderator.reset_mock()
+
+            mock_is_shipper.return_value = True
+            mock_is_carrier.return_value = False
+            mock_is_moderator.return_value = False
+
+            url = reverse('document-list', kwargs={'version': 'v1'})
+
+            # The shipper should be able to upload a document
+            self.set_user(self.shipper_user)
+            response = self.client.post(url, file_data, format='json')
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            # self.assertEqual(len(data), 4)
+            self.assertEqual(mock_is_shipper.call_count, 1)
+            self.assertEqual(mock_is_carrier.call_count, 0)
+            self.assertEqual(mock_is_moderator.call_count, 0)
+
 
 class ImageDocumentViewSetAPITests(APITestCase):
 
