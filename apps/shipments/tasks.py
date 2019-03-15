@@ -4,6 +4,7 @@ import logging
 from celery import shared_task
 from influxdb_metrics.loader import log_metric
 
+from apps.jobs.models import AsyncActionType
 from apps.rpc_client import RPCError
 from .rpc import RPCClientFactory
 from .models import Shipment
@@ -23,4 +24,7 @@ def tracking_data_update(self, shipment_id, payload):
                                              shipment.shipper_wallet_id,
                                              shipment.vault_id,
                                              payload)
-    shipment.set_vault_hash(signature['hash'], rate_limit=True)
+    shipment.set_vault_hash(signature['hash'],
+                            rate_limit=True,
+                            action_type=AsyncActionType.TRACKING,
+                            use_updated_by=False)
