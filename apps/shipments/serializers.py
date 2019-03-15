@@ -338,7 +338,7 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
     class Meta:
         model = TrackingData
-        exclude = ('point', 'time')
+        exclude = ('point', 'time', 'device')
 
     def create(self, validated_data):
-        return TrackingData.objects.create(**validated_data, shipment=self.context['shipment'])
+        return TrackingData.objects.create(**validated_data, **self.context)
