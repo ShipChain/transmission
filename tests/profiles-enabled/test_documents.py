@@ -23,6 +23,10 @@ from tests.utils import create_form_content, get_jwt
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'
 FAKE_ID = '00000000-0000-0000-0000-000000000000'
+SHIPPER_ID = '60b2662a-4ec6-4c28-ac1b-2b82ab4b3e03'
+CARRIER_ID = 'ff7908cd-6b10-43a7-9fa2-760c4b17dab4'
+MODERATOR_ID = '6eeff71e-332e-40e0-8961-f74dab3ff8e0'
+ANOTHER_ID = '355d0735-2d63-4054-8577-e675e7fa402b'
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
@@ -247,14 +251,26 @@ class DocumentAPITests(APITestCase):
         # Disable Shipment post save signal
         signals.post_save.disconnect(sender=Shipment, dispatch_uid='shipment_post_save')
 
-        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io'))
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io', sub=FAKE_ID))
+        self.shipper_user = passive_credentials_auth(get_jwt(username='user2@shipchain.io', sub=SHIPPER_ID))
+        self.carrier_user = passive_credentials_auth(get_jwt(username='user3@shipchain.io', sub=MODERATOR_ID))
+        self.moderator_user = passive_credentials_auth(get_jwt(username='user4@shipchain.io', sub=CARRIER_ID))
+        self.another_user = passive_credentials_auth(get_jwt(username='user4@shipchain.io', sub=ANOTHER_ID))
 
         shipment = Shipment.objects.create(
             vault_id=VAULT_ID,
             carrier_wallet_id=CARRIER_WALLET_ID,
             shipper_wallet_id=SHIPPER_WALLET_ID,
             storage_credentials_id=STORAGE_CRED_ID,
-            owner_id='5e8f1d76-162d-4f21-9b71-2ca97306ef7c'
+            owner_id=FAKE_ID
+        )
+
+        shipment_2 = Shipment.objects.create(
+            vault_id=VAULT_ID,
+            carrier_wallet_id=CARRIER_WALLET_ID,
+            shipper_wallet_id=SHIPPER_WALLET_ID,
+            storage_credentials_id=STORAGE_CRED_ID,
+            owner_id=FAKE_ID
         )
 
         LoadShipment.objects.create(shipment=shipment,
@@ -265,13 +281,24 @@ class DocumentAPITests(APITestCase):
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
         self.data = [
-            {'document_type': DocumentType.BOL, 'file_type': FileType.PDF, 'shipment': shipment},
+            {'document_type': DocumentType.BOL, 'file_type': FileType.PDF, 'shipment': shipment,
+             'upload_status': UploadStatus.PENDING, 'owner_id': self.user_1.id},
+            {'document_type': DocumentType.BOL, 'file_type': FileType.PNG, 'shipment': shipment,
+             'upload_status': UploadStatus.COMPLETE, 'owner_id': self.user_1.id},
+            {'document_type': DocumentType.OTHER, 'file_type': FileType.JPEG, 'shipment': shipment,
+             'upload_status': UploadStatus.COMPLETE, 'owner_id': self.user_1.id},
+            {'document_type': DocumentType.OTHER, 'file_type': FileType.PDF, 'shipment': shipment,
+             'upload_status': UploadStatus.COMPLETE, 'owner_id': self.shipper_user.id},
+            {'document_type': DocumentType.OTHER, 'file_type': FileType.PDF, 'shipment': shipment_2,
+             'upload_status': UploadStatus.COMPLETE, 'owner_id': self.shipper_user.id},
         ]
+
+        self.shipments = [shipment, shipment_2, ]
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
-    def create_docs_data(self):
+    def create_documents(self):
 
         self.pdf_docs = []
         for d in self.data:
@@ -280,8 +307,8 @@ class DocumentAPITests(APITestCase):
             )
 
     def test_create_objects(self):
-        self.create_docs_data()
-        self.assertEqual(Document.objects.all().count(), 1)
+        self.create_documents()
+        self.assertEqual(Document.objects.all().count(), 5)
 
     def test_s3_notification(self):
         mock_shipment_rpc_client = DocumentRPCClient
