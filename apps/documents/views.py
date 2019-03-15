@@ -115,14 +115,21 @@ class S3Events(APIView):
 
             if re.match(self.S3_PATH_REGEX, key):
                 # Parse IDs from key, "sc_uuid/wallet_uuid/vault_uuid/document_uuid.ext"
-                storage_credentials_id, wallet_uuid, vault_id, filename = key.split('/', 3)
+                key_fields = dict()
+                key_fields['storage_credentials_id'], \
+                    key_fields['wallet_uuid'], \
+                    key_fields['vault_id'], \
+                    key_fields['filename'] = key.split('/', 3)
 
-                document_id = filename.split('.')[0]
+                document_id = key_fields['filename'].split('.')[0]
                 document = Document.objects.filter(id=document_id).first()
                 if document:
                     # Save document to vault
-                    signature = DocumentRPCClient().add_document_from_s3(bucket, key, wallet_uuid,
-                                                                         storage_credentials_id, vault_id, filename)
+                    signature = DocumentRPCClient().add_document_from_s3(bucket, key,
+                                                                         key_fields['wallet_uuid'],
+                                                                         key_fields['storage_credentials_id'],
+                                                                         key_fields['vault_id'],
+                                                                         key_fields['filename'])
 
                     # Update upload status
                     document.upload_status = UploadStatus.COMPLETE
