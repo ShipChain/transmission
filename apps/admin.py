@@ -3,11 +3,14 @@ from rest_framework.reverse import reverse
 
 
 def admin_change_url(obj):
-    app_label = obj._meta.app_label
-    model_name = obj._meta.model.__name__.lower()
-    return reverse('admin:{}_{}_change'.format(
-        app_label, model_name
-    ), args=(obj.pk,))
+    if obj:
+        app_label = obj._meta.app_label
+        model_name = obj._meta.model.__name__.lower()
+        return reverse('admin:{}_{}_change'.format(
+            app_label, model_name
+        ), args=(obj.pk,))
+
+    return ''
 
 
 def admin_link(attr, short_description, empty_description="-"):
