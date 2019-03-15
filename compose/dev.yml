@@ -94,6 +94,8 @@ services:
       - ELASTICSEARCH_URL
       - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
       - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
+      - LOG_LEVEL
+      - FORCE_DEBUG
 
   celery:
     image: transmission-django-dev
@@ -122,6 +124,8 @@ services:
       - ELASTICSEARCH_URL
       - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
       - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
+      - LOG_LEVEL
+      - FORCE_DEBUG
     entrypoint: []
 
 networks:

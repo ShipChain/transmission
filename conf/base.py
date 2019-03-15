@@ -87,8 +87,8 @@ if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
     X_FRAME_OPTIONS = 'DENY'
 
 else:
-    DEBUG = True
-    LOG_LEVEL = 'DEBUG'
+    DEBUG = os.environ.get('FORCE_DEBUG', True)
+    LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
     DEV_SECRET_KEY = 'devsecretkey' * 19  # noqa
     SECRET_KEY = os.environ.get('SECRET_KEY', DEV_SECRET_KEY)
 
