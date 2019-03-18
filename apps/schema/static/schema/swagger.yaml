@@ -224,6 +224,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/page_size'
+        - $ref: '#/components/parameters/transaction/include_async_job_action'
       tags:
         - Shipments
       responses:
@@ -951,6 +952,16 @@ components:
         description: Wallet ID to filter transactions by
         schema:
           $ref: '#/components/schemas/dataTypes/uuid'
+
+      include_async_job_action:
+        required: false
+        name: include
+        in: query
+        description: Include AsyncActions for AsyncJobs
+        schema:
+          type: string
+          enum:
+            - async_job.actions
 
     document:
       path:
