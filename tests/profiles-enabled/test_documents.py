@@ -17,7 +17,7 @@ from rest_framework.test import APITestCase, APIClient
 from apps.authentication import passive_credentials_auth
 from apps.documents.models import Document, UploadStatus, DocumentType, FileType
 from apps.documents.rpc import DocumentRPCClient
-from apps.shipments.models import Shipment
+from apps.shipments.models import Shipment, LoadShipment
 from apps.shipments.signals import shipment_post_save
 from tests.utils import create_form_content, get_jwt
 
@@ -257,6 +257,10 @@ class DocumentAPITests(APITestCase):
             owner_id='5e8f1d76-162d-4f21-9b71-2ca97306ef7c'
         )
 
+        LoadShipment.objects.create(shipment=shipment,
+                                    funding_type=Shipment.FUNDING_TYPE,
+                                    contracted_amount=Shipment.SHIPMENT_AMOUNT)
+
         # Re-enable Shipment post save signal
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
@@ -281,7 +285,7 @@ class DocumentAPITests(APITestCase):
 
     def test_s3_notification(self):
         mock_shipment_rpc_client = DocumentRPCClient
-        mock_shipment_rpc_client.add_document_from_s3 = mock.Mock(return_value=None)
+        mock_shipment_rpc_client.add_document_from_s3 = mock.Mock(return_value={'hash': 'hash'})
 
         url = reverse('document-events', kwargs={'version': 'v1'})
 
