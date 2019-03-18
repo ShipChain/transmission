@@ -162,7 +162,7 @@ async def test_trackingdata_notification(communicator):
 
     tracking_data = await sync_to_async(TrackingData.objects.create)(
         id='FAKE_TRACKING_DATA_ID',
-        device_id=device,
+        device=device,
         shipment=shipment,
         latitude=75.65,
         longitude=84.36,

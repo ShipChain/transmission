@@ -128,7 +128,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
             tracking_data_update.delay(shipment.id, payload)
 
             # Cache tracking data to db
-            tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment})
+            tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment,
+                                                                                          'device': shipment.device})
             tracking_model_serializer.is_valid(raise_exception=True)
             tracking_model_serializer.save()
 

@@ -256,7 +256,7 @@ class ShipmentAPITests(APITestCase):
             # Tracking data in db
             data_from_db = TrackingData.objects.all()
             self.assertTrue(data_from_db.count(), 1)
-            self.assertEqual(data_from_db[0].device_id.id, track_dic['device_id'])
+            self.assertEqual(data_from_db[0].device.id, track_dic['device_id'])
             self.assertTrue(isinstance(data_from_db[0].shipment, Shipment))
             self.assertEqual(data_from_db[0].latitude, track_dic['position']['latitude'])
 
@@ -1450,7 +1450,7 @@ class TrackingDataAPITests(APITestCase):
                                                               shipment=self.shipments[0],
                                                               uncertainty=10,
                                                               version='1.0.0',
-                                                              device_id=Device.objects.create(certificate_id='My-Custom-Device'),
+                                                              device=Device.objects.create(certificate_id='My-Custom-Device'),
                                                               timestamp="2018-09-18T14:56:23.563847+00:00"))
 
     @mock_iot
