@@ -17,8 +17,9 @@ class UserHasPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         shipment = obj.shipment
 
-        return has_owner_access(request, obj) or self.is_shipper(request, shipment) or \
-            self.is_carrier(request, shipment) or self.is_moderator(request, shipment)
+        return has_owner_access(request, obj) or has_owner_access(request, shipment) or \
+            self.is_shipper(request, shipment) or self.is_carrier(request, shipment) or \
+            self.is_moderator(request, shipment)
 
     def has_permission(self, request, view):
 
@@ -26,7 +27,7 @@ class UserHasPermission(permissions.BasePermission):
         if not shipment_id:
             return True
 
-        shipment = Shipment.objects.filter(id=shipment_id).first()
+        shipment = Shipment.objects.get(id=shipment_id)
 
         return has_owner_access(request, shipment) or self.is_shipper(request, shipment) or \
             self.is_carrier(request, shipment) or self.is_moderator(request, shipment)

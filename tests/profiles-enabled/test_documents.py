@@ -428,9 +428,8 @@ class DocumentAPITests(APITestCase):
             mock_is_carrier.return_value = False
             mock_is_moderator.return_value = False
 
-            # url = reverse('document-list', kwargs={'version': 'v1'})
-
             # The shipper should be able to upload a document
+            # This is equivalently valid for carrier and moderator
             self.set_user(self.shipper_user)
             response = self.client.post(url, file_data, format='json')
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)

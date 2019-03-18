@@ -38,8 +38,10 @@ class DocumentViewSet(mixins.CreateModelMixin,
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(owner_id=get_owner_id(self.request))
-        return queryset
+            shipment_id = self.request.parser_context['kwargs'].get('shipment_pk', None)
+            if shipment_id:
+                return queryset.filter(shipment__id=shipment_id)
+        return queryset.filter(owner_id=get_owner_id(self.request))
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
@@ -84,11 +86,8 @@ class DocumentViewSet(mixins.CreateModelMixin,
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
-        if 'shipment_pk' in kwargs.keys():
-            documents = Document.objects.filter(shipment__id=kwargs['shipment_pk']).order_by('updated_at')
-            queryset = self.filter_queryset(documents)
-        else:
-            queryset = self.filter_queryset(self.get_queryset())
+
+        queryset = self.filter_queryset(self.get_queryset().order_by('updated_at'))
 
         page = self.paginate_queryset(queryset)
         if page is not None:
