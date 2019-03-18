@@ -116,16 +116,15 @@ class Device(models.Model):
             if response.status_code != HTTP_200_OK:
                 raise PermissionDenied("User does not have access to this device in ShipChain Profiles")
 
+        device, created = Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})
+
         if settings.ENVIRONMENT != 'LOCAL':
             # We update the related device with this certificate in case it exists
-            device, created = Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})
-
             if not created:
                 device.certificate_id = Device.get_valid_certificate(device_id)
                 device.save()
-                return device
 
-        return Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})
+        return device
 
     @staticmethod
     def get_valid_certificate(device_id):

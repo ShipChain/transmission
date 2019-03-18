@@ -6,7 +6,6 @@ from unittest import mock
 
 import boto3
 import httpretty
-from botocore.stub import Stubber
 from datetime import datetime, timezone
 from dateutil import parser
 from django.conf import settings as test_settings
@@ -366,7 +365,6 @@ class ShipmentAPITests(APITestCase):
             response = self.client.post(url, {'payload': signed_data}, format='json')
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    # @mock_iot
     def test_update_shipment_device_certificate(self):
         """
         The shipment's device certificate has been updated but the the old certificate is still attached to the device.
