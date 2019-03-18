@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0029_nullable_booleans'),
+        ('shipments', '0030_rename_TrackingData_device'),
     ]
 
     operations = [
