@@ -236,13 +236,6 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
 
-        # List of all documents attached to a shipment
-        url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipment.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.json()['data']
-        self.assertEqual(len(data), 2)
-
 
 class DocumentAPITests(APITestCase):
 
@@ -435,14 +428,12 @@ class DocumentAPITests(APITestCase):
             mock_is_carrier.return_value = False
             mock_is_moderator.return_value = False
 
-            url = reverse('document-list', kwargs={'version': 'v1'})
+            # url = reverse('document-list', kwargs={'version': 'v1'})
 
             # The shipper should be able to upload a document
             self.set_user(self.shipper_user)
             response = self.client.post(url, file_data, format='json')
-            data = response.json()['data']
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-            # self.assertEqual(len(data), 4)
             self.assertEqual(mock_is_shipper.call_count, 1)
             self.assertEqual(mock_is_carrier.call_count, 0)
             self.assertEqual(mock_is_moderator.call_count, 0)
