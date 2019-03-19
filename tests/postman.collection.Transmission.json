@@ -1268,7 +1268,7 @@
                     "path": [
                       "api",
                       "v1",
-                      "documents",
+                      "shipments",
                       "{{shipment_id}}",
                       "permission_links",
                       ""
@@ -1295,7 +1295,7 @@
                     "path": [
                       "api",
                       "v1",
-                      "documents",
+                      "shipments",
                       "{{shipment_id}}",
                       "permission_links",
                       ""
