@@ -6,7 +6,7 @@ from unittest import mock
 
 import boto3
 import httpretty
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from dateutil import parser
 from django.conf import settings as test_settings
 from jose import jws
@@ -1140,18 +1140,22 @@ class ShipmentAPITests(APITestCase):
         self.create_shipment()
         url = reverse('shipment-permissions-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
 
+        today = datetime.now(timezone.utc)
+        yesterday = today + timedelta(days=-1)
+        tomorrow = today + timedelta(days=1)
+
         valid_permission_no_exp, content_type = create_form_content({
             'name': 'test'
         })
 
         valid_permission_past_exp, content_type = create_form_content({
             'name': 'test',
-            'expiration_date': '2018-08-22T17:44:39.874352'
+            'expiration_date': yesterday.isoformat()
         })
 
         valid_permission_with_exp, content_type = create_form_content({
             'name': 'test',
-            'expiration_date': '2118-08-22T17:44:39.874352'
+            'expiration_date': tomorrow.isoformat()
         })
 
         shipment_update_info, content_type = create_form_content({
