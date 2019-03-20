@@ -20,9 +20,4 @@ class Migration(migrations.Migration):
             name='is_master_bol',
             field=models.NullBooleanField(),
         ),
-        migrations.AlterField(
-            model_name='shipment',
-            name='us_routed',
-            field=models.NullBooleanField(),
-        ),
     ]

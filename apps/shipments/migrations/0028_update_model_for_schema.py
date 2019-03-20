@@ -3,6 +3,25 @@
 from django.db import migrations, models
 
 
+def change_routed_value(apps, schema_editor):
+    Shipments = apps.get_model("shipments", "Shipment")
+
+    for shipment in Shipments.objects.all().iterator():
+        if shipment.us_routed:
+            if 'true' in shipment.us_routed.lower():
+                shipment.routed_value = True
+                shipment.save()
+            elif 'false' in shipment.us_routed.lower():
+                shipment.routed_value = False
+                shipment.save()
+            else:
+                shipment.routed_value = None
+                shipment.save()
+        else:
+            shipment.routed_value = None
+            shipment.save()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,10 +29,20 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
+        migrations.AddField(
+            model_name='shipment',
+            name='routed_value',
+            field=models.NullBooleanField()
+        ),
+        migrations.RunPython(change_routed_value),
+        migrations.RemoveField(
             model_name='shipment',
             name='us_routed',
-            field=models.BooleanField(default=False),
+        ),
+        migrations.RenameField(
+            model_name='shipment',
+            old_name='routed_value',
+            new_name='us_routed',
         ),
         migrations.AlterField(
             model_name='shipment',
