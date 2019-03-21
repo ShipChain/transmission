@@ -1,7 +1,9 @@
 import json
 from collections import OrderedDict
+from datetime import datetime
 
 import boto3
+import pytz
 from botocore.exceptions import ClientError
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -203,8 +205,16 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     def validate_device_id(self, device_id):
         auth = self.context['auth']
+        shipment = self.context['shipment']
+        if not device_id or device_id == 'null':
+            if not shipment.device:
+                return None
+            if not shipment.delivery_act or shipment.delivery_act >= datetime.utcnow().replace(tzinfo=pytz.UTC):
+                raise serializers.ValidationError('Cannot remove device from Shipment in progress')
+            return None
 
         device = Device.get_or_create_with_permission(auth, device_id)
+
         if hasattr(device, 'shipment'):
             if not device.shipment.delivery_act:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
