@@ -1686,6 +1686,7 @@ class ShipmentWithIoTAPITests(APITestCase):
 
             response = self.create_shipment()
             assert response.status_code == status.HTTP_202_ACCEPTED
+            mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
 
             response_json = response.json()
