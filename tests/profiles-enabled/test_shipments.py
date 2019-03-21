@@ -1139,6 +1139,7 @@ class ShipmentAPITests(APITestCase):
     def test_permission_link(self):
         self.create_shipment()
         url = reverse('shipment-permissions-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
+        url_shipment_list = reverse('shipment-list', kwargs={'version': 'v1'})
 
         today = datetime.now(timezone.utc)
         yesterday = today + timedelta(days=-1)
@@ -1211,13 +1212,21 @@ class ShipmentAPITests(APITestCase):
 
         self.set_user(self.user_2)
 
-        # A tier user (not shipment owner) cannot access the permission links
+        # A tier authenticated user(not shipment owner) cannot access
+        # the permission link objects of a shipment not owned
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # An authenticated user without permission link should not have access
         response = self.client.get(shipment_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # An authenticated user can only access the list of shipments he owns with a valid permission link
+        # user_2 owns 1 shipment and has the permission link for another one doesn't, total 2
+        response = self.client.get(f'{url_shipment_list}?permission_link={valid_permission_id_with_exp}')
+        response_json = response.json()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_json['data']), 2)
 
         response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1278,6 +1287,10 @@ class ShipmentAPITests(APITestCase):
 
         # An anonymous user cannot access a shipment's permission links
         response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # An anonymous user cannot access the shipment-list with a valid permission link
+        response = self.client.get(f'{url_shipment_list}?permission_link={valid_permission_id_with_exp}')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 

@@ -40,8 +40,7 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
             try:
                 permission_obj = PermissionLink.objects.get(pk=permission_link)
             except ObjectDoesNotExist:
-                permission_obj = None
-
+                pass
         if (not permission_obj or not permission_obj.is_valid) and not shipment_pk:
             return super(IsOwnerOrShared, self).has_permission(request, view)
 
