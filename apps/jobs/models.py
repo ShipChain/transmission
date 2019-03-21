@@ -11,6 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from gm2m import GM2MField
 from enumfields import Enum, EnumIntegerField
 
+from apps.eth.fields import HashField
 from apps.utils import random_id
 
 
@@ -69,6 +70,33 @@ class AsyncJob(models.Model):
             job.save()
             transaction.on_commit(lambda: job.fire(delay))
         return job
+
+
+class AsyncActionType(Enum):
+    UNKNOWN = 0
+    TRACKING = 1
+    SHIPMENT = 2
+    DOCUMENT = 3
+
+    class Labels:
+        UNKNOWN = 'Unknown'
+        TRACKING = 'Tracking Data'
+        SHIPMENT = 'Shipment Update'
+        DOCUMENT = 'Document Upload'
+
+
+class AsyncAction(models.Model):
+    id = models.CharField(primary_key=True, default=random_id, max_length=36)
+    async_job = models.ForeignKey(AsyncJob, on_delete=models.CASCADE, related_name='actions')
+    user_id = models.CharField(blank=True, null=True, max_length=36)
+    action_type = EnumIntegerField(AsyncActionType, default=AsyncActionType.UNKNOWN)
+    vault_hash = HashField(blank=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('created_at',)
 
 
 class MessageType(Enum):

@@ -15,6 +15,8 @@ limitations under the License.
 """
 import logging
 from inflection import underscore
+
+from apps.jobs.models import AsyncActionType
 from .models import EscrowState, ShipmentState
 from .rpc import RPCClientFactory
 from .serializers import ShipmentVaultSerializer
@@ -45,7 +47,7 @@ class LoadEventHandler:
         if shipment.moderator_wallet_id:
             shipment.set_moderator()
         shipment.set_vault_uri(shipment.vault_uri)
-        shipment.set_vault_hash(signature['hash'])
+        shipment.set_vault_hash(signature['hash'], action_type=AsyncActionType.SHIPMENT)
 
     @staticmethod
     def shipment_carrier_set(event, shipment):

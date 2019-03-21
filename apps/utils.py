@@ -80,6 +80,11 @@ class UpperEnumField(EnumField):
         return super(UpperEnumField, self).to_representation(instance).upper()
 
 
+class EnumIntegerFieldLabel(EnumField):
+    def to_representation(self, instance):
+        return str(instance)
+
+
 class AliasField(models.Field):
     def contribute_to_class(self, cls, name, private_only=False):
         """

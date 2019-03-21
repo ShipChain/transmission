@@ -10,6 +10,8 @@ from rest_framework.views import APIView
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import DocsLambdaRequest
+from apps.jobs.models import AsyncActionType
+from apps.permissions import get_owner_id
 from .filters import DocumentFilterSet
 from .models import Document
 from .models import UploadStatus
@@ -36,12 +38,12 @@ class DocumentViewSet(mixins.CreateModelMixin,
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(owner_id=self.request.user.id)
+            queryset = queryset.filter(owner_id=get_owner_id(self.request))
         return queryset
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=self.request.user.id)
+            created = serializer.save(owner_id=get_owner_id(self.request))
         else:
             created = serializer.save()
         return created
@@ -113,18 +115,26 @@ class S3Events(APIView):
 
             if re.match(self.S3_PATH_REGEX, key):
                 # Parse IDs from key, "sc_uuid/wallet_uuid/vault_uuid/document_uuid.ext"
-                storage_credentials_id, wallet_uuid, vault_id, filename = key.split('/', 3)
+                key_fields = dict()
+                key_fields['storage_credentials_id'], \
+                    key_fields['wallet_uuid'], \
+                    key_fields['vault_id'], \
+                    key_fields['filename'] = key.split('/', 3)
 
-                document_id = filename.split('.')[0]
+                document_id = key_fields['filename'].split('.')[0]
                 document = Document.objects.filter(id=document_id).first()
                 if document:
                     # Save document to vault
-                    DocumentRPCClient().add_document_from_s3(bucket, key, wallet_uuid,
-                                                             storage_credentials_id, vault_id, filename)
+                    signature = DocumentRPCClient().add_document_from_s3(bucket, key,
+                                                                         key_fields['wallet_uuid'],
+                                                                         key_fields['storage_credentials_id'],
+                                                                         key_fields['vault_id'],
+                                                                         key_fields['filename'])
 
                     # Update upload status
                     document.upload_status = UploadStatus.COMPLETE
                     document.save()
+                    document.shipment.set_vault_hash(signature['hash'], action_type=AsyncActionType.DOCUMENT)
                 else:
                     message = f'Document not found with ID {document_id}, for {key} uploaded to {bucket}'
                     LOG.warning(message)

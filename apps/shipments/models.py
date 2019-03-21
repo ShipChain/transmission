@@ -174,6 +174,8 @@ class Shipment(models.Model):
                                     content_type_field='listener_type', object_id_field='listener_id')
     contract_version = models.CharField(null=False, max_length=36)
 
+    updated_by = models.CharField(null=True, max_length=36)
+
     class Meta:
         ordering = ('created_at',)
 
@@ -317,7 +319,7 @@ class Shipment(models.Model):
                                                    'module': __name__})
         return async_job
 
-    def set_vault_hash(self, vault_hash, rate_limit=False):
+    def set_vault_hash(self, vault_hash, action_type, rate_limit=False, use_updated_by=True):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.loadshipment and self.loadshipment.shipment_state is not ShipmentState.NOT_CREATED:
@@ -339,6 +341,9 @@ class Shipment(models.Model):
                         vault_hash
                     ]
                     async_job.save()
+                    async_job.actions.create(action_type=action_type,
+                                             vault_hash=vault_hash,
+                                             user_id=self.updated_by if use_updated_by else None)
 
                     if (not async_job.delay or async_job.created_at + timedelta(minutes=async_job.delay * 1.2) <
                             datetime.utcnow().replace(tzinfo=pytz.UTC)):
@@ -357,6 +362,9 @@ class Shipment(models.Model):
                     signing_wallet_id=self.shipper_wallet_id,
                     listener=self,
                     delay=settings.VAULT_HASH_RATE_LIMIT)
+                async_job.actions.create(action_type=action_type,
+                                         vault_hash=vault_hash,
+                                         user_id=self.updated_by if use_updated_by else None)
             else:
                 LOG.debug(f'Shipment {self.id} requested a vault hash update')
                 async_job = AsyncJob.rpc_job_for_listener(
@@ -366,6 +374,9 @@ class Shipment(models.Model):
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
                     listener=self)
+                async_job.actions.create(action_type=action_type,
+                                         vault_hash=vault_hash,
+                                         user_id=self.updated_by if use_updated_by else None)
         else:
             LOG.info(f'Shipment {self.id} tried to set_vault_hash before contract shipment was created.')
             log_metric('transmission.error', tags={'method': 'shipment.set_vault_hash', 'code': 'call_too_early',

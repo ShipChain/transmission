@@ -11,7 +11,7 @@ from fieldsignals import post_save_changed
 from apps.eth.models import TransactionReceipt
 from apps.eth.signals import event_update
 from apps.iot_client import AWSIoTError
-from apps.jobs.models import JobState, MessageType, AsyncJob
+from apps.jobs.models import JobState, MessageType, AsyncJob, AsyncActionType
 from apps.jobs.signals import job_update
 from .events import LoadEventHandler
 from .iot_client import DeviceAWSIoTClient
@@ -71,7 +71,7 @@ def shipment_post_save(sender, **kwargs):
                                                  instance.vault_id, ShipmentVaultSerializer(instance).data)
         LOG.debug(f'Updating LOAD contract with vault uri/hash {signature["hash"]}.')
         # Update LOAD contract with vault uri/hash
-        instance.set_vault_hash(signature['hash'])
+        instance.set_vault_hash(signature['hash'], action_type=AsyncActionType.SHIPMENT)
 
 
 @receiver(post_save, sender=LoadShipment, dispatch_uid='loadshipment_post_save')

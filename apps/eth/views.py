@@ -11,6 +11,7 @@ from influxdb_metrics.loader import log_metric
 from apps.authentication import EngineRequest, get_jwt_from_request
 from apps.eth.models import EthAction, Event
 from apps.eth.serializers import EventSerializer, EthActionSerializer
+from apps.permissions import get_owner_id
 from apps.shipments.permissions import IsListenerOwner
 
 LOG = logging.getLogger('transmission')
@@ -88,7 +89,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
             if 'wallet_id' in self.request.query_params:
-                queryset = queryset.filter(Q(ethlistener__shipments__owner_id=self.request.user.id) |
+                queryset = queryset.filter(Q(ethlistener__shipments__owner_id=get_owner_id(self.request)) |
                                            Q(ethlistener__shipments__shipper_wallet_id=
                                              self.request.query_params.get('wallet_id')) |
                                            Q(ethlistener__shipments__moderator_wallet_id=
@@ -96,7 +97,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
                                            Q(ethlistener__shipments__carrier_wallet_id=
                                              self.request.query_params.get('wallet_id')))
             else:
-                queryset = queryset.filter(ethlistener__shipments__owner_id=self.request.user.id)
+                queryset = queryset.filter(ethlistener__shipments__owner_id=get_owner_id(self.request))
 
         return queryset
 
