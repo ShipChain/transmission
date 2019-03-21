@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pytz
 import geojson
 
@@ -394,6 +394,12 @@ class PermissionLink(models.Model):
     name = models.CharField(null=False, max_length=255)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def is_valid(self):
+        if not self.expiration_date:
+            return True
+        return datetime.now(timezone.utc) < self.expiration_date
 
 
 class LoadShipment(models.Model):

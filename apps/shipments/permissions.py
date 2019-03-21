@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import permissions
 
@@ -33,22 +31,52 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
     Custom permission to allow users with a unique link to access a shipment anonymously
     """
     def has_permission(self, request, view):
-        return (super(IsOwnerOrShared, self).has_permission(request, view) or
-                ('permission_link' in request.query_params and request.query_params['permission_link']))
 
-    def has_object_permission(self, request, view, obj):
-        if request.user.is_authenticated and has_owner_access(request, obj):
-            return True
-        if 'permission_link' in request.query_params and request.query_params['permission_link']:
+        permission_link = request.query_params.get('permission_link', None)
+        shipment_pk = request.parser_context['kwargs'].get('pk', None)
+
+        permission_obj = None
+        if permission_link:
             try:
-                permission_link = PermissionLink.objects.get(pk=request.query_params['permission_link'])
+                permission_obj = PermissionLink.objects.get(pk=permission_link)
+            except ObjectDoesNotExist:
+                permission_obj = None
+
+        if (not permission_obj or not permission_obj.is_valid) and not shipment_pk:
+            return super(IsOwnerOrShared, self).has_permission(request, view)
+
+        if shipment_pk:
+            try:
+                shipment = Shipment.objects.get(pk=shipment_pk)
             except ObjectDoesNotExist:
                 return False
-            if permission_link.expiration_date:
-                return (datetime.now(timezone.utc) < permission_link.expiration_date
-                        and obj.pk == permission_link.shipment.pk and request.method == 'GET')
-            return obj.pk == permission_link.shipment.pk and request.method == 'GET'
-        return False
+            return self.check_permission_link(request, shipment)
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if self.check_has_owner_access(request, obj):
+            return True
+
+        if 'permission_link' not in request.query_params:
+            return self.check_has_owner_access(request, obj)
+
+        return self.check_permission_link(request, obj)
+
+    def check_permission_link(self, request, shipment):
+        permission_link = request.query_params.get('permission_link', None)
+        if permission_link:
+            try:
+                permission_obj = PermissionLink.objects.get(pk=permission_link)
+            except ObjectDoesNotExist:
+                return False
+            if not permission_obj.is_valid:
+                return self.check_has_owner_access(request, shipment)
+            return shipment.pk == permission_obj.shipment.pk and request.method == 'GET'
+
+        return self.check_has_owner_access(request, shipment)
+
+    def check_has_owner_access(self, request, obj):
+        return request.user.is_authenticated and has_owner_access(request, obj)
 
 
 class IsAuthenticatedOrDevice(permissions.IsAuthenticated):
