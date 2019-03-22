@@ -41,7 +41,7 @@ LOCATION_NAME = "Test Location Name"
 LOCATION_NAME_2 = "Second Test Location Name"
 LOCATION_CITY = 'City'
 LOCATION_STATE = 'State'
-LOCATION_COUNTRY = 'us'
+LOCATION_COUNTRY = 'US'
 BAD_COUNTRY_CODE = 'XY'
 LOCATION_NUMBER = '555-555-5555'
 
@@ -533,23 +533,6 @@ class ShipmentAPITests(APITestCase):
         # Authenticated request should succeed using mapbox (if exists)
         self.set_user(self.user_1, self.token)
 
-        location_one = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
-                                               state=LOCATION_STATE)
-        location_two = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
-                                               state=LOCATION_STATE)
-
-        location_3 = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
-                                            state=LOCATION_STATE)
-
-        location_4 = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
-                                          state=LOCATION_STATE)
-
-        location_5 = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
-                                          state=LOCATION_STATE)
-
-        location_6 = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
-                                          state=LOCATION_STATE)
-
         parameters = {
             '_vault_id': VAULT_ID,
             '_vault_uri': 's3://bucket/' + VAULT_ID,
@@ -569,31 +552,22 @@ class ShipmentAPITests(APITestCase):
                                                           'carrier_wallet_id': CARRIER_WALLET_ID,
                                                           'shipper_wallet_id': SHIPPER_WALLET_ID,
                                                           'storage_credentials_id': STORAGE_CRED_ID,
-                                                          'ship_from_location_id': location_one.id
+                                                          'ship_from_location.name': LOCATION_NAME,
+                                                          'ship_from_location.city': LOCATION_CITY,
+                                                          'ship_from_location.state': LOCATION_STATE,
                                                           })
 
         two_locations, content_type = create_form_content({
                                                            'carrier_wallet_id': CARRIER_WALLET_ID,
                                                            'shipper_wallet_id': SHIPPER_WALLET_ID,
                                                            'storage_credentials_id': STORAGE_CRED_ID,
-                                                           'ship_from_location_id': location_two.id,
-                                                           'ship_to_location_id': location_3.id,
+                                                           'ship_from_location.name': LOCATION_NAME,
+                                                           'ship_from_location.city': LOCATION_CITY,
+                                                           'ship_from_location.state': LOCATION_STATE,
+                                                           'ship_to_location.name': LOCATION_NAME_2,
+                                                           'ship_to_location.city': LOCATION_CITY,
+                                                           'ship_to_location.state': LOCATION_STATE,
                                                            })
-
-        three_location, content_type = create_form_content({
-            'carrier_wallet_id': CARRIER_WALLET_ID,
-            'shipper_wallet_id': SHIPPER_WALLET_ID,
-            'storage_credentials_id': STORAGE_CRED_ID,
-            'ship_from_location_id': location_4.id
-        })
-
-        four_location, content_type = create_form_content({
-            'carrier_wallet_id': CARRIER_WALLET_ID,
-            'shipper_wallet_id': SHIPPER_WALLET_ID,
-            'storage_credentials_id': STORAGE_CRED_ID,
-            'ship_from_location_id': location_5.id,
-            'ship_to_location_id': location_6.id
-        })
 
         # Mock RPC calls
         mock_shipment_rpc_client = Load110RPCClient
@@ -665,7 +639,7 @@ class ShipmentAPITests(APITestCase):
         ship_from_location = Location.objects.get(id=response_data['relationships']['ship_from_location']['data']['id'])
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
-        self.assertEqual(ship_from_location.name, parameters['_ship_to_location_name'])
+        self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
         self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         self.assertIsNotNone(response_data['relationships']['ship_to_location']['data'])
@@ -679,7 +653,7 @@ class ShipmentAPITests(APITestCase):
         # Authenticated request should succeed using google
         mapbox_access_token = None
 
-        response = self.client.post(url, three_location, content_type=content_type)
+        response = self.client.post(url, one_location, content_type=content_type)
         force_authenticate(response, user=self.user_1, token=self.token)
         response_data = response.json()['data']
         response_included = response.json()['included']
@@ -696,11 +670,11 @@ class ShipmentAPITests(APITestCase):
         ship_from_location = Location.objects.get(id=response_data['relationships']['ship_from_location']['data']['id'])
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
-        self.assertEqual(ship_from_location.name, parameters['_ship_to_location_name'])
+        self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
         self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         # Authenticated request should succeed using google in creating two locations
-        response = self.client.post(url, four_location, content_type=content_type)
+        response = self.client.post(url, two_locations, content_type=content_type)
         force_authenticate(response, user=self.user_1, token=self.token)
         response_data = response.json()['data']
         response_included = response.json()['included']
@@ -716,7 +690,7 @@ class ShipmentAPITests(APITestCase):
         ship_from_location = Location.objects.get(id=response_data['relationships']['ship_from_location']['data']['id'])
         self.assertEqual(ship_from_location.city, parameters['_ship_from_location_city'])
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
-        self.assertEqual(ship_from_location.name, parameters['_ship_to_location_name'])
+        self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
         self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
 
         self.assertIsNotNone(response_data['relationships']['ship_to_location']['data'])
@@ -859,20 +833,6 @@ class ShipmentAPITests(APITestCase):
         httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
         httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
 
-        location_one = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
-                                               state=LOCATION_STATE)
-        location_two = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME_2, city=LOCATION_CITY,
-                                               state=LOCATION_STATE)
-
-        location_three = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
-                                            state=LOCATION_STATE)
-
-        location_four = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
-                                              state=LOCATION_STATE)
-
-        location_five = self.create_location(owner_id=self.user_1.id, name=LOCATION_NAME, city=LOCATION_CITY,
-                                             state=LOCATION_STATE)
-
         parameters = {
             '_vault_id': VAULT_ID,
             '_carrier_wallet_id': CARRIER_WALLET_ID,
@@ -887,19 +847,18 @@ class ShipmentAPITests(APITestCase):
             '_ship_to_location_state': LOCATION_STATE,
         }
 
-        one_location, content_type = create_form_content({
-                                                          'ship_from_location_id': location_one.id
+        one_location, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
+                                                          'ship_from_location.city': LOCATION_CITY,
+                                                          'ship_from_location.state': LOCATION_STATE
                                                           })
 
-        two_locations, content_type = create_form_content({
-                                                           'ship_from_location_id': location_three.id,
-                                                           'ship_to_location_id': location_two.id,
+        two_locations, content_type = create_form_content({'ship_from_location.name': LOCATION_NAME,
+                                                           'ship_from_location.city': LOCATION_CITY,
+                                                           'ship_from_location.state': LOCATION_STATE,
+                                                           'ship_to_location.name': LOCATION_NAME_2,
+                                                           'ship_to_location.city': LOCATION_CITY,
+                                                           'ship_to_location.state': LOCATION_STATE
                                                            })
-
-        three_locations, content_type = create_form_content({
-            'ship_from_location_id': location_four.id,
-            'ship_to_location_id': location_five.id,
-        })
 
         # Mock RPC calls
         mock_shipment_rpc_client = Load110RPCClient
@@ -944,12 +903,6 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_from_location.state, parameters['_ship_from_location_state'])
         self.assertEqual(ship_from_location.name, parameters['_ship_from_location_name'])
         self.assertEqual(ship_from_location.geometry.coords, (23.0, 12.0))
-
-        # Trying to reuse a location already in used on a different shipment should fail
-        url_2 = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
-        with transaction.atomic():
-            response = self.client.patch(url_2, one_location, content_type=content_type)
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Authenticated request should succeed using mapbox in creating two locations (if exists)
         self.set_user(self.user_1)
@@ -1006,7 +959,7 @@ class ShipmentAPITests(APITestCase):
         # Authenticated request should succeed using google in creating two locations
         self.set_user(self.user_1)
 
-        response = self.client.patch(url, three_locations, content_type=content_type)
+        response = self.client.patch(url, two_locations, content_type=content_type)
         response_data = response.json()['data']
         response_included = response.json()['included']
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
@@ -1029,13 +982,8 @@ class ShipmentAPITests(APITestCase):
         ship_to_location = Location.objects.get(id=response_data['relationships']['ship_to_location']['data']['id'])
         self.assertEqual(ship_to_location.city, parameters['_ship_to_location_city'])
         self.assertEqual(ship_to_location.state, parameters['_ship_to_location_state'])
-        self.assertEqual(ship_to_location.name, parameters['_ship_from_location_name'])
+        self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_to_location.geometry.coords, (23.0, 12.0))
-
-        # Trying to delete a location object attached to a shipment should fail
-        url = reverse('location-detail', kwargs={'version': 'v1', 'pk': location_one.id})
-        response = self.client.delete(url)
-        self.assertTrue(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_permission_link(self):
         self.create_shipment()
@@ -1151,186 +1099,6 @@ class ShipmentAPITests(APITestCase):
         self.set_user(None)
         response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_with_exp}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-
-class LocationAPITests(APITestCase):
-
-    def setUp(self):
-        self.client = APIClient()
-
-        os.environ['MAPBOX_ACCESS_TOKEN'] = 'pk.test'
-
-        self.token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID)
-        self.user_1 = passive_credentials_auth(self.token)
-
-    def set_user(self, user, token=None):
-        self.client.force_authenticate(user=user, token=token)
-
-    def create_location(self):
-        self.locations = []
-        self.locations.append(Location.objects.create(name=LOCATION_NAME,
-                                                      owner_id=OWNER_ID))
-
-    def test_list_empty(self):
-        """
-        Test listing requires authentication
-        """
-
-        # Unauthenticated request should fail with 403
-        url = reverse('location-list', kwargs={'version': 'v1'})
-
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # Authenticated request should succeed
-        self.set_user(self.user_1, self.token)
-
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        response_data = response.json()
-
-        # No Locations
-        #  created should return empty array
-        self.assertEqual(len(response_data['data']), 0)
-
-    @httpretty.activate
-    def test_create_location(self):
-        url = reverse('location-list', kwargs={'version': 'v1'})
-        valid_data, content_type = create_form_content({'name': LOCATION_NAME, 'city': LOCATION_CITY,
-                                                        'state': LOCATION_STATE, 'country': LOCATION_COUNTRY})
-
-        valid_data_profiles_disabled, content_type = create_form_content({'name': LOCATION_NAME, 'city': LOCATION_CITY,
-                                                                          'state': LOCATION_STATE,
-                                                                          'owner_id': OWNER_ID})
-
-        bad_country_code, content_type = create_form_content({'name': LOCATION_NAME, 'city': LOCATION_CITY,
-                                                              'state': LOCATION_STATE, 'country': BAD_COUNTRY_CODE})
-
-        google_obj = {'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
-        mapbox_obj = {'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [23, 12]}}]}
-
-        httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
-        httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
-
-        # Unauthenticated request should fail with 403
-        response = self.client.post(url, valid_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.set_user(self.user_1)
-
-        # Authenticated request without name parameter should fail
-        response = self.client.post(url, '{}', content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        # Authenticated request with name parameter using mapbox should succeed
-        response = self.client.post(url, valid_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        response_data = response.json()
-        self.assertEqual(response_data['data']['attributes']['name'], LOCATION_NAME)
-        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [23.0, 12.0])
-
-        # The Api should return the uppercase country code
-        self.assertEqual(response_data['data']['attributes']['country'], LOCATION_COUNTRY.upper())
-
-        # Requests with a bad country code should fail
-        response = self.client.post(url, bad_country_code, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        mapbox_access_token = None
-
-        # Authenticated request with name parameter using google should succeed
-        response = self.client.post(url, valid_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        response_data = response.json()
-        self.assertEqual(response_data['data']['attributes']['name'], LOCATION_NAME)
-        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [23.0, 12.0])
-
-        with self.settings(PROFILES_ENABLED=False, PROFILES_URL='DISABLED'):
-            response = self.client.post(url, valid_data_profiles_disabled, content_type=content_type)
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    @httpretty.activate
-    def test_update_existing_location(self):
-        self.create_location()
-        url = reverse('location-detail', kwargs={'version': 'v1', 'pk': self.locations[0].id})
-        valid_data, content_type = create_form_content({'phone_number': LOCATION_NUMBER, 'city': LOCATION_CITY,
-                                                        'state': LOCATION_STATE})
-        google_obj = {
-            'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
-        mapbox_obj = {
-            'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [23, 12]}}]}
-
-        httpretty.register_uri(httpretty.GET, google_url, body=json.dumps(google_obj))
-        httpretty.register_uri(httpretty.GET, mapbox_url, body=json.dumps(mapbox_obj))
-
-        # Unauthenticated request should fail with 403
-        response = self.client.patch(url, valid_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.set_user(self.user_1)
-
-        # Authenticated request with name parameter using mapbox should succeed
-        response = self.client.patch(url, valid_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        response_data = response.json()
-        self.assertEqual(response_data['data']['attributes']['phone_number'], LOCATION_NUMBER)
-        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [23.0, 12.0])
-
-        mapbox_access_token = None
-
-        # Authenticated request with name parameter using google should succeed
-        response = self.client.patch(url, valid_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        response_data = response.json()
-        self.assertEqual(response_data['data']['attributes']['phone_number'], LOCATION_NUMBER)
-        self.assertEqual(response_data['data']['attributes']['geometry']['coordinates'], [23.0, 12.0])
-
-    def test_update_nonexistent_location(self):
-        self.create_location()
-        url = reverse('location-detail', kwargs={'version': 'v1', 'pk': random_id()})
-        valid_data, content_type = create_form_content({'phone_number': LOCATION_NUMBER})
-
-        # Unauthenticated request should fail with 403
-        response = self.client.patch(url, valid_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.set_user(self.user_1)
-
-        # Authenticated request should fail
-        response = self.client.patch(url, valid_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_delete_existing_location(self):
-        self.create_location()
-        url = reverse('location-detail', kwargs={'version': 'v1', 'pk': self.locations[0].id})
-
-        # Unauthenticated request should fail with 403
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.set_user(self.user_1)
-
-        # Authenticated request should succeed
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-        # Ensure location does not exist
-        self.assertEqual(Location.objects.count(), 0)
-
-    def test_delete_nonexistent_location(self):
-        self.create_location()
-        url = reverse('location-detail', kwargs={'version': 'v1', 'pk': random_id()})
-
-        # Unauthenticated request should fail with 403
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.set_user(self.user_1)
-
-        # Authenticated request should fail
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class TrackingDataAPITests(APITestCase):

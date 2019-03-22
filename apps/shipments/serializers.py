@@ -8,8 +8,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from dateutil.parser import parse
 from django.conf import settings
-from django.db import transaction, IntegrityError
-from django.shortcuts import get_object_or_404
+from django.db import transaction
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions, status, serializers as rest_serializers
@@ -58,21 +57,9 @@ class LocationSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     Serializer for a location, used nested in a Shipment
     """
 
-    def __init__(self, *args, **kwargs):
-        # We ensure that the country value is uppercase
-        try:
-            data = kwargs['data'].copy()
-            country = data.get('country', None)
-            if country:
-                data.update({'country': country.upper()})
-                kwargs['data'] = data
-        except KeyError:
-            pass
-        super().__init__(*args, **kwargs)
-
     class Meta:
         model = Location
-        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        fields = '__all__'
 
 
 class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -82,7 +69,7 @@ class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        exclude = ('owner_id', 'geometry')
+        exclude = ('geometry',)
 
 
 class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -121,23 +108,15 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
 
 class ShipmentCreateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, required=False)
-    ship_from_location_id = serializers.CharField(max_length=36, required=False)
-    ship_to_location_id = serializers.CharField(max_length=36, required=False)
-    final_destination_location_id = serializers.CharField(max_length=36, required=False)
-    bill_to_location_id = serializers.CharField(max_length=36, required=False)
 
     def create(self, validated_data):
         extra_args = {}
 
         with transaction.atomic():
-            location_id_names = ['ship_from_location_id', 'ship_to_location_id', 'final_destination_location_id',
-                                 'bill_to_location_id']
-            for location_id_name in location_id_names:
-                location_id = validated_data.get(location_id_name, None)
-                if location_id:
-                    location = get_object_or_404(Location, pk=location_id)
-                    location_field = '_'.join(location_id_name.split('_')[:-1])
-                    extra_args[location_field] = location
+            for location_field in ['ship_from_location', 'ship_to_location', 'bill_to_location']:
+                if location_field in validated_data:
+                    data = validated_data.pop(location_field)
+                    extra_args[location_field] = Location.objects.create(**data)
 
             if 'device' in self.context:
                 extra_args['device'] = self.context['device']
@@ -182,10 +161,6 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, allow_null=True)
-    ship_from_location_id = serializers.CharField(max_length=36, required=False)
-    ship_to_location_id = serializers.CharField(max_length=36, required=False)
-    final_destination_location_id = serializers.CharField(max_length=36, required=False)
-    bill_to_location_id = serializers.CharField(max_length=36, required=False)
 
     class Meta:
         model = Shipment
@@ -200,19 +175,20 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 instance.device = validated_data.pop('device_id')
 
-        location_id_names = ['ship_from_location_id', 'ship_to_location_id', 'final_destination_location_id',
-                             'bill_to_location_id']
-        for location_id_name in location_id_names:
-            if location_id_name in validated_data:
-                location_id = validated_data.get(location_id_name, None)
-                location_field = '_'.join(location_id_name.split('_')[:-1])
-                if location_id:
-                    location = get_object_or_404(Location, id=location_id)
+        for location_field in ['ship_from_location', 'ship_to_location',
+                               'final_destination_location', 'bill_to_location']:
+            if location_field in validated_data:
+                location = getattr(instance, location_field)
+                data = validated_data.pop(location_field)
+
+                if location:
+                    for attr, value in data.items():
+                        setattr(location, attr, value)
+                    location.save()
+
+                else:
+                    location = Location.objects.create(**data)
                     setattr(instance, location_field, location)
-                    try:
-                        instance.save()
-                    except IntegrityError:
-                        raise serializers.ValidationError(f'Location: {location_id}, already in use.')
 
         info = model_meta.get_field_info(instance)
         for attr, value in validated_data.items():

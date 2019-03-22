@@ -19,7 +19,7 @@ def set_location_country(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0029_nullable_booleans'),
+        ('shipments', '0031_shipment_updated_by'),
     ]
 
     operations = [

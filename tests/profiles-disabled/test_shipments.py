@@ -118,7 +118,7 @@ class ShipmentAPITests(APITestCase):
             "transactionIndex": 0
         })
 
-        location = Location.objects.create(owner_id=OWNER_ID, name=LOCATION_NAME, city=LOCATION_CITY,
+        location = Location.objects.create(name=LOCATION_NAME, city=LOCATION_CITY,
                                            state=LOCATION_STATE)
 
         one_location_profiles_disabled, content_type = create_form_content({'ship_from_location_id': location.id,
