@@ -1,6 +1,6 @@
 import json
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 
 import boto3
 import pytz
@@ -205,11 +205,10 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     def validate_device_id(self, device_id):
         auth = self.context['auth']
-        shipment = self.context['shipment']
         if not device_id or device_id == 'null':
-            if not shipment.device:
+            if not self.instance.device:
                 return None
-            if not shipment.delivery_act or shipment.delivery_act >= datetime.utcnow().replace(tzinfo=pytz.UTC):
+            if not self.instance.delivery_act or self.instance.delivery_act >= datetime.now(timezone.utc):
                 raise serializers.ValidationError('Cannot remove device from Shipment in progress')
             return None
 

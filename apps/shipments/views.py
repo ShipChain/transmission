@@ -154,7 +154,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         log_metric('transmission.info', tags={'method': 'shipments.update', 'module': __name__})
 
         serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial,
-                                              context={'auth': get_jwt_from_request(request), 'shipment': instance})
+                                              context={'auth': get_jwt_from_request(request)})
         serializer.is_valid(raise_exception=True)
 
         shipment = self.perform_update(serializer)

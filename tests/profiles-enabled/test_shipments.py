@@ -1593,24 +1593,6 @@ class ShipmentWithIoTAPITests(APITestCase):
                 'shipmentId': shipment['id']
             }})
 
-            # shipment_obj = Shipment.objects.filter(id=shipment['id']).first()
-            # shipment_obj.delivery_act = '2018-08-22T17:44:39.874352Z'
-            # shipment_obj.save()
-            # # Test Shipment null Device ID updates shadow
-            # response = self.set_device_id(shipment['id'], None, None)
-            # assert response.status_code == status.HTTP_202_ACCEPTED
-            # mocked_call_count += 1
-            # assert mocked.call_count == mocked_call_count
-            # shipment_obj.refresh_from_db()
-            # shipment_obj.delivery_act = None
-            # shipment_obj.save()
-
-            # # Reset initial DEVICE_ID
-            # response = self.set_device_id(shipment['id'], DEVICE_ID, CERTIFICATE_ID)
-            # assert response.status_code == status.HTTP_202_ACCEPTED
-            # mocked_call_count += 1
-            # assert mocked.call_count == mocked_call_count
-
             # Test Shipment update with Device ID updates shadow
             response = self.set_device_id(shipment['id'], device_2_id, device_2_cert_id)
             assert response.status_code == status.HTTP_202_ACCEPTED
