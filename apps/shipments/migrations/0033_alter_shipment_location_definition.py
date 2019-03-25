@@ -14,6 +14,7 @@ def enforce_unique_locations(apps, schema_editor):
                 shipment.ship_from_location.pk = None
                 shipment.ship_from_location.id = None
                 shipment.ship_from_location.save()
+                Shipment.objects.filter(id=shipment.id).update(ship_from_location_id=shipment.ship_from_location.id)
             existing_locations_seen.add(shipment.ship_from_location.id)
 
         if shipment.ship_to_location_id:
@@ -21,6 +22,7 @@ def enforce_unique_locations(apps, schema_editor):
                 shipment.ship_to_location.pk = None
                 shipment.ship_to_location.id = None
                 shipment.ship_to_location.save()
+                Shipment.objects.filter(id=shipment.id).update(ship_to_location_id=shipment.ship_to_location.id)
             existing_locations_seen.add(shipment.ship_to_location.id)
 
         if shipment.final_destination_location_id:
@@ -28,6 +30,7 @@ def enforce_unique_locations(apps, schema_editor):
                 shipment.final_destination_location.pk = None
                 shipment.final_destination_location.id = None
                 shipment.final_destination_location.save()
+                Shipment.objects.filter(id=shipment.id).update(final_destination_location_id=shipment.final_destination_location.id)
             existing_locations_seen.add(shipment.final_destination_location.id)
 
         if shipment.bill_to_location_id:
@@ -35,6 +38,7 @@ def enforce_unique_locations(apps, schema_editor):
                 shipment.bill_to_location.pk = None
                 shipment.bill_to_location.id = None
                 shipment.bill_to_location.save()
+                Shipment.objects.filter(id=shipment.id).update(bill_to_location_id=shipment.bill_to_location.id)
             existing_locations_seen.add(shipment.bill_to_location.id)
 
 
