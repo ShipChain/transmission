@@ -3,7 +3,6 @@ from collections import OrderedDict
 from datetime import datetime, timezone
 
 import boto3
-import pytz
 from botocore.exceptions import ClientError
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -205,7 +204,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     def validate_device_id(self, device_id):
         auth = self.context['auth']
-        if not device_id or device_id == 'null':
+        if not device_id:
             if not self.instance.device:
                 return None
             if not self.instance.delivery_act or self.instance.delivery_act >= datetime.now(timezone.utc):
