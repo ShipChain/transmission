@@ -1221,18 +1221,17 @@ class ShipmentAPITests(APITestCase):
         response = self.client.get(shipment_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # An authenticated user can only access the list of shipments he owns with a valid permission link
-        # user_2 owns 1 shipment and has the permission link for the other one, total 2 shipments
+        # Shipments with permission links can only be accessible via shipments-detail endpoint
+        # not shipments-list response status should be 403
         response = self.client.get(f'{url_shipment_list}?permission_link={valid_permission_id_with_exp}')
-        response_json = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_json['data']), 2)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Assert that users cannot update or delete shipments when using a permission link
-        response = self.client.patch(f'{shipment_url}?permission_link={valid_permission_id}', shipment_update_info, content_type=content_type)
+        response = self.client.patch(f'{shipment_url}?permission_link={valid_permission_id}',
+                                     shipment_update_info, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Assert that users cannot update or delete shipments when using a permission link
