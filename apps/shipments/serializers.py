@@ -205,6 +205,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
     def validate_device_id(self, device_id):
         auth = self.context['auth']
         if not device_id:
+            print('In validate_device_id: ', device_id)
             if not self.instance.device:
                 return None
             if not self.instance.delivery_act or self.instance.delivery_act >= datetime.now(timezone.utc):

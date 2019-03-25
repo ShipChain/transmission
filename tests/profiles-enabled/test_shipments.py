@@ -1562,6 +1562,19 @@ class ShipmentWithIoTAPITests(APITestCase):
 
         return response
 
+    def set_device_id_form_data(self, shipment_id, device_id, certificate_id):
+        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
+
+        with mock.patch('apps.shipments.models.Device.get_or_create_with_permission') as mock_device:
+            if device_id:
+                mock_device.return_value = Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})[0]
+
+            device, content_type = create_form_content({'device_id': device_id})
+
+            response = self.client.patch(url, device, content_type='multipart/form-data; boundary=BoUnDaRyStRiNg')
+
+        return response
+
     @mock_iot
     def test_shipment_set_shadow(self):
         self.set_user(self.user_1, self.token)
@@ -1685,5 +1698,25 @@ class ShipmentWithIoTAPITests(APITestCase):
             response = self.set_device_id(shipment.id, None, None)
             shipment.refresh_from_db()
             assert response.status_code == status.HTTP_202_ACCEPTED
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+
+            response = self.create_shipment()
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+
+            response_json = response.json()
+            shipment = Shipment.objects.get(pk=response_json['data']['id'])
+
+            shipment.delivery_act = datetime.now()
+            shipment.save()
+            print('Before test: ', mocked.call_count)
+
+            # Setting device_id with form data should also succeed
+            response = self.set_device_id_form_data(shipment.id, '', None)
+            print(response.content)
+            assert response.status_code == status.HTTP_202_ACCEPTED
+            print('After test: ', mocked.call_count)
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
