@@ -7,6 +7,7 @@ import geocoder
 from geocoder.keys import mapbox_access_token
 
 import boto3
+from botocore.exceptions import ClientError
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -119,20 +120,44 @@ class Device(models.Model):
             if response.status_code != HTTP_200_OK:
                 raise PermissionDenied("User does not have access to this device in ShipChain Profiles")
 
-        if settings.ENVIRONMENT != 'LOCAL':
-            iot = boto3.client('iot')
+        device, created = Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})
 
-            try:
-                response = iot.list_thing_principals(thingName=device_id)
-                if not response['principals']:
-                    raise PermissionDenied(f"No certificates found for device {device_id} in AWS IoT")
-                for arn in response['principals']:
-                    # arn == arn:aws:iot:us-east-1:489745816517:cert/{certificate_id}
-                    certificate_id = arn.rsplit('/', 1)[1]
-                    break
-            except iot.exceptions.ResourceNotFoundException:
-                raise PermissionDenied(f"Specified device {device_id} does not exist in AWS IoT")
-        return Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})[0]
+        if settings.ENVIRONMENT != 'LOCAL':
+            # We update the related device with this certificate in case it exists
+            if not created:
+                device.certificate_id = Device.get_valid_certificate(device_id)
+                device.save()
+
+        return device
+
+    @staticmethod
+    def get_valid_certificate(device_id):
+        certificate_id = None
+        iot = boto3.client('iot', region_name='us-east-1')
+
+        try:
+            response = iot.list_thing_principals(thingName=device_id)
+            if not len(response['principals']) > 0:  # pylint:disable=len-as-condition
+                raise PermissionDenied(f"No certificates found for device {device_id} in AWS IoT")
+            for arn in response['principals']:
+                # arn == arn:aws:iot:us-east-1:489745816517:cert/{certificate_id}
+                certificate_id = arn.rsplit('/', 1)[1]
+                try:
+                    certificate = iot.describe_certificate(certificateId=certificate_id)
+                    if certificate['certificateDescription']['status'] != 'ACTIVE':
+                        certificate_id = None
+                    else:
+                        break
+                except ClientError as exc:
+                    LOG.warning(f"Encountered error: {exc}, while parsing certificate: {certificate_id}")
+
+        except iot.exceptions.ResourceNotFoundException:
+            raise PermissionDenied(f"Specified device {device_id} does not exist in AWS IoT")
+        except Exception as exception:
+            raise PermissionDenied(f"Unexpected error: {exception}, occurred while trying to retrieve device: "
+                                   f"{device_id}, from AWS IoT")
+
+        return certificate_id
 
 
 class FundingType(Enum):

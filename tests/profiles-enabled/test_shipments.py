@@ -361,6 +361,142 @@ class ShipmentAPITests(APITestCase):
             response = self.client.post(url, {'payload': signed_data}, format='json')
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_update_shipment_device_certificate(self):
+        """
+        The shipment's device certificate has been updated but the the old certificate is still attached to the device.
+        when we post new tracking data, we should be able to track and retrieve the new certificate in aws IoT and
+        attach it to the device
+        """
+        from apps.rpc_client import requests
+        from tests.utils import mocked_rpc_response
+
+        with mock_iot():
+            iot = boto3.client('iot', region_name='us-east-1')
+
+            device_id = 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'
+
+            with open('tests/data/cert.pem', 'r') as cert_file:
+                cert_pem = cert_file.read()
+
+            map_describe = {}
+            principals = []
+            expired_certificate = None
+            new_active_certificate = None
+            for i in range(0, 4):
+                describe = {}
+                res = iot.create_keys_and_certificate()
+                describe['certificateDescription'] = res
+                describe['certificateDescription']['status'] = 'INACTIVE'
+                if i == 1:
+                    expired_certificate = res['certificateId']
+                if i == 2:
+                    describe['certificateDescription']['status'] = 'ACTIVE'
+                    describe['certificateDescription']['certificatePem'] = cert_pem
+                    new_active_certificate = res['certificateId']
+                map_describe[res['certificateId']] = describe
+                principals.append(res['certificateArn'])
+
+        # Set device for Shipment
+        with mock.patch.object(requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_id": "TEST_VAULT_ID"
+                }
+            })
+            self.create_shipment()
+            self.shipments[0].device = Device.objects.create(
+                id=device_id,
+                certificate_id=expired_certificate
+            )
+
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_signed": {'hash': "TEST_VAULT_SIGNATURE"}
+                }
+            })
+            self.shipments[0].save()
+
+        url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+
+        track_dic = {
+            'position': {
+                'latitude': 75.0587610,
+                'longitude': -35.628643,
+                'altitude': 554,
+                'source': 'Gps',
+                'uncertainty': 92,
+                'speed': 34
+            },
+            'version': '1.0.0',
+            'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75',
+            'timestamp': '2018-09-18T15:02:30.563847+00:00'
+        }
+
+        def side_effects(**kwargs):
+            cert = kwargs['certificateId']
+            return map_describe[cert]
+
+        with mock.patch('apps.shipments.serializers.boto3.client') as serial_client, \
+                mock.patch('apps.shipments.models.boto3.client') as model_client:
+            serial_client = serial_client.return_value
+            model_client = model_client.return_value
+            serial_client.describe_certificate.side_effect = side_effects
+            model_client.list_thing_principals.return_value = {'principals': principals}
+            model_client.describe_certificate.side_effect = side_effects
+
+            with open('tests/data/eckey.pem', 'r') as key_file:
+                key_pem = key_file.read()
+            signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': new_active_certificate}, algorithm='ES256')
+
+            # Send tracking data
+            response = self.client.post(url, {'payload': signed_data}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+            # The new certificate should be attached to the shipment's device
+            device = self.shipments[0].device
+            device.refresh_from_db()
+            self.assertEqual(device.certificate_id, new_active_certificate)
+
+            # Creating a new shipment with a device for which the certificate has expired and a new one has been issued
+            self.shipments[0].device = None
+            self.shipments[0].save()
+            device.certificate_id = expired_certificate
+            device.save()
+            device.refresh_from_db()
+
+            post_data = {
+                'device_id': device.id,
+                'vault_id': VAULT_ID,
+                'carrier_wallet_id': CARRIER_WALLET_ID,
+                'shipper_wallet_id': SHIPPER_WALLET_ID,
+                'storage_credentials_id': STORAGE_CRED_ID
+            }
+
+            url = reverse('shipment-list', kwargs={'version': 'v1'})
+            self.set_user(self.user_1)
+
+            with mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_shipper_wallet_id') as mock_wallet_validation, \
+                    mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_storage_credentials_id') as mock_storage_validation, \
+                    mock.patch.object(requests.Session, 'get') as mock_method:
+
+                # Instead of httpretty, we mock the device's profile validation
+                mock_method.return_value.status_code = status.HTTP_200_OK
+
+                mock_wallet_validation.return_value = SHIPPER_WALLET_ID
+                mock_storage_validation.return_value = STORAGE_CRED_ID
+
+                response = self.client.post(url, post_data, format='json')
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+                # The new certificate should be attached to the shipment's device
+                device.refresh_from_db()
+                self.assertEqual(device.certificate_id, new_active_certificate)
+                data = response.json()['data']
+                self.assertEqual(device.shipment.id, data['id'])
+
     @httpretty.activate
     def test_create(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})
