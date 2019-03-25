@@ -33,18 +33,22 @@ LOG = logging.getLogger('transmission')
 
 class Location(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
-    owner_id = models.CharField(null=False, max_length=36)
 
+    phone_regex = RegexValidator(regex=r'^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}',
+                                 message="Invalid phone number.")
+    country_regex = RegexValidator(regex=r'^A[^ABCHJKNPVY]|B[^CKPUX]|C[^BEJPQST]|D[EJKMOZ]|E[CEGHRST]|F[IJKMOR]|'
+                                         r'G[^CJKOVXZ]|H[KMNRTU]|I[DEL-OQ-T]|J[EMOP]|K[EGHIMNPRWYZ]|L[ABCIKR-VY]|'
+                                         r'M[^BIJ]|N[ACEFGILOPRUZ]|OM|P[AE-HK-NRSTWY]|QA|R[EOSUW]|S[^FPQUW]|'
+                                         r'T[^ABEIPQSUXY]|U[AGMSYZ]|V[ACEGINU]|WF|WS|YE|YT|Z[AMW]',
+                                         message="Invalid ISO 3166-1 alpha-2 country code.")
     name = models.CharField(max_length=255)
     address_1 = models.CharField(max_length=255, blank=True, null=True)
     address_2 = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=255, blank=True, null=True)
     state = models.CharField(max_length=255, blank=True, null=True)
-    country = models.CharField(max_length=255, blank=True, null=True)
+    country = models.CharField(max_length=2, validators=[country_regex], blank=True, null=True)
     postal_code = models.CharField(max_length=255, blank=True, null=True)
 
-    phone_regex = RegexValidator(regex=r'^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}',
-                                 message="Invalid phone number.")
     phone_number = models.CharField(validators=[phone_regex], max_length=255, blank=True, null=True)
     fax_number = models.CharField(validators=[phone_regex], max_length=255, blank=True, null=True)
     geometry = GeometryField(null=True)
@@ -187,14 +191,14 @@ class Shipment(models.Model):
     forwarders_reference = models.CharField(max_length=255, blank=True, null=True)
     forwarders_shipper_id = models.CharField(max_length=255, blank=True, null=True)
 
-    ship_from_location = models.ForeignKey(Location, on_delete=models.PROTECT,
-                                           related_name='shipments_from', null=True)
-    ship_to_location = models.ForeignKey(Location, on_delete=models.PROTECT,
-                                         related_name='shipments_to', null=True)
-    final_destination_location = models.ForeignKey(Location, on_delete=models.PROTECT,
-                                                   related_name='shipments_dest', null=True)
+    ship_from_location = models.OneToOneField(Location, on_delete=models.PROTECT,
+                                              related_name='shipment_from', null=True)
+    ship_to_location = models.OneToOneField(Location, on_delete=models.PROTECT,
+                                            related_name='shipment_to', null=True)
+    final_destination_location = models.OneToOneField(Location, on_delete=models.PROTECT,
+                                                      related_name='shipment_dest', null=True)
     bill_to_location = models.ForeignKey(Location, on_delete=models.PROTECT,
-                                         related_name='bill_to', null=True)
+                                         related_name='shipment_bill', null=True)
 
     carriers_instructions = models.CharField(max_length=255, blank=True, null=True)
     special_instructions = models.CharField(max_length=255, blank=True, null=True)

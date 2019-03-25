@@ -15,13 +15,13 @@ from influxdb_metrics.loader import log_metric
 
 from apps.authentication import get_jwt_from_request
 from apps.jobs.models import JobState
-from apps.permissions import IsOwner, owner_access_filter, get_owner_id
+from apps.permissions import owner_access_filter, get_owner_id
 from .filters import ShipmentFilter
 from .geojson import render_point_features
-from .models import Shipment, Location, TrackingData, PermissionLink
+from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsAuthenticatedOrDevice, IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
-    LocationSerializer, TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
+    TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
     PermissionLinkSerializer
 from .tasks import tracking_data_update
 
@@ -150,7 +150,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        LOG.debug(f'Updating shipment {instance} with new details.')
+        LOG.debug(f'Updating shipment {instance.id} with new details.')
         log_metric('transmission.info', tags={'method': 'shipments.update', 'module': __name__})
 
         serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial,
@@ -196,43 +196,3 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         permission_link = PermissionLink.objects.create(**serializer.validated_data)
 
         return Response(PermissionLinkSerializer(permission_link).data, status=status.HTTP_201_CREATED)
-
-
-class LocationViewSet(viewsets.ModelViewSet):
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-    # TODO: Clarify/Solidify the permissions for Locations w/ respect to owner_id
-    permission_classes = ((permissions.IsAuthenticated, IsOwner) if settings.PROFILES_ENABLED
-                          else (permissions.AllowAny,))
-    http_method_names = ['get', 'post', 'delete', 'patch']
-
-    def get_queryset(self):
-        queryset = self.queryset
-        if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(owner_access_filter(self.request))
-        return queryset
-
-    def perform_create(self, serializer):
-        if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=get_owner_id(self.request))
-        else:
-            created = serializer.save()
-        return created
-
-    def perform_update(self, serializer):
-        return serializer.save()
-
-    def create(self, request, *args, **kwargs):
-        """
-        Create a Location object
-        """
-        # Create Location
-        serializer = LocationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        LOG.debug(f'Creating a location object.')
-        log_metric('transmission.info', tags={'method': 'location.create', 'module': __name__})
-
-        location = self.perform_create(serializer)
-
-        return Response(LocationSerializer(location).data,
-                        status=status.HTTP_201_CREATED,)

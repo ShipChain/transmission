@@ -59,7 +59,7 @@ class LocationSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        exclude = ('owner_id',) if settings.PROFILES_ENABLED else ()
+        fields = '__all__'
 
 
 class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -69,7 +69,7 @@ class LocationVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        exclude = ('owner_id', 'geometry')
+        exclude = ('geometry',)
 
 
 class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
@@ -93,6 +93,7 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
     bill_to_location = LocationSerializer(required=False)
+    final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
     class Meta:
@@ -115,9 +116,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             for location_field in ['ship_from_location', 'ship_to_location', 'bill_to_location']:
                 if location_field in validated_data:
                     data = validated_data.pop(location_field)
-                    if 'owner_id' not in data:
-                        data['owner_id'] = validated_data['owner_id']
-                    extra_args[location_field], _ = Location.objects.get_or_create(**data)
+                    extra_args[location_field] = Location.objects.create(**data)
 
             if 'device' in self.context:
                 extra_args['device'] = self.context['device']
@@ -176,7 +175,8 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 instance.device = validated_data.pop('device_id')
 
-        for location_field in ['ship_from_location', 'ship_to_location', 'bill_to_location']:
+        for location_field in ['ship_from_location', 'ship_to_location',
+                               'final_destination_location', 'bill_to_location']:
             if location_field in validated_data:
                 location = getattr(instance, location_field)
                 data = validated_data.pop(location_field)
@@ -187,7 +187,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                     location.save()
 
                 else:
-                    location, _ = Location.objects.get_or_create(**data)
+                    location = Location.objects.create(**data)
                     setattr(instance, location_field, location)
 
         info = model_meta.get_field_info(instance)
@@ -234,6 +234,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
     bill_to_location = LocationSerializer(required=False)
+    final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
     class Meta:
@@ -254,6 +255,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     ship_from_location = LocationVaultSerializer(required=False)
     ship_to_location = LocationVaultSerializer(required=False)
     bill_to_location = LocationVaultSerializer(required=False)
+    final_destination_location = LocationSerializer(required=False)
 
     class Meta:
         model = Shipment

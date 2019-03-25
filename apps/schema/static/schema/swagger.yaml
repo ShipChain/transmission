@@ -179,15 +179,15 @@ paths:
         content:
           application/vnd.api+json:
             schema:
-              $ref: '#/components/requestBodies/shipment/createRequest'
+              $ref: '#/components/requestBodies/shipment/patchRequest'
           application/json:
             schema:
               allOf:
-              - $ref: '#/components/requestBodies/shipment/createAttributes'
+              - $ref: '#/components/requestBodies/shipment/patchAttributes'
           multipart/form-data:
             schema:
               allOf:
-              - $ref: '#/components/requestBodies/shipment/createAttributes'
+              - $ref: '#/components/requestBodies/shipment/patchAttributes'
 
   /api/v1/shipments/{shipment_id}/documents/:
     get:
@@ -609,132 +609,6 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/errors/401'
-
-  /api/v1/locations/:
-    get:
-      summary: List locations
-      description: >
-        Retrieve an array of `Location` objects associated with the current user ordered by the `Location.created_at` date.
-      parameters:
-      - $ref: '#/components/parameters/page'
-      - $ref: '#/components/parameters/page_size'
-      tags:
-      - Locations
-      responses:
-        '200':
-          description: *response_200
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/location/listResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-
-    post:
-      summary: Create a location
-      description: >
-        Create a new `Location` owned by the current user.
-      tags:
-      - Locations
-      responses:
-        '201':
-          description: *response_201
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/location/getResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-      requestBody:
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/requestBodies/location/createRequest'
-          application/json:
-            schema:
-              allOf:
-              - $ref: '#/components/requestBodies/location/createAttributes'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/requestBodies/location/createAttributes'
-
-  /api/v1/locations/{locations_id}/:
-    get:
-      summary: Get location
-      description: >
-        Get additional info about a `Location`.
-      parameters:
-      - $ref: '#/components/parameters/location/path'
-      tags:
-      - Locations
-      responses:
-        '200':
-          description: *response_200
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/location/getResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-    delete:
-      summary: Delete a location
-      description: >
-        Delete the `Location` from Transmission.
-      parameters:
-      - $ref: '#/components/parameters/location/path'
-      tags:
-      - Locations
-      responses:
-        '204':
-          description: *response_204
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-    patch:
-      summary: Update a location
-      description: >
-        Update a `Location` with the provided parameters.
-      tags:
-      - Locations
-      responses:
-        '200':
-          description: *response_200
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/location/getResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-      requestBody:
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/requestBodies/location/createRequest'
-          application/json:
-            schema:
-              $ref: '#/components/requestBodies/location/createAttributes'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/requestBodies/location/createAttributes'
 
 components:
   parameters:
@@ -1594,6 +1468,9 @@ components:
               title: carrier_wallet_id
               description: Carrier's Wallet UUID associated with the shipment
 
+
+
+
         carriersScac:
           properties:
             carriers_scac:
@@ -2301,7 +2178,7 @@ components:
           properties:
             end_block:
               title: end_block
-              description: What block the hash eds at
+              description: What block the hash ends at
               type: number
               format: int32
               example: 5
@@ -3400,22 +3277,6 @@ components:
             attributes:
               $ref: '#/components/schemas/location/attributes'
 
-      getResponse:
-        allOf:
-        - $ref: '#/components/schemas/jsonApi/data'
-        - properties:
-            data:
-              $ref: '#/components/schemas/location/getResource'
-
-      listResponse:
-        allOf:
-        - $ref: '#/components/schemas/jsonApi/dataArray'
-        - $ref: '#/components/schemas/jsonApi/linksAndMeta'
-        - properties:
-            data:
-              items:
-                $ref: '#/components/schemas/location/getResource'
-
     transaction:
       resource:
         properties:
@@ -3673,6 +3534,13 @@ components:
             attributes:
               $ref: '#/components/requestBodies/shipment/createAttributes'
 
+      patchResource:
+        allOf:
+          - $ref: '#/components/schemas/shipment/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/requestBodies/shipment/patchAttributes'
+
       createAttributes:
         required:
         - shipper_wallet_id
@@ -3741,12 +3609,81 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/nmfcClass'
         - $ref: '#/components/schemas/dataTypes/shipment/isHazmat'
 
+      patchAttributes:
+#        required:
+#          - shipper_wallet_id
+#          - carrier_wallet_id
+#          - storage_credentials_id
+        allOf:
+#          - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
+#          - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
+#          - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
+#          - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
+          - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
+          - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
+          - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
+          - $ref: '#/components/schemas/dataTypes/shipment/shippersReference'
+          - $ref: '#/components/schemas/dataTypes/shipment/forwardersReference'
+          - $ref: '#/components/schemas/dataTypes/shipment/forwardersShipperId'
+          - $ref: '#/components/schemas/dataTypes/shipment/carriersInstructions'
+          - $ref: '#/components/schemas/dataTypes/shipment/proNumber'
+          - $ref: '#/components/schemas/dataTypes/shipment/billMaster'
+          - $ref: '#/components/schemas/dataTypes/shipment/billHouse'
+          - $ref: '#/components/schemas/dataTypes/shipment/billSubhouse'
+          - $ref: '#/components/schemas/dataTypes/shipment/paymentTerms'
+          - $ref: '#/components/schemas/dataTypes/shipment/vesselName'
+          - $ref: '#/components/schemas/dataTypes/shipment/voyageNumber'
+          - $ref: '#/components/schemas/dataTypes/shipment/modeOfTransportCode'
+          - $ref: '#/components/schemas/dataTypes/shipment/packageQty'
+          - $ref: '#/components/schemas/dataTypes/shipment/weightGross'
+          - $ref: '#/components/schemas/dataTypes/shipment/volume'
+          - $ref: '#/components/schemas/dataTypes/shipment/containerQty'
+          - $ref: '#/components/schemas/dataTypes/shipment/weightDim'
+          - $ref: '#/components/schemas/dataTypes/shipment/weightChargeable'
+          - $ref: '#/components/schemas/dataTypes/shipment/docsReceivedAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/docsApprovedAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/pickupAppt'
+          - $ref: '#/components/schemas/dataTypes/shipment/pickupEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/pickupAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/loadingEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/loadingAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/departureEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/departureAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppt'
+          - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/deliveryEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/deliveryAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/deliveryAttempt'
+          - $ref: '#/components/schemas/dataTypes/shipment/cancelRequestedDateAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/cancelConfirmedDateAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/customsFiledDateAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/containerType'
+          - $ref: '#/components/schemas/dataTypes/shipment/arrivalLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/finalPortLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/importLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/originLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/usRouted'
+          - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
+          - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
+          - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
+
       createRequest:
         allOf:
         - $ref: '#/components/requestBodies/jsonApi/createData'
         - properties:
             data:
               $ref: '#/components/requestBodies/shipment/createResource'
+
+      patchRequest:
+        allOf:
+          - $ref: '#/components/requestBodies/jsonApi/createData'
+          - properties:
+              data:
+                $ref: '#/components/requestBodies/shipment/patchResource'
 
       tracking:
         payload:
@@ -3761,35 +3698,6 @@ components:
                 HRpdHVkZSI6MjcxLjAsImxhdGl0dWRlIjozNC44NTIwNTU1LCJsb25naXR1ZGUiOi04Mi40MDAwOTQ3LCJzb3VyY2UiOiJHUFMiLCJzc
                 GVlZCI6MC4wLCJ1bmNlcnRhaW50eSI6OTl9LCJ0aW1lc3RhbXAiOiIyMDE4LTExLTI5VDIwOjI4OjA3WiIsInZlcnNpb24iOiIxLjAuM
                 SJ9.jNWQj7kC8iacZwpEYlWexcDsP8ed-wIaebwSwOsrB7nTIoMOmbMWVHL3JC5dMzs8yCA3rReSkqbOu3TG0ACudw
-
-    location:
-      createResource:
-        allOf:
-        - $ref: '#/components/schemas/location/resource'
-        - properties:
-            attributes:
-              $ref: '#/components/requestBodies/location/createAttributes'
-
-      createAttributes:
-        required:
-        - name
-        allOf:
-        - $ref: '#/components/schemas/dataTypes/location/name'
-        - $ref: '#/components/schemas/dataTypes/location/address_1'
-        - $ref: '#/components/schemas/dataTypes/location/address_2'
-        - $ref: '#/components/schemas/dataTypes/location/city'
-        - $ref: '#/components/schemas/dataTypes/location/state'
-        - $ref: '#/components/schemas/dataTypes/location/country'
-        - $ref: '#/components/schemas/dataTypes/location/postalCode'
-        - $ref: '#/components/schemas/dataTypes/location/phoneNumber'
-        - $ref: '#/components/schemas/dataTypes/location/faxNumber'
-
-      createRequest:
-        allOf:
-        - $ref: '#/components/requestBodies/jsonApi/createData'
-        - properties:
-            data:
-              $ref: '#/components/requestBodies/location/createResource'
 
     permissionLinks:
       createResource:
@@ -3827,12 +3735,6 @@ tags:
 - name: Shipments
   description: >
     Shipments are the core entity in the ShipChain Transmission service. This is a collection of endpoints related to managing shipments.
-- name: Locations
-  description: >
-    Locations are entities that contain fields pertaining to a physical location, to be referenced in a Shipment.
-- name: Locations
-  description: >
-    Locations are entities that contain fields pertaining to a physical location, to be referenced in a Shipment.
 - name: AsyncJobs
   description: >
     AsyncJobs model an asynchronous interaction with ShipChain Engine. They also contain references to the state of an associated Ethereum Transaction.
