@@ -226,7 +226,7 @@ class RPCClientFactory:
     @staticmethod
     def get_client(contract_version=None):
         if contract_version not in RPCClientFactory.clients:
-            if contract_version is None:
+            if not contract_version:
                 RPCClientFactory.clients[contract_version] = Load110RPCClient()  # Default version
             elif contract_version == '1.1.0':
                 RPCClientFactory.clients[contract_version] = Load110RPCClient()
