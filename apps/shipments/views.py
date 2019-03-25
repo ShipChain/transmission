@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime, timezone
 from string import Template
 
 from django.conf import settings
@@ -43,14 +42,15 @@ class ShipmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            if 'permission_link' in self.request.query_params and self.request.query_params['permission_link']:
+            permission_link = self.request.query_params.get('permission_link', None)
+            if permission_link:
                 try:
-                    permission_link = PermissionLink.objects.get(pk=self.request.query_params['permission_link'])
-                    if permission_link.expiration_date and permission_link.expiration_date < datetime.now(timezone.utc):
-                        queryset = queryset.filter(owner_access_filter(self.request))
+                    permission_link_obj = PermissionLink.objects.get(pk=permission_link)
                 except ObjectDoesNotExist:
+                    LOG.warning(f'User: {self.request.user}, is trying to access a shipment with permission link: '
+                                f'{permission_link}')
                     raise PermissionDenied('No permission link found.')
-                queryset = queryset.filter(owner_access_filter(self.request) | Q(pk=permission_link.shipment.pk))
+                queryset = queryset.filter(owner_access_filter(self.request) | Q(pk=permission_link_obj.shipment.pk))
             else:
                 queryset = queryset.filter(owner_access_filter(self.request))
         return queryset
