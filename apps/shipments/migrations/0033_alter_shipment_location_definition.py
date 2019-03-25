@@ -5,6 +5,35 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def enforce_unique_locations(apps, schema_editor):
+    existing_locations_seen = set()
+    Shipment = apps.get_model('shipments', 'Shipment')
+    for shipment in Shipment.objects.all():
+        if shipment.ship_from_location_id and shipment.ship_from_location_id in existing_locations_seen:
+            shipment.ship_from_location.pk = None
+            shipment.ship_from_location.id = None
+            shipment.ship_from_location.save()
+        existing_locations_seen.add(shipment.ship_from_location.id)
+
+        if shipment.ship_to_location_id and shipment.ship_to_location_id in existing_locations_seen:
+            shipment.ship_to_location.pk = None
+            shipment.ship_to_location.id = None
+            shipment.ship_to_location.save()
+        existing_locations_seen.add(shipment.ship_to_location.id)
+
+        if shipment.final_destination_location_id and shipment.final_destination_location_id in existing_locations_seen:
+            shipment.final_destination_location.pk = None
+            shipment.final_destination_location.id = None
+            shipment.final_destination_location.save()
+        existing_locations_seen.add(shipment.final_destination_location.id)
+
+        if shipment.bill_to_location_id and shipment.bill_to_location_id in existing_locations_seen:
+            shipment.bill_to_location.pk = None
+            shipment.bill_to_location.id = None
+            shipment.bill_to_location.save()
+        existing_locations_seen.add(shipment.bill_to_location.id)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -16,6 +45,7 @@ class Migration(migrations.Migration):
             model_name='location',
             name='owner_id',
         ),
+        migrations.RunPython(enforce_unique_locations),
         migrations.AlterField(
             model_name='location',
             name='country',
@@ -24,7 +54,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='shipment',
             name='bill_to_location',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, related_name='shipment_bill', to='shipments.Location'),
+            field=models.OneToOneField(null=True, on_delete=django.db.models.deletion.PROTECT, related_name='shipment_bill', to='shipments.Location'),
         ),
         migrations.AlterField(
             model_name='shipment',
