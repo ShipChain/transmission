@@ -23,6 +23,10 @@ from tests.utils import create_form_content, get_jwt
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'
 FAKE_ID = '00000000-0000-0000-0000-000000000000'
+SHIPPER_ID = '60b2662a-4ec6-4c28-ac1b-2b82ab4b3e03'
+CARRIER_ID = 'ff7908cd-6b10-43a7-9fa2-760c4b17dab4'
+MODERATOR_ID = '6eeff71e-332e-40e0-8961-f74dab3ff8e0'
+ANOTHER_ID = '355d0735-2d63-4054-8577-e675e7fa402b'
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
@@ -232,13 +236,6 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
 
-        # List of all documents attached to a shipment
-        url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipment.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.json()['data']
-        self.assertEqual(len(data), 2)
-
 
 class DocumentAPITests(APITestCase):
 
@@ -247,14 +244,26 @@ class DocumentAPITests(APITestCase):
         # Disable Shipment post save signal
         signals.post_save.disconnect(sender=Shipment, dispatch_uid='shipment_post_save')
 
-        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io'))
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io', sub=FAKE_ID))
+        self.shipper_user = passive_credentials_auth(get_jwt(username='user2@shipchain.io', sub=SHIPPER_ID))
+        self.carrier_user = passive_credentials_auth(get_jwt(username='user3@shipchain.io', sub=MODERATOR_ID))
+        self.moderator_user = passive_credentials_auth(get_jwt(username='user4@shipchain.io', sub=CARRIER_ID))
+        self.another_user = passive_credentials_auth(get_jwt(username='user4@shipchain.io', sub=ANOTHER_ID))
 
         shipment = Shipment.objects.create(
             vault_id=VAULT_ID,
             carrier_wallet_id=CARRIER_WALLET_ID,
             shipper_wallet_id=SHIPPER_WALLET_ID,
             storage_credentials_id=STORAGE_CRED_ID,
-            owner_id='5e8f1d76-162d-4f21-9b71-2ca97306ef7c'
+            owner_id=FAKE_ID
+        )
+
+        shipment_2 = Shipment.objects.create(
+            vault_id=VAULT_ID,
+            carrier_wallet_id=CARRIER_WALLET_ID,
+            shipper_wallet_id=SHIPPER_WALLET_ID,
+            storage_credentials_id=STORAGE_CRED_ID,
+            owner_id=FAKE_ID
         )
 
         LoadShipment.objects.create(shipment=shipment,
@@ -265,13 +274,24 @@ class DocumentAPITests(APITestCase):
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
         self.data = [
-            {'document_type': DocumentType.BOL, 'file_type': FileType.PDF, 'shipment': shipment},
+            {'document_type': DocumentType.BOL, 'file_type': FileType.PDF, 'shipment': shipment,
+             'upload_status': UploadStatus.PENDING, 'owner_id': self.user_1.id},
+            {'document_type': DocumentType.BOL, 'file_type': FileType.PNG, 'shipment': shipment,
+             'upload_status': UploadStatus.COMPLETE, 'owner_id': self.user_1.id},
+            {'document_type': DocumentType.OTHER, 'file_type': FileType.JPEG, 'shipment': shipment,
+             'upload_status': UploadStatus.COMPLETE, 'owner_id': self.user_1.id},
+            {'document_type': DocumentType.OTHER, 'file_type': FileType.PDF, 'shipment': shipment,
+             'upload_status': UploadStatus.COMPLETE, 'owner_id': self.shipper_user.id},
+            {'document_type': DocumentType.OTHER, 'file_type': FileType.PDF, 'shipment': shipment_2,
+             'upload_status': UploadStatus.COMPLETE, 'owner_id': self.shipper_user.id},
         ]
+
+        self.shipments = [shipment, shipment_2, ]
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
-    def create_docs_data(self):
+    def create_documents(self):
 
         self.pdf_docs = []
         for d in self.data:
@@ -280,8 +300,8 @@ class DocumentAPITests(APITestCase):
             )
 
     def test_create_objects(self):
-        self.create_docs_data()
-        self.assertEqual(Document.objects.all().count(), 1)
+        self.create_documents()
+        self.assertEqual(Document.objects.all().count(), 5)
 
     def test_s3_notification(self):
         mock_shipment_rpc_client = DocumentRPCClient
@@ -325,6 +345,97 @@ class DocumentAPITests(APITestCase):
         doc.refresh_from_db()
         mock_shipment_rpc_client.add_document_from_s3.assert_called_once()
         assert doc.upload_status == UploadStatus.COMPLETE
+
+    def test_document_permission(self):
+
+        url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
+
+        self.create_documents()
+
+        file_data = {
+            'name': 'Test Permission',
+            'document_type': 'Image',
+            'file_type': 'Png',
+            'shipment_id': self.shipments[0].id
+        }
+
+        self.set_user(self.user_1)
+
+        # user_1 is the shipment owner, he should have access to all 4 documents
+        response = self.client.get(url)
+        data = response.json()['data']
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(data), 4)
+
+        with mock.patch('apps.documents.permissions.UserHasPermission.is_shipper') as mock_is_shipper, \
+            mock.patch('apps.documents.permissions.UserHasPermission.is_carrier') as mock_is_carrier, \
+            mock.patch('apps.documents.permissions.UserHasPermission.is_moderator') as mock_is_moderator:
+            mock_is_shipper.return_value = True
+            mock_is_carrier.return_value = False
+            mock_is_moderator.return_value = False
+
+            # shipper_user is the  shipment's shipper, he should have access to all 4 shipment's documents
+            self.set_user(self.shipper_user)
+            response = self.client.get(url)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 4)
+            self.assertEqual(mock_is_shipper.call_count, 1)
+            self.assertEqual(mock_is_carrier.call_count, 0)
+            self.assertEqual(mock_is_moderator.call_count, 0)
+
+            # carrier_user is the shipment's carrier, he should have access to all 4 shipment's documents
+            self.set_user(self.carrier_user)
+            mock_is_shipper.return_value = False
+            mock_is_carrier.return_value = True
+            response = self.client.get(url)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 4)
+            self.assertEqual(mock_is_shipper.call_count, 2)
+            self.assertEqual(mock_is_carrier.call_count, 1)
+            self.assertEqual(mock_is_moderator.call_count, 0)
+
+            # moderator_user is the shipment's moderator, he should have access to all 4 shipment's documents
+            self.set_user(self.moderator_user)
+            mock_is_carrier.return_value = False
+            mock_is_moderator.return_value = True
+            response = self.client.get(url)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 4)
+            self.assertEqual(mock_is_shipper.call_count, 3)
+            self.assertEqual(mock_is_carrier.call_count, 2)
+            self.assertEqual(mock_is_moderator.call_count, 1)
+
+            # another_user is none of shipment owner, shipper, carrier or moderator.
+            # He shouldn't have access to the shipment's documents
+            self.set_user(self.another_user)
+            mock_is_moderator.return_value = False
+            response = self.client.get(url)
+            # data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            # self.assertEqual(len(data), 4)
+            self.assertEqual(mock_is_shipper.call_count, 4)
+            self.assertEqual(mock_is_carrier.call_count, 3)
+            self.assertEqual(mock_is_moderator.call_count, 2)
+
+            mock_is_shipper.reset_mock()
+            mock_is_carrier.reset_mock()
+            mock_is_moderator.reset_mock()
+
+            mock_is_shipper.return_value = True
+            mock_is_carrier.return_value = False
+            mock_is_moderator.return_value = False
+
+            # The shipper should be able to upload a document
+            # This is equivalently valid for carrier and moderator
+            self.set_user(self.shipper_user)
+            response = self.client.post(url, file_data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(mock_is_shipper.call_count, 1)
+            self.assertEqual(mock_is_carrier.call_count, 0)
+            self.assertEqual(mock_is_moderator.call_count, 0)
 
 
 class ImageDocumentViewSetAPITests(APITestCase):

@@ -1,5 +1,7 @@
 from django.conf import settings
 from rest_framework import permissions, status
+
+from apps.shipments.models import Shipment
 from apps.authentication import get_jwt_from_request
 from apps.permissions import has_owner_access
 
@@ -13,32 +15,46 @@ class UserHasPermission(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
+        shipment = obj.shipment
 
-        def is_carrier():
-            """
-            Custom permission for carrier documents management access
-            """
-            response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{obj.shipment.carrier_wallet_id}/',
-                                                     headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+        return has_owner_access(request, obj) or has_owner_access(request, shipment) or \
+            self.is_shipper(request, shipment) or self.is_carrier(request, shipment) or \
+            self.is_moderator(request, shipment)
 
-            return response.status_code == status.HTTP_200_OK
+    def has_permission(self, request, view):
 
-        def is_moderator():
-            """
-            Custom permission for moderator documents management access
-            """
-            response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{obj.shipment.moderator_wallet_id}/',
-                                                     headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+        shipment_id = request.parser_context['kwargs'].get('shipment_pk', None)
+        if not shipment_id:
+            return True
 
-            return response.status_code == status.HTTP_200_OK
+        shipment = Shipment.objects.get(id=shipment_id)
 
-        def is_shipper():
-            """
-            Custom permission for shipper documents management access
-            """
-            response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{obj.shipment.shipper_wallet_id}/',
-                                                     headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+        return has_owner_access(request, shipment) or self.is_shipper(request, shipment) or \
+            self.is_carrier(request, shipment) or self.is_moderator(request, shipment)
 
-            return response.status_code == status.HTTP_200_OK
+    def is_carrier(self, request, shipment):
+        """
+        Custom permission for carrier documents management access
+        """
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.carrier_wallet_id}/',
+                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
-        return has_owner_access(request, obj) or is_shipper() or is_carrier() or is_moderator()
+        return response.status_code == status.HTTP_200_OK
+
+    def is_moderator(self, request, shipment):
+        """
+        Custom permission for moderator documents management access
+        """
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.moderator_wallet_id}/',
+                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+        return response.status_code == status.HTTP_200_OK
+
+    def is_shipper(self, request, shipment):
+        """
+        Custom permission for shipper documents management access
+        """
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.shipper_wallet_id}/',
+                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+        return response.status_code == status.HTTP_200_OK
