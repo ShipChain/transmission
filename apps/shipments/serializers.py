@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import OrderedDict
+from datetime import datetime, timezone
 
 import boto3
 from botocore.exceptions import ClientError, BotoCoreError
@@ -207,8 +208,15 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     def validate_device_id(self, device_id):
         auth = self.context['auth']
+        if not device_id:
+            if not self.instance.device:
+                return None
+            if not self.instance.delivery_act or self.instance.delivery_act >= datetime.now(timezone.utc):
+                raise serializers.ValidationError('Cannot remove device from Shipment in progress')
+            return None
 
         device = Device.get_or_create_with_permission(auth, device_id)
+
         if hasattr(device, 'shipment'):
             if not device.shipment.delivery_act:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
