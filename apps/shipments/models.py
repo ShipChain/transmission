@@ -222,8 +222,8 @@ class Shipment(models.Model):
                                             related_name='shipment_to', null=True)
     final_destination_location = models.OneToOneField(Location, on_delete=models.PROTECT,
                                                       related_name='shipment_dest', null=True)
-    bill_to_location = models.ForeignKey(Location, on_delete=models.PROTECT,
-                                         related_name='shipment_bill', null=True)
+    bill_to_location = models.OneToOneField(Location, on_delete=models.PROTECT,
+                                            related_name='shipment_bill', null=True)
 
     carriers_instructions = models.CharField(max_length=255, blank=True, null=True)
     special_instructions = models.CharField(max_length=255, blank=True, null=True)
