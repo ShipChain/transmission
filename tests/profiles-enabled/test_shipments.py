@@ -642,7 +642,18 @@ class ShipmentAPITests(APITestCase):
 
     @mock_iot
     def test_shipment_device_history(self):
-        self.create_shipment()
+        from apps.rpc_client import requests
+        from tests.utils import mocked_rpc_response
+
+        with mock.patch.object(requests.Session, 'post') as mock_rpc:
+            mock_rpc.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_id": "TEST_VAULT_ID"
+                }
+            })
+            self.create_shipment()
 
         history = Shipment.history.all()
         history.delete()
@@ -656,11 +667,14 @@ class ShipmentAPITests(APITestCase):
         # Mock device validation call
         with mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_shipper_wallet_id') as mock_wallet_validation, \
                 mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_storage_credentials_id') as mock_storage_validation, \
-                mock.patch('apps.shipments.models.Device.get_or_create_with_permission') as mock_get_or_create_with_permission:
+                mock.patch('apps.shipments.models.Device.get_or_create_with_permission') as mock_get_or_create_with_permission, \
+                mock.patch('apps.iot_client.requests.Session.put') as mock_shadow:
 
             mock_wallet_validation.return_value = SHIPPER_WALLET_ID
             mock_storage_validation.return_value = STORAGE_CRED_ID
             mock_get_or_create_with_permission.return_value = device
+
+            mock_shadow.return_value = mocked_rpc_response({'data': {'shipmentId': 'Test'}})
 
             self.set_user(self.user_1)
 
