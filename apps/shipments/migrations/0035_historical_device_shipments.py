@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('shipments', '0027_shipment_device_onetoone'),
+        ('shipments', '0034_alter_shipment_location_definition'),
     ]
 
     operations = [
@@ -111,5 +111,35 @@ class Migration(migrations.Migration):
             model_name='shipment',
             name='version',
             field=models.CharField(default='1.2.0', max_length=255),
+        ),
+        migrations.AddField(
+            model_name='historicalshipment',
+            name='updated_by',
+            field=models.CharField(max_length=36, null=True),
+        ),
+        migrations.AlterField(
+            model_name='historicalshipment',
+            name='is_hazmat',
+            field=models.NullBooleanField(),
+        ),
+        migrations.AlterField(
+            model_name='historicalshipment',
+            name='is_master_bol',
+            field=models.NullBooleanField(),
+        ),
+        migrations.AlterField(
+            model_name='historicalshipment',
+            name='us_routed',
+            field=models.NullBooleanField(),
+        ),
+        migrations.AlterField(
+            model_name='historicalshipment',
+            name='version',
+            field=models.CharField(default='1.2.1', max_length=255),
+        ),
+        migrations.AlterField(
+            model_name='shipment',
+            name='version',
+            field=models.CharField(default='1.2.1', max_length=255),
         ),
     ]
