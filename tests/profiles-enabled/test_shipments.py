@@ -418,7 +418,12 @@ class ShipmentAPITests(APITestCase):
                     "vault_signed": {'hash': "TEST_VAULT_SIGNATURE"}
                 }
             })
-            self.shipments[0].save()
+
+            with mock.patch('apps.iot_client.requests.Session.put') as mocked:
+                mocked.return_value = mocked_rpc_response({'data': {
+                    'shipmentId': self.shipments[0].id
+                }})
+                self.shipments[0].save()
 
         url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
 
@@ -462,7 +467,11 @@ class ShipmentAPITests(APITestCase):
 
             # Creating a new shipment with a device for which the certificate has expired and a new one has been issued
             self.shipments[0].device = None
-            self.shipments[0].save()
+            with mock.patch('apps.iot_client.requests.Session.put') as mocked:
+                mocked.return_value = mocked_rpc_response({'data': {
+                    'shipmentId': None
+                }})
+                self.shipments[0].save()
             device.certificate_id = expired_certificate
             device.save()
             device.refresh_from_db()
