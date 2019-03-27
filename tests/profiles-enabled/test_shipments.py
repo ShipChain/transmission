@@ -497,7 +497,11 @@ class ShipmentAPITests(APITestCase):
                 mock_wallet_validation.return_value = SHIPPER_WALLET_ID
                 mock_storage_validation.return_value = STORAGE_CRED_ID
 
-                response = self.client.post(url, post_data, format='json')
+                with mock.patch('apps.iot_client.requests.Session.put') as mocked:
+                    mocked.return_value = mocked_rpc_response({'data': {
+                        'shipmentId': 'dunno yet'
+                    }})
+                    response = self.client.post(url, post_data, format='json')
                 self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
                 # The new certificate should be attached to the shipment's device
