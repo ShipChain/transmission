@@ -1249,7 +1249,7 @@
               }
             ]
           },
-           {
+          {
             "name": "Documents",
             "description": null,
             "item": [
@@ -1421,6 +1421,46 @@
                       "v1",
                       "documents",
                       "{{document_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              }
+            ]
+          },
+          {
+            "name":  "Devices",
+            "description": null,
+            "item": [
+              {
+                "name": "Add Tracking Data",
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}",
+                      "description": "",
+                      "enabled": true
+                    }
+                  ],
+                  "body":
+                  {
+                    "mode": "raw",
+                    "raw": "{\n\t\"payload\":\n\t{\n\t\t\"position\":\n\t\t{\n\t\t\t\"latitude\": -81.048253,\n\t\t\t\"longitude\": 34.628643,\n\t\t\t\"altitude\": 924,\n\t\t\t\"source\": \"gps\",\n            \"certainty\": 95,\n            \"speed\": 34\n\t\t\t\n\t\t},\n\n\t\t\"version\": \"1.0.0\",\n        \"device_id\": \"{{device_id}}\",\n        \"timestamp\": \"2018-09-18T15:02:30.563847+00:00\"\n\t\n\t}\n}"
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/devices/{{device_id}}/tracking/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "devices",
+                      "{{device_id}}",
+                      "tracking",
                       ""
                     ]
                   }
