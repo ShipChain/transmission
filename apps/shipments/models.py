@@ -348,7 +348,8 @@ class Shipment(models.Model):
                                                    'module': __name__})
         return async_job
 
-    def set_vault_hash(self, vault_hash, action_type, rate_limit=False, use_updated_by=True):
+    def set_vault_hash(self, vault_hash, action_type, rate_limit=settings.DATA_VAULT_HASH_RATE_LIMIT,
+                       use_updated_by=True):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.loadshipment and self.loadshipment.shipment_state is not ShipmentState.NOT_CREATED:
@@ -382,7 +383,7 @@ class Shipment(models.Model):
             elif rate_limit:
                 LOG.debug(f'Shipment {self.id} requested a rate-limited vault hash update')
                 LOG.debug(f'No pending vault hash updates for {self.id}, '
-                          f'sending one in {settings.VAULT_HASH_RATE_LIMIT} minutes')
+                          f'sending one in {rate_limit} minutes')
                 async_job = AsyncJob.rpc_job_for_listener(
                     rpc_method=rpc_client.set_vault_hash_tx,
                     rpc_parameters=[self.shipper_wallet_id,
@@ -390,7 +391,7 @@ class Shipment(models.Model):
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
                     listener=self,
-                    delay=settings.VAULT_HASH_RATE_LIMIT)
+                    delay=rate_limit)
                 async_job.actions.create(action_type=action_type,
                                          vault_hash=vault_hash,
                                          user_id=self.updated_by if use_updated_by else None)

@@ -65,8 +65,8 @@ class AsyncTask:
             contract_version, unsigned_tx = getattr(self.rpc_client, self.async_job.parameters['rpc_method'])(
                 *self.async_job.parameters['rpc_parameters'])
             for shipment in self.async_job.listeners.filter(Model='shipments.Shipment'):
-                shipment.contract_version = contract_version
-                shipment.save()
+                from apps.shipments.models import Shipment
+                Shipment.objects.filter(id=shipment.id).update(contract_version=contract_version)
         else:
             unsigned_tx = getattr(self.rpc_client, self.async_job.parameters['rpc_method'])(
                 *self.async_job.parameters['rpc_parameters'])
