@@ -652,121 +652,122 @@ class ShipmentAPITests(APITestCase):
 
         device = Device.objects.create(id=device_id)
 
-        # Mock device validation call
-        mock_get_or_create_with_permission = Device
-        mock_get_or_create_with_permission.get_or_create_with_permission = mock.Mock(return_value=device)
-
         # Mock wallet and storage validation
-        mock_validation = ShipmentCreateSerializer
-        mock_validation.validate_shipper_wallet_id = mock.Mock(return_value=SHIPPER_WALLET_ID)
-        mock_validation.validate_storage_credentials_id = mock.Mock(return_value=STORAGE_CRED_ID)
+        # Mock device validation call
+        with mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_shipper_wallet_id') as mock_wallet_validation, \
+                mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_storage_credentials_id') as mock_storage_validation, \
+                mock.patch('apps.shipments.models.Device.get_or_create_with_permission') as mock_get_or_create_with_permission:
 
-        self.set_user(self.user_1)
+            mock_wallet_validation.return_value = SHIPPER_WALLET_ID
+            mock_storage_validation.return_value = STORAGE_CRED_ID
+            mock_get_or_create_with_permission.return_value = device
 
-        create_shipment_data = {
-            'vault_id': VAULT_ID,
-            'carrier_wallet_id': CARRIER_WALLET_ID,
-            'shipper_wallet_id': SHIPPER_WALLET_ID,
-            'storage_credentials_id': STORAGE_CRED_ID
-        }
+            self.set_user(self.user_1)
 
-        url = reverse('shipment-list', kwargs={'version': 'v1'})
+            create_shipment_data = {
+                'vault_id': VAULT_ID,
+                'carrier_wallet_id': CARRIER_WALLET_ID,
+                'shipper_wallet_id': SHIPPER_WALLET_ID,
+                'storage_credentials_id': STORAGE_CRED_ID
+            }
 
-        # A shipment created without a device shouldn't have history.
-        response = self.client.post(url, create_shipment_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        history = Shipment.history.all()
-        self.assertEqual(history.count(), 0)
+            url = reverse('shipment-list', kwargs={'version': 'v1'})
 
-        # A shipment created with device should have an initial history.
-        create_shipment_data['device_id'] = device.id
-        response = self.client.post(url, create_shipment_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        history = Shipment.history.all()
-        self.assertEqual(history.count(), 1)
+            # A shipment created without a device shouldn't have history.
+            response = self.client.post(url, create_shipment_data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+            history = Shipment.history.all()
+            self.assertEqual(history.count(), 0)
 
-        # Remove device from shipment and save without history
-        self.remove_device_from_shipment(device)
+            # A shipment created with device should have an initial history.
+            create_shipment_data['device_id'] = device.id
+            response = self.client.post(url, create_shipment_data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+            history = Shipment.history.all()
+            self.assertEqual(history.count(), 1)
 
-        # Adding the device to an existing shipment should account to history
-        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
-        response = self.client.patch(url, {'device_id': device.id}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        history = Shipment.history.all()
-        self.assertEqual(history.count(), 2)
+            # Remove device from shipment and save without history
+            self.remove_device_from_shipment(device)
 
-        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
+            # Adding the device to an existing shipment should account to history
+            url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+            response = self.client.patch(url, {'device_id': device.id}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+            history = Shipment.history.all()
+            self.assertEqual(history.count(), 2)
 
-        # Remove device from shipment and save without history
-        self.remove_device_from_shipment(device)
+            url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
 
-        response = self.client.patch(url, {'device_id': device.id}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        history = Shipment.history.all()
-        self.assertEqual(history.count(), 3)
+            # Remove device from shipment and save without history
+            self.remove_device_from_shipment(device)
 
-        self.set_user(self.user_2, self.token2)
-        # Remove device from shipment and save without history
-        self.remove_device_from_shipment(device)
+            response = self.client.patch(url, {'device_id': device.id}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+            history = Shipment.history.all()
+            self.assertEqual(history.count(), 3)
 
-        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[2].id})
-        response = self.client.patch(url, {'device_id': device.id}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-        history = Shipment.history.all()
-        self.assertEqual(history.count(), 4)
+            self.set_user(self.user_2, self.token2)
+            # Remove device from shipment and save without history
+            self.remove_device_from_shipment(device)
 
-        # -------------------------User_1 context ---------------------------#
-        # Use_1 has access permission to the device, he should have access to the device history
-        self.set_user(self.user_1, self.token)
-        mock_device_permission = DeviceShipmentHistoryPermission
+            url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[2].id})
+            response = self.client.patch(url, {'device_id': device.id}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+            history = Shipment.history.all()
+            self.assertEqual(history.count(), 4)
 
-        # Mock device permission
-        mock_device_permission.has_permission = mock.Mock(return_value=True)
+            # -------------------------User_1 context ---------------------------#
+            # Use_1 has access permission to the device, he should have access to the device history
+            self.set_user(self.user_1, self.token)
+            mock_device_permission = DeviceShipmentHistoryPermission
 
-        url = reverse('device-shipments-history', kwargs={'version': 'v1', 'device_id': device.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.json()['data']
-        self.assertEqual(len(data), 4)
-        mock_device_permission.has_permission.assert_called_once()
+            # Mock device permission
+            mock_device_permission.has_permission = mock.Mock(return_value=True)
 
-        # Test search fields
-        url_search = url + f'?search={self.user_2.id}'
-        response = self.client.get(url_search)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.json()['data']
-        self.assertEqual(len(data), 1)
+            url = reverse('device-shipments-history', kwargs={'version': 'v1', 'device_id': device.id})
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 4)
+            mock_device_permission.has_permission.assert_called_once()
 
-        # Test filter date_lesser, for dates lesser than tomorrow should return 4 historical models
-        date = datetime.utcnow().date() + timedelta(days=1)
-        url_filter = url + f'?date_lesser={date.isoformat()}'
-        response = self.client.get(url_filter)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.json()['data']
-        self.assertEqual(len(data), 4)
+            # Test search fields
+            url_search = url + f'?search={self.user_2.id}'
+            response = self.client.get(url_search)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 1)
 
-        # Test filter date_greater, for dates greater than tomorrow should return 0 historical model
-        date = datetime.utcnow().date() + timedelta(days=1)
-        url_filter = url + f'?date_greater={date.isoformat()}'
-        response = self.client.get(url_filter)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.json()['data']
-        self.assertEqual(len(data), 0)
+            # Test filter date_lesser, for dates lesser than tomorrow should return 4 historical models
+            date = datetime.utcnow().date() + timedelta(days=1)
+            url_filter = url + f'?date_lesser={date.isoformat()}'
+            response = self.client.get(url_filter)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 4)
 
-        # -------------------------User_3 context ---------------------------#
-        # Use_3 doesn't have access permission to the device, he shouldn't have access to the device history
-        self.set_user(self.user_3, self.token3)
+            # Test filter date_greater, for dates greater than tomorrow should return 0 historical model
+            date = datetime.utcnow().date() + timedelta(days=1)
+            url_filter = url + f'?date_greater={date.isoformat()}'
+            response = self.client.get(url_filter)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 0)
 
-        # Reset device's mock values
-        mock_device_permission.has_permission.reset_mock()
-        # Mock device permission
-        mock_device_permission = DeviceShipmentHistoryPermission
-        mock_device_permission.has_permission = mock.Mock(return_value=False)
+            # -------------------------User_3 context ---------------------------#
+            # Use_3 doesn't have access permission to the device, he shouldn't have access to the device history
+            self.set_user(self.user_3, self.token3)
 
-        url = reverse('device-shipments-history', kwargs={'version': 'v1', 'device_id': device.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        mock_device_permission.has_permission.assert_called_once()
+            # Reset device's mock values
+            mock_device_permission.has_permission.reset_mock()
+            # Mock device permission
+            mock_device_permission = DeviceShipmentHistoryPermission
+            mock_device_permission.has_permission = mock.Mock(return_value=False)
+
+            url = reverse('device-shipments-history', kwargs={'version': 'v1', 'device_id': device.id})
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            mock_device_permission.has_permission.assert_called_once()
 
     @httpretty.activate
     def test_create(self):
