@@ -47,7 +47,7 @@ class LoadEventHandler:
         if shipment.moderator_wallet_id:
             shipment.set_moderator()
         shipment.set_vault_uri(shipment.vault_uri)
-        shipment.set_vault_hash(signature['hash'], action_type=AsyncActionType.SHIPMENT)
+        shipment.set_vault_hash(signature['hash'], action_type=AsyncActionType.SHIPMENT, rate_limit=0)
 
     @staticmethod
     def shipment_carrier_set(event, shipment):
