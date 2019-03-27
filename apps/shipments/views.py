@@ -213,9 +213,7 @@ class DeviceViewSet(viewsets.GenericViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=(permissions.AllowAny,))
     def tracking(self, request, version, pk):
-        if request.method == 'POST':
-            return self.add_tracking_data(request, version, pk)
-        raise exceptions.MethodNotAllowed(request.method)
+        return self.add_tracking_data(request, version, pk)
 
 
 class PermissionLinkViewSet(mixins.CreateModelMixin,
