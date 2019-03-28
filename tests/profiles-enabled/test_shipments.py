@@ -265,6 +265,8 @@ class ShipmentAPITests(APITestCase):
                 certificate_id=certificate_id
             )
 
+            tracking_get_url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
                 "result": {
@@ -274,7 +276,7 @@ class ShipmentAPITests(APITestCase):
             })
             self.shipments[0].save()
 
-            url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+            url = reverse('device-tracking', kwargs={'version': 'v1', 'pk': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'})
 
             track_dic = {
                 'position': {
@@ -312,17 +314,21 @@ class ShipmentAPITests(APITestCase):
             list_payload = [{'payload': signed_data}, {'payload': signed_data2}]
             response = self.client.post(url, list_payload, format='json')
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+            self.assertEqual(TrackingData.objects.all().count(), 3)
 
             # Get tracking data
-            response = self.client.get(url)
+            response = self.client.get(tracking_get_url)
 
             # Unauthenticated request should fail
             self.assertEqual(response.status_code, 403)
 
             # Authenticated request should succeed
             self.set_user(self.user_1)
-            response = self.client.get(url)
+            response = self.client.get(tracking_get_url)
+            print(response.status_code)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
+            print(response.content)
+            print(response)
             data = json.loads(response.content)['data']
             self.assertEqual(data['type'], 'FeatureCollection')
 
@@ -337,9 +343,10 @@ class ShipmentAPITests(APITestCase):
             # Send second tracking data
             response = self.client.post(url, {'payload': signed_data}, format='json')
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+            self.assertEqual(TrackingData.objects.all().count(), 4)
 
             # Test second tracking data
-            response = self.client.get(url)
+            response = self.client.get(tracking_get_url)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
             data = json.loads(response.content)['data']
             self.assertEqual(len(data['features']), 4)
@@ -350,7 +357,7 @@ class ShipmentAPITests(APITestCase):
             self.assertEqual(data['features'][0]['geometry']['coordinates'], [pos['longitude'], pos['latitude']])
 
             # Get data as point
-            url_as_point = url + '?as_point'
+            url_as_point = tracking_get_url + '?as_point'
             response = self.client.get(url_as_point)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
             data = json.loads(response.content)['data']
@@ -664,7 +671,7 @@ class ShipmentAPITests(APITestCase):
                 }})
                 self.shipments[0].save()
 
-        url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+        url = reverse('device-tracking', kwargs={'version': 'v1', 'pk': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'})
 
         track_dic = {
             'position': {
