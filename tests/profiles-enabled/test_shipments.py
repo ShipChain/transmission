@@ -325,10 +325,7 @@ class ShipmentAPITests(APITestCase):
             # Authenticated request should succeed
             self.set_user(self.user_1)
             response = self.client.get(tracking_get_url)
-            print(response.status_code)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
-            print(response.content)
-            print(response)
             data = json.loads(response.content)['data']
             self.assertEqual(data['type'], 'FeatureCollection')
 
@@ -1826,12 +1823,9 @@ class ShipmentWithIoTAPITests(APITestCase):
 
             shipment.delivery_act = datetime.now()
             shipment.save()
-            print('Before test: ', mocked.call_count)
 
             # Setting device_id with form data should also succeed
             response = self.set_device_id_form_data(shipment.id, '', None)
-            print(response.content)
             assert response.status_code == status.HTTP_202_ACCEPTED
-            print('After test: ', mocked.call_count)
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
