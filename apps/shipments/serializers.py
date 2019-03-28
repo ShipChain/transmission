@@ -400,10 +400,20 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
 class DeviceShipmentsHistorySerializer(serializers.ModelSerializer):
     shipment_id = serializers.SerializerMethodField()
+    load_data = LoadShipmentSerializer(source='loadshipment', required=False)
+    ship_from_location = LocationSerializer(required=False)
+    ship_to_location = LocationSerializer(required=False)
+    bill_to_location = LocationSerializer(required=False)
+    final_destination_location = LocationSerializer(required=False)
+    device = DeviceSerializer(required=False)
 
     class Meta:
         model = Shipment.history.model
-        fields = '__all__'
+        exclude = ('history_user', )
+
+    class JSONAPIMeta:
+        included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
+                              'final_destination_location', 'load_data', 'device']
 
     def get_shipment_id(self, obj):
         return obj.id
