@@ -202,6 +202,7 @@ paths:
         - $ref: '#/components/parameters/document/uploadStatus'
       tags:
       - Shipments
+      - Documents
       responses:
         '200':
           description: *response_200
@@ -215,6 +216,104 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/errors/401'
+
+    post:
+      summary: Create document
+      description: |
+        Create a new `Document` owned by the current user.
+
+        A presigned S3 request will be generated with credentials to POST a new file of the specified type to S3.
+        Engine will then upload the file to the Shipment's vault.
+
+        Note: `Document.upload_status` will need to be updated to `COMPLETE` in order for the document to be retrieved
+        from S3.
+      tags:
+        - Documents
+      responses:
+        '202':
+          description: *response_202
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/document/createResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/document/createRequest'
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/requestBodies/document/createAttributes'
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: '#/components/requestBodies/document/createAttributes'
+
+  /api/v1/shipments/{shipment_id}/documents/{document_id}/:
+    get:
+      summary: Get document details
+      description: |
+        Get additional info about a `Document`.
+
+        If `Document.upload_status` is `COMPLETE`, a presigned S3 URL for downloading the file will be included in the
+        `meta` payload.
+      parameters:
+        - $ref: '#/components/parameters/document/path'
+      tags:
+        - Documents
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/document/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+    patch:
+      summary: Update a document
+      description: >
+        Update a `Document` object with the provided parameters.
+      tags:
+        - Documents
+      responses:
+        '202':
+          description: *response_202
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/document/getResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/document/createRequest'
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/requestBodies/document/createAttributes'
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: '#/components/requestBodies/document/createAttributes'
 
   /api/v1/shipments/{shipment_id}/transactions/:
     get:
@@ -316,132 +415,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
-
-  /api/v1/documents/:
-    get:
-      summary: List documents
-      description: >
-        Retrieve an array of `Document` objects associated with the current user.
-      parameters:
-      - $ref: '#/components/parameters/page'
-      - $ref: '#/components/parameters/page_size'
-      - $ref: '#/components/parameters/document/fileType'
-      - $ref: '#/components/parameters/document/documentType'
-      - $ref: '#/components/parameters/document/uploadStatus'
-      tags:
-      - Documents
-      responses:
-        '200':
-          description: *response_200
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/document/listResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-
-    post:
-      summary: Create document
-      description: |
-        Create a new `Document` owned by the current user.
-
-        A presigned S3 request will be generated with credentials to POST a new file of the specified type to S3.
-        Engine will then upload the file to the Shipment's vault.
-
-        Note: `Document.upload_status` will need to be updated to `COMPLETE` in order for the document to be retrieved
-        from S3.
-      tags:
-      - Documents
-      responses:
-        '202':
-          description: *response_202
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/document/createResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-      requestBody:
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/requestBodies/document/createRequest'
-          application/json:
-            schema:
-              allOf:
-              - $ref: '#/components/requestBodies/document/createAttributes'
-          multipart/form-data:
-            schema:
-              allOf:
-              - $ref: '#/components/requestBodies/document/createAttributes'
-
-  /api/v1/documents/{document_id}/:
-    get:
-      summary: Get document details
-      description: |
-        Get additional info about a `Document`.
-
-        If `Document.upload_status` is `COMPLETE`, a presigned S3 URL for downloading the file will be included in the
-        `meta` payload.
-      parameters:
-      - $ref: '#/components/parameters/document/path'
-      tags:
-      - Documents
-      responses:
-        '200':
-          description: *response_200
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/document/getResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-
-    patch:
-      summary: Update a document
-      description: >
-        Update a `Document` object with the provided parameters.
-      tags:
-      - Documents
-      responses:
-        '202':
-          description: *response_202
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/document/getResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-      requestBody:
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/requestBodies/document/createRequest'
-          application/json:
-            schema:
-              allOf:
-              - $ref: '#/components/requestBodies/document/createAttributes'
-          multipart/form-data:
-            schema:
-              allOf:
-              - $ref: '#/components/requestBodies/document/createAttributes'
-
   /api/v1/shipments/{shipment_id}/tracking/:
     post:
       summary: Add tracking data
@@ -494,8 +467,6 @@ paths:
         Retrieve GPS tracking data associated with a `Shipment` as a GeoJSON FeatureCollection of points (content returned in 'data' attribute conforms to the [GeoJSON](https://tools.ietf.org/html/rfc7946) spec).
       parameters:
       - $ref: '#/components/parameters/shipment/path'
-#      - $ref: '#/components/parameters/shipment/asPoint'
-#      - $ref: '#/components/parameters/shipment/asLine'
       tags:
       - Shipments
       responses:
@@ -506,8 +477,6 @@ paths:
               schema:
                 oneOf:
                 - $ref: '#/components/schemas/tracking/pointResponse'
-#                - $ref: '#/components/schemas/tracking/lineResponse'
-#                - $ref: '#/components/schemas/tracking/getResponse'
         '401':
           description: *response_401
           content:
