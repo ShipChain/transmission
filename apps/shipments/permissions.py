@@ -12,7 +12,7 @@ PROFILES_URL = f'{settings.PROFILES_URL}/api/v1/wallet'
 
 class IsShipmentOwner(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object to edit it (for use in related querysets)
+    Custom permission to allow only the owner or a wallet owner to interact with a shipment's permission link
     """
 
     def has_object_permission(self, request, view, obj):
@@ -25,17 +25,19 @@ class IsShipmentOwner(permissions.BasePermission):
 
     def has_permission(self, request, view):
         shipment_id = request.parser_context['kwargs'].get('shipment_pk', None)
-        if not shipment_id:
+        if not shipment_id and request.user.is_authenticated:
             return True
 
         shipment = Shipment.objects.get(id=shipment_id)
 
-        return has_owner_access(request, shipment) or self.is_shipper(request, shipment) or \
-               self.is_carrier(request, shipment) or self.is_moderator(request, shipment)
+        return request.user.is_authenticated and (has_owner_access(request, shipment) or
+                                                  self.is_shipper(request, shipment) or
+                                                  self.is_carrier(request, shipment) or
+                                                  self.is_moderator(request, shipment))
 
     def is_carrier(self, request, shipment):
         """
-        Custom permission for carrier documents management access
+        Custom permission for carrier shipment permission link management access
         """
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.carrier_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
@@ -44,7 +46,7 @@ class IsShipmentOwner(permissions.BasePermission):
 
     def is_moderator(self, request, shipment):
         """
-        Custom permission for moderator documents management access
+        Custom permission for moderator shipment permission link management access
         """
         if shipment.moderator_wallet_id:
             response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.moderator_wallet_id}/?is_active',
@@ -55,7 +57,7 @@ class IsShipmentOwner(permissions.BasePermission):
 
     def is_shipper(self, request, shipment):
         """
-        Custom permission for shipper documents management access
+        Custom permission for shipper shipment permission link management access
         """
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.shipper_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
@@ -133,7 +135,7 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
 
     def is_carrier(self, request, shipment):
         """
-        Custom permission for carrier documents management access
+        Custom permission for carrier shipment access
         """
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.carrier_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
@@ -142,7 +144,7 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
 
     def is_moderator(self, request, shipment):
         """
-        Custom permission for moderator documents management access
+        Custom permission for moderator shipment access
         """
         if shipment.moderator_wallet_id:
             response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.moderator_wallet_id}/?is_active',
@@ -153,7 +155,7 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
 
     def is_shipper(self, request, shipment):
         """
-        Custom permission for shipper documents management access
+        Custom permission for shipper shipment access
         """
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.shipper_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
