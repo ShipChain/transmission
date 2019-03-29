@@ -26,6 +26,7 @@ LOG = logging.getLogger('transmission')
 
 class DocumentViewSet(mixins.CreateModelMixin,
                       mixins.RetrieveModelMixin,
+                      mixins.UpdateModelMixin,
                       mixins.ListModelMixin,
                       viewsets.GenericViewSet):
     queryset = Document.objects.all()
@@ -61,6 +62,23 @@ class DocumentViewSet(mixins.CreateModelMixin,
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        """
+        Update document object status according to upload status: COMPLETE or FAILED
+        """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        LOG.debug(f'Updating document {instance.id} with new details.')
+        log_metric('transmission.info', tags={'method': 'documents.update', 'module': __name__})
+
+        serializer = DocumentRetrieveSerializer(instance, data=request.data, partial=partial,
+                                                context={'auth': request.auth})
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_update(serializer)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
