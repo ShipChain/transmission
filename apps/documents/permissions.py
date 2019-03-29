@@ -36,7 +36,7 @@ class UserHasPermission(permissions.BasePermission):
         """
         Custom permission for carrier documents management access
         """
-        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.carrier_wallet_id}/',
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.carrier_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
         return response.status_code == status.HTTP_200_OK
@@ -45,16 +45,17 @@ class UserHasPermission(permissions.BasePermission):
         """
         Custom permission for moderator documents management access
         """
-        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.moderator_wallet_id}/',
-                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+        if shipment.moderator_wallet_id:
+            response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.moderator_wallet_id}/?is_active',
+                                                     headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
-        return response.status_code == status.HTTP_200_OK
+        return shipment.moderator_wallet_id and response.status_code == status.HTTP_200_OK
 
     def is_shipper(self, request, shipment):
         """
         Custom permission for shipper documents management access
         """
-        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.shipper_wallet_id}/',
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.shipper_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
         return response.status_code == status.HTTP_200_OK

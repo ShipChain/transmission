@@ -180,6 +180,54 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()
         self.assertEqual(response_data['data'][0]['id'], self.shipments[0].id)
 
+    @httpretty.activate
+    def test_carrier_shipment_access(self):
+        """
+        Ensure that the owner of a shipment's carrier wallet is able to access and update shipment objects.
+        """
+        self.create_shipment()
+        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{CARRIER_WALLET_ID}/?is_active",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{SHIPPER_WALLET_ID}/?is_active",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+
+        # Unauthenticated request should fail with 403
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Authenticated request for shipment owner should succeed
+        self.set_user(self.user_1)
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Authenticated request for shipment's carrier wallet owner should succeed
+        self.set_user(self.user_2)
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Authenticated request to update by shipment's carrier should succeed
+        shipment_update, content_type = create_form_content({"carrier_scac": "carrier_scac"})
+        response = self.client.patch(url, shipment_update, content_type=content_type)
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+        # Authenticated request to delete a shipment by carrier should fail
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Authenticated request by owner of a shipment to delete should succeed
+        self.set_user(self.user_1)
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+
     @mock_iot
     def test_add_tracking_data(self):
         from apps.rpc_client import requests
@@ -1134,7 +1182,15 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_to_location.geometry.coords, (23.0, 12.0))
 
+    @httpretty.activate
     def test_permission_link(self):
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{CARRIER_WALLET_ID}/?is_active",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_404_NOT_FOUND)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{SHIPPER_WALLET_ID}/?is_active",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_404_NOT_FOUND)
+
         self.create_shipment()
         url = reverse('shipment-permissions-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
         url_shipment_list = reverse('shipment-list', kwargs={'version': 'v1'})
