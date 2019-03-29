@@ -19,6 +19,7 @@ from django.views.generic import TemplateView
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework_nested import routers as drf_nested_routers
 
+from apps.routing import OptionalSlashRouter
 from apps.jobs import views as jobs
 from apps.shipments import views as shipments
 from apps.eth import views as eth
@@ -28,7 +29,7 @@ from apps.documents import views as documents
 API_PREFIX = r'^api/(?P<version>(v1|v2))'
 
 # pylint: disable=invalid-name
-router = drf_nested_routers.SimpleRouter()
+router = OptionalSlashRouter()
 
 router.register(f'{API_PREFIX[1:]}/shipments', shipments.ShipmentViewSet)
 router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, base_name='job')
