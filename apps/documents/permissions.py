@@ -1,3 +1,4 @@
+import logging
 from django.conf import settings
 from rest_framework import permissions, status
 
@@ -5,6 +6,8 @@ from apps.shipments.models import Shipment
 from apps.authentication import get_jwt_from_request
 from apps.permissions import has_owner_access
 
+
+LOG = logging.getLogger('transmission')
 
 PROFILES_URL = f'{settings.PROFILES_URL}/api/v1/wallet'
 
@@ -27,8 +30,11 @@ class UserHasPermission(permissions.BasePermission):
         if not shipment_id:
             # The document's views are only accessible via nested route
             return False
-
-        shipment = Shipment.objects.get(id=shipment_id)
+        try:
+            shipment = Shipment.objects.get(id=shipment_id)
+        except Shipment.DoesNotExist:
+            LOG.warning(f'User: {request.user}, is trying to access documents of not found shipment: {shipment_id}')
+            return False
 
         return has_owner_access(request, shipment) or self.is_shipper(request, shipment) or \
             self.is_carrier(request, shipment) or self.is_moderator(request, shipment)
