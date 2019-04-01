@@ -39,8 +39,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
             shipment_id = self.request.parser_context['kwargs'].get('shipment_pk', None)
-            if shipment_id:
-                return queryset.filter(shipment__id=shipment_id)
+            return queryset.filter(shipment__id=shipment_id)
         return queryset.filter(owner_id=get_owner_id(self.request))
 
     def perform_create(self, serializer):
