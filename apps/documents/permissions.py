@@ -28,7 +28,7 @@ class UserHasPermission(permissions.BasePermission):
 
         shipment_id = request.parser_context['kwargs'].get('shipment_pk', None)
         if not shipment_id:
-            # The document's views are only accessible via nested route
+            # The document's views are only accessible via nested routes
             return False
         try:
             shipment = Shipment.objects.get(id=shipment_id)
