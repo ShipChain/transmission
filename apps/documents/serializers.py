@@ -68,6 +68,15 @@ class DocumentCreateSerializer(DocumentSerializer):
             exclude = ('shipment',)
         meta_fields = ('presigned_s3',)
 
+    def validate_shipment_id(self, shipment_id):
+        shipment_id_parser = self.context['shipment_id_parser']
+        if shipment_id != shipment_id_parser:
+            LOG.warning(f'Trying to create document on shipment: {shipment_id_parser}, '
+                        f'with shipment: {shipment_id}, as attribute')
+            raise serializers.ValidationError(f'Invalid shipment_id: {shipment_id}')
+
+        return shipment_id
+
 
 class DocumentRetrieveSerializer(DocumentSerializer):
     presigned_s3_thumbnail = serializers.SerializerMethodField()
