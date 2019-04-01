@@ -3089,6 +3089,12 @@ components:
               data:
                 items:
                   $ref: '#/components/schemas/document/getResource'
+          - properties:
+              data:
+                items:
+                  properties:
+                    meta:
+                      $ref: '#/components/schemas/dataTypes/document/presignedS3Get'
 
     tracking:
       collectionResource:
