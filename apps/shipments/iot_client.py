@@ -36,3 +36,27 @@ class DeviceAWSIoTClient(AWSIoTClient):
             raise AWSIoTError("Error in response from AWS IoT")
 
         return iot_shadow['data']
+
+    @staticmethod
+    def get_list_owner_devices(owner_id, max_results=10, next_token=None, results=[]):
+        LOG.debug(f'Getting devices for: {owner_id} from AWS IoT')
+        log_metric('transmission.info', tags={'method': 'DeviceAWSIoTClient.get_list_owner_devices'})
+
+        iot_client = DeviceAWSIoTClient()
+        list_devices = iot_client._get(f'devices?ownerId={owner_id}&maxResults={max_results}&nextToken={next_token}')
+
+        if 'data' not in list_devices:
+            raise AWSIoTError("Error in response from AWS IoT")
+
+        new_devices = list_devices['data']['devices']
+        if len(results) > 0 and len(new_devices) > 0:
+            results.extend(new_devices)
+        elif len(new_devices) > 0:
+            results.extend(new_devices)
+
+        next_token = list_devices['data']['nextToken']
+        if next_token:
+            return iot_client.get_list_owner_devices(owner_id, max_results=max_results, next_token=next_token,
+                                                     results=results)
+
+        return results
