@@ -1543,14 +1543,15 @@ class ShipmentWithIoTAPITests(APITestCase):
             assert response.status_code == status.HTTP_400_BAD_REQUEST
             assert mocked.call_count == mocked_call_count
 
-            # Devices can be reused after deliveries are complete
+            # Devices can be reused after deliveries are complete and should be removed from old shipment
             shipment_obj.refresh_from_db()
             shipment_obj.delivery_act = datetime.now()
             shipment_obj.save()
 
+            self.assertIsNone(shipment_obj.device)
             response = self.create_shipment()
             assert response.status_code == status.HTTP_202_ACCEPTED
-            mocked_call_count += 1
+            mocked_call_count += 2
             assert mocked.call_count == mocked_call_count
 
             response_json = response.json()
