@@ -25,8 +25,6 @@ class IsShipmentOwner(permissions.BasePermission):
 
     def has_permission(self, request, view):
         shipment_id = view.kwargs['shipment_pk']
-        if not shipment_id and request.user.is_authenticated:
-            return True
 
         shipment = Shipment.objects.get(id=shipment_id)
 
