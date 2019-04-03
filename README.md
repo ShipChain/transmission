@@ -187,7 +187,7 @@ Once the dependencies are resolved, starting Transmission should be as easy as:
 
 By default, the [dev.yml](bin/dev.yml) compose file uses Django runserver, which is mapped to the host port 8000.
 
-In addition, you are able to see the current Celery tasks when running locally through Flower, which is mapped to the port 8888.
+In addition, you are able to see the current Celery tasks when running locally through Flower, which is mapped to the host port 8888.
 
 ### Authentication
 All endpoints require a valid JWT from OIDC Auth with the ShipChain Profiles service. The JWT shall
