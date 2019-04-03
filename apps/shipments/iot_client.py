@@ -54,9 +54,7 @@ class DeviceAWSIoTClient(AWSIoTClient):
             raise AWSIoTError("Error in response from AWS IoT")
 
         new_devices = list_devices['data']['devices']
-        if len(results) > 0 and len(new_devices) > 0:
-            results.extend(new_devices)
-        elif len(new_devices) > 0:
+        if len(new_devices) > 0:
             results.extend(new_devices)
 
         next_token = list_devices['data']['nextToken']
