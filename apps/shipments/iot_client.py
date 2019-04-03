@@ -39,9 +39,12 @@ class DeviceAWSIoTClient(AWSIoTClient):
         return iot_shadow['data']
 
     @staticmethod
-    def get_list_owner_devices(owner_id, max_results=settings.IOT_DEVICES_MAX_RESULTS, next_token=None, results=[]):
+    def get_list_owner_devices(owner_id, max_results=settings.IOT_DEVICES_MAX_RESULTS, next_token=None, results=None):
         LOG.debug(f'Getting devices for: {owner_id} from AWS IoT')
         log_metric('transmission.info', tags={'method': 'DeviceAWSIoTClient.get_list_owner_devices'})
+
+        if not next_token:
+            results = []
 
         iot_client = DeviceAWSIoTClient()
         list_devices = iot_client._get(f'devices?ownerId={owner_id}&maxResults={max_results}'

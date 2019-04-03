@@ -2,6 +2,8 @@ import copy
 import json
 import re
 import time
+import random
+import types
 from unittest import mock
 
 import boto3
@@ -2083,22 +2085,42 @@ class DevicesLocationsAPITests(APITestCase):
 
         self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io', sub=OWNER_ID))
 
+        self.map_responses = {}
+
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
+
+    def random_location(self):
+        """
+        :return: [lon, lat] randomly generated in their respective valid ranges
+        """
+        return [random.uniform(-180, 180), random.uniform(-90, 90)]
 
     def iot_responses(self, owner_id, num_devices=5, next_token=False):
 
         device_template = {
-            "deviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            "deviceId": "",
             "deviceType": "AXLE_GATEWAY",
             "attributes": {
+                "creationDate": "2019-04-01T00:56:24.037787",
                 "environment": "test",
                 "version": "v.1.1",
-                "registration": "fb2024be-5518-4b85-9564-ec24144f2b81",
+                "registration": "",
                 "owner": owner_id
             },
+            "deviceGroups": [
+                owner_id,
+            ],
             "shadowData": {
-                "reported": {},
+                "reported": {
+                    "activated": True,
+                    "connected": True,
+                    "deviceId": "",
+                    "location": [],
+                    "ownerId": owner_id,
+                    "samplingInterval": 600,
+                    "shipmentId": ''
+                },
                 "notSet": {}
             }
         }
@@ -2108,18 +2130,30 @@ class DevicesLocationsAPITests(APITestCase):
             device = copy.deepcopy(device_template)
             device['deviceId'] = random_id()
             device['attributes']['registration'] = random_id()
+            device['shadowData']['reported']['location'] = self.random_location()
+            device['shadowData']['reported']['deviceId'] = device['deviceId']
+            device['shadowData']['reported']['samplingInterval'] = random.randint(60, 900)
+            device['shadowData']['reported']['shipmentId'] = random_id()
             devices.append(device)
 
         return {
             'data': {
                 'devices': devices,
-                'nextToken': 'tokenHere' if next_token else ''
+                'nextToken': NEXT_TOKEN if next_token else ''
             }
         }
 
+    @staticmethod
+    def json(self):
+        return self.data
+
+    def side_effects(self, url, **kwargs):
+        resp = Response(self.map_responses[url], status=status.HTTP_200_OK)
+        resp.json = types.MethodType(DevicesLocationsAPITests.json, resp)
+        return resp
+
     @mock_iot
     def test_get_devices_locations(self):
-        import types
 
         self.set_user(self.user_1)
 
@@ -2131,35 +2165,29 @@ class DevicesLocationsAPITests(APITestCase):
             base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}&nextToken={NEXT_TOKEN}',
         ]
 
-        map_responses = {
-            iot_enpoints[0]: self.iot_responses(OWNER_ID),
-            iot_enpoints[1]: self.iot_responses(OWNER_ID, next_token=True),
-        }
-
-        def json(self):
-            return self.data
-
-        def side_effects(*args, **kwargs):
-            response = Response(map_responses[args[0]], status=status.HTTP_200_OK)
-            response.json = types.MethodType(json, response)
-            return response
+        # The first called url doesn't have the nextToken value
+        self.map_responses[iot_enpoints[0]] = self.iot_responses(OWNER_ID)
+        # self.map_responses[iot_enpoints[1]] = self.iot_responses(OWNER_ID, next_token=True)
 
         with mock.patch('apps.iot_client.requests.Session.get') as mock_get:
-            mock_get.side_effect = side_effects
+            mock_get.side_effect = self.side_effects
 
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
             self.assertEqual(len(data), test_settings.IOT_DEVICES_MAX_RESULTS)
+            # Only one call is made to IOT_AWS_HOST
+            mock_get.assert_called_once()
 
-        map_responses[iot_enpoints[0]] = self.iot_responses(OWNER_ID, next_token=True)
-        map_responses[iot_enpoints[1]] = self.iot_responses(OWNER_ID)
-
-        # Result with recursion should return 10 results
-        with mock.patch('apps.iot_client.requests.Session.get') as mock_get:
-            mock_get.side_effect = side_effects
+            # The first called url do have the nextToken value, there should be a second call to IOT_AWS_HOST
+            mock_get.reset_mock()
+            self.map_responses = {
+                iot_enpoints[0]: self.iot_responses(OWNER_ID, next_token=True),
+                iot_enpoints[1]: self.iot_responses(OWNER_ID)
+            }
 
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
             self.assertEqual(len(data), 2 * test_settings.IOT_DEVICES_MAX_RESULTS)
+            assert mock_get.call_count == 2
