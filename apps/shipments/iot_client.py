@@ -16,6 +16,7 @@ limitations under the License.
 
 import logging
 
+from django.conf import settings
 from influxdb_metrics.loader import log_metric
 
 from apps.iot_client import AWSIoTClient, AWSIoTError
@@ -38,14 +39,15 @@ class DeviceAWSIoTClient(AWSIoTClient):
         return iot_shadow['data']
 
     @staticmethod
-    def get_list_owner_devices(owner_id, max_results=10, next_token=None, results=[]):
+    def get_list_owner_devices(owner_id, max_results=settings.IOT_DEVICES_MAX_RESULTS, next_token=None, results=[]):
         LOG.debug(f'Getting devices for: {owner_id} from AWS IoT')
         log_metric('transmission.info', tags={'method': 'DeviceAWSIoTClient.get_list_owner_devices'})
 
         iot_client = DeviceAWSIoTClient()
-        list_devices = iot_client._get(f'devices?ownerId={owner_id}&maxResults={max_results}&nextToken={next_token}')
+        list_devices = iot_client._get(f'devices?ownerId={owner_id}&maxResults={max_results}'
+                                       f'&nextToken={next_token if next_token else ""}')
 
-        if 'data' not in list_devices:
+        if 'error' in list_devices:
             raise AWSIoTError("Error in response from AWS IoT")
 
         new_devices = list_devices['data']['devices']

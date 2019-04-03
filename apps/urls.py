@@ -55,6 +55,8 @@ urlpatterns = [
     ),
     url(r'^admin/', admin.site.urls),
     url(f'{API_PREFIX[1:]}/documents/events', documents.S3Events.as_view(), name='document-events'),
+    url(f'{API_PREFIX[1:]}/devices/locations', shipments.CurrentDevicesLocations.as_view(), name='devices-locations'),
+    url(f'{API_PREFIX[1:]}/documents/events', documents.S3Events.as_view(), name='document-events'),
 ]
 urlpatterns += router.urls
 

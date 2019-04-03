@@ -11,6 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status, filters, mixins, renderers
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound, PermissionDenied
 from influxdb_metrics.loader import log_metric
 
@@ -20,6 +21,7 @@ from apps.pagination import CustomResponsePagination
 from apps.permissions import owner_access_filter, get_owner_id
 from apps.utils import send_templated_email
 from .filters import ShipmentFilter, HistoricalShipmentFilter
+from .iot_client import DeviceAWSIoTClient
 from .geojson import render_point_features
 from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
@@ -252,3 +254,15 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
             return paginator.get_paginated_response(page)
 
         return Response(serializer.data)
+
+
+class CurrentDevicesLocations(APIView):
+    http_method_names = ['get', ]
+    permission_classes = (permissions.IsAuthenticated, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, )
+    resource_name = 'IotDevice'
+
+    def get(self, request, *args, **kwargs):
+        owner_id = get_owner_id(request)
+        devices = DeviceAWSIoTClient().get_list_owner_devices(owner_id)
+
+        return Response(devices, status=status.HTTP_200_OK)

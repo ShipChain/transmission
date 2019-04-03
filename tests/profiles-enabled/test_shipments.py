@@ -16,6 +16,7 @@ from jose import jws
 from moto import mock_iot
 from rest_framework import status
 from rest_framework.reverse import reverse
+from rest_framework.response import Response
 from rest_framework.test import APITestCase, force_authenticate, APIClient
 
 from apps.authentication import passive_credentials_auth
@@ -46,6 +47,7 @@ LOCATION_COUNTRY = 'US'
 BAD_COUNTRY_CODE = 'XY'
 LOCATION_NUMBER = '555-555-5555'
 LOCATION_POSTAL_CODE = '29600'
+NEXT_TOKEN = 'DummyIotNextToken'
 
 mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
 google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
@@ -2073,3 +2075,91 @@ class ShipmentWithIoTAPITests(APITestCase):
             assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
+
+
+class DevicesLocationsAPITests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io', sub=OWNER_ID))
+
+    def set_user(self, user, token=None):
+        self.client.force_authenticate(user=user, token=token)
+
+    def iot_responses(self, owner_id, num_devices=5, next_token=False):
+
+        device_template = {
+            "deviceId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            "deviceType": "AXLE_GATEWAY",
+            "attributes": {
+                "environment": "test",
+                "version": "v.1.1",
+                "registration": "fb2024be-5518-4b85-9564-ec24144f2b81",
+                "owner": owner_id
+            },
+            "shadowData": {
+                "reported": {},
+                "notSet": {}
+            }
+        }
+
+        devices = []
+        for i in range(num_devices):
+            device = copy.deepcopy(device_template)
+            device['deviceId'] = random_id()
+            device['attributes']['registration'] = random_id()
+            devices.append(device)
+
+        return {
+            'data': {
+                'devices': devices,
+                'nextToken': 'tokenHere' if next_token else ''
+            }
+        }
+
+    @mock_iot
+    def test_get_devices_locations(self):
+        import types
+
+        self.set_user(self.user_1)
+
+        url = reverse('devices-locations', kwargs={'version': 'v1'})
+
+        base_iot = f'https://{test_settings.IOT_AWS_HOST}/{test_settings.IOT_GATEWAY_STAGE}/'
+        iot_enpoints = [
+            base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}&nextToken=',
+            base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}&nextToken={NEXT_TOKEN}',
+        ]
+
+        map_responses = {
+            iot_enpoints[0]: self.iot_responses(OWNER_ID),
+            iot_enpoints[1]: self.iot_responses(OWNER_ID, next_token=True),
+        }
+
+        def json(self):
+            return self.data
+
+        def side_effects(*args, **kwargs):
+            response = Response(map_responses[args[0]], status=status.HTTP_200_OK)
+            response.json = types.MethodType(json, response)
+            return response
+
+        with mock.patch('apps.iot_client.requests.Session.get') as mock_get:
+            mock_get.side_effect = side_effects
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), test_settings.IOT_DEVICES_MAX_RESULTS)
+
+        map_responses[iot_enpoints[0]] = self.iot_responses(OWNER_ID, next_token=True)
+        map_responses[iot_enpoints[1]] = self.iot_responses(OWNER_ID)
+
+        # Result with recursion should return 10 results
+        with mock.patch('apps.iot_client.requests.Session.get') as mock_get:
+            mock_get.side_effect = side_effects
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 2 * test_settings.IOT_DEVICES_MAX_RESULTS)
