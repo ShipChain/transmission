@@ -263,6 +263,7 @@ class CurrentDevicesLocations(APIView):
     def get(self, request, *args, **kwargs):
         owner_id = get_owner_id(request)
         iot_client = DeviceAWSIoTClient()
+
         devices = iot_client.get_list_owner_devices(owner_id)
 
         active = 'active' in request.query_params
@@ -273,7 +274,7 @@ class CurrentDevicesLocations(APIView):
         elif active:
             response = Response(iot_client.filter_list_devices(devices)[0], status=status.HTTP_200_OK)
         elif inactive:
-            response = Response(iot_client.filter_list_devices(devices, active=False)[0], status=status.HTTP_200_OK)
+            response = Response(iot_client.filter_list_devices(devices)[1], status=status.HTTP_200_OK)
         else:
             response = Response(devices, status=status.HTTP_200_OK)
 

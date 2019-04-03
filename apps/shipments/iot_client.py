@@ -38,48 +38,40 @@ class DeviceAWSIoTClient(AWSIoTClient):
 
         return iot_shadow['data']
 
-    @staticmethod
-    def get_list_owner_devices(owner_id, max_results=settings.IOT_DEVICES_MAX_RESULTS, next_token=None, results=None):
+    def get_list_owner_devices(self, owner_id, max_results=settings.IOT_DEVICES_MAX_RESULTS, next_token=None,
+                               results=None):
         LOG.debug(f'Getting devices for: {owner_id} from AWS IoT')
         log_metric('transmission.info', tags={'method': 'DeviceAWSIoTClient.get_list_owner_devices'})
 
         if not next_token:
             results = []
 
-        iot_client = DeviceAWSIoTClient()
-        list_devices = iot_client._get(f'devices?ownerId={owner_id}&maxResults={max_results}'
-                                       f'&nextToken={next_token if next_token else ""}')
+        list_devices = self._get(f'devices?ownerId={owner_id}&maxResults={max_results}'
+                                 f'&nextToken={next_token if next_token else ""}')
 
         if 'error' in list_devices:
             raise AWSIoTError("Error in response from AWS IoT")
 
         new_devices = list_devices['data']['devices']
-        if len(new_devices) > 0:
+        if new_devices:
             results.extend(new_devices)
 
         next_token = list_devices['data']['nextToken']
         if next_token:
-            return iot_client.get_list_owner_devices(owner_id, max_results=max_results, next_token=next_token,
-                                                     results=results)
+            return self.get_list_owner_devices(owner_id, max_results=max_results, next_token=next_token,
+                                               results=results)
 
         return results
 
     @staticmethod
-    def filter_list_devices(list_device, active=True):
+    def filter_list_devices(list_device):
         """
         Returns the list of current active / inactive devices
         """
-        if active:
-            active_devices = list_device.copy()
-            for device in active_devices:
-                reported = device['shadowData']['reported']
-                if len(reported) < 1 or len(reported['shipmentId']) < 36:
-                    active_devices.pop(active_devices.index(device))
+        inactive_devices = []
+        for device in list_device:
+            reported = device['shadowData']['reported']
+            if not reported or len(reported['shipmentId']) < 36:
+                inactive_devices.append(list_device.pop(list_device.index(device)))
 
-            return active_devices, list_device
-
-        active_devices, list_device = DeviceAWSIoTClient.filter_list_devices(list_device, active=True)
-        inactive_devices = [device for device in list_device if device not in active_devices]
-
-        return inactive_devices, list_device
-
+        return list_device, inactive_devices
