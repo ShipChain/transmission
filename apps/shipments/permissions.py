@@ -84,7 +84,7 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
     def has_permission(self, request, view):
 
         permission_link = request.query_params.get('permission_link', None)
-        shipment_pk = request.parser_context['kwargs'].get('shipment_pk', None)
+        shipment_pk = request.parser_context['kwargs'].get('pk', None)
 
         # The shipments can only be accessible via permission link only on shipment-detail endpoint
         if permission_link and not shipment_pk:
