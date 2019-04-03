@@ -2167,7 +2167,6 @@ class DevicesLocationsAPITests(APITestCase):
 
         # The first called url doesn't have the nextToken value
         self.map_responses[iot_enpoints[0]] = self.iot_responses(OWNER_ID)
-        # self.map_responses[iot_enpoints[1]] = self.iot_responses(OWNER_ID, next_token=True)
 
         with mock.patch('apps.iot_client.requests.Session.get') as mock_get:
             mock_get.side_effect = self.side_effects

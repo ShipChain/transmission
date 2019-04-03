@@ -63,3 +63,17 @@ class DeviceAWSIoTClient(AWSIoTClient):
                                                      results=results)
 
         return results
+
+    @staticmethod
+    def filter_list_devices(list_device, active=True):
+        """
+        Returns the list of current active reporting devices
+        """
+        if active:
+            for device in list_device:
+                reported = device['shadowData']['reported']
+                if len(reported) < 1 or len(reported['shipmentId']) < 36:
+                    list_device.pop(reported)
+
+        return list_device
+
