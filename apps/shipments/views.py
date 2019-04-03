@@ -259,7 +259,6 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
 class CurrentDevicesLocations(APIView):
     http_method_names = ['get', ]
     permission_classes = (permissions.IsAuthenticated, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, )
-    resource_name = 'IotDevice'
 
     def get(self, request, *args, **kwargs):
         owner_id = get_owner_id(request)
