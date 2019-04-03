@@ -1558,11 +1558,12 @@ class ShipmentWithIoTAPITests(APITestCase):
             shipment_obj.refresh_from_db()
             shipment_obj.delivery_act = datetime.now()
             shipment_obj.save()
+            shipment_obj.refresh_from_db()
 
             self.assertIsNone(shipment_obj.device)
             response = self.create_shipment()
             assert response.status_code == status.HTTP_202_ACCEPTED
-            mocked_call_count += 2
+            mocked_call_count += 4
             assert mocked.call_count == mocked_call_count
 
             response_json = response.json()
