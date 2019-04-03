@@ -1741,7 +1741,7 @@ components:
           properties:
             delivery_act:
               title: delivery_act
-              description: Actual timestamp of delivery
+              description: Actual timestamp of delivery, cannot be set to a time in the future
               type: string
               example: '2018-08-22T17:44:39.874352'
 
