@@ -1,17 +1,66 @@
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from rest_framework import permissions
+from rest_framework import permissions, status
 
+from apps.authentication import get_jwt_from_request
 from apps.permissions import has_owner_access
 from .models import PermissionLink, Shipment
 
 
+PROFILES_URL = f'{settings.PROFILES_URL}/api/v1/wallet'
+
+
 class IsShipmentOwner(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object to edit it (for use in related querysets)
+    Custom permission to allow only the owner or a wallet owner to interact with a shipment's permission link
     """
+
+    def has_object_permission(self, request, view, obj):
+        shipment_id = view.kwargs['shipment_pk']
+
+        shipment = Shipment.objects.get(id=shipment_id)
+
+        return (has_owner_access(request, shipment) or self.is_shipper(request, shipment) or
+                self.is_carrier(request, shipment) or self.is_moderator(request, shipment))
+
     def has_permission(self, request, view):
-        shipment = Shipment.objects.get(pk=view.kwargs['shipment_pk'])
-        return has_owner_access(request, shipment)
+        shipment_id = view.kwargs['shipment_pk']
+
+        shipment = Shipment.objects.get(id=shipment_id)
+
+        return request.user.is_authenticated and (has_owner_access(request, shipment) or
+                                                  self.is_shipper(request, shipment) or
+                                                  self.is_carrier(request, shipment) or
+                                                  self.is_moderator(request, shipment))
+
+    def is_carrier(self, request, shipment):
+        """
+        Custom permission for carrier shipment permission link management access
+        """
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.carrier_wallet_id}/?is_active',
+                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+        return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
+
+    def is_moderator(self, request, shipment):
+        """
+        Custom permission for moderator shipment permission link management access
+        """
+        if shipment.moderator_wallet_id:
+            response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.moderator_wallet_id}/?is_active',
+                                                     headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+        return (shipment.moderator_wallet_id and response.status_code == status.HTTP_200_OK and
+                request.method in ('GET', 'PATCH'))
+
+    def is_shipper(self, request, shipment):
+        """
+        Custom permission for shipper shipment permission link management access
+        """
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.shipper_wallet_id}/?is_active',
+                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+        return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
 
 
 class IsListenerOwner(permissions.BasePermission):
@@ -79,7 +128,37 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
         return self.check_has_owner_access(request, shipment)
 
     def check_has_owner_access(self, request, obj):
-        return request.user.is_authenticated and has_owner_access(request, obj)
+        return request.user.is_authenticated and (has_owner_access(request, obj) or self.is_shipper(request, obj) or
+                                                  self.is_carrier(request, obj) or self.is_moderator(request, obj))
+
+    def is_carrier(self, request, shipment):
+        """
+        Custom permission for carrier shipment access
+        """
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.carrier_wallet_id}/?is_active',
+                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+        return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
+
+    def is_moderator(self, request, shipment):
+        """
+        Custom permission for moderator shipment access
+        """
+        if shipment.moderator_wallet_id:
+            response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.moderator_wallet_id}/?is_active',
+                                                     headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+        return (shipment.moderator_wallet_id and response.status_code == status.HTTP_200_OK and
+                request.method in ('GET', 'PATCH'))
+
+    def is_shipper(self, request, shipment):
+        """
+        Custom permission for shipper shipment access
+        """
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.shipper_wallet_id}/?is_active',
+                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+        return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
 
 
 class IsAuthenticatedOrDevice(permissions.IsAuthenticated):

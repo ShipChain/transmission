@@ -51,6 +51,8 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                                 f'{permission_link}')
                     raise PermissionDenied('No permission link found.')
                 queryset = queryset.filter(owner_access_filter(self.request) | Q(pk=permission_link_obj.shipment.pk))
+            elif self.detail:
+                return queryset
             else:
                 queryset = queryset.filter(owner_access_filter(self.request))
         return queryset

@@ -127,7 +127,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
                 wallet_id = self.request.query_params.get('wallet_id')
 
                 wallet_response = settings.REQUESTS_SESSION.get(
-                    f'{settings.PROFILES_URL}/api/v1/wallet/{wallet_id}/',
+                    f'{settings.PROFILES_URL}/api/v1/wallet/{wallet_id}/?is_active',
                     headers={'Authorization': f'JWT {get_jwt_from_request(request)}'}
                 )
 

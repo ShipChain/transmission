@@ -102,12 +102,16 @@ class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
         return user
 
 
+def is_internal_call(request):
+    return ('X_NGINX_SOURCE' in request.META and request.META['X_NGINX_SOURCE'] == 'internal'
+            and request.META['X_SSL_CLIENT_VERIFY'] == 'SUCCESS')
+
+
 class InternalRequest(BasePermission):
     def has_permission(self, request, view):
         if settings.ENVIRONMENT in ('LOCAL',):
             return True
-        if ('X_NGINX_SOURCE' in request.META and request.META['X_NGINX_SOURCE'] == 'internal'
-                and request.META['X_SSL_CLIENT_VERIFY'] == 'SUCCESS'):
+        if is_internal_call(request):
             certificate_cn = parse_dn(request.META['X_SSL_CLIENT_DN'])['CN']
             return certificate_cn == f'{self.SERVICE_NAME}.{settings.ENVIRONMENT.lower()}-internal'
         return False
