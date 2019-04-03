@@ -2190,3 +2190,26 @@ class DevicesLocationsAPITests(APITestCase):
             data = response.json()['data']
             self.assertEqual(len(data), 2 * test_settings.IOT_DEVICES_MAX_RESULTS)
             assert mock_get.call_count == 2
+
+            # ----------------------- Filtering tests ------------------------- #
+            iot_data = self.iot_responses(OWNER_ID)
+            iot_data['data']['devices'][1]['shadowData']['reported']['shipmentId'] = 'bad-id'
+            iot_data['data']['devices'][3]['shadowData']['reported'] = {}
+
+            self.map_responses = {iot_enpoints[0]: iot_data}
+
+            # There should be exactly 3 active devices
+            active_url = url + '?active'
+            response = self.client.get(active_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 3)
+
+            # There should be exactly 2 inactive devices
+            inactive_url = url + '?inactive'
+            response = self.client.get(inactive_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 2)
+
+

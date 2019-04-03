@@ -266,15 +266,15 @@ class CurrentDevicesLocations(APIView):
         iot_client = DeviceAWSIoTClient()
         devices = iot_client.get_list_owner_devices(owner_id)
 
-        active = request.queryparams.get('active', None)
-        inactive = request.queryparams.get('inactive', None)
+        active = 'active' in request.query_params
+        inactive = 'inactive' in request.query_params
 
         if active and inactive:
             response = Response(devices, status=status.HTTP_200_OK)
         elif active:
-            response = Response(iot_client.filter_list_devices(devices), status=status.HTTP_200_OK)
+            response = Response(iot_client.filter_list_devices(devices)[0], status=status.HTTP_200_OK)
         elif inactive:
-            response = Response(devices - iot_client.filter_list_devices(devices), status=status.HTTP_200_OK)
+            response = Response(iot_client.filter_list_devices(devices, active=False)[0], status=status.HTTP_200_OK)
         else:
             response = Response(devices, status=status.HTTP_200_OK)
 
