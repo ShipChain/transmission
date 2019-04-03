@@ -361,6 +361,27 @@ class ShipmentAPITests(APITestCase):
             response = self.client.post(url, {'payload': signed_data}, format='json')
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_shipment_update(self):
+        self.create_shipment()
+        url = reverse('shipments-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+
+        successful_delivery_act, content_type = create_form_content({'delivery_act': datetime.now()})
+        unsuccessful_delivery_act, content_type = create_form_content({'delivery_act': datetime.now() +
+                                                                                       timedelta(days=1)})
+
+        # Unauthenticated response should fail
+        response = self.client.patch(url, successful_delivery_act, content_type=content_type)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+        # Authenticated account with invalid delivery_act should fail
+        self.set_user(self.user_1)
+        response = self.client.patch(url, unsuccessful_delivery_act, content_type=content_type)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        # Authenticated account with invalid delivery_act should fail
+        response = self.client.patch(url, successful_delivery_act, content_type=content_type)
+        assert response.status_code == status.HTTP_200_OK
+
     def test_update_shipment_device_certificate(self):
         """
         The shipment's device certificate has been updated but the the old certificate is still attached to the device.
@@ -1529,16 +1550,6 @@ class ShipmentWithIoTAPITests(APITestCase):
             assert mocked.call_count == mocked_call_count
 
             # Removing device should fail if there is no delivery_act on the shipment
-            response = self.set_device_id(shipment['id'], None, None)
-            assert response.status_code == status.HTTP_400_BAD_REQUEST
-            assert mocked.call_count == mocked_call_count
-
-            # Removing device should fail if delivery_act is in the future
-            shipment_obj.refresh_from_db()
-            shipment_obj.delivery_act = datetime.now() + timedelta(days=1)
-            shipment_obj.save()
-            mocked_call_count += 2  # Shipment_obj.save() increases the call count
-
             response = self.set_device_id(shipment['id'], None, None)
             assert response.status_code == status.HTTP_400_BAD_REQUEST
             assert mocked.call_count == mocked_call_count

@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -120,11 +119,10 @@ def trackingdata_post_save(sender, **kwargs):
 
 @receiver(post_save_changed, sender=Shipment, fields=['delivery_act'], dispatch_uid='shipment_delivery_act_post_save')
 def shipment_delivery_act_changed(sender, instance, changed_fields, **kwargs):
-    if instance.delivery_act <= datetime.now():
-        logging.info(f'Shipment with id {instance.id} ended on {instance.delivery_act}.')
+    logging.info(f'Shipment with id {instance.id} ended on {instance.delivery_act}.')
 
-        instance.device = None
-        instance.save()
+    instance.device = None
+    instance.save()
 
 
 @receiver(post_save_changed, sender=Shipment, fields=['device'], dispatch_uid='shipment_device_id_post_save')
