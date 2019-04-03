@@ -16,7 +16,7 @@ class IsShipmentOwner(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-        shipment_id = request.parser_context['kwargs'].get('shipment_pk', None)
+        shipment_id = view.kwargs['shipment_pk']
 
         shipment = Shipment.objects.get(id=shipment_id)
 
@@ -24,7 +24,7 @@ class IsShipmentOwner(permissions.BasePermission):
                 self.is_carrier(request, shipment) or self.is_moderator(request, shipment))
 
     def has_permission(self, request, view):
-        shipment_id = request.parser_context['kwargs'].get('shipment_pk', None)
+        shipment_id = view.kwargs['shipment_pk']
         if not shipment_id and request.user.is_authenticated:
             return True
 
@@ -84,7 +84,7 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
     def has_permission(self, request, view):
 
         permission_link = request.query_params.get('permission_link', None)
-        shipment_pk = request.parser_context['kwargs'].get('pk', None)
+        shipment_pk = view.kwargs['shipment_pk']
 
         # The shipments can only be accessible via permission link only on shipment-detail endpoint
         if permission_link and not shipment_pk:
