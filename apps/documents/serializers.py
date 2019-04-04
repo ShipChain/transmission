@@ -67,9 +67,8 @@ class DocumentCreateSerializer(DocumentSerializer):
             exclude = ('shipment',)
         meta_fields = ('presigned_s3',)
 
-    def validate(self, attrs):
-        attrs['shipment_id'] = self.context['shipment_id']
-        return attrs
+    def create(self, validated_data):
+        return Document.objects.create(**validated_data, **self.context)
 
 
 class DocumentRetrieveSerializer(DocumentSerializer):
