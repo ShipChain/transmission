@@ -414,7 +414,7 @@ class ShipmentAPITests(APITestCase):
         url = reverse('shipments-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
 
         successful_delivery_act, content_type = create_form_content({'delivery_act': datetime.now()})
-        datetime_aware_delivery_act, content_type = create_form_content({'delivery_act': "2018-08-22T17:44:39.874352"})
+        datetime_aware_delivery_act, content_type = create_form_content({'delivery_act': "2008-09-15T15:53:00+05:00"})
         unsuccessful_delivery_act, content_type = create_form_content({'delivery_act': datetime.now() +
                                                                                        timedelta(days=1)})
 
