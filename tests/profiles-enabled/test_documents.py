@@ -436,19 +436,6 @@ class DocumentAPITests(APITestCase):
             self.assertEqual(mock_is_carrier.call_count, 0)
             self.assertEqual(mock_is_moderator.call_count, 0)
 
-        # trying to create a document with a shipment_id, different than the one included in the url should failed
-        url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
-        self.set_user(self.user_1)
-        file_data, content_type = create_form_content({
-            'name': 'Wrong Shipment_id',
-            'document_type': 'Bol',
-            'file_type': 'Pdf',
-            'shipment_id': self.shipments[1].id
-        })
-
-        response = self.client.post(url, file_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
 class ImageDocumentViewSetAPITests(APITestCase):
 
