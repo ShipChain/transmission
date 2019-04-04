@@ -233,7 +233,7 @@ paths:
         '202':
           description: *response_202
           content:
-            application/json:
+            application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/document/createResponse'
         '401':
