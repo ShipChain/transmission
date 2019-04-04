@@ -2157,7 +2157,7 @@ class DevicesLocationsAPITests(APITestCase):
 
         self.set_user(self.user_1)
 
-        url = reverse('devices-locations', kwargs={'version': 'v1'})
+        url = reverse('devices-status', kwargs={'version': 'v1'})
 
         base_iot = f'https://{test_settings.IOT_AWS_HOST}/{test_settings.IOT_GATEWAY_STAGE}/'
         iot_enpoints = [
