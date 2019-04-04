@@ -2199,17 +2199,20 @@ class DevicesLocationsAPITests(APITestCase):
             self.map_responses = {iot_enpoints[0]: iot_data}
 
             # There should be exactly 3 active devices
-            active_url = url + '?active'
+            active_url = url + '?active=True'
             response = self.client.get(active_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
             self.assertEqual(len(data), 3)
 
             # There should be exactly 2 inactive devices
-            inactive_url = url + '?inactive'
+            inactive_url = url + '?active=FALSE'
             response = self.client.get(inactive_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
             self.assertEqual(len(data), 2)
 
-
+            # A request with a query params other than true or false should return http400
+            bad_param_url = url + '?active=falso'
+            response = self.client.get(bad_param_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

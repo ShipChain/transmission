@@ -4,7 +4,7 @@ from string import Template
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
@@ -266,15 +266,16 @@ class CurrentDevicesLocations(APIView):
 
         devices = iot_client.get_list_owner_devices(owner_id)
 
-        active = 'active' in request.query_params
-        inactive = 'inactive' in request.query_params
+        device_status = request.query_params.get('active', None)
 
-        if active and inactive:
-            response = Response(devices, status=status.HTTP_200_OK)
-        elif active:
-            response = Response(iot_client.filter_list_devices(devices)[0], status=status.HTTP_200_OK)
-        elif inactive:
-            response = Response(iot_client.filter_list_devices(devices)[1], status=status.HTTP_200_OK)
+        if device_status:
+            device_status = device_status.lower()
+            if device_status == 'true':
+                response = Response(iot_client.filter_list_devices(devices)[0], status=status.HTTP_200_OK)
+            elif device_status == 'false':
+                response = Response(iot_client.filter_list_devices(devices)[1], status=status.HTTP_200_OK)
+            else:
+                response = HttpResponseBadRequest()
         else:
             response = Response(devices, status=status.HTTP_200_OK)
 
