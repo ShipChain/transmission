@@ -227,7 +227,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         return device_id
 
     def validate_delivery_act(self, delivery_act):
-        if delivery_act <= datetime.now():
+        if delivery_act <= datetime.utcnow():
             return delivery_act
         raise serializers.ValidationError('Cannot update Shipment with future delivery_act')
 

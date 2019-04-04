@@ -414,6 +414,7 @@ class ShipmentAPITests(APITestCase):
         url = reverse('shipments-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
 
         successful_delivery_act, content_type = create_form_content({'delivery_act': datetime.now()})
+        datetime_aware_delivery_act, content_type = create_form_content({'delivery_act': "2018-08-22T17:44:39.874352"})
         unsuccessful_delivery_act, content_type = create_form_content({'delivery_act': datetime.now() +
                                                                                        timedelta(days=1)})
 
@@ -426,8 +427,12 @@ class ShipmentAPITests(APITestCase):
         response = self.client.patch(url, unsuccessful_delivery_act, content_type=content_type)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-        # Authenticated account with invalid delivery_act should fail
+        # Authenticated account with valid delivery_act should succeed
         response = self.client.patch(url, successful_delivery_act, content_type=content_type)
+        assert response.status_code == status.HTTP_200_OK
+
+        # Authenticated account with valid datetime aware delivery_act should fail
+        response = self.client.patch(url, datetime_aware_delivery_act, content_type=content_type)
         assert response.status_code == status.HTTP_200_OK
 
     def test_update_shipment_device_certificate(self):
