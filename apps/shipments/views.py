@@ -18,7 +18,7 @@ from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id
 from .filters import ShipmentFilter
 from .geojson import render_point_features
-from .models import Shipment, TrackingData, PermissionLink, Device
+from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
@@ -87,10 +87,12 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
 
-    def get_tracking_data(self, request, version, pk):
+    @method_decorator(cache_page(60 * 10, cache='page'))  # Cache responses for 10 minutes
+    @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
+    def tracking(self, request, version, pk):
         """
-        Retrieve tracking data from db
-        """
+                Retrieve tracking data from db
+                """
         LOG.debug(f'Retrieve tracking data for a shipment {pk}.')
         log_metric('transmission.info', tags={'method': 'shipments.tracking', 'module': __name__})
         shipment = Shipment.objects.get(pk=pk)
@@ -101,15 +103,11 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         if tracking_data.exists():
             response = Template('{"data": $geojson}').substitute(geojson=render_point_features(shipment, tracking_data))
-            httpresponse = HttpResponse(content=response, content_type='application/vnd.api+json')
+            httpresponse = HttpResponse(content=response,
+                                        content_type='application/vnd.api+json')
             return httpresponse
 
         return HttpResponseNotFound()
-
-    @method_decorator(cache_page(60 * 10, cache='page'))  # Cache responses for 10 minutes
-    @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
-    def tracking(self, request, version, pk):
-        return self.get_tracking_data(request, version, pk)
 
     def update(self, request, *args, **kwargs):
         """
@@ -133,18 +131,17 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
 
 
-class DeviceViewSet(viewsets.GenericViewSet):
-    queryset = Device.objects.all()
+class DeviceViewSet(viewsets.ViewSet):
     permission_classes = permissions.AllowAny
     serializer_class = PermissionLinkSerializer
 
     def add_tracking_data(self, request, version, pk):
         LOG.debug(f'Adding tracking data by the device.')
         log_metric('transmission.info', tags={'method': 'devices.tracking', 'module': __name__})
-        device = Device.objects.get(pk=pk)
-        try:
-            shipment = Shipment.objects.filter(device=device).first()
-        except ObjectDoesNotExist:
+
+        shipment = Shipment.objects.filter(device_id=pk).first()
+
+        if not shipment:
             LOG.debug(f'No shipment found associated to device: {pk}')
             raise PermissionDenied('No shipment found associated to device.')
 
