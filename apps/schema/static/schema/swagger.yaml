@@ -3481,7 +3481,6 @@ components:
 
       createAttributes:
         required:
-          - shipment_id
           - file_type
           - document_type
           - name
@@ -3491,8 +3490,6 @@ components:
           - $ref: '#/components/schemas/dataTypes/document/documentType'
           - $ref: '#/components/schemas/dataTypes/document/fileType'
           - $ref: '#/components/schemas/dataTypes/document/uploadStatus'
-          - $ref: '#/components/schemas/dataTypes/shipmentId'
-
 
       createRequest:
         allOf:
