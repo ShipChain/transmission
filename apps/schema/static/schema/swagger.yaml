@@ -609,6 +609,29 @@ paths:
               allOf:
               - $ref: '#/components/requestBodies/shipment/tracking/payload'
 
+  /api/v1/devices/status/:
+    get:
+      summary: List devices
+      description: >
+        List of devices with most recent configurations
+      parameters:
+        - $ref: '#/components/parameters/device/active'
+      tags:
+        - Shipments
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/device/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
 components:
   parameters:
     page:
@@ -908,6 +931,16 @@ components:
           type: string
           format: date-time
           example: '2019-06-05T18:54:56Z'
+
+    device:
+      active:
+        name: active
+        in: query
+        description: Device's location reporting status at the moment of the request.
+        required: false
+        schema:
+          type: string
+          format: format
 
   schemas:
     dataTypes:
@@ -1474,6 +1507,156 @@ components:
 
                - $ref: '#/components/schemas/dataTypes/document/bucketUrl'
                - $ref: '#/components/schemas/dataTypes/document/s3Fields'
+
+      device:
+        deviceId:
+          properties:
+            deviceId:
+              <<: *uuid
+              title: deviceId
+              description: device UUID
+
+        deviceType:
+          properties:
+            deviceType:
+              title: deviceType
+              description: Device category type
+              type: string
+              enum: [ANDROID, AXLE_GATEWAY]
+              example: 'AXLE_GATEWAY'
+
+        creationDate:
+          properties:
+            creationDate:
+              title: creationDate
+              description: Date/time of the device's creation
+              type: string
+              format: date-time
+              example: '2018-06-18T14:54:56.652732Z'
+
+        environment:
+          properties:
+            environment:
+              title: environment
+              description: Device working stage environment
+              type: string
+              example: 'prod'
+
+        version:
+          properties:
+            version:
+              title: version
+              description: Device's version
+              type: string
+              example: 'v.1.1'
+
+        registration:
+          properties:
+            registration:
+              <<: *uuid
+              title: registration
+              description: Device UUID registration token
+
+        owner:
+          properties:
+            owner:
+              <<: *uuid
+              title: owner
+              description: Device's owner UUID
+
+        coordinates:
+          properties:
+            coordinates:
+              title: location
+              description: Latitude and Longitude of location
+              type: array
+              items:
+                type: number
+              example: [50.924085, -1.475295]
+
+
+        activated:
+          properties:
+            activated:
+              title: activated
+              description: Whether the device is activated or not
+              type: boolean
+              example: true
+
+        connected:
+          properties:
+            connected:
+              title: connected
+              description: Indicates whether the device is currently online or not
+              type: boolean
+              example: true
+
+        ownerId:
+          - $ref: '#/components/schemas/dataTypes/device/owner'
+
+        samplingInterval:
+          properties:
+            samplingInterval:
+              title: samplingInterval
+              description: The device's reporting interval, in millisecond
+              type: integer
+              example: 600
+
+        shipmentId:
+          properties:
+            shipmentId:
+              <<: *uuid
+              title: shipmentId
+              description: The shipment UUID currently associeted to the device
+
+        deviceGroups:
+          properties:
+            deviceGroups:
+              title: deviceGroups
+              description: Group or owner associated to a device
+              type: array
+              items:
+                type: string
+              example: [fb2024be-5518-4b85-9564-ec24144f2b81]
+
+        reported:
+          properties:
+            reported:
+              type: object
+              title: reported
+              description: Device current settings
+              allOf:
+                - $ref: '#/components/schemas/dataTypes/device/activated'
+                - $ref: '#/components/schemas/dataTypes/device/connected'
+                - $ref: '#/components/schemas/dataTypes/device/deviceId'
+                - $ref: '#/components/schemas/dataTypes/device/coordinates'
+                - $ref: '#/components/schemas/dataTypes/device/ownerId'
+                - $ref: '#/components/schemas/dataTypes/device/samplingInterval'
+                - $ref: '#/components/schemas/dataTypes/device/shipmentId'
+
+        notSet:
+          properties:
+            notSet:
+              type: object
+              title: notSet
+              description: Device's pending settings
+              allOf:
+                - $ref: '#/components/schemas/dataTypes/device/coordinates'
+                - $ref: '#/components/schemas/dataTypes/device/ownerId'
+                - $ref: '#/components/schemas/dataTypes/device/samplingInterval'
+                - $ref: '#/components/schemas/dataTypes/device/shipmentId'
+
+
+        shadowData:
+          properties:
+            shadowData:
+              type: object
+              title: shadowData
+              description: device's shadow
+              allOf:
+                - $ref: '#/components/schemas/dataTypes/device/reported'
+                - $ref: '#/components/schemas/dataTypes/device/notSet'
+
 
       shipment:
         storageCredentialsId:
@@ -3588,6 +3771,36 @@ components:
             included:
               items:
                 $ref: '#/components/schemas/ethAction/included'
+
+    device:
+      attributes:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/device/creationDate'
+          - $ref: '#/components/schemas/dataTypes/device/environment'
+          - $ref: '#/components/schemas/dataTypes/device/version'
+          - $ref: '#/components/schemas/dataTypes/device/registration'
+          - $ref: '#/components/schemas/dataTypes/device/owner'
+
+      listResponse:
+        allOf:
+          - properties:
+              data:
+                items:
+                  $ref: '#/components/schemas/device/getResource'
+
+      getResource:
+        allOf:
+          - $ref: '#/components/schemas/device/resource'
+          - properties:
+              attributes:
+                $ref: '#/components/schemas/device/attributes'
+
+      resource:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/device/deviceId'
+          - $ref: '#/components/schemas/dataTypes/device/deviceType'
+          - $ref: '#/components/schemas/dataTypes/device/deviceGroups'
+          - $ref: '#/components/schemas/dataTypes/device/shadowData'
 
     errors:
       401:
