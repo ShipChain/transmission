@@ -105,8 +105,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
             'name': 'Test BOL',
             'description': 'Auto generated file for test purposes',
             'document_type': 'Bol',
-            'file_type': 'Pdf',
-            'shipment_id': self.shipment.id
+            'file_type': 'Pdf'
         })
 
         # Unauthenticated user should fail
@@ -158,7 +157,6 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Tentative to update a fields other than upload_status should fail
         file_data, content_type = create_form_content({
             'document_type': DocumentType.IMAGE,
-            'shipment_id': self.shipment.id,
         })
         response = self.client.patch(url_patch, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -183,8 +181,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'name': os.path.basename(f_path),
             'document_type': 'Bol',
-            'file_type': 'Pdf',
-            'shipment_id': self.shipment.id
+            'file_type': 'Pdf'
         })
 
         response = self.client.post(url, file_data, content_type=content_type)
@@ -354,8 +351,7 @@ class DocumentAPITests(APITestCase):
         file_data = {
             'name': 'Test Permission',
             'document_type': 'Image',
-            'file_type': 'Png',
-            'shipment_id': self.shipments[0].id
+            'file_type': 'Png'
         }
 
         self.set_user(self.user_1)
@@ -506,8 +502,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'name': os.path.basename(img_path[1]),
             'document_type': 'Image',
-            'file_type': 'Png',
-            'shipment_id': self.shipment.id
+            'file_type': 'Png'
         })
 
         # png image object creation
@@ -592,8 +587,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'name': os.path.basename(img_path),
             'document_type': 'Image',
-            'file_type': 'Png',
-            'shipment_id': self.shipment.id
+            'file_type': 'Png'
         })
 
         mock_document_rpc_client = DocumentRPCClient
