@@ -1301,7 +1301,7 @@ components:
 
         pointCoordinates:
           title: coordinates
-          description: Tuple of the Latitude and Longitude of the device location
+          description: Tuple of the Longitude and Latitude of the device location
           example: [-80.123635, 33.018413333333335]
           type: array
           items:
@@ -1516,6 +1516,14 @@ components:
               title: deviceId
               description: device UUID
 
+        devicePk:
+          properties:
+            deviceId:
+              <<: *uuid
+              title: deviceId
+              description: device UUID
+
+
         deviceType:
           properties:
             deviceType:
@@ -1564,16 +1572,14 @@ components:
               title: owner
               description: Device's owner UUID
 
-        coordinates:
+        location:
           properties:
-            coordinates:
+            location:
+              type: object
               title: location
-              description: Latitude and Longitude of location
-              type: array
-              items:
-                type: number
-              example: [50.924085, -1.475295]
-
+              description: location's GeoJson point coordinates
+              allOf:
+                - $ref: '#/components/schemas/tracking/pointFeature'
 
         activated:
           properties:
@@ -1613,7 +1619,7 @@ components:
           properties:
             deviceGroups:
               title: deviceGroups
-              description: Group or owner associated to a device
+              description: Owner group associated with device
               type: array
               items:
                 type: string
@@ -1624,12 +1630,12 @@ components:
             reported:
               type: object
               title: reported
-              description: Device current settings
+              description: Device's current configurations, `might be abscent from the response depending on the device's conditions.`
               allOf:
                 - $ref: '#/components/schemas/dataTypes/device/activated'
                 - $ref: '#/components/schemas/dataTypes/device/connected'
-                - $ref: '#/components/schemas/dataTypes/device/deviceId'
-                - $ref: '#/components/schemas/dataTypes/device/coordinates'
+                - $ref: '#/components/schemas/dataTypes/device/devicePk'
+                - $ref: '#/components/schemas/dataTypes/device/location'
                 - $ref: '#/components/schemas/dataTypes/device/ownerId'
                 - $ref: '#/components/schemas/dataTypes/device/samplingInterval'
                 - $ref: '#/components/schemas/dataTypes/device/shipmentId'
@@ -1639,9 +1645,9 @@ components:
             notSet:
               type: object
               title: notSet
-              description: Device's pending settings
+              description: Device's pending configurations, `might be abscent from response depending on the device's conditions.`
               allOf:
-                - $ref: '#/components/schemas/dataTypes/device/coordinates'
+                - $ref: '#/components/schemas/dataTypes/device/location'
                 - $ref: '#/components/schemas/dataTypes/device/ownerId'
                 - $ref: '#/components/schemas/dataTypes/device/samplingInterval'
                 - $ref: '#/components/schemas/dataTypes/device/shipmentId'
