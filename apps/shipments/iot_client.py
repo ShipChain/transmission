@@ -70,10 +70,10 @@ class DeviceAWSIoTClient(AWSIoTClient):
         """
         Returns the list of current active / inactive devices
         """
-        inactive_devices = []
+        active_devices = []
         for device in list_device:
             reported = device['shadowData']['reported']
-            if not isinstance(reported, dict) or not is_uuid(reported['shipmentId']):
-                inactive_devices.append(list_device.pop(list_device.index(device)))
+            if isinstance(reported, dict) and is_uuid(reported.get('shipmentId', None)):
+                active_devices.append(list_device.pop(list_device.index(device)))
 
-        return list_device, inactive_devices
+        return active_devices, list_device
