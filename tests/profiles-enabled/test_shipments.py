@@ -27,7 +27,8 @@ from apps.iot_client import BotoAWSRequestsAuth
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
 from apps.shipments.rpc import Load110RPCClient
 from tests.utils import get_jwt
-from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response
+from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response, random_timestamp, \
+    random_location
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
 
@@ -2090,12 +2091,6 @@ class DevicesLocationsAPITests(APITestCase):
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
-    def random_location(self):
-        """
-        :return: [lon, lat] randomly generated in their respective valid ranges
-        """
-        return [random.uniform(-180, 180), random.uniform(-90, 90)]
-
     def iot_responses(self, owner_id, num_devices=5, next_token=False):
 
         device_template = {
@@ -2121,7 +2116,7 @@ class DevicesLocationsAPITests(APITestCase):
                     "samplingInterval": 600,
                     "shipmentId": ''
                 },
-                "notSet": {}
+                "notSet": None
             }
         }
 
@@ -2129,8 +2124,9 @@ class DevicesLocationsAPITests(APITestCase):
         for i in range(num_devices):
             device = copy.deepcopy(device_template)
             device['deviceId'] = random_id()
+            device['attributes']['creationDate'] = random_timestamp()
             device['attributes']['registration'] = random_id()
-            device['shadowData']['reported']['location'] = self.random_location()
+            device['shadowData']['reported']['location'] = random_location()
             device['shadowData']['reported']['deviceId'] = device['deviceId']
             device['shadowData']['reported']['samplingInterval'] = random.randint(60, 900)
             device['shadowData']['reported']['shipmentId'] = random_id()
@@ -2143,13 +2139,12 @@ class DevicesLocationsAPITests(APITestCase):
             }
         }
 
-    @staticmethod
-    def json(self):
-        return self.data
+    def json(self, response):
+        return response.data
 
     def side_effects(self, url, **kwargs):
         resp = Response(self.map_responses[url], status=status.HTTP_200_OK)
-        resp.json = types.MethodType(DevicesLocationsAPITests.json, resp)
+        resp.json = types.MethodType(self.json, resp)
         return resp
 
     @mock_iot
@@ -2194,7 +2189,7 @@ class DevicesLocationsAPITests(APITestCase):
             # ----------------------- Filtering tests ------------------------- #
             iot_data = self.iot_responses(OWNER_ID)
             iot_data['data']['devices'][1]['shadowData']['reported']['shipmentId'] = 'bad-id'
-            iot_data['data']['devices'][3]['shadowData']['reported'] = {}
+            iot_data['data']['devices'][3]['shadowData']['reported'] = None
 
             self.map_responses = {iot_enpoints[0]: iot_data}
 

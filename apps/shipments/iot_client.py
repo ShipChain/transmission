@@ -20,6 +20,8 @@ from django.conf import settings
 from influxdb_metrics.loader import log_metric
 
 from apps.iot_client import AWSIoTClient, AWSIoTError
+from apps.utils import is_uuid
+
 
 LOG = logging.getLogger('transmission')
 
@@ -71,7 +73,7 @@ class DeviceAWSIoTClient(AWSIoTClient):
         inactive_devices = []
         for device in list_device:
             reported = device['shadowData']['reported']
-            if not reported or len(reported['shipmentId']) < 36:
+            if not isinstance(reported, dict) or not is_uuid(reported['shipmentId']):
                 inactive_devices.append(list_device.pop(list_device.index(device)))
 
         return list_device, inactive_devices
