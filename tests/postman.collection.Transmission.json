@@ -1063,6 +1063,32 @@
                   }
                 },
                 "response": []
+              },
+              {
+                "name": "Get List of devices",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/devices/status/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "devices",
+                      "status",
+                      ""
+                    ]
+                  }
+                }
               }
             ]
           },
