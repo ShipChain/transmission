@@ -3,7 +3,6 @@ import json
 import re
 import time
 import random
-import types
 from unittest import mock
 
 import boto3
@@ -18,7 +17,6 @@ from jose import jws
 from moto import mock_iot
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.response import Response
 from rest_framework.test import APITestCase, force_authenticate, APIClient
 
 from apps.authentication import passive_credentials_auth
@@ -2139,13 +2137,8 @@ class DevicesLocationsAPITests(APITestCase):
             }
         }
 
-    def json(self, response):
-        return response.data
-
     def side_effects(self, url, **kwargs):
-        resp = Response(self.map_responses[url], status=status.HTTP_200_OK)
-        resp.json = types.MethodType(self.json, resp)
-        return resp
+        return mocked_rpc_response(self.map_responses[url])
 
     @mock_iot
     def test_get_devices_locations(self):
@@ -2170,10 +2163,11 @@ class DevicesLocationsAPITests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
             self.assertEqual(len(data), test_settings.IOT_DEVICES_MAX_RESULTS)
-            # Only one call is made to IOT_AWS_HOST
+            # Only one Api call is made to IOT_AWS_HOST
             mock_get.assert_called_once()
 
-            # The first called url do have the nextToken value, there should be a second call to IOT_AWS_HOST
+            # The response of first called url do have the nextToken value,
+            # there should be a second call to IOT_AWS_HOST
             mock_get.reset_mock()
             self.map_responses = {
                 iot_enpoints[0]: self.iot_responses(OWNER_ID, next_token=True),

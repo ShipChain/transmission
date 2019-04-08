@@ -939,8 +939,8 @@ components:
         description: Device's location reporting status at the moment of the request.
         required: false
         schema:
-          type: string
-          format: format
+          type: boolean
+          enum: [true, false]
 
   schemas:
     dataTypes:
