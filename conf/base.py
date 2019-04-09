@@ -338,3 +338,7 @@ if INFLUXDB_URL:
     INFLUXDB_TIMEOUT = 1
 
     EMAIL_BACKEND = 'influxdb_metrics.email.InfluxDbEmailBackend'
+
+
+# Django Simple History Custom setting
+SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True

@@ -231,10 +231,11 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class DeviceShipmentsHistoryListView(generics.ListAPIView):
+class ShipmentHistoryListView(viewsets.GenericViewSet,
+                              mixins.ListModelMixin,):
     permission_classes = ((permissions.IsAuthenticated, DeviceShipmentHistoryPermission) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
-    resource_name = 'ShipmentHistory'
+
     serializer_class = DeviceShipmentsHistorySerializer
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     search_fields = ('shippers_reference', 'forwarders_reference', 'owner_id',)

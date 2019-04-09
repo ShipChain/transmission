@@ -26,7 +26,7 @@ from influxdb_metrics.loader import log_metric
 from apps.eth.fields import AddressField, HashField
 from apps.eth.models import EthListener
 from apps.jobs.models import JobListener, AsyncJob, JobState
-from apps.utils import random_id, AliasField, ShipHistory
+from apps.utils import random_id, AliasField, TxmHistoricalRecords
 from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')
@@ -56,6 +56,9 @@ class Location(models.Model):
 
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Model's history tracking definition
+    history = TxmHistoricalRecords()
 
     def get_lat_long_from_address(self):
         LOG.debug(f'Creating lat/long point for location {self.id}')
@@ -109,6 +112,9 @@ class Location(models.Model):
 class Device(models.Model):
     id = models.CharField(primary_key=True, null=False, max_length=36)
     certificate_id = models.CharField(unique=True, null=True, blank=False, max_length=255)
+
+    # Model's history tracking definition
+    history = TxmHistoricalRecords()
 
     @staticmethod
     def get_or_create_with_permission(jwt, device_id):
@@ -287,7 +293,8 @@ class Shipment(models.Model):
 
     customer_fields = JSONField(blank=True, null=True)
 
-    history = ShipHistory()
+    # Model's history tracking definition
+    history = TxmHistoricalRecords()
 
     def get_device_request_url(self):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
