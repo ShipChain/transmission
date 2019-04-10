@@ -151,9 +151,14 @@ def send_templated_email(template, subject, context, recipients, sender=None):
     email.send()
 
 
-class TxmHistoricalRecords(HistoricalRecords):
-    def _get_history_user_fields(self):
-        """
-        We do not need to track users objects.
-        """
-        return {}
+# class TxmHistoricalRecords(HistoricalRecords):
+#
+#     def __init__(self, *args, **kwargs):
+#         super(TxmHistoricalRecords, self).__init__(*args, *kwargs)
+#         self.user_model
+    # def _get_history_user_fields(self):
+    #     """
+    #     We do not need to track users objects.
+    #     """
+    #     return {}
+

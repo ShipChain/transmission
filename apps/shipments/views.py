@@ -233,8 +233,8 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
 
 class ShipmentHistoryListView(viewsets.GenericViewSet,
                               mixins.ListModelMixin,):
-    permission_classes = ((permissions.IsAuthenticated, DeviceShipmentHistoryPermission) if settings.PROFILES_ENABLED
-                          else (permissions.AllowAny,))
+    # permission_classes = ((permissions.IsAuthenticated, DeviceShipmentHistoryPermission) if settings.PROFILES_ENABLED
+    #                       else (permissions.AllowAny,))
 
     serializer_class = DeviceShipmentsHistorySerializer
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
@@ -244,9 +244,11 @@ class ShipmentHistoryListView(viewsets.GenericViewSet,
     queryset = Shipment.history.all()
 
     def get_queryset(self):
+        from .models import ShallowUser
         queryset = self.queryset
-        device_id = self.kwargs.get('device_id', None)
-        if device_id:
-            queryset = queryset.filter(device_id=device_id)
+        print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Shallow: {ShallowUser.objects.all()[0].username}')
+        # device_id = self.kwargs.get('device_id', None)
+        # if device_id:
+        #     queryset = queryset.filter(device_id=device_id)
 
         return queryset

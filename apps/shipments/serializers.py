@@ -129,9 +129,9 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                 return Shipment.objects.create(**validated_data, **extra_args)
 
             # Shipment creation without history
-            shipment = Shipment(**validated_data, **extra_args)
-            shipment.save_without_historical_record()
-            return shipment
+            # shipment = Shipment(**validated_data, **extra_args)
+            # shipment.save_without_historical_record()
+            return Shipment.objects.create(**validated_data, **extra_args)
 
     def validate_device_id(self, device_id):
         auth = self.context['auth']
@@ -184,8 +184,6 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                 instance.device = self.context['device']
                 device = Device.get_or_create_with_permission(self.context['auth'], validated_data.pop('device_id'))
                 instance.device = device
-                # Add device to shipment with history
-                instance.save()
             else:
                 instance.device = validated_data.pop('device_id')
 
@@ -212,8 +210,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             else:
                 setattr(instance, attr, value)
 
-        # Update shipment without history
-        instance.save_without_historical_record()
+        instance.save()
         return instance
 
     def validate_device_id(self, device_id):
@@ -399,7 +396,7 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
 
 class DeviceShipmentsHistorySerializer(serializers.ModelSerializer):
-    shipment_id = serializers.SerializerMethodField()
+    # shipment_id = serializers.SerializerMethodField()
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
     ship_from_location = LocationSerializer(required=False)
     ship_to_location = LocationSerializer(required=False)
@@ -409,11 +406,12 @@ class DeviceShipmentsHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shipment.history.model
-        exclude = ('history_user', )
+        # exclude = ('history_user', )
+        fields = '__all__'
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data', 'device']
 
-    def get_shipment_id(self, obj):
-        return obj.id
+    # def get_shipment_id(self, obj):
+    #     return obj.id
