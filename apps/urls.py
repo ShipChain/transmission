@@ -35,9 +35,9 @@ router.register(f'{API_PREFIX[1:]}/shipments', shipments.ShipmentViewSet)
 router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, base_name='job')
 router.register(f'{API_PREFIX[1:]}/events', eth.EventViewSet, base_name='event')
 router.register(f'{API_PREFIX[1:]}/transactions', eth.TransactionViewSet, base_name='transaction')
-router.register(f'{API_PREFIX[1:]}/documents', documents.DocumentViewSet)
 router.register(f'{API_PREFIX[1:]}/devices', shipments.DeviceViewSet, base_name='device')
 
+# Shipment's nested routes definition
 nested_router = drf_nested_routers.NestedSimpleRouter(router, f'{API_PREFIX[1:]}/shipments', lookup='shipment')
 nested_router.register(r'documents', documents.DocumentViewSet, base_name='shipment-documents')
 nested_router.register(r'transactions', eth.TransactionViewSet, base_name='shipment-transactions')

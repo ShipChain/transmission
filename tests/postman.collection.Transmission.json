@@ -1039,7 +1039,7 @@
                     "path": [
                       "api",
                       "v1",
-                      "documents",
+                      "shipments",
                       "{{shipment_id}}",
                       "permission_links",
                       "{{permission_link_id}}",
@@ -1265,13 +1265,15 @@
                     ]
                   },
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/documents/",
+                    "raw": "{{transmission_url}}/api/v1/shipments/{shipment_id}/documents/",
                     "host": [
                       "{{transmission_url}}"
                     ],
                     "path": [
                       "api",
                       "v1",
+                      "shipments",
+                      "{{shipment_id}}",
                       "documents",
                       ""
                     ]
@@ -1291,13 +1293,15 @@
                   ],
                   "body": {},
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/documents/",
+                    "raw": "{{transmission_url}}/api/v1/shipments/{shipment_id}/documents/",
                     "host": [
                       "{{transmission_url}}"
                     ],
                     "path": [
                       "api",
                       "v1",
+                      "shipments",
+                      "{{shipment_id}}",
                       "documents",
                       ""
                     ]
@@ -1317,13 +1321,15 @@
                   ],
                   "body": {},
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/documents/{{document_id}}/",
+                    "raw": "{{transmission_url}}/api/v1/shipments/{shipment_id}/documents/{{document_id}}/",
                     "host": [
                       "{{transmission_url}}"
                     ],
                     "path": [
                       "api",
                       "v1",
+                      "shipments",
+                      "{{shipment_id}}",
                       "documents",
                       "{{document_id}}",
                       ""
@@ -1378,13 +1384,15 @@
                     ]
                   },
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/documents/{{document_id}}/",
+                    "raw": "{{transmission_url}}/api/v1/shipments/{shipment_id}/documents/{{document_id}}/",
                     "host": [
                       "{{transmission_url}}"
                     ],
                     "path": [
                       "api",
                       "v1",
+                      "shipments",
+                      "{{shipment_id}}",
                       "documents",
                       "{{document_id}}",
                       ""

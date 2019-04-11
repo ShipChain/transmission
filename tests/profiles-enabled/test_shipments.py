@@ -284,7 +284,7 @@ class ShipmentAPITests(APITestCase):
                     'altitude': 554,
                     'source': 'Gps',
                     'uncertainty': 92,
-                    'speed': 34
+                    'speed': 34.56
                 },
                 'version': '1.0.0',
                 'device_id': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75',
