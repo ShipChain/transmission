@@ -32,7 +32,7 @@ def mocked_rpc_response(json, code=200):
 
 def get_jwt(exp=None, sub='00000000-0000-0000-0000-000000000000', username='fake@shipchain.io', organization_id=None):
     payload = {'email': username, 'username': username, 'sub': sub,
-               'aud': settings.SIMPLE_JWT['AUDIENCE']}
+               'aud': '892633'}
 
     if organization_id:
         payload['organization_id'] = organization_id
