@@ -19,7 +19,6 @@ SIMPLE_JWT = {
         backend=default_backend()
     ),
     'ALGORITHM': 'RS256',
-    'AUDIENCE': os.environ.get('OIDC_RP_CLIENT_ID', '892633'),
     'AUTH_HEADER_TYPES': ('JWT',),
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.UntypedToken',),
     'USER_ID_CLAIM': 'sub',
