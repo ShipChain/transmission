@@ -167,8 +167,6 @@ class TransactionReceiptTestCase(APITestCase):
 
             mock_shipment_rpc.subscribe(project="LOAD", url="URL")
 
-            print(mock_method.target)
-
             mock_method.assert_called_with(test_settings.ENGINE_RPC_URL, data=json.dumps(full_params))
 
 

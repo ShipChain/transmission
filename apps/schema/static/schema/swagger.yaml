@@ -416,51 +416,6 @@ paths:
                 $ref: '#/components/schemas/errors/401'
 
   /api/v1/shipments/{shipment_id}/tracking/:
-    post:
-      summary: Add tracking data
-      description: |
-        Associate GPS tracking data with a `Shipment`. The tracking payload must be signed and encoded as a [JWS](https://tools.ietf.org/html/rfc7515).
-        An active AXLE certificate must be used to sign this JWS, and the certificate ID must be included in the headers as `kid`.
-
-        A JSON Schema specification for the tracking data payload format is located at [schema.shipchain.io](http://schema.shipchain.io/1.2.1/tracking.json)
-
-        An example of a raw payload:
-        ```
-        {
-          "position": {
-            "latitude": -81.048253,
-            "longitude": 34.628643,
-            "altitude": 924,
-            "source": "gps",
-            "uncertainty": 95,
-            "speed": 31.15
-          },
-          "version": "1.0.1",
-          "timestamp": "2018-08-22T17:44:39.874352",
-          "device_id": "1243d23b-e2fc-475a-8290-0e4f53479553"
-        }
-        ```
-      parameters:
-      - $ref: '#/components/parameters/shipment/path'
-      tags:
-      - Shipments
-      security: []
-      responses:
-        '204':
-          description: *response_204
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              allOf:
-              - $ref: '#/components/requestBodies/shipment/tracking/payload'
-
     get:
       summary: Get tracking data
       description: >
@@ -579,6 +534,53 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
+
+  /api/v1/devices/{device_id}/tracking/:
+    post:
+      summary: Add tracking data
+      description: |
+        Associate GPS tracking data with a `Shipment`. The tracking payload must be signed and encoded as a [JWS](https://tools.ietf.org/html/rfc7515).
+        An active AXLE certificate must be used to sign this JWS, and the certificate ID must be included in the headers as `kid`.
+
+        A JSON Schema specification for the tracking data payload format is located at [schema.shipchain.io](http://schema.shipchain.io/1.2.1/tracking.json)
+
+        An example of a raw payload:
+        ```
+        {
+          "position": {
+            "latitude": -81.048253,
+            "longitude": 34.628643,
+            "altitude": 924,
+            "source": "gps",
+            "uncertainty": 95,
+            "speed": 34
+          },
+          "version": "1.0.1",
+          "timestamp": "2018-08-22T17:44:39.874352",
+          "device_id": "1243d23b-e2fc-475a-8290-0e4f53479553"
+        }
+        ```
+      parameters:
+      - $ref: '#/components/parameters/device/path'
+      tags:
+      - Devices
+      security: []
+      responses:
+        '204':
+          description: *response_204
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/requestBodies/shipment/tracking/payload'
+
 components:
   parameters:
     page:
@@ -616,6 +618,15 @@ components:
       schema:
         type: string
         enum: [created_at, modified_at, -created_at, -modified_at]
+
+    device:
+      path:
+        required: true
+        name: device_id
+        in: path
+        description: ID of the device
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
 
     shipment:
       path:

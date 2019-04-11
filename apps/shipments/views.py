@@ -8,7 +8,7 @@ from django.http import HttpResponse, HttpResponseNotFound
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, permissions, status, exceptions, filters, mixins
+from rest_framework import viewsets, permissions, status, filters, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
@@ -19,7 +19,7 @@ from apps.permissions import owner_access_filter, get_owner_id
 from .filters import ShipmentFilter
 from .geojson import render_point_features
 from .models import Shipment, TrackingData, PermissionLink
-from .permissions import IsAuthenticatedOrDevice, IsOwnerOrShared, IsShipmentOwner
+from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
     PermissionLinkSerializer
@@ -87,10 +87,12 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
 
-    def get_tracking_data(self, request, version, pk):
+    @method_decorator(cache_page(60 * 10, cache='page'))  # Cache responses for 10 minutes
+    @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
+    def tracking(self, request, version, pk):
         """
-        Retrieve tracking data from db
-        """
+                Retrieve tracking data from db
+                """
         LOG.debug(f'Retrieve tracking data for a shipment {pk}.')
         log_metric('transmission.info', tags={'method': 'shipments.tracking', 'module': __name__})
         shipment = Shipment.objects.get(pk=pk)
@@ -101,50 +103,11 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         if tracking_data.exists():
             response = Template('{"data": $geojson}').substitute(geojson=render_point_features(shipment, tracking_data))
-            return HttpResponse(content=response,
-                                content_type='application/vnd.api+json')
+            httpresponse = HttpResponse(content=response,
+                                        content_type='application/vnd.api+json')
+            return httpresponse
 
         return HttpResponseNotFound()
-
-    def add_tracking_data(self, request, version, pk):
-        shipment = Shipment.objects.get(pk=pk)
-
-        data = request.data
-        serializer = UnvalidatedTrackingDataSerializer if settings.ENVIRONMENT == 'LOCAL' else TrackingDataSerializer
-
-        if not isinstance(data, list):
-            LOG.debug(f'Adding tracking data for shipment: {shipment.id}')
-            serializer = serializer(data=data, context={'shipment': shipment})
-            serializer.is_valid(raise_exception=True)
-            tracking_data = [serializer.validated_data]
-        else:
-            LOG.debug(f'Adding bulk tracking data for shipment: {shipment.id}')
-            serializer = serializer(data=data, context={'shipment': shipment}, many=True)
-            serializer.is_valid(raise_exception=True)
-            tracking_data = serializer.validated_data
-
-        for data in tracking_data:
-            payload = data['payload']
-
-            # Add tracking data to shipment via Engine RPC
-            tracking_data_update.delay(shipment.id, payload)
-
-            # Cache tracking data to db
-            tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment,
-                                                                                          'device': shipment.device})
-            tracking_model_serializer.is_valid(raise_exception=True)
-            tracking_model_serializer.save()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @method_decorator(cache_page(60 * 10, cache='page'))  # Cache responses for 10 minutes
-    @action(detail=True, methods=['get', 'post'], permission_classes=(IsAuthenticatedOrDevice,))
-    def tracking(self, request, version, pk):
-        if request.method == 'GET':
-            return self.get_tracking_data(request, version, pk)
-        if request.method == 'POST':
-            return self.add_tracking_data(request, version, pk)
-        raise exceptions.MethodNotAllowed(request.method)
 
     def update(self, request, *args, **kwargs):
         """
@@ -166,6 +129,50 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         response.instance.async_job_id = async_jobs.latest('created_at').id if async_jobs else None
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
+
+
+class DeviceViewSet(viewsets.ViewSet):
+    permission_classes = permissions.AllowAny
+    serializer_class = PermissionLinkSerializer
+
+    @action(detail=True, methods=['post'], permission_classes=(permissions.AllowAny,))
+    def tracking(self, request, version, pk):
+        LOG.debug(f'Adding tracking data by device with id: {pk}.')
+        log_metric('transmission.info', tags={'method': 'devices.tracking', 'module': __name__})
+
+        shipment = Shipment.objects.filter(device_id=pk).first()
+
+        if not shipment:
+            LOG.debug(f'No shipment found associated to device: {pk}')
+            raise PermissionDenied('No shipment found associated to device.')
+
+        data = request.data
+        serializer = UnvalidatedTrackingDataSerializer if settings.ENVIRONMENT == 'LOCAL' else TrackingDataSerializer
+
+        if not isinstance(data, list):
+            LOG.debug(f'Adding tracking data for device: {pk} for shipment: {shipment.id}')
+            serializer = serializer(data=data, context={'shipment': shipment})
+            serializer.is_valid(raise_exception=True)
+            tracking_data = [serializer.validated_data]
+        else:
+            LOG.debug(f'Adding bulk tracking data for device: {pk} shipment: {shipment.id}')
+            serializer = serializer(data=data, context={'shipment': shipment}, many=True)
+            serializer.is_valid(raise_exception=True)
+            tracking_data = serializer.validated_data
+
+        for data in tracking_data:
+            payload = data['payload']
+
+            # Add tracking data to shipment via Engine RPC
+            tracking_data_update.delay(shipment.id, payload)
+
+            # Cache tracking data to db
+            tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment,
+                                                                                          'device': shipment.device})
+            tracking_model_serializer.is_valid(raise_exception=True)
+            tracking_model_serializer.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class PermissionLinkViewSet(mixins.CreateModelMixin,
