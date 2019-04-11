@@ -464,7 +464,7 @@ class TrackingData(models.Model):
     altitude = models.FloatField(max_length=36, null=True, blank=True)
     source = models.CharField(max_length=36)
     uncertainty = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], null=True, blank=True)
-    speed = models.IntegerField(validators=[MinValueValidator(0)], null=True, blank=True)
+    speed = models.FloatField(validators=[MinValueValidator(0)], null=True, blank=True)
     timestamp = models.DateTimeField()
     time = AliasField(db_column='timestamp')
     version = models.CharField(max_length=36)
