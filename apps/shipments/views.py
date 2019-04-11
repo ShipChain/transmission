@@ -135,8 +135,9 @@ class DeviceViewSet(viewsets.ViewSet):
     permission_classes = permissions.AllowAny
     serializer_class = PermissionLinkSerializer
 
-    def add_tracking_data(self, request, version, pk):
-        LOG.debug(f'Adding tracking data by the device.')
+    @action(detail=True, methods=['post'], permission_classes=(permissions.AllowAny,))
+    def tracking(self, request, version, pk):
+        LOG.debug(f'Adding tracking data by device with id: {pk}.')
         log_metric('transmission.info', tags={'method': 'devices.tracking', 'module': __name__})
 
         shipment = Shipment.objects.filter(device_id=pk).first()
@@ -172,10 +173,6 @@ class DeviceViewSet(viewsets.ViewSet):
             tracking_model_serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=True, methods=['post'], permission_classes=(permissions.AllowAny,))
-    def tracking(self, request, version, pk):
-        return self.add_tracking_data(request, version, pk)
 
 
 class PermissionLinkViewSet(mixins.CreateModelMixin,
