@@ -23,6 +23,7 @@ from tests.utils import create_form_content, get_jwt
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'
 FAKE_ID = '00000000-0000-0000-0000-000000000000'
+OWNER_ID = '5e8f1d76-162d-4f21-9b71-2ca97306ef7c'
 SHIPPER_ID = '60b2662a-4ec6-4c28-ac1b-2b82ab4b3e03'
 CARRIER_ID = 'ff7908cd-6b10-43a7-9fa2-760c4b17dab4'
 MODERATOR_ID = '6eeff71e-332e-40e0-8961-f74dab3ff8e0'
@@ -44,7 +45,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Disable Shipment post save signal
         signals.post_save.disconnect(sender=Shipment, dispatch_uid='shipment_post_save')
 
-        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io'))
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io', sub=OWNER_ID))
 
         self.shipment = Shipment.objects.create(
             id=SHIPMENT_ID,
@@ -52,7 +53,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
             carrier_wallet_id=CARRIER_WALLET_ID,
             shipper_wallet_id=SHIPPER_WALLET_ID,
             storage_credentials_id=STORAGE_CRED_ID,
-            owner_id='5e8f1d76-162d-4f21-9b71-2ca97306ef7c'
+            owner_id=OWNER_ID
         )
 
         # Re-enable Shipment post save signal
@@ -88,11 +89,14 @@ class PdfDocumentViewSetAPITests(APITestCase):
         pdf.cell(40, 60, f"{DATE}")
         pdf.output(file_path, 'F')
 
+    @mock.patch('apps.documents.permissions.UserHasPermission.is_shipper', mock.MagicMock(return_value=False))
+    @mock.patch('apps.documents.permissions.UserHasPermission.is_carrier', mock.MagicMock(return_value=False))
+    @mock.patch('apps.documents.permissions.UserHasPermission.is_moderator', mock.MagicMock(return_value=False))
     def test_sign_to_s3(self):
         mock_document_rpc_client = DocumentRPCClient
         mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=True)
 
-        url = reverse('document-list', kwargs={'version': 'v1'})
+        url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipment.id})
 
         f_path = './tests/tmp/test_upload.pdf'
         self.make_pdf_file(f_path)
@@ -101,13 +105,12 @@ class PdfDocumentViewSetAPITests(APITestCase):
             'name': 'Test BOL',
             'description': 'Auto generated file for test purposes',
             'document_type': 'Bol',
-            'file_type': 'Pdf',
-            'shipment_id': self.shipment.id
+            'file_type': 'Pdf'
         })
 
         # Unauthenticated user should fail
         response = self.client.post(url, file_data, content_type=content_type)
-        self.assertNotEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # Authenticated request should succeed
         self.set_user(self.user_1)
@@ -143,26 +146,25 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.assertTrue(downloaded_file.exists())
 
         # Update document object upon upload completion
-        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
+        url_patch = url + f'{document[0].id}/'
         file_data, content_type = create_form_content({
             'upload_status': 'COMPLETE',
         })
-        response = self.client.patch(url, file_data, content_type=content_type)
+        response = self.client.patch(url_patch, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
 
-        # # Tentative to update a fields other than upload_status should fail
+        # Tentative to update a fields other than upload_status should fail
         file_data, content_type = create_form_content({
             'document_type': DocumentType.IMAGE,
-            'shipment_id': self.shipment.id,
         })
-        response = self.client.patch(url, file_data, content_type=content_type)
+        response = self.client.patch(url_patch, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertNotEqual(document[0].document_type, DocumentType.IMAGE)
 
         # Get a document
-        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
-        response = self.client.get(url)
+        url_get = url + f'{document[0].id}/'
+        response = self.client.get(url_get)
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -179,59 +181,53 @@ class PdfDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'name': os.path.basename(f_path),
             'document_type': 'Bol',
-            'file_type': 'Pdf',
-            'shipment_id': self.shipment.id
+            'file_type': 'Pdf'
         })
-        url = reverse('document-list', kwargs={'version': 'v1'})
+
         response = self.client.post(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        document = Document.objects.all()
+        document = Document.objects.all().order_by('created_at')
         self.assertEqual(document.count(), 2)
 
         # Update second uploaded document status to complete
-        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[1].id})
+        url_patch = url + f'{document[1].id}/'
         file_data, content_type = create_form_content({
             'upload_status': 'Complete',
         })
-        response = self.client.patch(url, file_data, content_type=content_type)
+        response = self.client.patch(url_patch, file_data, content_type=content_type)
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(document[1].upload_status, UploadStatus.COMPLETE)
         self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
 
         # Get list of documents
-        url = reverse('document-list', kwargs={'version': 'v1'})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Get list of pdf documents via query params, it should return 2 elements
-        url = reverse('document-list', kwargs={'version': 'v1'})
-        url += f'?file_type=Pdf'
-        response = self.client.get(url)
+        url_pdf = url + '?file_type=Pdf'
+        response = self.client.get(url_pdf)
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 2)
 
         # Querying for png files should return an empty list at this stage
-        url = reverse('document-list', kwargs={'version': 'v1'})
-        url += f'?file_type=Png'
-        response = self.client.get(url)
+        url_png = url + '?file_type=Png'
+        response = self.client.get(url_png)
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
 
         # Get list of BOL documents via query params, it should return 2 elements
-        url = reverse('document-list', kwargs={'version': 'v1'})
-        url += f'?document_type=Bol'
-        response = self.client.get(url)
+        url_bol = url + '?document_type=Bol'
+        response = self.client.get(url_bol)
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 2)
 
         # Querying for file objects with upload_status FAILED, should return an empty list at this stage
-        url = reverse('document-list', kwargs={'version': 'v1'})
-        url += f'?upload_status=FAIled'
-        response = self.client.get(url)
+        url_failed_satus = url + '?upload_status=FAIled'
+        response = self.client.get(url_failed_satus)
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
@@ -355,8 +351,7 @@ class DocumentAPITests(APITestCase):
         file_data = {
             'name': 'Test Permission',
             'document_type': 'Image',
-            'file_type': 'Png',
-            'shipment_id': self.shipments[0].id
+            'file_type': 'Png'
         }
 
         self.set_user(self.user_1)
@@ -446,7 +441,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         # Disable Shipment post save signal
         signals.post_save.disconnect(sender=Shipment, dispatch_uid='shipment_post_save')
 
-        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io'))
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io', sub=OWNER_ID))
 
         self.shipment = Shipment.objects.create(
             id=SHIPMENT_ID,
@@ -454,7 +449,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
             carrier_wallet_id=CARRIER_WALLET_ID,
             shipper_wallet_id=SHIPPER_WALLET_ID,
             storage_credentials_id=STORAGE_CRED_ID,
-            owner_id='5e8f1d76-162d-4f21-9b71-2ca97306ef7c'
+            owner_id=OWNER_ID
         )
 
         # Re-enable Shipment post save signal
@@ -493,19 +488,21 @@ class ImageDocumentViewSetAPITests(APITestCase):
         draw.text((160, 150), DATE, font=font2, fill='white')
         img.save(file_path)
 
+    @mock.patch('apps.documents.permissions.UserHasPermission.is_shipper', mock.MagicMock(return_value=False))
+    @mock.patch('apps.documents.permissions.UserHasPermission.is_carrier', mock.MagicMock(return_value=False))
+    @mock.patch('apps.documents.permissions.UserHasPermission.is_moderator', mock.MagicMock(return_value=False))
     def test_image_creation(self):
         img_path = ['./tests/tmp/jpeg_img.jpg', './tests/tmp/png_img.png']
 
         for img in img_path:
             self.make_image(img)
 
-        url = reverse('document-list', kwargs={'version': 'v1'})
+        url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipment.id})
 
         file_data, content_type = create_form_content({
             'name': os.path.basename(img_path[1]),
             'document_type': 'Image',
-            'file_type': 'Png',
-            'shipment_id': self.shipment.id
+            'file_type': 'Png'
         })
 
         # png image object creation
@@ -528,32 +525,32 @@ class ImageDocumentViewSetAPITests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
         # Failed upload document and Pending should have the presigned post meta object
-        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
+        url_patch = url + f'{document[0].id}/'
         file_data, content_type = create_form_content({
             'upload_status': 'Failed',
         })
-        response = self.client.patch(url, file_data, content_type=content_type)
-        data = response.json()['data']
+        response = self.client.patch(url_patch, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
         self.assertEqual(document[0].upload_status, UploadStatus.FAILED)
         self.assertTrue(isinstance(data['meta']['presigned_s3'], dict))
 
         # Update document object upon upload completion
-        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
         file_data, content_type = create_form_content({
             'upload_status': 'complete',
         })
-        response = self.client.patch(url, file_data, content_type=content_type)
-        data = response.json()['data']
+        response = self.client.patch(url_patch, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
         self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
         self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
 
         # Get a document
-        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
-        response = self.client.get(url)
-        data = response.json()['data']
+        # url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
+        url_get = url + f'{document[0].id}/'
+        response = self.client.get(url_get)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
         self.assertTrue(data['meta']['presigned_s3'])
 
         # Download document from pre-signed s3 generated url
@@ -563,33 +560,34 @@ class ImageDocumentViewSetAPITests(APITestCase):
             f.write(res.content)
 
         # Get list of png image via query params, should return one document
-        url = reverse('document-list', kwargs={'version': 'v1'})
-        url += '?file_type=Png'
-        response = self.client.get(url)
-        data = response.json()['data']
+        url_png = url + '?file_type=Png'
+        response = self.client.get(url_png)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
         self.assertEqual(len(data), 1)
 
         # This should return an empty list since there is no pdf in db at this stage
-        url = reverse('document-list', kwargs={'version': 'v1'})
-        url += '?file_type=Pdf'
-        response = self.client.get(url)
+        url_pdf = url + '?file_type=Pdf'
+        response = self.client.get(url_pdf)
         data = response.json()['data']
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
 
+    @mock.patch('apps.documents.permissions.UserHasPermission.is_shipper', mock.MagicMock(return_value=False))
+    @mock.patch('apps.documents.permissions.UserHasPermission.is_carrier', mock.MagicMock(return_value=False))
+    @mock.patch('apps.documents.permissions.UserHasPermission.is_moderator', mock.MagicMock(return_value=False))
     def test_get_document_from_vault(self):
         img_path = './tests/tmp/png_img.png'
 
         self.make_image(img_path)
 
-        url = reverse('document-list', kwargs={'version': 'v1'})
+        # url = reverse('document-list', kwargs={'version': 'v1'})
+        url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipment.id})
 
         file_data, content_type = create_form_content({
             'name': os.path.basename(img_path),
             'document_type': 'Image',
-            'file_type': 'Png',
-            'shipment_id': self.shipment.id
+            'file_type': 'Png'
         })
 
         mock_document_rpc_client = DocumentRPCClient
@@ -655,15 +653,16 @@ class ImageDocumentViewSetAPITests(APITestCase):
 
         # Trying to access the COMPLETE document detail the rpc method should be called
         mock_document_rpc_client.put_document_in_s3.reset_mock()
-        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': doc.id})
-        response = self.client.patch(url, {}, content_type='application/json')
+        # url = reverse('document-detail', kwargs={'version': 'v1', 'pk': doc.id})
+        url_get = url + f'{doc.id}/'
+        response = self.client.patch(url_get, {}, content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_document_rpc_client.put_document_in_s3.assert_called_once()
 
         # In case of rpc error, we should have a null presigned_url
         mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=False)
-        url = reverse('document-detail', kwargs={'version': 'v1', 'pk': doc.id})
-        response = self.client.get(url)
+        # url = reverse('document-detail', kwargs={'version': 'v1', 'pk': doc.id})
+        response = self.client.get(url_get)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertIsNone(data['meta']['presigned_s3'])

@@ -58,7 +58,6 @@ class DocumentCreateSerializer(DocumentSerializer):
     document_type = UpperEnumField(DocumentType, lenient=True, ints_as_names=True)
     file_type = UpperEnumField(FileType, lenient=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, read_only=True, ints_as_names=True)
-    shipment_id = serializers.CharField(max_length=36)
 
     class Meta:
         model = Document
@@ -67,6 +66,9 @@ class DocumentCreateSerializer(DocumentSerializer):
         else:
             exclude = ('shipment',)
         meta_fields = ('presigned_s3',)
+
+    def create(self, validated_data):
+        return Document.objects.create(**validated_data, **self.context)
 
 
 class DocumentRetrieveSerializer(DocumentSerializer):

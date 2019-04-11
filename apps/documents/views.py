@@ -26,8 +26,8 @@ LOG = logging.getLogger('transmission')
 
 class DocumentViewSet(mixins.CreateModelMixin,
                       mixins.RetrieveModelMixin,
-                      mixins.ListModelMixin,
                       mixins.UpdateModelMixin,
+                      mixins.ListModelMixin,
                       viewsets.GenericViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
@@ -38,9 +38,8 @@ class DocumentViewSet(mixins.CreateModelMixin,
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            shipment_id = self.request.parser_context['kwargs'].get('shipment_pk', None)
-            if shipment_id:
-                return queryset.filter(shipment__id=shipment_id)
+            shipment_id = self.kwargs['shipment_pk']
+            return queryset.filter(shipment__id=shipment_id)
         return queryset.filter(owner_id=get_owner_id(self.request))
 
     def perform_create(self, serializer):
@@ -57,7 +56,8 @@ class DocumentViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Creating a document object.')
         log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
 
-        serializer = DocumentCreateSerializer(data=request.data)
+        shipment_id = self.kwargs['shipment_pk']
+        serializer = DocumentCreateSerializer(data=request.data, context={'shipment_id': shipment_id})
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
