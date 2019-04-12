@@ -1,7 +1,7 @@
 import json
 import logging
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import boto3
 from botocore.exceptions import ClientError, BotoCoreError
@@ -395,23 +395,87 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
         return TrackingData.objects.create(**validated_data, **self.context)
 
 
-class DeviceShipmentsHistorySerializer(serializers.ModelSerializer):
-    # shipment_id = serializers.SerializerMethodField()
-    load_data = LoadShipmentSerializer(source='loadshipment', required=False)
-    ship_from_location = LocationSerializer(required=False)
-    ship_to_location = LocationSerializer(required=False)
-    bill_to_location = LocationSerializer(required=False)
-    final_destination_location = LocationSerializer(required=False)
-    device = DeviceSerializer(required=False)
+class ChangesDiffSerializer(object):
+    def __init__(self, queryset):
+        self.queryset = queryset
 
-    class Meta:
-        model = Shipment.history.model
-        # exclude = ('history_user', )
-        fields = '__all__'
+        self.relation_fields = {
+            'ship_from_location': 'shipment_from',
+            'ship_to_location': 'shipment_to',
+            'final_destination_location': 'shipment_dest',
+            'bill_to_location': 'shipment_bill'
+        }
 
-    class JSONAPIMeta:
-        included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
-                              'final_destination_location', 'load_data', 'device']
+    def diff_object_fields(self, old, new):
+        changes = new.diff_against(old)
 
-    # def get_shipment_id(self, obj):
-    #     return obj.id
+        flat_changes = self.build_list_changes(changes)
+
+        relation_changes = self.relations_changes(old, new, self.relation_fields.keys())
+
+        return {
+            'history_date': new.history_date,
+            'fields': flat_changes,
+            'relationships': relation_changes,
+            'author': new.history_user_id
+        }
+
+    def build_list_changes(self, changes):
+
+        field_list = []
+        for change in changes.changes:
+            field = {
+                'field': change.field,
+                'old': change.old,
+                'new': change.new
+            }
+            field_list.append(field)
+
+        return field_list
+
+    def get_related_historical(self, historical_obj, obj, date, related_name):
+        obj_class = obj.__class__.__name__
+        filter_kwargs = {
+            'history_date__range': (date + timedelta(milliseconds=-500), date),
+            'history_user_id': historical_obj.history_user_id
+        }
+        historical_queryset = globals()[obj_class].history.all().filter(**filter_kwargs)
+
+        for historical in historical_queryset:
+            if hasattr(historical.instance, related_name):
+                return historical
+        return None
+
+    def relations_changes(self, old_historical, new_historical, relations):
+
+        relations_map = {}
+        for relation in relations:
+            obj_new = obj_old = None
+            obj = getattr(new_historical, relation, None)
+
+            if obj:
+                obj_new = self.get_related_historical(new_historical, obj, new_historical.history_date,
+                                                      self.relation_fields[relation])
+                obj_old = self.get_related_historical(old_historical, obj, old_historical.history_date,
+                                                      self.relation_fields[relation])
+
+            if obj_old and obj_new:
+                changes = obj_new.diff_against(obj_old)
+                relations_map[relation] = self.build_list_changes(changes)
+
+        return relations_map
+
+    @property
+    def data(self):
+        queryset = self.queryset
+        count = queryset.count()
+        queryset_diff = {}
+        if count > 1:
+            i = 0
+            while i + 1 < count:
+                new = queryset[i]
+                old = queryset[i + 1]
+                i += 1
+                queryset_diff[i] = self.diff_object_fields(old, new)
+
+        return queryset_diff

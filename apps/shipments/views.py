@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, viewsets, permissions, status, exceptions, filters, mixins
+from rest_framework import viewsets, permissions, status, exceptions, filters, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -18,13 +18,13 @@ from apps.authentication import get_jwt_from_request
 from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id
 from apps.utils import send_templated_email
-from .filters import ShipmentFilter, ShipmentHistoryFilter
+from .filters import ShipmentFilter
 from .geojson import render_point_features
 from .models import Shipment, TrackingData, PermissionLink
-from .permissions import IsAuthenticatedOrDevice, IsOwnerOrShared, IsShipmentOwner, DeviceShipmentHistoryPermission
+from .permissions import IsAuthenticatedOrDevice, IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer, PermissionLinkCreateSerializer, DeviceShipmentsHistorySerializer
+    PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer
 
 from .tasks import tracking_data_update
 
@@ -231,24 +231,16 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class ShipmentHistoryListView(viewsets.GenericViewSet,
-                              mixins.ListModelMixin,):
-    # permission_classes = ((permissions.IsAuthenticated, DeviceShipmentHistoryPermission) if settings.PROFILES_ENABLED
-    #                       else (permissions.AllowAny,))
+class ShipmentHistoryListView(viewsets.ViewSet):
+    permission_classes = ((IsOwnerOrShared,) if settings.PROFILES_ENABLED
+                          else (permissions.AllowAny,))
+    http_method_names = ['get', ]
 
-    serializer_class = DeviceShipmentsHistorySerializer
-    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
-    search_fields = ('shippers_reference', 'forwarders_reference', 'owner_id',)
-    ordering_fields = ('created_at', 'pickup_est', 'delivery_est', 'historical_date',)
-    filterset_class = ShipmentHistoryFilter
-    queryset = Shipment.history.all()
+    def list(self, request, *args, **kwargs):
 
-    def get_queryset(self):
-        from .models import ShallowUser
-        queryset = self.queryset
-        print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Shallow: {ShallowUser.objects.all()[0].username}')
-        # device_id = self.kwargs.get('device_id', None)
-        # if device_id:
-        #     queryset = queryset.filter(device_id=device_id)
+        shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
 
-        return queryset
+        queryset = shipment.history.all()
+        serializer = ChangesDiffSerializer(queryset)
+
+        return Response(serializer.data)
