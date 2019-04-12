@@ -37,6 +37,9 @@ class ShallowUser(models.Model):
     id = models.CharField(primary_key=True, max_length=36)
     username = models.EmailField()
 
+    def __str__(self):
+        return f'{self.username}'
+
     @staticmethod
     def get_user(request=None, **kwargs):
         if not request or not request.user.id:
