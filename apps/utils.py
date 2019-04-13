@@ -7,7 +7,6 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from enumfields.drf import EnumField
-from simple_history.models import HistoricalRecords
 
 
 def random_id():

@@ -395,7 +395,7 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
         return TrackingData.objects.create(**validated_data, **self.context)
 
 
-class ChangesDiffSerializer(object):
+class ChangesDiffSerializer:
     def __init__(self, queryset):
         self.queryset = queryset
 
@@ -471,11 +471,11 @@ class ChangesDiffSerializer(object):
         count = queryset.count()
         queryset_diff = {}
         if count > 1:
-            i = 0
-            while i + 1 < count:
-                new = queryset[i]
-                old = queryset[i + 1]
-                i += 1
-                queryset_diff[i] = self.diff_object_fields(old, new)
+            index = 0
+            while index + 1 < count:
+                new = queryset[index]
+                old = queryset[index + 1]
+                index += 1
+                queryset_diff[index] = self.diff_object_fields(old, new)
 
         return queryset_diff

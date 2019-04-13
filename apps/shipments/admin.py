@@ -1,18 +1,10 @@
 from django import http
 from django.contrib import admin
-from django.contrib.admin.utils import unquote
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.utils.html import format_html
-
-from simple_history.admin import SimpleHistoryAdmin, USER_NATURAL_KEY, SIMPLE_HISTORY_EDIT
-
-from apps.admin import admin_change_url
-from apps.shipments.models import Shipment, Location, ShallowUser
-
 from django.contrib.admin import helpers
 from django.contrib.admin.utils import unquote
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.encoding import force_text
@@ -20,6 +12,10 @@ from django.utils.html import mark_safe
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
 
+from simple_history.admin import SimpleHistoryAdmin, USER_NATURAL_KEY, SIMPLE_HISTORY_EDIT
+
+from apps.admin import admin_change_url
+from apps.shipments.models import Shipment, Location, ShallowUser
 
 
 class AsyncJobInlineTab(GenericTabularInline):
@@ -160,7 +156,7 @@ class BaseModelHistory(SimpleHistoryAdmin):
         })
     )
 
-    def history_view(self, request, object_id, extra_context=None):
+    def history_view(self, request, object_id, extra_context=None):     # pylint:disable=too-many-locals
         request.current_app = self.admin_site.name
         model = self.model
         opts = model._meta
@@ -214,7 +210,7 @@ class BaseModelHistory(SimpleHistoryAdmin):
         extra_kwargs = {}
         return render(request, self.object_history_template, context, **extra_kwargs)
 
-    def history_form_view(self, request, object_id, version_id, extra_context=None):
+    def history_form_view(self, request, object_id, version_id, extra_context=None):    # pylint:disable=too-many-locals
         request.current_app = self.admin_site.name
         original_opts = self.model._meta
         model = getattr(
@@ -223,17 +219,14 @@ class BaseModelHistory(SimpleHistoryAdmin):
         obj = get_object_or_404(
             model, **{original_opts.pk.attname: object_id, "history_id": version_id}
         ).instance
-        obj._state.adding = False
+        obj._state.adding = False   # pylint:disable=protected-access
 
+        # We override this behavior for the moment
         if not self.has_change_permission(request, obj):
-            # We override this behavior for the moment
             # raise PermissionDenied
             pass
 
-        if SIMPLE_HISTORY_EDIT:
-            change_history = True
-        else:
-            change_history = False
+        change_history = bool(SIMPLE_HISTORY_EDIT)
 
         if "_change_history" in request.POST and SIMPLE_HISTORY_EDIT:
             obj = obj.history.get(pk=version_id).instance
