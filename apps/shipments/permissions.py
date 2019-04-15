@@ -21,9 +21,6 @@ from apps.permissions import has_owner_access, check_has_shipment_owner_access, 
 from .models import PermissionLink
 
 
-PROFILES_DEVICE_URL = f'{settings.PROFILES_URL}/api/v1/device'
-
-
 class IsShipmentOwner(permissions.BasePermission):
     """
     Custom permission to allow only the owner or a wallet owner to interact with a shipment's permission link
@@ -122,15 +119,3 @@ class IsAuthenticatedOrDevice(permissions.IsAuthenticated):
             return True
 
         return super(IsAuthenticatedOrDevice, self).has_permission(request, view)
-
-
-class DeviceShipmentHistoryPermission(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-        """
-        Check whether the requester has access permission to the device
-        """
-        response = settings.REQUESTS_SESSION.get(f'{PROFILES_DEVICE_URL}/{view.kwargs["device_id"]}/',
-                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
-
-        return response.status_code == status.HTTP_200_OK

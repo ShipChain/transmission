@@ -406,6 +406,8 @@ class ChangesDiffSerializer:
             'bill_to_location': 'shipment_bill'
         }
 
+        self.excluded_fields = ('updated_at', 'history_user', )
+
     def diff_object_fields(self, old, new):
         changes = new.diff_against(old)
 
@@ -423,7 +425,8 @@ class ChangesDiffSerializer:
     def build_list_changes(self, changes):
 
         field_list = []
-        for change in changes.changes:
+        changes_list = [change for change in changes.changes if change.field not in self.excluded_fields]
+        for change in changes_list:
             field = {
                 'field': change.field,
                 'old': change.old,
