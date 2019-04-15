@@ -130,10 +130,6 @@ class Device(models.Model):
     id = models.CharField(primary_key=True, null=False, max_length=36)
     certificate_id = models.CharField(unique=True, null=True, blank=False, max_length=255)
 
-    # Model's history tracking definition
-    history = HistoricalRecords(user_model=ShallowUser,
-                                get_user=ShallowUser.get_user)
-
     @staticmethod
     def get_or_create_with_permission(jwt, device_id):
         certificate_id = None

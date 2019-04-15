@@ -125,12 +125,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
             if 'device' in self.context:
                 extra_args['device'] = self.context['device']
-                # Shipment creation with history
-                return Shipment.objects.create(**validated_data, **extra_args)
 
-            # Shipment creation without history
-            # shipment = Shipment(**validated_data, **extra_args)
-            # shipment.save_without_historical_record()
             return Shipment.objects.create(**validated_data, **extra_args)
 
     def validate_device_id(self, device_id):
@@ -406,7 +401,7 @@ class ChangesDiffSerializer:
             'bill_to_location': 'shipment_bill'
         }
 
-        self.excluded_fields = ('updated_at', 'history_user', )
+        self.excluded_fields = ('updated_at', 'history_user', 'owner_id', 'version', )
 
     def diff_object_fields(self, old, new):
         changes = new.diff_against(old)
