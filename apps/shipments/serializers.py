@@ -467,13 +467,13 @@ class ChangesDiffSerializer:
     def data(self):
         queryset = self.queryset
         count = queryset.count()
-        queryset_diff = {}
+        queryset_diff = []
         if count > 1:
             index = 0
             while index + 1 < count:
                 new = queryset[index]
                 old = queryset[index + 1]
                 index += 1
-                queryset_diff[index] = self.diff_object_fields(old, new)
+                queryset_diff.append(self.diff_object_fields(old, new))
 
         return queryset_diff

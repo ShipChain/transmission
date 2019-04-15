@@ -703,7 +703,7 @@ class ShipmentAPITests(APITestCase):
             response = self.client.get(history_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             history_data = response.json()['data']
-            fields = history_data['1']['fields']
+            fields = history_data[0]['fields']
             self.assertTrue(len(fields) > 0)
             changed_fields = self.get_changed_fields(fields)
             self.assertTrue('package_qty' in changed_fields)
@@ -720,14 +720,14 @@ class ShipmentAPITests(APITestCase):
                 })
 
                 # Updating a shipment a location object, should be reflected in the response's field
-                # of the most recent delta change (the indice 1)
+                # of the most recent delta change (indice 0 of the list)
                 response = self.client.patch(url_patch, update_shipment_data, content_type=content_type)
                 self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
                 response = self.client.get(history_url)
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
-                history_data = response.json()['data']
-                changed_fields = self.get_changed_fields(history_data['1']['fields'])
+                history_data = response.json()['data'][0]
+                changed_fields = self.get_changed_fields(history_data['fields'])
                 self.assertTrue('ship_from_location' in changed_fields)
 
                 update_shipment_data, content_type = create_form_content({
@@ -744,7 +744,7 @@ class ShipmentAPITests(APITestCase):
                 response = self.client.get(history_url)
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
                 history_data = response.json()['data']
-                ship_from_location_changes = history_data['1']['relationships'].get('ship_from_location', None)
+                ship_from_location_changes = history_data[0]['relationships'].get('ship_from_location', None)
                 self.assertTrue(bool(ship_from_location_changes))
                 ship_from_location_field_changes = self.get_changed_fields(ship_from_location_changes)
                 self.assertTrue('phone_number' in ship_from_location_field_changes)
@@ -772,11 +772,10 @@ class ShipmentAPITests(APITestCase):
                 # is_shipper method is called once just ofr accessing the shipment history
                 self.assertEqual(mock_shipper_permission.call_count, 3)
                 history_data = response.json()['data']
-                changed_fields = self.get_changed_fields(history_data['1']['fields'])
+                changed_fields = self.get_changed_fields(history_data[0]['fields'])
                 self.assertIn('device', changed_fields)
                 self.assertIn('updated_by', changed_fields)
-                self.assertNotEqual(history_data['1']['author'], history_data['2']['author'])
-
+                self.assertNotEqual(history_data[0]['author'], history_data[1]['author'])
 
     @httpretty.activate
     def test_create(self):
