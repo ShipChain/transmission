@@ -13,7 +13,7 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0034_alter_shipment_location_definition'),
+        ('shipments', '0035_speed_float_field'),
     ]
 
     operations = [

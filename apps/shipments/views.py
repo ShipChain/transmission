@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, permissions, status, exceptions, filters, mixins
+from rest_framework import viewsets, permissions, status, filters, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -21,7 +21,7 @@ from apps.utils import send_templated_email
 from .filters import ShipmentFilter
 from .geojson import render_point_features
 from .models import Shipment, TrackingData, PermissionLink
-from .permissions import IsAuthenticatedOrDevice, IsOwnerOrShared, IsShipmentOwner
+from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
     PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer
