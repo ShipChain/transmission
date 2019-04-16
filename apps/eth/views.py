@@ -106,7 +106,9 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
         log_metric('transmission.info', tags={'method': 'transaction.list', 'module': __name__})
 
         shipment_pk = kwargs.get('shipment_pk', None)
-        if shipment_pk:
+        permission_link = request.query_params.get('permission_link', None)
+
+        if shipment_pk and permission_link or shipment_pk:
             LOG.debug(f'Getting transactions for shipment: {shipment_pk}.')
 
             queryset = self.queryset.filter(ethlistener__shipments__id=shipment_pk)

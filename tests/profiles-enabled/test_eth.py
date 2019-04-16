@@ -10,7 +10,7 @@ from rest_framework.test import APITestCase, APIClient, force_authenticate
 from apps.authentication import passive_credentials_auth
 from apps.eth.models import TransactionReceipt, EthAction
 from apps.jobs.models import AsyncJob
-from apps.shipments.models import Shipment
+from apps.shipments.models import Shipment, PermissionLink
 from apps.shipments.rpc import Load110RPCClient
 from tests.utils import get_jwt
 

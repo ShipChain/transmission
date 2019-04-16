@@ -16,14 +16,13 @@ class IsShipmentOwner(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-
         shipment_id = view.kwargs.get('shipment_pk', None)
         if shipment_id:
             shipment = shipment_exists(shipment_id)
             if not shipment:
                 return False
-
-        return check_has_shipment_owner_access(request, shipment)
+            return check_has_shipment_owner_access(request, shipment)
+        return False
 
     def has_permission(self, request, view):
         shipment_id = view.kwargs.get('shipment_pk', None)
@@ -31,14 +30,27 @@ class IsShipmentOwner(permissions.BasePermission):
             shipment = shipment_exists(shipment_id)
             if not shipment:
                 return False
-
-        return check_has_shipment_owner_access(request, shipment)
+            return check_has_shipment_owner_access(request, shipment)
+        return False
 
 
 class IsListenerOwner(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it
     """
+
+    def has_permission(self, request, view):
+        shipment_id = view.kwargs.get('shipment_pk', None)
+
+        if shipment_id:
+            shipment = shipment_exists(shipment_id)
+            if not shipment:
+                return False
+            return check_permission_link(request, shipment)
+
+        # Transactions are still accessible on their own endpoint
+        return True
+
     def has_object_permission(self, request, view, obj):
         # Permissions are allowed to anyone who owns a shipment listening to this job
         for shipment in obj.listeners.filter(Model='shipments.Shipment'):
@@ -54,7 +66,7 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
     def has_permission(self, request, view):
 
         permission_link = request.query_params.get('permission_link', None)
-        shipment_pk = request.parser_context['kwargs'].get('pk', None)
+        shipment_pk = view.kwargs.get('pk', None) or view.kwargs.get('shipment_pk', None)
 
         # The shipments can only be accessible via permission links only on shipment-detail endpoints
         if permission_link and not shipment_pk:
@@ -73,7 +85,7 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
             shipment = shipment_exists(shipment_pk)
             if not shipment:
                 return False
-            return self.check_permission_link(request, shipment)
+            return check_permission_link(request, shipment)
         return request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
@@ -83,20 +95,7 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
         if 'permission_link' not in request.query_params:
             return check_has_shipment_owner_access(request, obj)
 
-        return self.check_permission_link(request, obj)
-
-    def check_permission_link(self, request, shipment):
-        permission_link = request.query_params.get('permission_link', None)
-        if permission_link:
-            try:
-                permission_obj = PermissionLink.objects.get(pk=permission_link)
-            except ObjectDoesNotExist:
-                return False
-            if not permission_obj.is_valid:
-                return check_has_shipment_owner_access(request, shipment)
-            return shipment.pk == permission_obj.shipment.pk and request.method == 'GET'
-
-        return check_has_shipment_owner_access(request, shipment)
+        return check_permission_link(request, obj)
 
 
 class IsAuthenticatedOrDevice(permissions.IsAuthenticated):
@@ -129,8 +128,9 @@ def is_moderator(request, shipment):
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.moderator_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
-    return (shipment.moderator_wallet_id and response.status_code == status.HTTP_200_OK and
-            request.method in ('GET', 'PATCH'))
+        return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
+
+    return False
 
 
 def is_shipper(request, shipment):
@@ -154,6 +154,21 @@ def shipment_exists(shipment_id):
         return False
 
     return shipment_obj
+
+
+def check_permission_link(request, shipment_obj):
+    permission_link_id = request.query_params.get('permission_link', None)
+    if permission_link_id:
+        try:
+            permission_obj = PermissionLink.objects.get(pk=permission_link_id)
+        except ObjectDoesNotExist:
+            return False
+        if not permission_obj.is_valid:
+            return check_has_shipment_owner_access(request, shipment_obj)
+
+        return shipment_obj.pk == permission_obj.shipment.pk and request.method == 'GET'
+
+    return check_has_shipment_owner_access(request, shipment_obj)
 
 
 def check_has_shipment_owner_access(request, obj):
