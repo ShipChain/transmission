@@ -49,7 +49,7 @@ class IsListenerOwner(permissions.BasePermission):
             return check_permission_link(request, shipment)
 
         # Transactions are still accessible on their own endpoint
-        return True
+        return request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
         # Permissions are allowed to anyone who owns a shipment listening to this job

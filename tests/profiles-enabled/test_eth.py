@@ -1,4 +1,5 @@
 import json
+import datetime
 from unittest import mock
 
 import httpretty
@@ -124,7 +125,6 @@ class TransactionReceiptTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response_json['included'][1]['attributes']['from_address'], FROM_ADDRESS)
 
-    @httpretty.activate
     def test_transaction_list(self):
         mock_shipment_rpc_client = Load110RPCClient
 
@@ -155,6 +155,16 @@ class TransactionReceiptTestCase(APITestCase):
                                            shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
                                            storage_credentials_id=WALLET_ID)
 
+        valid_permission_link = PermissionLink.objects.create(
+            expiration_date=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1),
+            shipment=listener
+        )
+
+        invalid_permission_link = PermissionLink.objects.create(
+            expiration_date=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=-1),
+            shipment=listener
+        )
+
         self.createAsyncJobs()
         self.createEthAction(listener)
         self.createTransactionReceipts()
@@ -174,27 +184,44 @@ class TransactionReceiptTestCase(APITestCase):
         response = self.client.get(f'{url}?wallet_address={FROM_ADDRESS}')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{WALLET_ID}/",
-                               body=json.dumps({'data': {'attributes': {'address':  FROM_ADDRESS}}}),
-                               status=status.HTTP_200_OK)
+        with httpretty.enabled():
+            httpretty.register_uri(httpretty.GET,
+                                   f"{test_settings.PROFILES_URL}/api/v1/wallet/{WALLET_ID}/",
+                                   body=json.dumps({'data': {'attributes': {'address':  FROM_ADDRESS}}}),
+                                   status=status.HTTP_200_OK)
 
-        # request for specific eth actions should only return ones with that from_address
-        response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
-        force_authenticate(response, user=self.user_1, token=self.token)
-        response_json = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_json['data']), 1)
+            # request for specific eth actions should only return ones with that from_address
+            response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
+            force_authenticate(response, user=self.user_1, token=self.token)
+            response_json = response.json()
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(response_json['data']), 1)
 
-        httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{WALLET_ID}/",
-                               status=status.HTTP_401_UNAUTHORIZED)
+            httpretty.register_uri(httpretty.GET,
+                                   f"{test_settings.PROFILES_URL}/api/v1/wallet/{WALLET_ID}/",
+                                   status=status.HTTP_401_UNAUTHORIZED)
 
-        # request for specific eth actions should fail if the profiles request fails
-        response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            # request for specific eth actions should fail if the profiles request fails
+            response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Shipment transactions list
-        url = reverse('shipment-transactions-list', kwargs={'version': 'v1', 'shipment_pk': listener.id})
-        response = self.client.get(url)
+        nested_url = reverse('shipment-transactions-list', kwargs={'version': 'v1', 'shipment_pk': listener.id})
+        response = self.client.get(nested_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # A Transactions list view cannot be accessed by an anonymous user on a nested route
+        self.set_user(None)
+
+        response = self.client.get(nested_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # An anonymous user shouldn't have access to the shipment's transactions with an expired permission link
+        response = self.client.get(f'{nested_url}?permission_link={invalid_permission_link.id}')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # An anonymous user with a valid permission link should have access to the shipment's transactions
+        response = self.client.get(f'{nested_url}?permission_link={valid_permission_link.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        self.assertEqual(len(data), 2)
