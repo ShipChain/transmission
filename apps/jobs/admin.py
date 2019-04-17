@@ -7,6 +7,7 @@ from pygments.formatters import HtmlFormatter
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
 from django.utils.html import format_html
+from enumfields.admin import EnumFieldListFilter
 
 from apps.admin import admin_change_url
 from .models import AsyncJob, JobState, AsyncAction, Message
@@ -101,11 +102,11 @@ class AsyncJobAdmin(admin.ModelAdmin):
         'actions_display',
     )
 
-    list_filter = (
-        'state',
-        'last_try',
-        'created_at',
-    )
+    list_filter = [
+        ('last_try', admin.DateFieldListFilter),
+        ('created_at', admin.DateFieldListFilter),
+        ('state', EnumFieldListFilter)
+    ]
 
     readonly_fields = (
         'id',
@@ -162,11 +163,15 @@ class AsyncJobAdmin(admin.ModelAdmin):
     actions_display.short_description = "Actions"
 
     def get_search_results(self, request, queryset, search_term):
-        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
-        queryset |= self.model.objects.filter(
+        searched_queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+
+        shipment_queryset = queryset.filter(
             joblistener__listener_type=ContentType.objects.get(app_label="shipments", model="shipment").id,
             joblistener__listener_id__contains=search_term
         )
+
+        queryset = searched_queryset | shipment_queryset
+
         return queryset, use_distinct
 
     def get_actions(self, request):
