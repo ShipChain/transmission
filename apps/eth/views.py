@@ -1,17 +1,18 @@
 import logging
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Q
+from influxdb_metrics.loader import log_metric
 from rest_framework import mixins, viewsets, parsers, status, renderers, permissions
 from rest_framework.response import Response
 from rest_framework_json_api import renderers as jsapi_renderers, serializers
-from influxdb_metrics.loader import log_metric
 
 from apps.authentication import EngineRequest, get_jwt_from_request
 from apps.eth.models import EthAction, Event
 from apps.eth.serializers import EventSerializer, EthActionSerializer
 from apps.permissions import get_owner_id
+from apps.rpc_client import RPCError
 from apps.shipments.permissions import IsListenerOwner
 
 LOG = logging.getLogger('transmission')
@@ -28,46 +29,32 @@ class EventViewSet(mixins.CreateModelMixin,
     renderer_classes = (renderers.JSONRenderer, jsapi_renderers.JSONRenderer)
     permission_classes = (EngineRequest,)
 
+    @staticmethod
+    def _process_event(event):
+        try:
+            action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
+            Event.objects.get_or_create(**event, eth_action=action)
+        except RPCError as exc:
+            LOG.info(f"Engine RPC error processing event {event['transaction_hash']}: {exc}")
+        except MultipleObjectsReturned as exc:
+            LOG.info(f"MultipleObjectsReturned during get/get_or_create for event {event['transaction_hash']}: {exc}")
+        except ObjectDoesNotExist:
+            log_metric('transmission.info', tags={'method': 'events.create', 'code': 'non_ethaction_event',
+                                                  'module': __name__})
+            LOG.info(f"Non-EthAction Event processed Tx: {event['transaction_hash']}")
+
     def create(self, request, *args, **kwargs):
         log_metric('transmission.info', tags={'method': 'events.create', 'module': __name__})
         LOG.debug('Events create')
 
         is_many = isinstance(request.data, list)
+        serializer = EventSerializer(data=request.data, many=is_many)
+        serializer.is_valid(raise_exception=True)
 
-        if not is_many:
-            LOG.debug('Event is_many is false')
-            serializer = EventSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
+        events = serializer.data if is_many else [serializer.data]
 
-            try:
-                LOG.debug(f'Finding contract receipt for tx hash: {serializer.data["transaction_hash"]}')
-                action = EthAction.objects.get(transaction_hash=serializer.data['transaction_hash'])
-            except ObjectDoesNotExist:
-                action = None
-                log_metric('transmission.error', tags={'method': 'events.create', 'code': 'object_does_not_exist',
-                                                       'module': __name__, 'detail': 'events.is_many is false'})
-                LOG.info(f"Non-EthAction Event processed "
-                         f"Tx: {serializer.data['transaction_hash']}")
-
-            Event.objects.get_or_create(**serializer.data, eth_action=action)
-
-        else:
-            LOG.debug('Events is_many is true')
-            serializer = EventSerializer(data=request.data, many=True)
-            serializer.is_valid(raise_exception=True)
-
-            for event in serializer.data:
-                try:
-                    LOG.debug(f'Finding contract receipt for tx hash: {event["transaction_hash"]}')
-                    action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
-                except ObjectDoesNotExist:
-                    action = None
-                    log_metric('transmission.error', tags={'method': 'events.create', 'code': 'object_does_not_exist',
-                                                           'module': __name__, 'detail': 'events.is_many is true'})
-                    LOG.info(f"Non-EthAction Event processed "
-                             f"Tx: {event['transaction_hash']}")
-
-                Event.objects.get_or_create(**event, eth_action=action)
+        for event in events:
+            self._process_event(event)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

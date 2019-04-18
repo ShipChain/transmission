@@ -4,7 +4,7 @@ from .base import ENVIRONMENT
 WALLET_TIMEOUT = 900
 
 # The maximum timeout that Transmission will 'lock' a vault_id, preventing concurrent vault writes
-VAULT_TIMEOUT = 60
+VAULT_TIMEOUT = 120
 
 # Celery retry intervals
 CELERY_WALLET_RETRY = 30
