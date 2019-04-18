@@ -89,9 +89,9 @@ class PdfDocumentViewSetAPITests(APITestCase):
         pdf.cell(40, 60, f"{DATE}")
         pdf.output(file_path, 'F')
 
-    @mock.patch('apps.documents.permissions.UserHasPermission.is_shipper', mock.MagicMock(return_value=False))
-    @mock.patch('apps.documents.permissions.UserHasPermission.is_carrier', mock.MagicMock(return_value=False))
-    @mock.patch('apps.documents.permissions.UserHasPermission.is_moderator', mock.MagicMock(return_value=False))
+    @mock.patch('apps.permissions.is_shipper', mock.MagicMock(return_value=False))
+    @mock.patch('apps.permissions.is_carrier', mock.MagicMock(return_value=False))
+    @mock.patch('apps.permissions.is_moderator', mock.MagicMock(return_value=False))
     def test_sign_to_s3(self):
         mock_document_rpc_client = DocumentRPCClient
         mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=True)
@@ -362,9 +362,9 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 4)
 
-        with mock.patch('apps.documents.permissions.UserHasPermission.is_shipper') as mock_is_shipper, \
-            mock.patch('apps.documents.permissions.UserHasPermission.is_carrier') as mock_is_carrier, \
-            mock.patch('apps.documents.permissions.UserHasPermission.is_moderator') as mock_is_moderator:
+        with mock.patch('apps.permissions.is_shipper') as mock_is_shipper, \
+            mock.patch('apps.permissions.is_carrier') as mock_is_carrier, \
+            mock.patch('apps.permissions.is_moderator') as mock_is_moderator:
             mock_is_shipper.return_value = True
             mock_is_carrier.return_value = False
             mock_is_moderator.return_value = False
@@ -488,9 +488,9 @@ class ImageDocumentViewSetAPITests(APITestCase):
         draw.text((160, 150), DATE, font=font2, fill='white')
         img.save(file_path)
 
-    @mock.patch('apps.documents.permissions.UserHasPermission.is_shipper', mock.MagicMock(return_value=False))
-    @mock.patch('apps.documents.permissions.UserHasPermission.is_carrier', mock.MagicMock(return_value=False))
-    @mock.patch('apps.documents.permissions.UserHasPermission.is_moderator', mock.MagicMock(return_value=False))
+    @mock.patch('apps.permissions.is_shipper', mock.MagicMock(return_value=False))
+    @mock.patch('apps.permissions.is_carrier', mock.MagicMock(return_value=False))
+    @mock.patch('apps.permissions.is_moderator', mock.MagicMock(return_value=False))
     def test_image_creation(self):
         img_path = ['./tests/tmp/jpeg_img.jpg', './tests/tmp/png_img.png']
 
@@ -573,9 +573,9 @@ class ImageDocumentViewSetAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(data), 0)
 
-    @mock.patch('apps.documents.permissions.UserHasPermission.is_shipper', mock.MagicMock(return_value=False))
-    @mock.patch('apps.documents.permissions.UserHasPermission.is_carrier', mock.MagicMock(return_value=False))
-    @mock.patch('apps.documents.permissions.UserHasPermission.is_moderator', mock.MagicMock(return_value=False))
+    @mock.patch('apps.permissions.is_shipper', mock.MagicMock(return_value=False))
+    @mock.patch('apps.permissions.is_carrier', mock.MagicMock(return_value=False))
+    @mock.patch('apps.permissions.is_moderator', mock.MagicMock(return_value=False))
     def test_get_document_from_vault(self):
         img_path = './tests/tmp/png_img.png'
 

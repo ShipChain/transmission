@@ -323,6 +323,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/page_size'
+        - $ref: '#/components/parameters/transaction/permissionLinkId'
         - $ref: '#/components/parameters/transaction/include_async_job_action'
       tags:
         - Shipments
@@ -816,6 +817,13 @@ components:
           type: string
           enum:
             - async_job.actions
+
+      permissionLinkId:
+        name: permission_link
+        in: query
+        description: When included and valid, a permission link parameter provides unauthenticated read-only access to the shipment's transactions.
+        schema:
+          $ref: '#/components/schemas/dataTypes/uuid'
 
     document:
       path:
