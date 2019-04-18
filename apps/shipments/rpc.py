@@ -1,6 +1,7 @@
 import logging
 
 from abc import abstractmethod
+from django.conf import settings
 from django.core.cache import cache
 from influxdb_metrics.loader import log_metric
 
@@ -33,7 +34,7 @@ class ShipmentRPCClient(RPCClient):
         raise RPCError("Invalid response from Engine")
 
     def add_shipment_data(self, storage_credentials_id, wallet_id, vault_id, shipment_data):
-        with cache.lock(vault_id):
+        with cache.lock(vault_id, timeout=settings.VAULT_TIMEOUT):
             LOG.debug(f'Adding shipment data with storage_credentials_id {storage_credentials_id},'
                       f'wallet_id {wallet_id}, and vault_id {vault_id}.')
             log_metric('transmission.info', tags={'method': 'shipment_rpcclient.add_shipment_data',
@@ -56,7 +57,7 @@ class ShipmentRPCClient(RPCClient):
             raise RPCError("Invalid response from Engine")
 
     def add_tracking_data(self, storage_credentials_id, wallet_id, vault_id, tracking_data):
-        with cache.lock(vault_id):
+        with cache.lock(vault_id, timeout=settings.VAULT_TIMEOUT):
             LOG.debug(f'Adding tracking data with storage_credentials_id {storage_credentials_id},'
                       f'wallet_id {wallet_id}, and vault_id {vault_id}.')
             log_metric('transmission.info', tags={'method': 'shipment_rpcclient.add_tracking_data',

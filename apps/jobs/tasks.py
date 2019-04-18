@@ -122,7 +122,7 @@ class AsyncTask:
              retry_backoff=3, retry_backoff_max=60, max_retries=10)
 def async_job_fire(self):
     # Lock on Task ID to protect against tasks that are queued multiple times
-    task_lock = cache.lock(self.request.id)
+    task_lock = cache.lock(self.request.id, timeout=600)
     if task_lock.acquire(blocking=False):
         try:
             async_job_id = self.request.id
