@@ -347,6 +347,34 @@ class ShipmentAPITests(APITestCase):
             data = json.loads(response.content)['data']
             self.assertEqual(len(data['features']), 4)
 
+            # -------------------- Get tracking data through permission link --------------------#
+            valid_permission_link = PermissionLink.objects.create(
+                expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+                shipment=self.shipments[0]
+            )
+
+            invalid_permission_link = PermissionLink.objects.create(
+                expiration_date=datetime.now(timezone.utc) + timedelta(days=-1),
+                shipment=self.shipments[0]
+            )
+
+            # An anonymous user shouldn't have access to a shipment tracking data
+            self.set_user(None)
+            response = self.client.get(tracking_get_url)
+            self.assertTrue(response.status_code, status.HTTP_403_FORBIDDEN)
+
+            # An anonymous user with an invalid permission link shouldn't have access to the shipment tracking data
+            response = self.client.get(f'{tracking_get_url}?permission_link={invalid_permission_link.id}')
+            self.assertTrue(response.status_code, status.HTTP_403_FORBIDDEN)
+
+            # An anonymous user with a valid permission link should have access to the shipment tracking data
+            response = self.client.get(f'{tracking_get_url}?permission_link={valid_permission_link.id}')
+            self.assertTrue(response.status_code, status.HTTP_200_OK)
+            data = json.loads(response.content)['data']
+            self.assertEqual(len(data['features']), 4)
+
+            self.set_user(self.user_1)
+
             # We expect the second point data to be the first in LineString
             # since it has been  generated first. See timestamp values
             pos = track_dic_2['position']
