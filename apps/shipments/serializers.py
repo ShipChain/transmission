@@ -20,7 +20,7 @@ from rest_framework_json_api import serializers
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData, PermissionLink
-from apps.utils import UpperEnumField
+from apps.utils import UpperEnumField, TxmHistoricalChanges
 
 
 LOG = logging.getLogger('transmission')
@@ -410,11 +410,13 @@ class ChangesDiffSerializer:
 
         relation_changes = self.relations_changes(old, new, self.relation_fields.keys())
 
+        author = None if not new.history_user else new.history_user
+
         return {
             'history_date': new.history_date,
             'fields': flat_changes,
             'relationships': relation_changes,
-            'author': new.history_user_id
+            'author': author,
         }
 
     def build_list_changes(self, changes):
@@ -435,7 +437,7 @@ class ChangesDiffSerializer:
         obj_class = obj.__class__.__name__
         filter_kwargs = {
             'history_date__range': (date + timedelta(milliseconds=-500), date),
-            'history_user_id': historical_obj.history_user_id
+            'history_user': historical_obj.history_user
         }
         historical_queryset = globals()[obj_class].history.all().filter(**filter_kwargs)
 
@@ -457,8 +459,8 @@ class ChangesDiffSerializer:
                 obj_old = self.get_related_historical(old_historical, obj, old_historical.history_date,
                                                       self.relation_fields[relation])
 
-            if obj_old and obj_new:
-                changes = obj_new.diff_against(obj_old)
+            if obj_new:
+                changes = TxmHistoricalChanges(obj_new).diff_against(obj_old)
                 relations_map[relation] = self.build_list_changes(changes)
 
         return relations_map

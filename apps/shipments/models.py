@@ -10,6 +10,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Point
@@ -22,30 +23,14 @@ from enumfields import EnumField
 from rest_framework.exceptions import Throttled, PermissionDenied, APIException
 from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
-from simple_history.models import HistoricalRecords
 
 from apps.eth.fields import AddressField, HashField
 from apps.eth.models import EthListener
 from apps.jobs.models import JobListener, AsyncJob, JobState
-from apps.utils import random_id, AliasField
+from apps.utils import random_id, AliasField, get_user, TxmHistoricalRecords
 from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')
-
-
-class ShallowUser(models.Model):
-    id = models.CharField(primary_key=True, max_length=36)
-    username = models.EmailField()
-
-    def __str__(self):
-        return f'{self.username}'
-
-    @staticmethod
-    def get_user(request=None, **kwargs):
-        if not request or not request.user.id:
-            return None
-
-        return ShallowUser.objects.get_or_create(id=request.user.id, defaults={'username': request.user.username})[0]
 
 
 class Location(models.Model):
@@ -74,8 +59,7 @@ class Location(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     # Model's history tracking definition
-    history = HistoricalRecords(user_model=ShallowUser,
-                                get_user=ShallowUser.get_user)
+    history = TxmHistoricalRecords(get_user=get_user, history_user_id_field=True)
 
     def get_lat_long_from_address(self):
         LOG.debug(f'Creating lat/long point for location {self.id}')
@@ -308,8 +292,7 @@ class Shipment(models.Model):
     customer_fields = JSONField(blank=True, null=True)
 
     # Model's history tracking definition
-    history = HistoricalRecords(user_model=ShallowUser,
-                                get_user=ShallowUser.get_user)
+    history = TxmHistoricalRecords(get_user=get_user, history_user_id_field=True)
 
     def get_device_request_url(self):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
