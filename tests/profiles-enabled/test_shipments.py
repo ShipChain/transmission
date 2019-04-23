@@ -275,6 +275,19 @@ class ShipmentAPITests(APITestCase):
             })
             self.shipments[0].save()
 
+            # Get tracking data
+            response = self.client.get(tracking_get_url)
+
+            # Unauthenticated request should fail
+            self.assertEqual(response.status_code, 403)
+
+            self.set_user(self.user_1)
+            # Authenticated request with no tracking data associated should fail
+            response = self.client.get(tracking_get_url)
+            response_json = response.json()
+            self.assertEqual(response.status_code, 404)
+            self.assertTrue("No tracking data found for Shipment" in response_json['errors'][0]['detail'])
+
             url = reverse('device-tracking', kwargs={'version': 'v1', 'pk': 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'})
 
             track_dic = {
@@ -315,14 +328,7 @@ class ShipmentAPITests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             self.assertEqual(TrackingData.objects.all().count(), 3)
 
-            # Get tracking data
-            response = self.client.get(tracking_get_url)
-
-            # Unauthenticated request should fail
-            self.assertEqual(response.status_code, 403)
-
             # Authenticated request should succeed
-            self.set_user(self.user_1)
             response = self.client.get(tracking_get_url)
             self.assertTrue(response.status_code, status.HTTP_200_OK)
             data = json.loads(response.content)['data']

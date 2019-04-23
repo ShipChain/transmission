@@ -4,13 +4,14 @@ from string import Template
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status, filters, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound
 from influxdb_metrics.loader import log_metric
 
 from apps.authentication import get_jwt_from_request
@@ -107,7 +108,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                                         content_type='application/vnd.api+json')
             return httpresponse
 
-        return HttpResponseNotFound()
+        raise NotFound("No tracking data found for Shipment.")
 
     def update(self, request, *args, **kwargs):
         """
