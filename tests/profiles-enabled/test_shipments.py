@@ -689,7 +689,7 @@ class ShipmentAPITests(APITestCase):
 
             history_url = reverse('shipment-history-list', kwargs={'version': 'v1', 'shipment_pk': shipment_id})
 
-            # Since we track just the objects diff, we should have an empty dictionary response here
+            # On shipment creation, we should have the newly created values against null values.
             response = self.client.get(history_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertEqual(len(response.json()['data']), 1)
@@ -719,8 +719,8 @@ class ShipmentAPITests(APITestCase):
                     'ship_from_location.state': LOCATION_STATE
                 })
 
-                # Updating a shipment a location object, should be reflected in the response's field
-                # of the most recent delta change (indice 0 of the list)
+                # Updating a shipment with a location object, should be reflected in both fields
+                # and relationships fields in response data
                 response = self.client.patch(url_patch, update_shipment_data, content_type=content_type)
                 self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
@@ -729,6 +729,7 @@ class ShipmentAPITests(APITestCase):
                 history_data = response.json()['data'][0]
                 changed_fields = self.get_changed_fields(history_data['fields'])
                 self.assertTrue('ship_from_location' in changed_fields)
+                self.assertTrue('ship_from_location' in history_data['relationships'].keys())
 
                 update_shipment_data, content_type = create_form_content({
                     'ship_from_location.country': LOCATION_COUNTRY,
@@ -750,7 +751,7 @@ class ShipmentAPITests(APITestCase):
                 self.assertTrue('phone_number' in ship_from_location_field_changes)
 
             # ----------------------- Shipment update by someone other than owner --------------------------#
-            with mock.patch('apps.shipments.permissions.IsOwnerOrShared.is_shipper') as mock_shipper_permission:
+            with mock.patch('apps.permissions.is_shipper') as mock_shipper_permission:
                 mock_shipper_permission.return_value = True
 
                 self.set_user(self.user_2)
