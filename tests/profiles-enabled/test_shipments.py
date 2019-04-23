@@ -692,7 +692,7 @@ class ShipmentAPITests(APITestCase):
             # Since we track just the objects diff, we should have an empty dictionary response here
             response = self.client.get(history_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.assertEqual(len(response.json()['data']), 0)
+            self.assertEqual(len(response.json()['data']), 1)
 
             url_patch = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
 

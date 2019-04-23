@@ -288,4 +288,3 @@ class LocationAdmin(BaseModelHistory):
 admin.site.register(Shipment, HistoricalShipmentAdmin)
 
 admin.site.register(Location, LocationAdmin)
-

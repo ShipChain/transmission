@@ -10,7 +10,6 @@ import boto3
 from botocore.exceptions import ClientError
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Point

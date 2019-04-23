@@ -8,11 +8,12 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils import six
 from django.core.serializers import serialize
+
 from enumfields.drf import EnumField
 from simple_history.models import HistoricalRecords, ModelChange, ModelDelta
 
 
-RELATED_TO_LOCATION = ('shipment_to', 'shipment_from', 'shipment_dest', 'shipment_bill' )
+RELATED_TO_LOCATION = ('shipment_to', 'shipment_from', 'shipment_dest', 'shipment_bill', )
 
 
 def random_id():
@@ -157,8 +158,9 @@ def send_templated_email(template, subject, context, recipients, sender=None):
 
 
 def get_user(request=None, instance=None):
-    if not request and not instance:
-        return None
+
+    if request:
+        return request.user.id
 
     if instance:
         if hasattr(instance, 'updated_by'):
@@ -167,7 +169,7 @@ def get_user(request=None, instance=None):
             if hasattr(instance, related):
                 return getattr(instance, related).updated_by
 
-    return request.user.id
+    return None
 
 
 def _model_to_dict(model):
@@ -200,10 +202,15 @@ class TxmHistoricalChanges:
 
         changes = []
         changed_fields = []
-        current_values = _model_to_dict(self.obj.instance)
+        if hasattr(self.obj, 'instance'):
+            current_values = _model_to_dict(self.obj.instance)
+        else:
+            current_values = _model_to_dict(self.obj)
 
-        old_values = {f: None for f in current_values.keys()} if not old_history else \
-            _model_to_dict(old_history.instance)
+        if not old_history:
+            old_values = {f: None for f in current_values.keys()}
+        else:
+            old_values = _model_to_dict(old_history.instance)
 
         for field, new_value in current_values.items():
             if field in old_values:
