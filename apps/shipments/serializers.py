@@ -401,7 +401,7 @@ class ChangesDiffSerializer:
             'bill_to_location': 'shipment_bill'
         }
 
-        self.excluded_fields = ('updated_at', 'history_user', 'owner_id', 'version', )
+        self.excluded_fields = ('history_user', )
 
     def diff_object_fields(self, old, new):
         changes = TxmHistoricalChanges(new).diff_against(old)
@@ -470,15 +470,14 @@ class ChangesDiffSerializer:
         count = queryset.count()
 
         queryset_diff = []
+        index = 0
         if count > 1:
-            index = 0
             while index + 1 < count:
                 new = queryset[index]
                 old = queryset[index + 1]
                 index += 1
                 queryset_diff.append(self.diff_object_fields(old, new))
 
-        else:
-            queryset_diff.append(self.diff_object_fields(None, queryset[0]))
+        queryset_diff.append(self.diff_object_fields(None, queryset[index]))
 
         return queryset_diff

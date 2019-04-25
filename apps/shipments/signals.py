@@ -67,7 +67,14 @@ def shipment_post_save(sender, **kwargs):
                                     funding_type=Shipment.FUNDING_TYPE,
                                     contracted_amount=Shipment.SHIPMENT_AMOUNT)
 
-        Shipment.objects.filter(id=instance.id).update(vault_id=vault_id, vault_uri=vault_uri)
+        instance.vault_id = vault_id
+        instance.vault_uri = vault_uri
+        instance.save()
+        # Save related history instance without user
+        history_instance = instance.history.all().first()
+        history_instance.history_user = None
+        history_instance.save()
+
         shipment_device_id_changed(Shipment, instance, {Shipment.device.field: (None, instance.device_id)})
     else:
         # Update Shipment vault data
