@@ -627,8 +627,11 @@ class ShipmentAPITests(APITestCase):
                 data = response.json()['data']
                 self.assertEqual(device.shipment.id, data['id'])
 
-    def get_changed_fields(self, changes_list):
-        return [item['field'] for item in changes_list]
+    def get_changed_fields(self, changes_list, field_name):
+        return [item[field_name] for item in changes_list]
+
+    # def get_changed_values(self, changes_list):
+    #     return [item['field'] for item in changes_list]
 
     @mock_iot
     def test_shipment_history(self):
@@ -679,24 +682,33 @@ class ShipmentAPITests(APITestCase):
 
             url = reverse('shipment-list', kwargs={'version': 'v1'})
 
-            # Every shipment created should have a historical object.
+            # Every shipment created should have tow historical objects, one for the shipment
+            # creation and one for shipment update with engine metadata.
             response = self.client.post(url, create_shipment_data, format='json')
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
             data = response.json()['data']
             shipment_id = data['id']
             history = Shipment.history.all()
-            self.assertEqual(history.count(), 1)
+            self.assertEqual(history.count(), 2)
 
             history_url = reverse('shipment-history-list', kwargs={'version': 'v1', 'shipment_pk': shipment_id})
 
             # On shipment creation, we should have the newly created values against null values.
             response = self.client.get(history_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.assertEqual(len(response.json()['data']), 1)
+            history_data = response.json()['data']
+            self.assertEqual(len(history_data), 2)
+            old_values = self.get_changed_fields(history_data[1]['fields'], 'old')
+
+            for old in old_values:
+                assert old is None
+
+            engine_changes = self.get_changed_fields(history_data[0]['fields'], 'field')
+            assert 'vault_uri' in engine_changes
 
             url_patch = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
 
-            # Exiting shipment updated with new fields values should have history diff
+            # Existing shipment updated with new fields values should have history diff
             response = self.client.patch(url_patch, update_shipment_data, format='json')
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
@@ -705,33 +717,58 @@ class ShipmentAPITests(APITestCase):
             history_data = response.json()['data']
             fields = history_data[0]['fields']
             self.assertTrue(len(fields) > 0)
-            changed_fields = self.get_changed_fields(fields)
+            changed_fields = self.get_changed_fields(fields, 'field')
             self.assertTrue('package_qty' in changed_fields)
+            self.assertTrue('pickup_act' in changed_fields)
 
             # ----------------------- Shipment update with a location field --------------------------#
             # Equivalently valid for any location field
             with mock.patch('apps.shipments.models.Location.get_lat_long_from_address') as mock_geocoder:
                 mock_geocoder.return_value = Point((53.1, -35.87))
 
-                update_shipment_data, content_type = create_form_content({
+                shipment_creation_with_location, content_type = create_form_content({
+                    'vault_id': VAULT_ID,
+                    'carrier_wallet_id': CARRIER_WALLET_ID,
+                    'shipper_wallet_id': SHIPPER_WALLET_ID,
+                    'storage_credentials_id': STORAGE_CRED_ID,
                     'ship_from_location.name': LOCATION_NAME,
                     'ship_from_location.city': LOCATION_CITY,
                     'ship_from_location.state': LOCATION_STATE
                 })
 
+                shipment_update_with_location, content_type = create_form_content({
+                    'ship_from_location.name': LOCATION_NAME,
+                    'ship_from_location.city': LOCATION_CITY,
+                    'ship_from_location.state': LOCATION_STATE,
+                })
+
+                # Creating a shipment with a location should be reflected in the initial diff history
+                response = self.client.post(url, shipment_creation_with_location, content_type=content_type)
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+                shipment2_id = response.json()['data']['id']
+
+                shipment2_history_url = reverse('shipment-history-list', kwargs={'version': 'v1', 'shipment_pk': shipment2_id})
+
+                response = self.client.get(shipment2_history_url)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                history_data = response.json()['data'][1]
+                changed_fields = self.get_changed_fields(history_data['fields'], 'field')
+                self.assertTrue('ship_from_location' in changed_fields)
+                self.assertTrue('ship_from_location' in history_data['relationships'].keys())
+
                 # Updating a shipment with a location object, should be reflected in both fields
                 # and relationships fields in response data
-                response = self.client.patch(url_patch, update_shipment_data, content_type=content_type)
+                response = self.client.patch(url_patch, shipment_update_with_location, content_type=content_type)
                 self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
                 response = self.client.get(history_url)
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
                 history_data = response.json()['data'][0]
-                changed_fields = self.get_changed_fields(history_data['fields'])
+                changed_fields = self.get_changed_fields(history_data['fields'], 'field')
                 self.assertTrue('ship_from_location' in changed_fields)
                 self.assertTrue('ship_from_location' in history_data['relationships'].keys())
 
-                update_shipment_data, content_type = create_form_content({
+                shipment_update_with_location, content_type = create_form_content({
                     'ship_from_location.country': LOCATION_COUNTRY,
                     'ship_from_location.postal_code': LOCATION_POSTAL_CODE,
                     'ship_from_location.phone_number': LOCATION_NUMBER
@@ -739,7 +776,7 @@ class ShipmentAPITests(APITestCase):
 
                 # Updating an existing shipment location should yield to a diff location
                 # in the response's relationships field
-                response = self.client.patch(url_patch, update_shipment_data, content_type=content_type)
+                response = self.client.patch(url_patch, shipment_update_with_location, content_type=content_type)
                 self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
                 response = self.client.get(history_url)
@@ -747,7 +784,7 @@ class ShipmentAPITests(APITestCase):
                 history_data = response.json()['data']
                 ship_from_location_changes = history_data[0]['relationships'].get('ship_from_location', None)
                 self.assertTrue(bool(ship_from_location_changes))
-                ship_from_location_field_changes = self.get_changed_fields(ship_from_location_changes)
+                ship_from_location_field_changes = self.get_changed_fields(ship_from_location_changes, 'field')
                 self.assertTrue('phone_number' in ship_from_location_field_changes)
 
             # ----------------------- Shipment update by someone other than owner --------------------------#
@@ -756,13 +793,13 @@ class ShipmentAPITests(APITestCase):
 
                 self.set_user(self.user_2)
 
-                update_shipment_data, content_type = create_form_content({
+                shipment_update_with_device, content_type = create_form_content({
                     'device_id': device_id,
                 })
 
                 # User_2 is the shipment's shipper, any changes made by him should be reflected in the diff history
                 # and his ID in the 'author' field of the related diff change
-                response = self.client.patch(url_patch, update_shipment_data, content_type=content_type)
+                response = self.client.patch(url_patch, shipment_update_with_device, content_type=content_type)
                 self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
                 # The is_shipper method is called twice, one for accessing the shipment
                 # and one for object edit permission
@@ -773,7 +810,7 @@ class ShipmentAPITests(APITestCase):
                 # is_shipper method is called once just ofr accessing the shipment history
                 self.assertEqual(mock_shipper_permission.call_count, 3)
                 history_data = response.json()['data']
-                changed_fields = self.get_changed_fields(history_data[0]['fields'])
+                changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
                 self.assertIn('device', changed_fields)
                 self.assertIn('updated_by', changed_fields)
                 self.assertNotEqual(history_data[0]['author'], history_data[1]['author'])
