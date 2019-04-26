@@ -26,7 +26,8 @@ from influxdb_metrics.loader import log_metric
 from apps.eth.fields import AddressField, HashField
 from apps.eth.models import EthListener
 from apps.jobs.models import JobListener, AsyncJob, JobState
-from apps.utils import random_id, AliasField, get_user, TxmHistoricalRecords
+from apps.utils import random_id, AliasField
+from apps.simple_history import get_user, TxmHistoricalRecords
 from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')

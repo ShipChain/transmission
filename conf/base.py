@@ -176,7 +176,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 ROOT_URLCONF = 'apps.urls'
@@ -339,8 +338,3 @@ if INFLUXDB_URL:
     INFLUXDB_TIMEOUT = 1
 
     EMAIL_BACKEND = 'influxdb_metrics.email.InfluxDbEmailBackend'
-
-
-# Django Simple History Custom setting
-SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True
-SIMPLE_HISTORY_EDIT = False

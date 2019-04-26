@@ -20,7 +20,8 @@ from rest_framework_json_api import serializers
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData, PermissionLink
-from apps.utils import UpperEnumField, TxmHistoricalChanges
+from apps.utils import UpperEnumField
+from apps.simple_history import TxmHistoricalChanges
 
 
 LOG = logging.getLogger('transmission')

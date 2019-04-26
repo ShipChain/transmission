@@ -70,9 +70,10 @@ def shipment_post_save(sender, **kwargs):
         instance.vault_id = vault_id
         instance.vault_uri = vault_uri
         instance.save()
-        # Save related history instance without user
+        # Save related history instance without historical user
         history_instance = instance.history.all().first()
         history_instance.history_user = None
+        history_instance.updated_by = None
         history_instance.save()
 
         shipment_device_id_changed(Shipment, instance, {Shipment.device.field: (None, instance.device_id)})
