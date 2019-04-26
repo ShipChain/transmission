@@ -432,17 +432,6 @@ class ChangesDiffSerializer:
 
         return field_list
 
-    def get_related_historical_object(self, historical_obj, date, obj_instance=None):
-
-        filter_kwargs = {
-            'history_date__range': (date + timedelta(milliseconds=-500), date),
-            'history_user': historical_obj.history_user
-        }
-
-        historical_queryset = obj_instance.history.all().filter(**filter_kwargs)
-
-        return historical_queryset.first()
-
     def relations_changes(self, old_historical, new_historical, relations):
 
         relations_map = {}
@@ -451,13 +440,21 @@ class ChangesDiffSerializer:
             obj = getattr(new_historical, relation, None)
 
             if obj:
-                obj_new = self.get_related_historical_object(new_historical, new_historical.history_date,
-                                                             obj_instance=obj)
-                if not old_historical:
-                    obj_old = None
+                obj_new = obj.history.all().last()
+
+            if obj_new and old_historical:
+
+                date_max = new_historical.history_date
+                date_min = date_max + timedelta(milliseconds=-500)
+
+                obj_new = obj.history.all().filter(history_date__range=(date_min, date_max)).first()
+
+                if obj_new and obj_new.history_user == new_historical.history_user:
+                    obj_old = obj_new.prev_record
                 else:
-                    obj_old = self.get_related_historical_object(old_historical, old_historical.history_date,
-                                                                 obj_instance=obj)
+                    obj_new = None
+            else:
+                obj_old = None
 
             if obj_new:
                 changes = TxmHistoricalChanges(obj_new).diff_against(obj_old)
