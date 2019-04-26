@@ -258,7 +258,8 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
         model = Shipment
         exclude = ('version',)
         meta_fields = ('async_job_id',)
-        read_only_fields = ('owner_id', 'contract_version',) if settings.PROFILES_ENABLED else ('contract_version',)
+        if settings.PROFILES_ENABLED:
+            read_only_fields = ('owner_id',)
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
