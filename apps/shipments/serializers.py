@@ -103,8 +103,8 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
 
     class Meta:
         model = Shipment
-        exclude = ('owner_id', 'version') if settings.PROFILES_ENABLED else ('version',)
-        read_only_fields = ('contract_version',)
+        exclude = ('version',)
+        read_only_fields = ('owner_id', 'contract_version',) if settings.PROFILES_ENABLED else ('contract_version',)
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
@@ -256,8 +256,9 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shipment
-        exclude = ('owner_id', 'version') if settings.PROFILES_ENABLED else ('version',)
+        exclude = ('version',)
         meta_fields = ('async_job_id',)
+        read_only_fields = ('owner_id', 'contract_version',) if settings.PROFILES_ENABLED else ('contract_version',)
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',

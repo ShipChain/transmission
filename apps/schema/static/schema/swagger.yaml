@@ -1435,6 +1435,13 @@ components:
               title: vault_id
               description: Vault UUID associated with the shipment
 
+        ownerId:
+          properties:
+            owner_id:
+              <<: *uuid
+              title: owner_id
+              description: Owner UUID of the shipment
+
         deviceId:
           properties:
             device_id:
@@ -2756,6 +2763,7 @@ components:
 
       attributes:
         allOf:
+        - $ref: '#/components/schemas/dataTypes/shipment/ownerId'
         - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
         - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
         - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
@@ -2896,6 +2904,7 @@ components:
       createAttributes:
         allOf:
         - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
+        - $ref: '#/components/schemas/dataTypes/shipment/ownerId'
         - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
         - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
         - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
