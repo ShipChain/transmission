@@ -21,7 +21,6 @@ from rest_framework_json_api import serializers
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData, PermissionLink
 from apps.utils import UpperEnumField
-from apps.simple_history import TxmHistoricalChanges
 
 
 LOG = logging.getLogger('transmission')
@@ -137,7 +136,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             if not device.shipment.delivery_act:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
-                Shipment.objects.filter(device_id=device.id).update(device=None)
+                Shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
         self.context['device'] = device
 
         return device_id
@@ -178,8 +177,6 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         if 'device' in self.context:
             if validated_data['device_id']:
                 instance.device = self.context['device']
-                device = Device.get_or_create_with_permission(self.context['auth'], validated_data.pop('device_id'))
-                instance.device = device
             else:
                 instance.device = validated_data.pop('device_id')
 
@@ -224,7 +221,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             if not device.shipment.delivery_act:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
-                Shipment.objects.filter(device_id=device.id).update(device=None)
+                Shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
         self.context['device'] = device
 
         return device_id
@@ -405,11 +402,11 @@ class ChangesDiffSerializer:
         self.excluded_fields = ('history_user', )
 
     def diff_object_fields(self, old, new):
-        changes = TxmHistoricalChanges(new).diff_against(old)
+        changes = new.diff(old)
 
         flat_changes = self.build_list_changes(changes)
 
-        relation_changes = self.relations_changes(old, new, self.relation_fields.keys())
+        relation_changes = self.relation_changes(old, new, self.relation_fields.keys())
 
         return {
             'history_date': new.history_date,
@@ -432,7 +429,7 @@ class ChangesDiffSerializer:
 
         return field_list
 
-    def relations_changes(self, old_historical, new_historical, relations):
+    def relation_changes(self, old_historical, new_historical, relations):
 
         relations_map = {}
         for relation in relations:
@@ -443,7 +440,6 @@ class ChangesDiffSerializer:
                 obj_new = obj.history.all().last()
 
             if obj_new and old_historical:
-
                 date_max = new_historical.history_date
                 date_min = date_max + timedelta(milliseconds=-500)
 
@@ -457,7 +453,7 @@ class ChangesDiffSerializer:
                 obj_old = None
 
             if obj_new:
-                changes = TxmHistoricalChanges(obj_new).diff_against(obj_old)
+                changes = obj_new.diff(obj_old)
                 relations_map[relation] = self.build_list_changes(changes)
 
         return relations_map

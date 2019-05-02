@@ -14,66 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import json
-
-from django.core.serializers import serialize
 from django.db import models
 
-from simple_history.models import HistoricalRecords, ModelChange, ModelDelta
+from simple_history.models import HistoricalRecords, ModelChange, ModelDelta, _model_to_dict
 
 
-RELATED_TO_LOCATION = ('shipment_to', 'shipment_from', 'shipment_dest', 'shipment_bill', )
-
-
-def get_user(request=None, instance=None):
-
-    if request:
+def get_user(request=None, **kwargs):
+    if request and request.user:
         return request.user.id
-
-    if instance:
-        if hasattr(instance, 'updated_by'):
-            return instance.updated_by
-        for related in RELATED_TO_LOCATION:
-            if hasattr(instance, related):
-                return getattr(instance, related).updated_by
-
     return None
 
 
-def _model_to_dict(model):
-    return json.loads(serialize("json", [model]))[0]["fields"]
+class HistoricalChangesMixin:
 
-
-class TxmHistoricalRecords(HistoricalRecords):
-
-    def _get_history_user_fields(self):
-        if self.user_id_field:
-            # We simply track the updated_by field
-            history_user_fields = {
-                "history_user": models.CharField(null=True, blank=True, max_length=36),
-            }
-        else:
-            history_user_fields = {}
-
-        return history_user_fields
-
-
-class TxmHistoricalChanges:
-    def __init__(self, new_obj):
-        self.obj = new_obj
-
-    def diff_against(self, old_history):
-        if self.obj is not None and old_history is not None:
-            if not isinstance(old_history, type(self.obj)):
+    def diff(self, old_history):
+        if self is not None and old_history is not None:
+            if not isinstance(old_history, type(self)):
                 raise TypeError(
-                    f"unsupported type(s) for diffing: '{type(self.obj)}' and '{type(old_history)}'")
+                    f"unsupported type(s) for diffing: '{type(self)}' and '{type(old_history)}'")
 
         changes = []
         changed_fields = []
-        if hasattr(self.obj, 'instance'):
-            current_values = _model_to_dict(self.obj.instance)
+        if hasattr(self, 'instance'):
+            current_values = _model_to_dict(self.instance)
         else:
-            current_values = _model_to_dict(self.obj)
+            current_values = _model_to_dict(self)
 
         if not old_history:
             old_values = {f: None for f in current_values.keys()}
@@ -88,4 +53,25 @@ class TxmHistoricalChanges:
                     changes.append(change)
                     changed_fields.append(field)
 
-        return ModelDelta(changes, changed_fields, old_history, self.obj)
+        return ModelDelta(changes, changed_fields, old_history, self)
+
+
+class TxmHistoricalRecords(HistoricalRecords):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.bases += (HistoricalChangesMixin,)
+        self.manager_name = 'history'
+        self.user_id_field = True
+        self.get_user = get_user
+
+    def _get_history_user_fields(self):
+        if self.user_id_field:
+            # We simply track the updated_by field
+            history_user_fields = {
+                "history_user": models.CharField(null=True, blank=True, max_length=36),
+            }
+        else:
+            history_user_fields = {}
+
+        return history_user_fields

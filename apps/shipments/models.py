@@ -27,7 +27,7 @@ from apps.eth.fields import AddressField, HashField
 from apps.eth.models import EthListener
 from apps.jobs.models import JobListener, AsyncJob, JobState
 from apps.utils import random_id, AliasField
-from apps.simple_history import get_user, TxmHistoricalRecords
+from apps.simple_history import TxmHistoricalRecords
 from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')
@@ -59,7 +59,7 @@ class Location(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     # Model's history tracking definition
-    history = TxmHistoricalRecords(get_user=get_user, history_user_id_field=True)
+    history = TxmHistoricalRecords()
 
     def get_lat_long_from_address(self):
         LOG.debug(f'Creating lat/long point for location {self.id}')
@@ -292,7 +292,7 @@ class Shipment(models.Model):
     customer_fields = JSONField(blank=True, null=True)
 
     # Model's history tracking definition
-    history = TxmHistoricalRecords(get_user=get_user, history_user_id_field=True)
+    history = TxmHistoricalRecords()
 
     def get_device_request_url(self):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')
@@ -419,6 +419,30 @@ class Shipment(models.Model):
             log_metric('transmission.error', tags={'method': 'shipment.set_vault_hash', 'code': 'call_too_early',
                                                    'module': __name__})
         return async_job
+
+    @staticmethod
+    def anonymous_historical_change(filter_dict={}, **kwargs):
+        """
+        Update a shipment and create a related anonymous historical record.
+
+        :param filter_dict: filter dictionary
+        :param kwargs: key value fields to update.
+        """
+
+        history_type = '~'
+        shipment = Shipment.objects.filter(**filter_dict)
+        shipment.update(**kwargs)
+        shipment = shipment.first()
+
+        # Manual creation of shipment historical object
+        TxmHistoricalRecords().create_historical_record(shipment, history_type)
+        historical_instance = shipment.history.first()
+        historical_instance.history_user = None
+        historical_instance.updated_by = None
+        historical_instance.save()
+
+        LOG.debug(f'Updated shipment: {shipment.id}, with: {kwargs} and created related anonymous historical record: '
+                  f'{historical_instance.id}')
 
     # Defaults
     FUNDING_TYPE = FundingType.NO_FUNDING.value

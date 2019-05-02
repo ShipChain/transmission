@@ -67,14 +67,8 @@ def shipment_post_save(sender, **kwargs):
                                     funding_type=Shipment.FUNDING_TYPE,
                                     contracted_amount=Shipment.SHIPMENT_AMOUNT)
 
-        instance.vault_id = vault_id
-        instance.vault_uri = vault_uri
-        instance.save()
-        # Save related history instance without historical user
-        history_instance = instance.history.all().first()
-        history_instance.history_user = None
-        history_instance.updated_by = None
-        history_instance.save()
+        Shipment.anonymous_historical_change(filter_dict={'id': instance.id},
+                                             vault_id=vault_id, vault_uri=vault_uri)
 
         shipment_device_id_changed(Shipment, instance, {Shipment.device.field: (None, instance.device_id)})
     else:
@@ -131,7 +125,9 @@ def shipment_delivery_act_changed(sender, instance, changed_fields, **kwargs):
     logging.info(f'Shipment with id {instance.id} ended on {instance.delivery_act}.')
 
     device_id = instance.device_id
-    Shipment.objects.filter(id=instance.id).update(device_id=None)
+
+    Shipment.anonymous_historical_change(filter_dict={'id': instance.id}, device_id=None)
+
     shipment_device_id_changed(Shipment, instance, {Shipment.device.field: (device_id, None)})
 
 
