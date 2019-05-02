@@ -421,7 +421,7 @@ class Shipment(models.Model):
         return async_job
 
     @staticmethod
-    def anonymous_historical_change(filter_dict={}, **kwargs):
+    def anonymous_historical_change(filter_dict=None, **kwargs):
         """
         Update a shipment and create a related anonymous historical record.
 

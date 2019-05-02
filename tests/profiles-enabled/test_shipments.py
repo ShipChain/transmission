@@ -630,9 +630,6 @@ class ShipmentAPITests(APITestCase):
     def get_changed_fields(self, changes_list, field_name):
         return [item[field_name] for item in changes_list]
 
-    # def get_changed_values(self, changes_list):
-    #     return [item['field'] for item in changes_list]
-
     @mock_iot
     def test_shipment_history(self):
         from apps.rpc_client import requests
@@ -705,6 +702,8 @@ class ShipmentAPITests(APITestCase):
 
             engine_changes = self.get_changed_fields(history_data[0]['fields'], 'field')
             assert 'vault_uri' in engine_changes
+            # On shipment creation, the most recent change is from a background task. Should have a null author.
+            self.assertIsNone(history_data[0]['author'])
 
             url_patch = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
 
@@ -814,6 +813,28 @@ class ShipmentAPITests(APITestCase):
                 self.assertIn('device', changed_fields)
                 self.assertIn('updated_by', changed_fields)
                 self.assertNotEqual(history_data[0]['author'], history_data[1]['author'])
+
+            # ------------------------------------ Shipment Signal update ---------------------------------------#
+            self.set_user(self.user_1)
+
+            shipment_update_delivery_act, content_type = create_form_content({
+                'delivery_act': datetime.utcnow().isoformat() + 'Z',
+            })
+
+            response = self.client.patch(url_patch, shipment_update_delivery_act, content_type=content_type)
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+            # The most recent change should be from the post save action with a null author
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            self.assertIsNone(history_data[0]['author'])
+            # device should be in the most recent changed fields
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertIn('device', changed_fields)
+            # delivery_act should be in the second most recent changed fields
+            changed_fields = self.get_changed_fields(history_data[1]['fields'], 'field')
+            self.assertIn('delivery_act', changed_fields)
 
     @httpretty.activate
     def test_create(self):
