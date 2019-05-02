@@ -444,7 +444,6 @@ class ChangesDiffSerializer:
                 date_min = date_max + timedelta(milliseconds=-500)
 
                 obj_new = obj.history.all().filter(history_date__range=(date_min, date_max)).first()
-
                 if obj_new and obj_new.history_user == new_historical.history_user:
                     obj_old = obj_new.prev_record
                 else:

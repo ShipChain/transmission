@@ -442,9 +442,9 @@ paths:
 
   /api/v1/shipments/{shipment_id}/history/:
     get:
-      summary: List Shipment changes
+      summary: List Shipment history
       description: >
-        Get list of changes difference associated with the `Shipment`.
+        Retrieve a list of historical changes to a `Shipment`.
       tags:
         - Shipments
       responses:
@@ -2000,7 +2000,7 @@ components:
             author:
               <<: *uuid
               title: author
-              description: UUID of the changes' author
+              description: UUID of the authoring User
 
         shipmentField:
           properties:
