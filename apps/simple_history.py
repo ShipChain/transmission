@@ -13,10 +13,22 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import copy
 
 from django.db import models
+from django.utils.timezone import now
+from django.db.models.fields.proxy import OrderWrt
 
-from simple_history.models import HistoricalRecords, ModelChange, ModelDelta, _model_to_dict
+from simple_history.signals import post_create_historical_record, pre_create_historical_record
+from simple_history.models import HistoricalRecords, ModelChange, ModelDelta, transform_field, _model_to_dict
+
+
+RELATED_FIELDS_WITH_HISTORY_MAP = {
+    'ship_from_location': 'Location',
+    'ship_to_location': 'Location',
+    'final_destination_location': 'Location',
+    'bill_to_location': 'Location'
+}
 
 
 def get_user(request=None, **kwargs):
@@ -75,3 +87,100 @@ class TxmHistoricalRecords(HistoricalRecords):
             history_user_fields = {}
 
         return history_user_fields
+
+    def copy_fields(self, model):
+        fields = {}
+        for field in self.fields_included(model):
+            field = copy.copy(field)
+            field.remote_field = copy.copy(field.remote_field)
+            if isinstance(field, OrderWrt):
+                field.__class__ = models.IntegerField
+            if isinstance(field, models.ForeignKey):
+                old_field = field
+                old_swappable = old_field.swappable
+                old_field.swappable = False
+                try:
+                    _name, _path, args, field_args = old_field.deconstruct()
+                finally:
+                    old_field.swappable = old_swappable
+
+                if getattr(old_field, "one_to_one", False) or isinstance(old_field, models.OneToOneField):
+                    field_type = models.ForeignKey
+                    field_model_name = old_field.name
+
+                    if field_model_name in RELATED_FIELDS_WITH_HISTORY_MAP.keys():
+                        field_args["to"] = f'shipments.Historical{RELATED_FIELDS_WITH_HISTORY_MAP[field_model_name]}'
+                else:
+                    field_type = type(old_field)
+
+                if field_args.get("to", None) == "self":
+                    field_args["to"] = old_field.model
+
+                # Override certain arguments passed when creating the field
+                # so that they work for the historical field.
+                field_args.update(
+                    db_constraint=False,
+                    related_name="+",
+                    null=True,
+                    blank=True,
+                    primary_key=False,
+                    db_index=True,
+                    serialize=True,
+                    unique=False,
+                    on_delete=models.DO_NOTHING,
+                )
+                field = field_type(*args, **field_args)
+                field.name = old_field.name
+            else:
+                transform_field(field)
+            fields[field.name] = field
+        return fields
+
+    def create_historical_record(self, instance, history_type, using=None):
+        history_date = getattr(instance, "_history_date", now())
+        history_user = self.get_history_user(instance)
+        history_change_reason = getattr(instance, "changeReason", None)
+        manager = getattr(instance, self.manager_name)
+
+        attrs = {}
+        if instance.__class__.__name__ == 'Shipment':
+            for field in self.fields_included(instance):
+                if field.name in RELATED_FIELDS_WITH_HISTORY_MAP.keys():
+                    related_instance = getattr(instance, field.name)
+                    if related_instance:
+                        attrs[field.name] = related_instance.history.first()
+                else:
+                    attrs[field.name] = getattr(instance, field.name)
+        else:
+            for field in self.fields_included(instance):
+                attrs[field.name] = getattr(instance, field.name)
+
+        history_instance = manager.model(
+            history_date=history_date,
+            history_type=history_type,
+            history_user=history_user,
+            history_change_reason=history_change_reason,
+            **attrs
+        )
+
+        pre_create_historical_record.send(
+            sender=manager.model,
+            instance=instance,
+            history_date=history_date,
+            history_user=history_user,
+            history_change_reason=history_change_reason,
+            history_instance=history_instance,
+            using=using,
+        )
+
+        history_instance.save(using=using)
+
+        post_create_historical_record.send(
+            sender=manager.model,
+            instance=instance,
+            history_instance=history_instance,
+            history_date=history_date,
+            history_user=history_user,
+            history_change_reason=history_change_reason,
+            using=using,
+        )
