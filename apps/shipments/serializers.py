@@ -392,12 +392,8 @@ class ChangesDiffSerializer:
     def __init__(self, queryset):
         self.queryset = queryset
 
-        self.relation_fields = {
-            'ship_from_location': 'shipment_from',
-            'ship_to_location': 'shipment_to',
-            'final_destination_location': 'shipment_dest',
-            'bill_to_location': 'shipment_bill'
-        }
+        self.relation_fields = ('ship_from_location', 'ship_to_location', 'final_destination_location',
+                                'bill_to_location', )
 
         self.excluded_fields = ('history_user', )
 
@@ -406,18 +402,20 @@ class ChangesDiffSerializer:
 
         flat_changes = self.build_list_changes(changes)
 
-        relation_changes = self.relation_changes(old, new, self.relation_fields.keys())
+        relation_changes = self.relation_changes(new)
 
         return {
             'history_date': new.history_date,
             'fields': flat_changes,
-            'relationships': relation_changes,
+            'relationships': relation_changes if relation_changes else None,
             'author': new.history_user,
         }
 
     def build_list_changes(self, changes):
-
         field_list = []
+        if changes is None:
+            return field_list
+
         changes_list = [change for change in changes.changes if change.field not in self.excluded_fields]
         for change in changes_list:
             field = {
@@ -425,34 +423,30 @@ class ChangesDiffSerializer:
                 'old': change.old,
                 'new': change.new
             }
-            field_list.append(field)
 
+            if change.field in self.relation_fields:
+                if change.old is None:
+                    field['new'] = Location.history.filter(pk=change.new).first().instance.id
+                if change.old and change.new:
+                    continue
+
+            field_list.append(field)
         return field_list
 
-    def relation_changes(self, old_historical, new_historical, relations):
+    def relation_changes(self, new_historical):
 
         relations_map = {}
-        for relation in relations:
-            obj_new = obj_old = None
-            obj = getattr(new_historical, relation, None)
-
-            if obj:
-                obj_new = obj.history.all().last()
-
-            if obj_new and old_historical:
+        for relation in self.relation_fields:
+            historical_relation = getattr(new_historical, relation, None)
+            changes = None
+            if historical_relation:
                 date_max = new_historical.history_date
                 date_min = date_max + timedelta(milliseconds=-500)
-
-                obj_new = obj.history.all().filter(history_date__range=(date_min, date_max)).first()
-                if obj_new and obj_new.history_user == new_historical.history_user:
-                    obj_old = obj_new.prev_record
-                else:
-                    obj_new = None
-            else:
-                obj_old = None
-
-            if obj_new:
-                changes = obj_new.diff(obj_old)
+                if new_historical.history_user == historical_relation.history_user and \
+                        date_min <= historical_relation.history_date <= date_max:
+                    # The relationship field has changed
+                    changes = historical_relation.diff(historical_relation.prev_record)
+            if changes:
                 relations_map[relation] = self.build_list_changes(changes)
 
         return relations_map

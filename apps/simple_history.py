@@ -146,7 +146,7 @@ class TxmHistoricalRecords(HistoricalRecords):
         if instance.__class__.__name__ == 'Shipment':
             for field in self.fields_included(instance):
                 if field.name in RELATED_FIELDS_WITH_HISTORY_MAP.keys():
-                    related_instance = getattr(instance, field.name)
+                    related_instance = getattr(instance, field.name, None)
                     if related_instance:
                         attrs[field.name] = related_instance.history.first()
                 else:
