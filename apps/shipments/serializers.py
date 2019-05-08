@@ -457,6 +457,8 @@ class ChangesDiffSerializer:
         count = queryset.count()
 
         queryset_diff = []
+        if count == 0:
+            return queryset_diff
         index = 0
         if count > 1:
             while index + 1 < count:

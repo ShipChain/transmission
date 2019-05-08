@@ -421,25 +421,36 @@ class Shipment(models.Model):
         return async_job
 
     @staticmethod
-    def anonymous_historical_change(filter_dict=None, **kwargs):
+    def anonymous_historical_change(filter_dict=None, dtm=False, initial_object=None, user=None, **kwargs):
         """
         Update a shipment and create a related anonymous historical record.
 
         :param filter_dict: filter dictionary
         :param kwargs: key value fields to update.
+        :param dtm: Boolean for manually create a generic historical object
+        :param initial_object: Generic object for which we want to create a historical record
+        :param user: Authoring of the historical record
         """
-
         history_type = '~'
+
+        def create_historical_instance(obj, h_type):
+            # Manual creation of a historical object
+            TxmHistoricalRecords().create_historical_record(obj, h_type)
+            h_instance = obj.history.first()
+            h_instance.history_user = user
+            h_instance.updated_by = user
+            h_instance.save()
+            return h_instance
+
+        if dtm:
+            historical_object = create_historical_instance(initial_object, history_type)
+            LOG.debug(f'Created anonymous historical record: {historical_object.id}')
+            return historical_object
+
         shipment = Shipment.objects.filter(**filter_dict)
         shipment.update(**kwargs)
         shipment = shipment.first()
-
-        # Manual creation of shipment historical object
-        TxmHistoricalRecords().create_historical_record(shipment, history_type)
-        historical_instance = shipment.history.first()
-        historical_instance.history_user = None
-        historical_instance.updated_by = None
-        historical_instance.save()
+        historical_instance = create_historical_instance(shipment, history_type)
 
         LOG.debug(f'Updated shipment: {shipment.id}, with: {kwargs} and created related anonymous historical record: '
                   f'{historical_instance.id}')
