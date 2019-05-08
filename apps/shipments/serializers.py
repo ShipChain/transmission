@@ -464,7 +464,6 @@ class ChangesDiffSerializer:
                 old = queryset[index + 1]
                 index += 1
                 queryset_diff.append(self.diff_object_fields(old, new))
-
         queryset_diff.append(self.diff_object_fields(None, queryset[index]))
 
         return queryset_diff

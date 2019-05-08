@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, permissions, status, filters, mixins
+from rest_framework import viewsets, permissions, status, filters, mixins, renderers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -27,6 +27,7 @@ from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentU
     PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer
 
 from .tasks import tracking_data_update
+from .pagination import ShipmentHistoryPagination
 
 LOG = logging.getLogger('transmission')
 
@@ -232,15 +233,19 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
 
 
 class ShipmentHistoryListView(viewsets.ViewSet):
-    permission_classes = ((IsOwnerOrShared,) if settings.PROFILES_ENABLED
-                          else (permissions.AllowAny,))
     http_method_names = ['get', ]
+    permission_classes = ((IsOwnerOrShared,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
+    pagination_class = ShipmentHistoryPagination
+    renderer_classes = (renderers.JSONRenderer, )
 
     def list(self, request, *args, **kwargs):
-
         shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
-
         queryset = shipment.history.all()
         serializer = ChangesDiffSerializer(queryset)
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(serializer.data, self.request, view=self)
+        if page is not None:
+            return paginator.get_paginated_response(page)
 
         return Response(serializer.data)
