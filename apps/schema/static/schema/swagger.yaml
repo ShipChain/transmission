@@ -445,6 +445,9 @@ paths:
       summary: List Shipment history
       description: >
         Retrieve a list of historical changes to a `Shipment`.
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/page_size'
       tags:
         - Shipments
       responses:
@@ -3276,6 +3279,7 @@ components:
 
       listResponse:
         allOf:
+          - $ref: '#/components/schemas/jsonApi/linksAndMeta'
           - properties:
               data:
                 items:
@@ -3610,7 +3614,7 @@ components:
           description: Link to next page of the list
           type: string
           example: '/api/v1/{object-type}/?page=3'
-        previous:
+        prev:
           title: previous
           description: Link to previous page of the list
           type: string
@@ -3626,7 +3630,7 @@ components:
           properties:
             count:
               title: count
-              description: Total number of resources associated with user
+              description: Total number of resources
               type: integer
               format: int32
               example: '37'
