@@ -238,6 +238,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * **James Neyer** - [jamesfneyer](https://github.com/jamesfneyer)
 * **Lucas Clay** - [mlclay](https://github.com/mlclay)
 * **Leeward Bound** - [leewardbound](https://github.com/leewardbound)
+* **Kevin Duck** - [kevingduck](https://github.com/kevingduck)
 
 See also the list of [contributors](https://github.com/ShipChain/transmission/contributors) who participated in this project.
 
