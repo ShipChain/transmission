@@ -39,9 +39,18 @@ class EventViewSet(mixins.CreateModelMixin,
         except MultipleObjectsReturned as exc:
             LOG.info(f"MultipleObjectsReturned during get/get_or_create for event {event['transaction_hash']}: {exc}")
         except ObjectDoesNotExist:
-            log_metric('transmission.info', tags={'method': 'events.create', 'code': 'non_ethaction_event',
-                                                  'module': __name__, 'project': project})
-            LOG.info(f"Non-EthAction Event processed Tx: {event['transaction_hash']}")
+            if event['event_name'] == 'Transfer':
+                LOG.info(f"ShipToken Transfer processed Tx: {event['transaction_hash']}")
+                log_metric('transmission.info',
+                           tags={'method': 'event.transfer', 'module': __name__, 'project': project},
+                           fields={'from_address': event['return_values']['from'],
+                                   'to_address': event['return_values']['to'],
+                                   'token_amount': float(event['return_values']['value']) / (10 ** 18),
+                                   'count': 1})
+            else:
+                LOG.info(f"Non-EthAction Event processed Tx: {event['transaction_hash']}")
+                log_metric('transmission.info', tags={'method': 'events.create', 'code': 'non_ethaction_event',
+                                                      'module': __name__})
 
     def create(self, request, *args, **kwargs):
         log_metric('transmission.info', tags={'method': 'events.create', 'module': __name__})
