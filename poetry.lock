@@ -1045,6 +1045,7 @@ xmltodict = "*"
 reference = "b0e6f5e98f6be8c0d23bcee9a29c09f7565f09e7"
 type = "git"
 url = "git://github.com/ShipChain/moto.git"
+
 [[package]]
 category = "main"
 description = "MessagePack (de)serializer."
@@ -1186,7 +1187,7 @@ category = "main"
 description = "C parser in Python"
 name = "pycparser"
 optional = false
-python-versions = "*"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.19"
 
 [[package]]
@@ -1336,7 +1337,7 @@ setuptools = "*"
 six = ">=1.10.0"
 
 [package.dependencies.more-itertools]
-python = ">2.7"
+python = ">=2.8"
 version = ">=4.0.0"
 
 [[package]]
@@ -1431,7 +1432,7 @@ category = "main"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
 optional = false
-python-versions = "*"
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "5.1"
 
 [[package]]
