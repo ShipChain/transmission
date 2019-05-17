@@ -4,7 +4,7 @@ from string import Template
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
@@ -263,9 +263,7 @@ class CurrentDevicesLocations(APIView):
     def get(self, request, *args, **kwargs):
         owner_id = get_owner_id(request)
         iot_client = DeviceAWSIoTClient()
-
         devices = iot_client.get_list_owner_devices(owner_id)
-
         device_status = request.query_params.get('active', None)
 
         if device_status:
