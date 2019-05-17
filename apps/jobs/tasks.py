@@ -118,7 +118,7 @@ class AsyncTask:
             self.async_job.save()
 
 
-@shared_task(bind=True, autoretry_for=(RPCError,), retry_backoff=True)
+@shared_task(bind=True, autoretry_for=(RPCError,), retry_backoff=True, max_retries=None)
 def async_job_fire(self):
     # Lock on Task ID to protect against tasks that are queued multiple times
     task_lock = cache.lock(self.request.id, timeout=600)
