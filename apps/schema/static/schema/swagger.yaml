@@ -615,7 +615,7 @@ paths:
       description: >
         List of devices with most recent configurations
       parameters:
-        - $ref: '#/components/parameters/device/active'
+        - $ref: '#/components/parameters/deviceStatus/active'
       tags:
         - Shipments
       responses:
@@ -932,7 +932,7 @@ components:
           format: date-time
           example: '2019-06-05T18:54:56Z'
 
-    device:
+    deviceStatus:
       active:
         name: active
         in: query
