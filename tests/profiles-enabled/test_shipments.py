@@ -2161,12 +2161,12 @@ class DevicesLocationsAPITests(APITestCase):
 
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            data = response.json()['data']
-            self.assertEqual(len(data), test_settings.IOT_DEVICES_MAX_RESULTS)
+            data = response.json()
+            self.assertEqual(len(data['data']), 5)
             # Only one Api call is made to IOT_AWS_HOST
             mock_get.assert_called_once()
 
-            # The response of first called url do have the nextToken value,
+            # The response for first called url do have the nextToken value,
             # there should be a second call to IOT_AWS_HOST
             mock_get.reset_mock()
             self.map_responses = {
@@ -2205,3 +2205,19 @@ class DevicesLocationsAPITests(APITestCase):
             bad_param_url = url + '?active=falso'
             response = self.client.get(bad_param_url)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # ------------------------- Results Pagination test -----------------------#
+            mock_get.reset_mock()
+            # The api call returns 15 results which should yield 2 pages.
+            self.map_responses = {iot_enpoints[0]: self.iot_responses(OWNER_ID, num_devices=15)}
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            page = response.json()
+            # Two pages results
+            self.assertEqual(len(page['data']), 10)
+            self.assertTrue(page.get('meta', None))
+            self.assertTrue(page.get('links', None))
+            self.assertEqual(page['meta']['pagination']['pages'], 2)
+            self.assertEqual(page['meta']['pagination']['count'], 15)
+            self.assertTrue(page['links']['next'])
+

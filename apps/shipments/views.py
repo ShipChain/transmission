@@ -11,6 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status, filters, mixins, renderers
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound, ParseError
 from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound, PermissionDenied
 from influxdb_metrics.loader import log_metric
@@ -30,6 +31,8 @@ from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentU
     PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer
 
 from .tasks import tracking_data_update
+from .pagination import ListDataPagination
+
 
 LOG = logging.getLogger('transmission')
 
@@ -259,6 +262,8 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
 class CurrentDevicesLocations(APIView):
     http_method_names = ['get', ]
     permission_classes = (permissions.IsAuthenticated, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, )
+    pagination_class = ListDataPagination
+    renderer_classes = (renderers.JSONRenderer,)
 
     def get(self, request, *args, **kwargs):
         owner_id = get_owner_id(request)
@@ -269,12 +274,14 @@ class CurrentDevicesLocations(APIView):
         if device_status:
             device_status = device_status.lower()
             if device_status == 'true':
-                response = Response(iot_client.filter_list_devices(devices)[0], status=status.HTTP_200_OK)
+                devices = iot_client.filter_list_devices(devices)[0]
             elif device_status == 'false':
-                response = Response(iot_client.filter_list_devices(devices)[1], status=status.HTTP_200_OK)
+                devices = iot_client.filter_list_devices(devices)[1]
             else:
-                response = HttpResponseBadRequest()
-        else:
-            response = Response(devices, status=status.HTTP_200_OK)
+                raise ParseError(f'Invalid query parameter: {device_status}')
 
-        return response
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(devices, request, view=self)
+        if page is not None:
+            return paginator.get_paginated_response(page)
+        return Response(devices, status=status.HTTP_200_OK)
