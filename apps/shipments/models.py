@@ -27,13 +27,13 @@ from apps.eth.fields import AddressField, HashField
 from apps.eth.models import EthListener
 from apps.jobs.models import JobListener, AsyncJob, JobState
 from apps.utils import random_id, AliasField
-from apps.simple_history import TxmHistoricalRecords
+from apps.simple_history import TxmHistoricalRecords, AnonymousHistoricalMixin
 from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')
 
 
-class Location(models.Model):
+class Location(AnonymousHistoricalMixin, models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
 
     phone_regex = RegexValidator(regex=r'^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}',
@@ -187,7 +187,7 @@ class EscrowState(Enum):
     WITHDRAWN = 5
 
 
-class Shipment(models.Model):
+class Shipment(AnonymousHistoricalMixin, models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     owner_id = models.CharField(null=False, max_length=36)
 
@@ -419,41 +419,6 @@ class Shipment(models.Model):
             log_metric('transmission.error', tags={'method': 'shipment.set_vault_hash', 'code': 'call_too_early',
                                                    'module': __name__})
         return async_job
-
-    @staticmethod
-    def anonymous_historical_change(filter_dict=None, dtm=False, initial_object=None, user=None, **kwargs):
-        """
-        Update a shipment and create a related anonymous historical record.
-
-        :param filter_dict: filter dictionary
-        :param kwargs: key value fields to update.
-        :param dtm: Boolean for manually create a generic historical object
-        :param initial_object: Generic object for which we want to create a historical record
-        :param user: Authoring of the historical record
-        """
-        history_type = '~'
-
-        def create_historical_instance(obj, h_type):
-            # Manual creation of a historical object
-            TxmHistoricalRecords().create_historical_record(obj, h_type)
-            h_instance = obj.history.first()
-            h_instance.history_user = user
-            h_instance.updated_by = user
-            h_instance.save()
-            return h_instance
-
-        if dtm:
-            historical_object = create_historical_instance(initial_object, history_type)
-            LOG.debug(f'Created anonymous historical record: {historical_object.id}')
-            return historical_object
-
-        shipment = Shipment.objects.filter(**filter_dict)
-        shipment.update(**kwargs)
-        shipment = shipment.first()
-        historical_instance = create_historical_instance(shipment, history_type)
-
-        LOG.debug(f'Updated shipment: {shipment.id}, with: {kwargs} and created related anonymous historical record: '
-                  f'{historical_instance.id}')
 
     # Defaults
     FUNDING_TYPE = FundingType.NO_FUNDING.value

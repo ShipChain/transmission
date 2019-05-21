@@ -136,7 +136,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             if not device.shipment.delivery_act:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
-                Shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
+                shipment = Shipment.objects.filter(device_id=device.id).first()
+                shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
         self.context['device'] = device
 
         return device_id
@@ -221,7 +222,8 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             if not device.shipment.delivery_act:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
-                Shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
+                shipment = Shipment.objects.filter(device_id=device.id).first()
+                shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
         self.context['device'] = device
 
         return device_id

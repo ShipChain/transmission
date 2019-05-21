@@ -65,9 +65,7 @@ class AsyncTask:
             contract_version, unsigned_tx = getattr(self.rpc_client, self.async_job.parameters['rpc_method'])(
                 *self.async_job.parameters['rpc_parameters'])
             for shipment in self.async_job.listeners.filter(Model='shipments.Shipment'):
-                from apps.shipments.models import Shipment
-
-                Shipment.anonymous_historical_change(filter_dict={'id': shipment.id},
+                shipment.anonymous_historical_change(filter_dict={'id': shipment.id},
                                                      contract_version=contract_version)
         else:
             unsigned_tx = getattr(self.rpc_client, self.async_job.parameters['rpc_method'])(

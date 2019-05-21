@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import copy
+import logging
 
 from django.db import models
 from django.utils.timezone import now
@@ -21,6 +22,9 @@ from django.db.models.fields.proxy import OrderWrt
 
 from simple_history.signals import post_create_historical_record, pre_create_historical_record
 from simple_history.models import HistoricalRecords, ModelChange, ModelDelta, transform_field, _model_to_dict
+
+
+LOG = logging.getLogger('transmission')
 
 
 RELATED_FIELDS_WITH_HISTORY_MAP = {
@@ -184,3 +188,45 @@ class TxmHistoricalRecords(HistoricalRecords):
             history_change_reason=history_change_reason,
             using=using,
         )
+
+
+class AnonymousHistoricalMixin:
+    @classmethod
+    def get_class_instance(cls):
+        return cls
+
+    def anonymous_historical_change(self, filter_dict=None, only_history=False, history_type='~', user=None, **kwargs):
+        """
+        Update a shipment and / or create a related anonymous historical record.
+
+        :param filter_dict: filter dictionary
+        :param kwargs: key value fields to update.
+        :param only_history: Boolean for creating a historical record without changes to the object instance
+        :param history_type: Type for the historical object in creation, '+' or '~' respectively for
+        created and changed
+        :param user: Authoring of the historical record
+        """
+        if not filter_dict or not isinstance(filter_dict, dict):
+            raise ValueError('filter_dict, should not be a non empty dictionary')
+
+        def create_historical_instance(obj, h_type):
+            # Manual creation of a historical object
+            TxmHistoricalRecords().create_historical_record(obj, h_type)
+            h_instance = obj.history.first()
+            h_instance.history_user = user
+            h_instance.updated_by = user
+            h_instance.save()
+            return h_instance
+
+        if only_history:
+            historical_object = create_historical_instance(self, history_type)
+            LOG.debug(f'Created anonymous historical record: {historical_object.id}')
+            return historical_object
+
+        instance = self.get_class_instance().objects.filter(**filter_dict)
+        instance.update(**kwargs)
+        instance = instance.first()
+        historical_instance = create_historical_instance(instance, history_type)
+
+        LOG.debug(f'Updated shipment: {instance.id}, with: {kwargs} and created related anonymous historical record: '
+                  f'{historical_instance.id}')

@@ -67,8 +67,7 @@ def shipment_post_save(sender, **kwargs):
                                     funding_type=Shipment.FUNDING_TYPE,
                                     contracted_amount=Shipment.SHIPMENT_AMOUNT)
 
-        Shipment.anonymous_historical_change(filter_dict={'id': instance.id},
-                                             vault_id=vault_id, vault_uri=vault_uri)
+        instance.anonymous_historical_change(filter_dict={'id': instance.id}, vault_id=vault_id, vault_uri=vault_uri)
 
         shipment_device_id_changed(Shipment, instance, {Shipment.device.field: (None, instance.device_id)})
     else:
@@ -126,7 +125,7 @@ def shipment_delivery_act_changed(sender, instance, changed_fields, **kwargs):
 
     device_id = instance.device_id
 
-    Shipment.anonymous_historical_change(filter_dict={'id': instance.id}, device_id=None)
+    instance.anonymous_historical_change(filter_dict={'id': instance.id}, device_id=None)
 
     shipment_device_id_changed(Shipment, instance, {Shipment.device.field: (device_id, None)})
 
