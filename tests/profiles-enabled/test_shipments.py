@@ -2083,7 +2083,6 @@ class DevicesLocationsAPITests(APITestCase):
         self.client = APIClient()
 
         self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io', sub=OWNER_ID))
-
         self.map_responses = {}
 
     def set_user(self, user, token=None):
@@ -2109,7 +2108,7 @@ class DevicesLocationsAPITests(APITestCase):
                     "activated": True,
                     "connected": True,
                     "deviceId": "",
-                    "location": [],
+                    "location": {},
                     "ownerId": owner_id,
                     "samplingInterval": 600,
                     "shipmentId": ''
@@ -2220,4 +2219,12 @@ class DevicesLocationsAPITests(APITestCase):
             self.assertEqual(page['meta']['pagination']['pages'], 2)
             self.assertEqual(page['meta']['pagination']['count'], 15)
             self.assertTrue(page['links']['next'])
+
+            # ------------------------------ Not found Test ----------------------------#
+            mock_get.reset_mock()
+            # The api call returns 0 result should trigger a 404 not found.
+            self.map_responses = {iot_enpoints[0]: self.iot_responses(OWNER_ID, num_devices=0)}
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
 

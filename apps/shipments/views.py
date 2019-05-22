@@ -280,6 +280,9 @@ class CurrentDevicesLocations(APIView):
             else:
                 raise ParseError(f'Invalid query parameter: {device_status}')
 
+        if not devices:
+            raise NotFound()
+
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(devices, request, view=self)
         if page is not None:
