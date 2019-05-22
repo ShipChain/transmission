@@ -2152,6 +2152,8 @@ class DevicesLocationsAPITests(APITestCase):
             f'&nextToken=&in_box=',
             base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}'
             f'&nextToken={NEXT_TOKEN}&in_box=',
+            base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}'
+            f'&nextToken=&in_box=-82.5,34.5,-82,35',
         ]
 
         # The first called url doesn't have the nextToken value
@@ -2189,7 +2191,7 @@ class DevicesLocationsAPITests(APITestCase):
             self.map_responses = {iot_enpoints[0]: iot_data}
 
             # There should be exactly 3 active devices
-            active_url = url + '?active=True'
+            active_url = url + '?active=True&box=65,-65,41,75'
             response = self.client.get(active_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
@@ -2229,4 +2231,31 @@ class DevicesLocationsAPITests(APITestCase):
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+            # ---------------------------- in_box param validation test ----------------------------#
+            mock_get.reset_mock()
+            # A call with a non numeric value in in_box should fail with 400 status
+            in_box_url = f'{url}?in_box=-82.5,34.5,-82a,35'
+            response = self.client.get(in_box_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+            # A call with a longitude value out of range in in_box should fail with 400 status
+            in_box_url = f'{url}?in_box=-181,34.5,-82,35'
+            response = self.client.get(in_box_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # A call with a latitude value out of range in in_box should fail with 400 status
+            in_box_url = f'{url}?in_box=-82.5,34.5,-82,95'
+            response = self.client.get(in_box_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # A call with less than 4 in_box parameters should fail with 400 status
+            in_box_url = f'{url}?in_box=-82.5,34.5,-82'
+            response = self.client.get(in_box_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # A call with well formed in_box parameters should succeed with 200 status
+            # even with a couple of blank spaces between values
+            in_box_url = f'{url}?in_box=-82.5 ,34.5,-82, 35'
+            self.map_responses = {iot_enpoints[2]: self.iot_responses(OWNER_ID)}
+            response = self.client.get(in_box_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)

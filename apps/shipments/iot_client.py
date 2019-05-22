@@ -47,6 +47,13 @@ class DeviceAWSIoTClient(AWSIoTClient):
 
         active = kwargs.get('active', None)
         in_box = kwargs.get('in_box', None)
+
+        if in_box:
+            in_box = ','.join([c.strip() for c in in_box.split(',')])
+            in_box_is_valid, message = self.validate_in_box(in_box)
+            if not in_box_is_valid:
+                raise ParseError(message)
+
         if not next_token:
             results = []
 
@@ -65,7 +72,6 @@ class DeviceAWSIoTClient(AWSIoTClient):
         if next_token:
             return self.get_list_owner_devices(owner_id, next_token=next_token, results=results, active=active,
                                                in_box=in_box)
-
         if active:
             device_status = active.lower()
             if device_status == 'true':
@@ -88,3 +94,24 @@ class DeviceAWSIoTClient(AWSIoTClient):
                 active_devices.append(list_device.pop(list_device.index(device)))
 
         return active_devices, list_device
+
+    def validate_in_box(self, in_box):
+        long_range = (-180, 180)
+        lat_range = (-90, 90)
+        box_ranges = (long_range, lat_range, long_range, lat_range)
+
+        list_box = in_box.split(',')
+        if len(list_box) < 4:
+            return False, f'in_box parameter takes 4 position parameters but {len(list_box)}, were passed in.'
+
+        for box_value, rang, index in zip(list_box, box_ranges, range(1, 5)):
+            try:
+                box_value = float(box_value)
+            except ValueError:
+                return False, f'in_box coordinate: {box_value}, should be type number'
+
+            if not rang[0] <= box_value <= rang[1]:
+                return False, f'in_box coordinate in position: {index}, value: {box_value}, should be in range: {rang}'
+
+        return True, 'ok'
+
