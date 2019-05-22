@@ -4,14 +4,14 @@ from string import Template
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status, filters, mixins, renderers
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.exceptions import NotFound, ParseError
+from rest_framework.exceptions import NotFound
 from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound, PermissionDenied
 from influxdb_metrics.loader import log_metric
@@ -268,17 +268,9 @@ class CurrentDevicesLocations(APIView):
     def get(self, request, *args, **kwargs):
         owner_id = get_owner_id(request)
         iot_client = DeviceAWSIoTClient()
-        devices = iot_client.get_list_owner_devices(owner_id)
         device_status = request.query_params.get('active', None)
-
-        if device_status:
-            device_status = device_status.lower()
-            if device_status == 'true':
-                devices = iot_client.filter_list_devices(devices)[0]
-            elif device_status == 'false':
-                devices = iot_client.filter_list_devices(devices)[1]
-            else:
-                raise ParseError(f'Invalid query parameter: {device_status}')
+        in_box = request.query_params.get('in_box', None)
+        devices = iot_client.get_list_owner_devices(owner_id, active=device_status, in_box=in_box)
 
         if not devices:
             raise NotFound()

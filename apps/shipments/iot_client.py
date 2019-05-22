@@ -17,6 +17,7 @@ limitations under the License.
 import logging
 
 from django.conf import settings
+from rest_framework.exceptions import ParseError
 from influxdb_metrics.loader import log_metric
 
 from apps.iot_client import AWSIoTClient, AWSIoTError
@@ -40,33 +41,43 @@ class DeviceAWSIoTClient(AWSIoTClient):
 
         return iot_shadow['data']
 
-    def get_list_owner_devices(self, owner_id, max_results=settings.IOT_DEVICES_MAX_RESULTS, next_token=None,
-                               results=None):
+    def get_list_owner_devices(self, owner_id, next_token=None, results=None, **kwargs):
         LOG.debug(f'Getting devices for: {owner_id} from AWS IoT')
         log_metric('transmission.info', tags={'method': 'DeviceAWSIoTClient.get_list_owner_devices'})
 
+        active = kwargs.get('active', None)
+        in_box = kwargs.get('in_box', None)
         if not next_token:
             results = []
 
-        list_devices = self._get(f'devices?ownerId={owner_id}&maxResults={max_results}'
-                                 f'&nextToken={next_token if next_token else ""}')
+        list_devices = self._get(f'devices?ownerId={owner_id}&maxResults={settings.IOT_DEVICES_MAX_RESULTS}'
+                                 f'&nextToken={next_token if next_token else ""}'
+                                 f'&in_box={in_box if in_box else ""}')
 
         if 'error' in list_devices:
             raise AWSIoTError("Error in response from AWS IoT")
 
-        new_devices = list_devices['data']['devices']
+        new_devices = list_devices['data'].get('devices', None)
         if new_devices:
             results.extend(new_devices)
 
-        next_token = list_devices['data']['nextToken']
+        next_token = list_devices['data'].get('nextToken', None)
         if next_token:
-            return self.get_list_owner_devices(owner_id, max_results=max_results, next_token=next_token,
-                                               results=results)
+            return self.get_list_owner_devices(owner_id, next_token=next_token, results=results, active=active,
+                                               in_box=in_box)
+
+        if active:
+            device_status = active.lower()
+            if device_status == 'true':
+                results = self.filter_list_devices(results)[0]
+            elif device_status == 'false':
+                results = self.filter_list_devices(results)[1]
+            else:
+                raise ParseError(f'Invalid query parameter: {device_status}')
 
         return results
 
-    @staticmethod
-    def filter_list_devices(list_device):
+    def filter_list_devices(self, list_device):
         """
         Returns the list of current active / inactive devices
         """

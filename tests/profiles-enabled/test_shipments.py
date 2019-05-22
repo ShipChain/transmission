@@ -2148,8 +2148,10 @@ class DevicesLocationsAPITests(APITestCase):
 
         base_iot = f'https://{test_settings.IOT_AWS_HOST}/{test_settings.IOT_GATEWAY_STAGE}/'
         iot_enpoints = [
-            base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}&nextToken=',
-            base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}&nextToken={NEXT_TOKEN}',
+            base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}'
+            f'&nextToken=&in_box=',
+            base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}'
+            f'&nextToken={NEXT_TOKEN}&in_box=',
         ]
 
         # The first called url doesn't have the nextToken value
