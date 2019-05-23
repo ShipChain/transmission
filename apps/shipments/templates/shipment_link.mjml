@@ -1,0 +1,80 @@
+{% load mjml %}
+{% block subject %}shipchain.io - ShipChain Wallet Balance Alert.{% endblock %}
+
+{% block html_body %}
+{% mjml %}
+    <mjml>
+      <mj-body background-color="#ec7143">
+          <mj-section>
+            <mj-column>
+
+              <mj-image src="https://profiles.shipchain.io/static/profiles/shipchain-logo-2.png"></mj-image>
+
+            </mj-column>
+          </mj-section>
+          <mj-section background-color="#FFFFFF" full-width="full-width">
+              <mj-column>
+                  <mj-divider border-color="#000"></mj-divider>
+                  <mj-text font-size="20px" color="#000" font-family="helvetica">
+                      <p>You're receiving this email because at least one of your ethereum wallets is low on funds.</p>
+                  </mj-text>
+                  <mj-text font-size="20px" color="#000" font-family="helvetica">
+                      <p>Your ethereum wallet(s) are running low, and have the following information</p><br>
+
+                  </mj-text>
+                  <mj-table>
+                  <tr>
+                    <th>Address</th>
+                    <th>Nickname</th>
+                    <th>Ether Balance</th>
+                    <th>SHIP Balance</th>
+                    <th>Etherscan Link</th>
+                  </tr> {% for wallet in wallets %}
+                  <tr>
+                      <td style="text-align: center">{{ wallet.wallet_address }}</td>
+                      <td style="text-align: center">{{ wallet.wallet_nickname }}</td>
+                      <td style="text-align: center"><a href={{ wallet.wallet_etherscan }}>{{ wallet.wallet_etherscan }}</a></td>
+                      <td style="text-align: center">{{ wallet.eth_value }}</td>
+                      <td style="text-align: center">{{ wallet.ship_value }}</td>
+                  </tr> {% endfor %}
+                  </mj-table>
+                  <mj-text font-size="20px" color="#000" font-family="helvetica">
+                      Sincerely,
+                      The ShipChain team
+                  </mj-text>
+                  <mj-divider border-color="#000"></mj-divider>
+              </mj-column>
+          </mj-section>
+          <mj-section background-color="#FFFFFF" full-width="full-width" vertical-align="top">
+              <mj-column vertical-align="top">
+                  <mj-text align="center" color="#000" font-size="24px" padding-bottom="10px" padding-top="25px">
+                      Stay Connected With Shipchain
+                  </mj-text>
+              </mj-column>
+          </mj-section>
+          <mj-section background-color="#FFFFFF" vertical-align="top" full-width="full-width">
+            <mj-group>
+              <mj-column>
+                  <mj-image src="https://profiles.shipchain.io/static/profiles/twitter_orange.png" href="https://twitter.com/shipchain" width="50px"/>
+              </mj-column>
+              <mj-column>
+                  <mj-image src="https://profiles.shipchain.io/static/profiles/facebook_orange.png" href="https://www.facebook.com/shipchain" width="50px"/>
+              </mj-column>
+              <mj-column>
+                  <mj-image src="https://profiles.shipchain.io/static/profiles/linkedin_orange.png" href="https://www.linkedin.com/company/shipchain/" width="50px"/>
+              </mj-column>
+              <mj-column>
+                  <mj-image src="https://profiles.shipchain.io/static/profiles/instagram_orange.png" href="https://www.instagram.com/ship.chain/" width="50px"/>
+              </mj-column>
+            </mj-group>
+          </mj-section>
+          <mj-section background-color="#FFFFFF" full-width="full-width">
+            <mj-column>
+              <mj-text font-size="10px" color="#000" font-family="helvetica" align="center">
+                  <a href="https://profiles.shipchain.io/privacy-policy">Privacy Policy</a>
+              </mj-text>
+            </mj-column>
+          </mj-section>
+      </mj-body>
+    </mjml>
+{% endmjml %}

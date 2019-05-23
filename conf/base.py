@@ -170,7 +170,9 @@ ROOT_URLCONF = 'apps.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'apps/shipments/templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -237,6 +239,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+DEFAULT_FROM_EMAIL = os.environ.get('FROM_EMAIL', 'noreply@smtp.shipchain.io.local')
+EMAIL_CONFIG = ENV.email_url('EMAIL_URL', default='smtp://:@smtp:25')
+vars().update(EMAIL_CONFIG)
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
