@@ -616,6 +616,7 @@ paths:
         List of devices with most recent configurations
       parameters:
         - $ref: '#/components/parameters/deviceStatus/active'
+        - $ref: '#/components/parameters/deviceStatus/inBox'
       tags:
         - Shipments
       responses:
@@ -941,6 +942,16 @@ components:
         schema:
           type: boolean
           enum: [true, false]
+
+      inBox:
+        name: in_box
+        in: query
+        description: Device's location viewport box coordinates, in the form (min Lon, min Lat, max Lon, max Lat)
+        required: false
+        schema:
+          type: string
+          example: -82.5,34.5,-83,36
+
 
   schemas:
     dataTypes:
@@ -3789,6 +3800,8 @@ components:
 
       listResponse:
         allOf:
+          - $ref: '#/components/schemas/jsonApi/dataArray'
+          - $ref: '#/components/schemas/jsonApi/linksAndMeta'
           - properties:
               data:
                 items:

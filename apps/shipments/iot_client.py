@@ -96,6 +96,13 @@ class DeviceAWSIoTClient(AWSIoTClient):
         return active_devices, list_device
 
     def validate_in_box(self, in_box):
+        """
+        returns a tuple (bool, message) where bool indicates whether the passed in in_box is valid or not
+        and message is the related error message if any.
+
+        :param in_box: string tuple like, which defines the viewport rectangle boundaries
+                        format: min Lon, min Lat, max Lon, max Lat
+        """
         long_range = (-180, 180)
         lat_range = (-90, 90)
         box_ranges = (long_range, lat_range, long_range, lat_range)
@@ -114,4 +121,3 @@ class DeviceAWSIoTClient(AWSIoTClient):
                 return False, f'in_box coordinate in position: {index}, value: {box_value}, should be in range: {rang}'
 
         return True, 'ok'
-
