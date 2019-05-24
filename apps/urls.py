@@ -28,6 +28,8 @@ from apps.documents import views as documents
 
 API_PREFIX = r'^api/(?P<version>(v1|v2))'
 
+admin.site.site_header = 'Transmission Administration'
+
 # pylint: disable=invalid-name
 router = OptionalSlashRouter()
 
