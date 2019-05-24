@@ -1048,6 +1048,56 @@
                   }
                 },
                 "response": []
+              },
+              {
+                "name": "Email shipment details",
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "to_email",
+                        "value": "user2@shipchain.io",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "name",
+                        "value": "name",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "expiration_date",
+                        "value": "2019-05-24T10:00-04:00",
+                        "type": "text",
+                        "disabled": true
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/permission_links_email/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "shipments",
+                      "{{shipment_id}}",
+                      "permission_links_email",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
               }
             ]
           },
