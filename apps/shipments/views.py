@@ -15,11 +15,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from influxdb_metrics.loader import log_metric
-from templated_mail.mail import BaseEmailMessage
 
 from apps.authentication import get_jwt_from_request
 from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id
+from apps.utils import send_templated_email
 from .filters import ShipmentFilter
 from .geojson import render_point_features
 from .models import Shipment, TrackingData, PermissionLink
@@ -222,10 +222,9 @@ class EmailShipmentPermissionLink(viewsets.ViewSet):
         to_email = serialize.validated_data['to_email']
         email_context = serialize.get_context
 
-        # BaseEmailMessage(context=email_context, template_name='shipment_link.html').send(to=[to_email])
-
-        email = EmailMessage('Testing Permission link', render_to_string('shipment_link.html', context=email_context), settings.DEFAULT_FROM_EMAIL, [to_email])
-        email.content_subtype = 'html'
-        email.send()
+        send_templated_email(template='email/shipment_link.html',
+                             subject=email_context['subject'],
+                             context=email_context,
+                             recipients=[to_email])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
