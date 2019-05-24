@@ -377,3 +377,41 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
     def create(self, validated_data):
         return TrackingData.objects.create(**validated_data, **self.context)
+
+
+class EmailShipmentDetailsSerializer(serializers.Serializer):
+    to_email = serializers.EmailField(required=True)
+    expiration_date = serializers.DateTimeField(required=False)
+    name = serializers.CharField(required=False, max_length=255)
+
+    def validate_expiration_date(self, expiration_date):
+        if expiration_date <= datetime.now(timezone.utc):
+            raise exceptions.ValidationError('The expiration date should be greater than actual date')
+        return expiration_date
+
+    @property
+    def get_context(self):
+        data = self.validated_data
+        context = self.context
+        expiration_date = data.get('expiration_date', None)
+        shipment_id = context['shipment_id']
+        username = context['user'].username
+        permission_link = None
+
+        if not expiration_date:
+            # We try to reuse an existing expiration date
+            permission_link = PermissionLink.objects.filter(
+                shipment_id=shipment_id, expiration_date__isnull=True).first()
+
+        if not permission_link:
+            permission_link = PermissionLink.objects.create(shipment_id=shipment_id, **data)
+
+        shared_link = f'https://{settings.ENVIRONMENT.lower()}.shipchain.io/shipments/{shipment_id}/' \
+                      f'?permission_link={permission_link.id}'
+
+        return {
+            'username': username,
+            'link': shared_link,
+            'subject': f'{username} shared a shipment details page with you.'
+        }
+

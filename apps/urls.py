@@ -44,6 +44,7 @@ nested_router = drf_nested_routers.NestedSimpleRouter(router, f'{API_PREFIX[1:]}
 nested_router.register(r'documents', documents.DocumentViewSet, base_name='shipment-documents')
 nested_router.register(r'transactions', eth.TransactionViewSet, base_name='shipment-transactions')
 nested_router.register(r'permission_links', shipments.PermissionLinkViewSet, base_name='shipment-permissions')
+nested_router.register(r'permission_links_email', shipments.EmailShipmentPermissionLink, base_name='email-shipment')
 
 urlpatterns = [
     url(

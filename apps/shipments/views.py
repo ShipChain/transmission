@@ -3,6 +3,8 @@ from string import Template
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -13,6 +15,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from influxdb_metrics.loader import log_metric
+from templated_mail.mail import BaseEmailMessage
 
 from apps.authentication import get_jwt_from_request
 from apps.jobs.models import JobState
@@ -23,7 +26,7 @@ from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer
+    PermissionLinkSerializer, EmailShipmentDetailsSerializer
 from .tasks import tracking_data_update
 
 LOG = logging.getLogger('transmission')
@@ -206,3 +209,23 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         permission_link = PermissionLink.objects.create(**serializer.validated_data)
 
         return Response(PermissionLinkSerializer(permission_link).data, status=status.HTTP_201_CREATED)
+
+
+class EmailShipmentPermissionLink(viewsets.ViewSet):
+    http_method_names = ['post', ]
+    permission_classes = ((IsShipmentOwner,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
+
+    def create(self, request, *args, **kwargs):
+        serialize = EmailShipmentDetailsSerializer(data=request.data, context={'shipment_id': kwargs['shipment_pk'],
+                                                                               'user': request.user})
+        serialize.is_valid(raise_exception=True)
+        to_email = serialize.validated_data['to_email']
+        email_context = serialize.get_context
+
+        # BaseEmailMessage(context=email_context, template_name='shipment_link.html').send(to=[to_email])
+
+        email = EmailMessage('Testing Permission link', render_to_string('shipment_link.html', context=email_context), settings.DEFAULT_FROM_EMAIL, [to_email])
+        email.content_subtype = 'html'
+        email.send()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
