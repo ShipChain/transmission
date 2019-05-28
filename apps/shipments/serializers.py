@@ -404,6 +404,7 @@ class EmailShipmentDetailsSerializer(serializers.Serializer):
                 shipment_id=shipment_id, expiration_date__isnull=True).first()
 
         if not permission_link:
+            data.pop('to_email')
             permission_link = PermissionLink.objects.create(shipment_id=shipment_id, **data)
 
         shared_link = f'https://{settings.ENVIRONMENT.lower()}.shipchain.io/shipments/{shipment_id}/' \
@@ -414,4 +415,3 @@ class EmailShipmentDetailsSerializer(serializers.Serializer):
             'link': shared_link,
             'subject': f'{username} shared a shipment details page with you.'
         }
-

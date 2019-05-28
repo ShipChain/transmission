@@ -9,6 +9,7 @@ import httpretty
 from datetime import datetime, timezone, timedelta
 from dateutil import parser
 from django.conf import settings as test_settings
+from django.core import mail
 from django.db import transaction
 from jose import jws
 from moto import mock_iot
@@ -1413,6 +1414,79 @@ class ShipmentAPITests(APITestCase):
         # An anonymous user cannot access the shipment-list with a valid permission link
         response = self.client.get(f'{url_shipment_list}?permission_link={valid_permission_id_with_exp}')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_permission_link_email(self):
+        from apps.rpc_client import requests
+        from tests.utils import mocked_rpc_response
+        with mock.patch.object(requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_id": "TEST_VAULT_ID"
+                }
+            })
+            self.create_shipment()
+
+        url = reverse('email-shipment-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
+
+        today = datetime.now(timezone.utc)
+        yesterday = today + timedelta(days=-1)
+        tomorrow = today + timedelta(days=1)
+        outbox = mail.outbox
+
+        email_data = {
+            "to_email": "test@example.com"
+        }
+        # user_1 is the shipment owner he should be able to share the email the shipment details page
+        self.set_user(self.user_1)
+
+        # A request with an expiration date prior to the moment of the request should fail
+        email_data['expiration_date'] = yesterday.isoformat()
+        response = self.client.post(url, email_data, format='json')
+        self.assertTrue(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(outbox), 0)
+
+        # A request with an invalid email address should fail
+        response = self.client.post(url, {'to_email': 'bad@email.1'}, format='json')
+        self.assertTrue(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(outbox), 0)
+
+        # A request with an expiration date in the future should succeed
+        email_data['expiration_date'] = tomorrow.isoformat()
+        response = self.client.post(url, email_data, format='json')
+        self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(outbox), 1)
+        self.assertTrue('The ShipChain team' in str(outbox[0].body))
+        self.assertTrue(self.user_1.username in str(outbox[0].subject))
+
+        # A request without expiration date should succeed
+        email_data.pop('expiration_date')
+        response = self.client.post(url, email_data, format='json')
+        self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(outbox), 2)
+        self.assertTrue('The ShipChain team' in str(outbox[1].body))
+        self.assertTrue(self.user_1.username in str(outbox[1].subject))
+
+        # -------------------- Permissions test -------------------#
+        self.set_user(None)
+        # An unauthenticated user should fail, with 403 status code
+        response = self.client.post(url, email_data, format='json')
+        self.assertTrue(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # A shipment shipper, carrier, moderator should succeed sharing a shipment via email
+        with mock.patch('apps.permissions.is_carrier') as mock_carrier, \
+                mock.patch('apps.permissions.is_shipper') as mock_shipper:
+            mock_carrier.return_value = True
+            mock_shipper.return_value = False
+
+            # user_2 is the shipment carrier and should succeed sharing the shipment via email
+            self.set_user(self.user_2)
+            response = self.client.post(url, email_data, format='json')
+            self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
+            self.assertEqual(len(outbox), 3)
+            self.assertTrue('The ShipChain team' in str(outbox[2].body))
+            self.assertTrue(self.user_2.username in str(outbox[2].subject))
 
 
 class TrackingDataAPITests(APITestCase):
