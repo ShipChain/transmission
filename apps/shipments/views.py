@@ -269,8 +269,8 @@ class CurrentDevicesLocations(APIView):
         owner_id = get_owner_id(request)
         iot_client = DeviceAWSIoTClient()
         device_status = request.query_params.get('active', None)
-        in_box = request.query_params.get('in_box', None)
-        devices = iot_client.get_list_owner_devices(owner_id, active=device_status, in_box=in_box)
+        in_bbox = request.query_params.get('in_bbox', None)
+        devices = iot_client.get_list_owner_devices(owner_id, active=device_status, in_bbox=in_bbox)
 
         if not devices:
             raise NotFound()

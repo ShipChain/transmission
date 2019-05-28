@@ -46,12 +46,12 @@ class DeviceAWSIoTClient(AWSIoTClient):
         log_metric('transmission.info', tags={'method': 'DeviceAWSIoTClient.get_list_owner_devices'})
 
         active = kwargs.get('active', None)
-        in_box = kwargs.get('in_box', None)
+        in_bbox = kwargs.get('in_bbox', None)
 
-        if in_box:
-            in_box = ','.join([c.strip() for c in in_box.split(',')])
-            in_box_is_valid, message = self.validate_in_box(in_box)
-            if not in_box_is_valid:
+        if in_bbox:
+            in_bbox = ','.join([c.strip() for c in in_bbox.split(',')])
+            in_bbox_is_valid, message = self.validate_in_bbox(in_bbox)
+            if not in_bbox_is_valid:
                 raise ParseError(message)
 
         if not next_token:
@@ -59,7 +59,7 @@ class DeviceAWSIoTClient(AWSIoTClient):
 
         list_devices = self._get(f'devices?ownerId={owner_id}&maxResults={settings.IOT_DEVICES_MAX_RESULTS}'
                                  f'&nextToken={next_token if next_token else ""}'
-                                 f'&in_box={in_box if in_box else ""}')
+                                 f'&in_bbox={in_bbox if in_bbox else ""}')
 
         if 'error' in list_devices:
             raise AWSIoTError("Error in response from AWS IoT")
@@ -71,7 +71,7 @@ class DeviceAWSIoTClient(AWSIoTClient):
         next_token = list_devices['data'].get('nextToken', None)
         if next_token:
             return self.get_list_owner_devices(owner_id, next_token=next_token, results=results, active=active,
-                                               in_box=in_box)
+                                               in_box=in_bbox)
         if active:
             device_status = active.lower()
             if device_status == 'true':
@@ -95,19 +95,19 @@ class DeviceAWSIoTClient(AWSIoTClient):
 
         return active_devices, list_device
 
-    def validate_in_box(self, in_box):
+    def validate_in_bbox(self, in_bbox):
         """
         returns a tuple (bool, message) where bool indicates whether the passed in in_box is valid or not
         and message is the related error message if any.
 
-        :param in_box: string tuple like, which defines the viewport rectangle boundaries
+        :param in_bbox: string tuple like, which defines the viewport rectangle boundaries
                         format: min Lon, min Lat, max Lon, max Lat
         """
         long_range = (-180, 180)
         lat_range = (-90, 90)
         box_ranges = (long_range, lat_range, long_range, lat_range)
 
-        list_box = in_box.split(',')
+        list_box = in_bbox.split(',')
         if len(list_box) < 4:
             return False, f'in_box parameter takes 4 position parameters but {len(list_box)}, were passed in.'
 
