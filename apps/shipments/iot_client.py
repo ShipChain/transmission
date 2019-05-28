@@ -97,7 +97,7 @@ class DeviceAWSIoTClient(AWSIoTClient):
 
     def validate_in_bbox(self, in_bbox):
         """
-        returns a tuple (bool, message) where bool indicates whether the passed in in_box is valid or not
+        returns a tuple (bool, message) where bool indicates whether the passed in in_bbox is valid or not
         and message is the related error message if any.
 
         :param in_bbox: string tuple like, which defines the viewport rectangle boundaries
@@ -115,9 +115,9 @@ class DeviceAWSIoTClient(AWSIoTClient):
             try:
                 box_value = float(box_value)
             except ValueError:
-                return False, f'in_box coordinate: {box_value}, should be type number'
+                return False, f'in_bbox coordinate: {box_value}, should be type number'
 
             if not rang[0] <= box_value <= rang[1]:
-                return False, f'in_box coordinate in position: {index}, value: {box_value}, should be in range: {rang}'
+                return False, f'in_bbox coordinate in position: {index}, value: {box_value}, should be in range: {rang}'
 
         return True, 'ok'
