@@ -1436,7 +1436,7 @@ class ShipmentAPITests(APITestCase):
         outbox = mail.outbox
 
         email_data = {
-            "to_email": "test@example.com"
+            "email": "test@example.com"
         }
         # user_1 is the shipment owner he should be able to share the email the shipment details page
         self.set_user(self.user_1)
@@ -1448,7 +1448,7 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(len(outbox), 0)
 
         # A request with an invalid email address should fail
-        response = self.client.post(url, {'to_email': 'bad@email.1'}, format='json')
+        response = self.client.post(url, {'email': 'bad@email.1'}, format='json')
         self.assertTrue(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(len(outbox), 0)
 

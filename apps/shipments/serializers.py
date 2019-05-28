@@ -380,7 +380,7 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
 
 class EmailShipmentDetailsSerializer(serializers.Serializer):
-    to_email = serializers.EmailField(required=True)
+    email = serializers.EmailField(required=True)
     expiration_date = serializers.DateTimeField(required=False)
     name = serializers.CharField(required=False, max_length=255)
 
@@ -404,7 +404,7 @@ class EmailShipmentDetailsSerializer(serializers.Serializer):
                 shipment_id=shipment_id, expiration_date__isnull=True).first()
 
         if not permission_link:
-            data.pop('to_email')
+            data.pop('email')
             permission_link = PermissionLink.objects.create(shipment_id=shipment_id, **data)
 
         shared_link = f'https://{settings.ENVIRONMENT.lower()}.shipchain.io/shipments/{shipment_id}/' \

@@ -397,6 +397,29 @@ paths:
               allOf:
                 - $ref: '#/components/requestBodies/permissionLinks/createAttributes'
 
+  /api/v1/shipments/{shipment_id}/permission_links_email/:
+    post:
+      summary: Email a Shipment
+      description: |
+        Email a shipment details page, accessible via permission link
+      tags:
+        - Shipments
+      responses:
+        '204':
+          description: *response_204
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/requestBodies/emailShipment/createRequest'
+
+
   /api/v1/shipments/{shipment_id}/permission_links/{permission_links_id}/:
     delete:
       summary: Delete a permission link
@@ -869,6 +892,15 @@ components:
         format: uuid
         description: Unique UUID for this resource
         example: '1243d23b-e2fc-475a-8290-0e4f53479553'
+
+      email:
+        properties:
+          email:
+            title: email
+            description: Recepient email address
+            type: string
+            format: email
+            example: user@email.com
 
       shipmentId:
         properties:
@@ -3723,6 +3755,20 @@ components:
           - properties:
               data:
                 $ref: '#/components/requestBodies/permissionLinks/createResource'
+
+    emailShipment:
+      createResource:
+        required:
+          - email
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/permissionLinks/name'
+          - $ref: '#/components/schemas/dataTypes/permissionLinks/expirationDate'
+          - $ref: '#/components/schemas/dataTypes/email'
+      createRequest:
+        allOf:
+          - properties:
+              data:
+                $ref: '#/components/requestBodies/emailShipment/createResource'
 
   securitySchemes:
     JWT:

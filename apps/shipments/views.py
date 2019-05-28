@@ -3,8 +3,6 @@ from string import Template
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
-from django.core.mail import EmailMessage
-from django.template.loader import render_to_string
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -219,12 +217,12 @@ class EmailShipmentPermissionLink(viewsets.ViewSet):
         serialize = EmailShipmentDetailsSerializer(data=request.data, context={'shipment_id': kwargs['shipment_pk'],
                                                                                'user': request.user})
         serialize.is_valid(raise_exception=True)
-        to_email = serialize.validated_data['to_email']
+        email = serialize.validated_data['email']
         email_context = serialize.get_context
 
         send_templated_email(template='email/shipment_link.html',
                              subject=email_context['subject'],
                              context=email_context,
-                             recipients=[to_email])
+                             recipients=[email])
 
         return Response(status=status.HTTP_204_NO_CONTENT)

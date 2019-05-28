@@ -146,7 +146,8 @@ def send_templated_email(template=None, subject=None, context=None, sender=None,
     if not template or not subject or not recipients:
         raise ValidationError
 
-    assert isinstance(recipients, list), 'recipients should be a list'
+    if not isinstance(recipients, list):
+        raise ValidationError('recipients should be a list')
 
     send_by = sender if sender else settings.DEFAULT_FROM_EMAIL
 
