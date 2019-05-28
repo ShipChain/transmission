@@ -1063,7 +1063,7 @@
                     "mode": "formdata",
                     "formdata": [
                       {
-                        "key": "to_email",
+                        "key": "email",
                         "value": "user2@shipchain.io",
                         "type": "text",
                         "disabled": false
