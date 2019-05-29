@@ -234,14 +234,42 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
 class PermissionLinkSerializer(serializers.ModelSerializer):
     shipment_id = serializers.CharField(max_length=36, required=False)
+    emails = serializers.ListField(
+        child=serializers.EmailField(),
+        min_length=0,
+        required=False
+    )
 
     class Meta:
         model = PermissionLink
-        exclude = ('shipment', )
+        exclude = ('shipment',)
 
-    def validate(self, attrs):
-        attrs['shipment_id'] = self.context['shipment_id']
-        return attrs
+    def create(self, validated_data):
+        username = getattr(self.context['user'], 'username', None)
+        shipment_id = self.context['shipment_id']
+        protocol = 'https' if self.context['protocol'] else 'http'
+
+        if 'emails' in validated_data:
+            validated_data.pop('emails')
+
+        permission_link = PermissionLink.objects.create(**validated_data)
+
+        self.subject = f'{username} shared a shipment details page with you.'
+        self.link = f'{protocol}://{settings.FRONTEND_DOMAIN}/shipments/{shipment_id}/' \
+                    f'?permission_link={permission_link.id}'
+
+        return permission_link
+
+    def validate_expiration_date(self, expiration_date):
+        if expiration_date <= datetime.now(timezone.utc):
+            raise exceptions.ValidationError('The expiration date should be greater than actual date')
+        return expiration_date
+
+
+class PermissionLinkResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PermissionLink
+        exclude = ('shipment',)
 
 
 class ShipmentTxSerializer(serializers.ModelSerializer):

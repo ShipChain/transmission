@@ -24,7 +24,7 @@ from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer, EmailShipmentDetailsSerializer
+    PermissionLinkSerializer, PermissionLinkResponseSerializer, EmailShipmentDetailsSerializer
 from .tasks import tracking_data_update
 
 LOG = logging.getLogger('transmission')
@@ -201,12 +201,40 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         LOG.debug('Creating permission link for shipment.')
         log_metric('transmission.info', tags={'method': 'shipments.create_permission_link', 'module': __name__})
 
-        serializer = PermissionLinkSerializer(data=request.data, context={'shipment_id': kwargs['shipment_pk']})
+        serializer = PermissionLinkSerializer(data=request.data, context={'shipment_id': kwargs['shipment_pk'],
+                                                                          'user': request.user,
+                                                                          'protocol': request.is_secure()})
         serializer.is_valid(raise_exception=True)
 
-        permission_link = PermissionLink.objects.create(**serializer.validated_data)
+        validated_data = serializer.validated_data
+        permission_link = serializer.save(shipment_id=kwargs['shipment_pk'])
 
-        return Response(PermissionLinkSerializer(permission_link).data, status=status.HTTP_201_CREATED)
+        emails = validated_data.get('emails', None)
+        if settings.PROFILES_ENABLED and emails:
+            email_context = {
+                'username': request.user.username,
+                'link': serializer.link,
+                'request': request
+            }
+            send_templated_email(template='email/shipment_link.html',
+                                 subject=serializer.subject,
+                                 context=email_context,
+                                 recipients=emails)
+
+        return Response(PermissionLinkResponseSerializer(permission_link).data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset()).filter(shipment_id=kwargs['shipment_pk'])
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = PermissionLinkResponseSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = PermissionLinkResponseSerializer(queryset, many=True)
+
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
 class EmailShipmentPermissionLink(viewsets.ViewSet):
