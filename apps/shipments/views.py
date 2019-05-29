@@ -219,6 +219,7 @@ class EmailShipmentPermissionLink(viewsets.ViewSet):
         serialize.is_valid(raise_exception=True)
         email = serialize.validated_data['email']
         email_context = serialize.get_context
+        email_context['request'] = request
 
         send_templated_email(template='email/shipment_link.html',
                              subject=email_context['subject'],

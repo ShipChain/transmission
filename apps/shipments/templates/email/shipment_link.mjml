@@ -1,6 +1,5 @@
 {% load mjml %}
-{% block subject %}shipchain.io - {{username}} shared a shipment details page with you.{% endblock %}
-
+{% load fullurl %}
 {% block html_body %}
 {% mjml %}
     <mjml>
@@ -8,7 +7,7 @@
           <mj-section>
             <mj-column>
 
-              <mj-image src="https://profiles.shipchain.io/static/profiles/shipchain-logo-2.png"></mj-image>
+              <mj-image src="{% fullstatic 'icon/shipchain-logo.png' %}"></mj-image>
 
             </mj-column>
           </mj-section>
@@ -39,16 +38,16 @@
           <mj-section background-color="#FFFFFF" vertical-align="top" full-width="full-width" padding-top="0">
             <mj-group>
               <mj-column>
-                  <mj-image src="https://profiles.shipchain.io/static/profiles/twitter_orange.png" href="https://twitter.com/shipchain" width="40px"/>
+                  <mj-image src="{% fullstatic 'icon/twitter_orange.png' %}" href="https://twitter.com/shipchain" width="40px"/>
               </mj-column>
               <mj-column>
-                  <mj-image src="https://profiles.shipchain.io/static/profiles/facebook_orange.png" href="https://www.facebook.com/shipchain" width="40px"/>
+                  <mj-image src="{% fullstatic 'icon/facebook_orange.png' %}" href="https://www.facebook.com/shipchain" width="40px"/>
               </mj-column>
               <mj-column>
-                  <mj-image src="https://profiles.shipchain.io/static/profiles/linkedin_orange.png" href="https://www.linkedin.com/company/shipchain/" width="40px"/>
+                  <mj-image src="{% fullstatic 'icon/linkedin_orange.png' %}" href="https://www.linkedin.com/company/shipchain/" width="40px"/>
               </mj-column>
               <mj-column>
-                  <mj-image src="https://profiles.shipchain.io/static/profiles/instagram_orange.png" href="https://www.instagram.com/ship.chain/" width="40px"/>
+                  <mj-image src="{% fullstatic 'icon/instagram_orange.png' %}" href="https://www.instagram.com/ship.chain/" width="40px"/>
               </mj-column>
             </mj-group>
           </mj-section>

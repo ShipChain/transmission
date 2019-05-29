@@ -57,12 +57,18 @@ CORS_ORIGIN_ALLOW_ALL = True
 BOTO3_SESSION = None
 
 if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
-    if ENVIRONMENT in ('PROD', 'DEMO'):
+    if ENVIRONMENT == 'PROD':
         DEBUG = False
         LOG_LEVEL = 'INFO'
+        FRONTEND_DOMAIN = 'portal.shipchain.io'
+    elif ENVIRONMENT == 'DEMO':
+        DEBUG = False
+        LOG_LEVEL = 'INFO'
+        FRONTEND_DOMAIN = 'demo.shipchain.io'
     else:
         DEBUG = os.environ.get('FORCE_DEBUG', False)
         LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
+        FRONTEND_DOMAIN = 'portal-stage.ops.shipchain.io'
 
     import boto3
     BOTO3_SESSION = boto3.Session(region_name='us-east-1')
@@ -91,6 +97,7 @@ else:
     LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
     DEV_SECRET_KEY = 'devsecretkey' * 19  # noqa
     SECRET_KEY = os.environ.get('SECRET_KEY', DEV_SECRET_KEY)
+    FRONTEND_DOMAIN = 'localhost:3000'
 
 # Application definition
 
@@ -101,6 +108,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'fullurl',
     'django.contrib.gis',
     'django_extensions',
     'django_filters',

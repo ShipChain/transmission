@@ -1,3 +1,7 @@
+{% load staticfiles %}
+{% load fullurl %}
+
+{% block html_body %}
 <!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 
@@ -143,7 +147,7 @@
                         <tbody>
                           <tr>
                             <td style="width:550px;">
-                              <img height="auto" src="https://profiles.shipchain.io/static/profiles/shipchain-logo-2.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="550" />
+                              <img height="auto" src="{% fullstatic 'icon/shipchain-logo.png' %}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="550" />
                             </td>
                           </tr>
                         </tbody>
@@ -370,7 +374,7 @@
                                     <tr>
                                       <td style="width:40px;">
                                         <a href="https://twitter.com/shipchain" target="_blank">
-                                          <img height="auto" src="https://profiles.shipchain.io/static/profiles/twitter_orange.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="40" />
+                                          <img height="auto" src="{% fullstatic 'icon/twitter_orange.png' %}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="40" />
                                         </a>
                                       </td>
                                     </tr>
@@ -396,7 +400,7 @@
                                     <tr>
                                       <td style="width:40px;">
                                         <a href="https://www.facebook.com/shipchain" target="_blank">
-                                          <img height="auto" src="https://profiles.shipchain.io/static/profiles/facebook_orange.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="40" />
+                                          <img height="auto" src="{% fullstatic 'icon/facebook_orange.png' %}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="40" />
                                         </a>
                                       </td>
                                     </tr>
@@ -422,7 +426,7 @@
                                     <tr>
                                       <td style="width:40px;">
                                         <a href="https://www.linkedin.com/company/shipchain/" target="_blank">
-                                          <img height="auto" src="https://profiles.shipchain.io/static/profiles/linkedin_orange.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="40" />
+                                          <img height="auto" src="{% fullstatic 'icon/linkedin_orange.png' %}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="40" />
                                         </a>
                                       </td>
                                     </tr>
@@ -448,7 +452,7 @@
                                     <tr>
                                       <td style="width:40px;">
                                         <a href="https://www.instagram.com/ship.chain/" target="_blank">
-                                          <img height="auto" src="https://profiles.shipchain.io/static/profiles/instagram_orange.png" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="40" />
+                                          <img height="auto" src="{% fullstatic 'icon/instagram_orange.png' %}" style="border:0;display:block;outline:none;text-decoration:none;height:auto;width:100%;font-size:13px;" width="40" />
                                         </a>
                                       </td>
                                     </tr>
@@ -547,3 +551,5 @@
 </body>
 
 </html>
+
+{% endblock %}

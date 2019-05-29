@@ -6,6 +6,7 @@ from django.db import models
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
+from django.template import RequestContext
 from rest_framework.exceptions import ValidationError
 from enumfields.drf import EnumField
 
@@ -143,15 +144,16 @@ class AliasSerializerMixin:
 
 
 def send_templated_email(template=None, subject=None, context=None, sender=None, recipients=None):
-    if not template or not subject or not recipients:
-        raise ValidationError
+    request = context.get('request', None)
+    if not template or not subject or not recipients or not request:
+        raise ValueError
 
     if not isinstance(recipients, list):
-        raise ValidationError('recipients should be a list')
+        raise TypeError('recipients should be a list')
 
     send_by = sender if sender else settings.DEFAULT_FROM_EMAIL
 
-    email_body = render_to_string(template, context=context)
+    email_body = render_to_string(template, context=context, request=request)
     email = EmailMessage(subject, email_body, send_by, recipients)
     email.content_subtype = 'html'
     email.send()
