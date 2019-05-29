@@ -198,19 +198,21 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         """
         Creates a link to grant permission to read shipments
         """
-        LOG.debug('Creating permission link for shipment.')
+        shipment_id = kwargs['shipment_pk']
+        LOG.debug(f'Creating permission link for shipment {shipment_id}')
         log_metric('transmission.info', tags={'method': 'shipments.create_permission_link', 'module': __name__})
 
-        serializer = PermissionLinkSerializer(data=request.data, context={'shipment_id': kwargs['shipment_pk'],
+        serializer = PermissionLinkSerializer(data=request.data, context={'shipment_id': shipment_id,
                                                                           'user': request.user,
                                                                           'protocol': request.is_secure()})
         serializer.is_valid(raise_exception=True)
 
         validated_data = serializer.validated_data
-        permission_link = serializer.save(shipment_id=kwargs['shipment_pk'])
+        permission_link = serializer.save(shipment_id=shipment_id)
 
         emails = validated_data.get('emails', None)
         if settings.PROFILES_ENABLED and emails:
+            LOG.debug(f'Emailing permission link: {permission_link.id}')
             email_context = {
                 'username': request.user.username,
                 'link': serializer.link,

@@ -240,6 +240,11 @@ class PermissionLinkSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    def __init__(self, *args, **kwargs):
+        super(PermissionLinkSerializer, self).__init__(*args, **kwargs)
+        self.subject = None
+        self.link = None
+
     class Meta:
         model = PermissionLink
         exclude = ('shipment',)
@@ -254,7 +259,6 @@ class PermissionLinkSerializer(serializers.ModelSerializer):
 
         permission_link = PermissionLink.objects.create(**validated_data)
 
-        # pylint:disable=attribute-defined-outside-init
         self.subject = f'{username} shared a shipment details page with you.'
         self.link = f'{protocol}://{settings.FRONTEND_DOMAIN}/shipments/{shipment_id}/' \
                     f'?permission_link={permission_link.id}'

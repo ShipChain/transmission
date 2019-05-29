@@ -365,7 +365,7 @@ paths:
     post:
       summary: Create permission link
       description: |
-        Create a new `PermissionLink` associated with the `Shipment`.
+        Create a new `PermissionLink` associated with the `Shipment` and e-mail a list of recipients if provited.
 
         This `PermissionLink` provides read-only access to the `Shipment`.
       tags:
@@ -396,29 +396,6 @@ paths:
             schema:
               allOf:
                 - $ref: '#/components/requestBodies/permissionLinks/createAttributes'
-
-  /api/v1/shipments/{shipment_id}/permission_links_email/:
-    post:
-      summary: Email a Shipment
-      description: |
-        Email a shipment details page, accessible via permission link
-      tags:
-        - Shipments
-      responses:
-        '204':
-          description: *response_204
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-      requestBody:
-        content:
-          application/vnd.api+json:
-            schema:
-              $ref: '#/components/requestBodies/emailShipment/createRequest'
-
 
   /api/v1/shipments/{shipment_id}/permission_links/{permission_links_id}/:
     delete:
@@ -894,13 +871,11 @@ components:
         example: '1243d23b-e2fc-475a-8290-0e4f53479553'
 
       email:
-        properties:
-          email:
-            title: email
-            description: Recepient email address
-            type: string
-            format: email
-            example: user@email.com
+        title: email
+        description: Recepient email address
+        type: string
+        format: email
+        example: user@email.com
 
       shipmentId:
         properties:
@@ -2520,6 +2495,14 @@ components:
               type: string
               example: '2018-08-22T17:44:39.874352'
 
+        emails:
+          properties:
+            emails:
+              title: emails
+              description: List of email recipients
+              type: array
+              items:
+                $ref: '#/components/schemas/dataTypes/email'
 
     # Models
     jsonApi:
@@ -3748,6 +3731,7 @@ components:
         allOf:
           - $ref: '#/components/schemas/dataTypes/permissionLinks/name'
           - $ref: '#/components/schemas/dataTypes/permissionLinks/expirationDate'
+          - $ref: '#/components/schemas/dataTypes/permissionLinks/emails'
 
       createRequest:
         allOf:
@@ -3755,20 +3739,6 @@ components:
           - properties:
               data:
                 $ref: '#/components/requestBodies/permissionLinks/createResource'
-
-    emailShipment:
-      createResource:
-        required:
-          - email
-        allOf:
-          - $ref: '#/components/schemas/dataTypes/permissionLinks/name'
-          - $ref: '#/components/schemas/dataTypes/permissionLinks/expirationDate'
-          - $ref: '#/components/schemas/dataTypes/email'
-      createRequest:
-        allOf:
-          - properties:
-              data:
-                $ref: '#/components/requestBodies/emailShipment/createResource'
 
   securitySchemes:
     JWT:
