@@ -24,7 +24,7 @@ from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer, PermissionLinkResponseSerializer, EmailShipmentDetailsSerializer
+    PermissionLinkSerializer, PermissionLinkResponseSerializer
 from .tasks import tracking_data_update
 
 LOG = logging.getLogger('transmission')
@@ -235,23 +235,3 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         serializer = PermissionLinkResponseSerializer(queryset, many=True)
 
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-
-
-class EmailShipmentPermissionLink(viewsets.ViewSet):
-    http_method_names = ['post', ]
-    permission_classes = ((IsShipmentOwner,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
-
-    def create(self, request, *args, **kwargs):
-        serialize = EmailShipmentDetailsSerializer(data=request.data, context={'shipment_id': kwargs['shipment_pk'],
-                                                                               'user': request.user})
-        serialize.is_valid(raise_exception=True)
-        email = serialize.validated_data['email']
-        email_context = serialize.get_context
-        email_context['request'] = request
-
-        send_templated_email(template='email/shipment_link.html',
-                             subject=email_context['subject'],
-                             context=email_context,
-                             recipients=[email])
-
-        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -6,8 +6,6 @@ from django.db import models
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
-from django.template import RequestContext
-from rest_framework.exceptions import ValidationError
 from enumfields.drf import EnumField
 
 

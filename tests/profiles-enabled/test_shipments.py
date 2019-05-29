@@ -1286,6 +1286,9 @@ class ShipmentAPITests(APITestCase):
             'carrier_scac': 'test'
         })
 
+        valid_permission_id_past_exp = PermissionLink.objects.create(name='test', shipment_id=self.shipments[0].id,
+                                                                     expiration_date=yesterday).id
+
         # Unauthenticated request should fail with 403
         response = self.client.post(url, valid_permission_no_exp, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -1300,13 +1303,9 @@ class ShipmentAPITests(APITestCase):
         self.assertIsNone(response_json['data']['attributes']['expiration_date'])
         valid_permission_id = response_json['data']['id']
 
-        # Authenticated request should succeed
+        # Authenticated request should fail with a date time prior to the moment
         response = self.client.post(url, valid_permission_past_exp, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        response_json = response.json()
-        self.assertEqual(response_json['data']['attributes']['shipment_id'], self.shipments[0].id)
-        self.assertTrue(datetime.now(timezone.utc) > parser.parse(response_json['data']['attributes']['expiration_date']))
-        valid_permission_id_past_exp = response_json['data']['id']
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Authenticated request should succeed
         response = self.client.post(url, valid_permission_with_exp, content_type=content_type)
@@ -1428,7 +1427,7 @@ class ShipmentAPITests(APITestCase):
             })
             self.create_shipment()
 
-        url = reverse('email-shipment-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
+        url = reverse('shipment-permissions-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
 
         today = datetime.now(timezone.utc)
         yesterday = today + timedelta(days=-1)
@@ -1436,7 +1435,8 @@ class ShipmentAPITests(APITestCase):
         outbox = mail.outbox
 
         email_data = {
-            "email": "test@example.com"
+            'name': 'Email Permission link',
+            "emails": ["test@example.com", "guest@shipchain.io", ]
         }
         # user_1 is the shipment owner he should be able to share the email the shipment details page
         self.set_user(self.user_1)
@@ -1448,8 +1448,13 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(len(outbox), 0)
 
         # A request with an invalid email address should fail
-        response = self.client.post(url, {'email': 'bad@email.1'}, format='json')
+        response = self.client.post(url, {'name': 'Bad Email', 'emails': ['bad@email.1', ]}, format='json')
         self.assertTrue(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(outbox), 0)
+
+        # A valid request without any email should succeed without sending any email
+        response = self.client.post(url, {'name': 'Bad Email', 'emails': []}, format='json')
+        self.assertTrue(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(outbox), 0)
 
         # A request with an expiration date in the future should succeed
@@ -1458,6 +1463,7 @@ class ShipmentAPITests(APITestCase):
         self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(outbox), 1)
         self.assertTrue('The ShipChain team' in str(outbox[0].body))
+        self.assertTrue(self.user_1.username in str(outbox[0].body))
         self.assertTrue(self.user_1.username in str(outbox[0].subject))
 
         # A request without expiration date should succeed
@@ -1466,6 +1472,7 @@ class ShipmentAPITests(APITestCase):
         self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(outbox), 2)
         self.assertTrue('The ShipChain team' in str(outbox[1].body))
+        self.assertTrue(self.user_1.username in str(outbox[1].body))
         self.assertTrue(self.user_1.username in str(outbox[1].subject))
 
         # -------------------- Permissions test -------------------#
@@ -1486,6 +1493,7 @@ class ShipmentAPITests(APITestCase):
             self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
             self.assertEqual(len(outbox), 3)
             self.assertTrue('The ShipChain team' in str(outbox[2].body))
+            self.assertTrue(self.user_2.username in str(outbox[2].body))
             self.assertTrue(self.user_2.username in str(outbox[2].subject))
 
 
