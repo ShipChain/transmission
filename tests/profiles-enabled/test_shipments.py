@@ -1438,6 +1438,11 @@ class ShipmentAPITests(APITestCase):
             'name': 'Email Permission link',
             "emails": ["test@example.com", "guest@shipchain.io", ]
         }
+
+        multi_form_email_data, content_type = create_form_content({
+            'name': 'Email Permission link',
+            "emails": ["test@example.com", "guest@shipchain.io", ]
+        })
         # user_1 is the shipment owner he should be able to share the email the shipment details page
         self.set_user(self.user_1)
 
@@ -1457,23 +1462,31 @@ class ShipmentAPITests(APITestCase):
         self.assertTrue(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(outbox), 0)
 
-        # A request with an expiration date in the future should succeed
-        email_data['expiration_date'] = tomorrow.isoformat()
-        response = self.client.post(url, email_data, format='json')
+        # Assert that email can be sent via Multiform data
+        response = self.client.post(url, multi_form_email_data, content_type=content_type)
         self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(outbox), 1)
         self.assertTrue('The ShipChain team' in str(outbox[0].body))
         self.assertTrue(self.user_1.username in str(outbox[0].body))
         self.assertTrue(self.user_1.username in str(outbox[0].subject))
 
-        # A request without expiration date should succeed
-        email_data.pop('expiration_date')
+        # A request with an expiration date in the future should succeed
+        email_data['expiration_date'] = tomorrow.isoformat()
         response = self.client.post(url, email_data, format='json')
         self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(outbox), 2)
         self.assertTrue('The ShipChain team' in str(outbox[1].body))
         self.assertTrue(self.user_1.username in str(outbox[1].body))
         self.assertTrue(self.user_1.username in str(outbox[1].subject))
+
+        # A request without expiration date should succeed
+        email_data.pop('expiration_date')
+        response = self.client.post(url, email_data, format='json')
+        self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(outbox), 3)
+        self.assertTrue('The ShipChain team' in str(outbox[2].body))
+        self.assertTrue(self.user_1.username in str(outbox[2].body))
+        self.assertTrue(self.user_1.username in str(outbox[2].subject))
 
         # -------------------- Permissions test -------------------#
         self.set_user(None)
@@ -1491,10 +1504,10 @@ class ShipmentAPITests(APITestCase):
             self.set_user(self.user_2)
             response = self.client.post(url, email_data, format='json')
             self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
-            self.assertEqual(len(outbox), 3)
-            self.assertTrue('The ShipChain team' in str(outbox[2].body))
-            self.assertTrue(self.user_2.username in str(outbox[2].body))
-            self.assertTrue(self.user_2.username in str(outbox[2].subject))
+            self.assertEqual(len(outbox), 4)
+            self.assertTrue('The ShipChain team' in str(outbox[3].body))
+            self.assertTrue(self.user_2.username in str(outbox[3].body))
+            self.assertTrue(self.user_2.username in str(outbox[3].subject))
 
 
 class TrackingDataAPITests(APITestCase):

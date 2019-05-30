@@ -1,13 +1,16 @@
 from unittest import mock
 from conf import test_settings_profiles_disabled
 
+from django.core import mail
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 
 from apps.shipments.rpc import ShipmentRPCClient
-from apps.shipments.models import Location
+from apps.shipments.models import Location, Shipment
 from tests.utils import create_form_content
+from apps.rpc_client import requests
+from tests.utils import mocked_rpc_response
 
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
@@ -26,6 +29,23 @@ class ShipmentAPITests(APITestCase):
 
     def setUp(self):
         self.client = APIClient()
+
+        with mock.patch.object(requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_id": "TEST_VAULT_ID"
+                }
+            })
+
+            self.shipments = []
+            self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
+                                                          carrier_wallet_id=CARRIER_WALLET_ID,
+                                                          shipper_wallet_id=SHIPPER_WALLET_ID,
+                                                          storage_credentials_id=STORAGE_CRED_ID,
+                                                          pickup_est="2018-11-10T17:57:05.070419Z",
+                                                          owner_id=OWNER_ID))
 
     def test_shipment_create(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})
@@ -131,3 +151,17 @@ class ShipmentAPITests(APITestCase):
 
         response = self.client.post(url, one_location_profiles_disabled, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+    def test_permission_link_email(self):
+        outbox = mail.outbox
+        url = reverse('shipment-permissions-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
+
+        multi_form_email_data, content_type = create_form_content({
+            'name': 'Email Permission link',
+            "emails": ["test@example.com", "guest@shipchain.io", ]
+        })
+
+        # Assert that email cannot be sent on profile disabled
+        response = self.client.post(url, multi_form_email_data, content_type=content_type)
+        self.assertTrue(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(len(outbox), 0)

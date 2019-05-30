@@ -961,27 +961,9 @@
                     }
                   ],
                   "body": {
-                    "mode": "formdata",
-                    "formdata": [
-                      {
-                        "key": "name",
-                        "value": "name",
-                        "type": "text",
-                        "disabled": false
-                      },
-                      {
-                        "key": "expiration_date",
-                        "value": "2018-08-22T17:44:39.874352",
-                        "type": "text",
-                        "disabled": true
-                      },
-                      {
-                        "key": "emails",
-                        "value": ["user2@shipchain.io"],
-                        "type": "text",
-                        "disabled": true
-                      }
-                    ]
+                    "mode": "raw",
+                    "raw": "{\n\t\"name\": \"Permission link name\",\n\t\"expiration_date\": \"2018-08-22T17:44:39.874352\",\n\t\"emails\":[\"user1@shipchain.io\", \"user2@shipchain.io\"]\n}"
+
                   },
                   "url": {
                     "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/permission_links/",
