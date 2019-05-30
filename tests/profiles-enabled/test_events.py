@@ -58,7 +58,6 @@ class EventTests(APITestCase):
         }
 
         response = self.client.post(url, data, format='json')
-        print(response.content)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
         # Set NGINX headers for engine auth
