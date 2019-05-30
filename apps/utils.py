@@ -141,16 +141,9 @@ class AliasSerializerMixin:
         return self.getvalue()
 
 
-def send_templated_email(template=None, subject=None, context=None, sender=None, recipients=None):
+def send_templated_email(template, subject, context, recipients, sender=None):
     request = context.get('request', None)
-    if not template or not subject or not recipients or not request:
-        raise ValueError
-
-    if not isinstance(recipients, list):
-        raise TypeError('recipients should be a list')
-
     send_by = sender if sender else settings.DEFAULT_FROM_EMAIL
-
     email_body = render_to_string(template, context=context, request=request)
     email = EmailMessage(subject, email_body, send_by, recipients)
     email.content_subtype = 'html'

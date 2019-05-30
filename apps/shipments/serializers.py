@@ -250,20 +250,9 @@ class PermissionLinkSerializer(serializers.ModelSerializer):
         exclude = ('shipment',)
 
     def create(self, validated_data):
-        username = getattr(self.context['user'], 'username', None)
-        shipment_id = self.context['shipment_id']
-        protocol = 'https' if self.context['protocol'] else 'http'
-
         if 'emails' in validated_data:
             validated_data.pop('emails')
-
-        permission_link = PermissionLink.objects.create(**validated_data)
-
-        self.subject = f'{username} shared a shipment details page with you.'
-        self.link = f'{protocol}://{settings.FRONTEND_DOMAIN}/shipments/{shipment_id}/' \
-                    f'?permission_link={permission_link.id}'
-
-        return permission_link
+        return PermissionLink.objects.create(**validated_data)
 
     def validate_expiration_date(self, expiration_date):
         if expiration_date <= datetime.now(timezone.utc):

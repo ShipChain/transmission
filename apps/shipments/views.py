@@ -202,9 +202,7 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Creating permission link for shipment {shipment_id}')
         log_metric('transmission.info', tags={'method': 'shipments.create_permission_link', 'module': __name__})
 
-        serializer = PermissionLinkSerializer(data=request.data, context={'shipment_id': shipment_id,
-                                                                          'user': request.user,
-                                                                          'protocol': request.is_secure()})
+        serializer = PermissionLinkSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         validated_data = serializer.validated_data
@@ -213,15 +211,17 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         emails = validated_data.get('emails', None)
         if settings.PROFILES_ENABLED and emails:
             LOG.debug(f'Emailing permission link: {permission_link.id}')
+            username = request.user.username
+            protocol = 'https' if request.is_secure() else 'http'
+            subject = f'{username} shared a shipment details page with you.'
             email_context = {
                 'username': request.user.username,
-                'link': serializer.link,
+                'link': f'{protocol}://{settings.FRONTEND_DOMAIN}/shipments/{shipment_id}/'
+                        f'?permission_link={permission_link.id}',
                 'request': request
             }
-            send_templated_email(template='email/shipment_link.html',
-                                 subject=serializer.subject,
-                                 context=email_context,
-                                 recipients=emails)
+
+            send_templated_email('email/shipment_link.html', subject, email_context, emails)
 
         return Response(PermissionLinkResponseSerializer(permission_link).data, status=status.HTTP_201_CREATED)
 
