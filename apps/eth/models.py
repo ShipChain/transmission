@@ -153,6 +153,7 @@ class Event(models.Model):
           "shipTokenContractAddress": "0xFCaf25bF38E7C86612a25ff18CB8e09aB07c9885"
         },
         "event": "SetTokenContractAddressEvent",
+        "project": "SHIP",
         "signature": "0xbbbf32f08c8c0621e580dcf0a8e0024525ec357db61bb4faa1a639d4f958a824",
         "raw": {
           "data": "0x000000000000000000000000fcaf25bf38e7c86612a25ff18cb8e09ab07c9885",

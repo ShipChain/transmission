@@ -24,7 +24,7 @@ from apps.eth.models import Event
 class EventTests(APITestCase):
     def test_event_update(self):
         url = reverse('event-list', kwargs={'version': 'v1'})
-        data = {
+        event = {
             "address": "0x25Ff5dc79A7c4e34254ff0f4a19d69E491201DD3",
             "blockNumber": 3,
             "transactionHash": "0xc18a24a35052a5a3375ee6c2c5ddd6b0587cfa950b59468b67f63f284e2cc382",
@@ -45,8 +45,20 @@ class EventTests(APITestCase):
                 "0xbbbf32f08c8c0621e580dcf0a8e0024525ec357db61bb4faa1a639d4f958a824"
               ]
             }
-          }
+        }
+
+        data = {
+            'events': event,
+            'project': 'TEST'
+        }
+
+        data_batched = {
+            'events': [event, event],
+            'project': 'TEST'
+        }
+
         response = self.client.post(url, data, format='json')
+        print(response.content)
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
         # Set NGINX headers for engine auth
@@ -61,7 +73,7 @@ class EventTests(APITestCase):
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert Event.objects.count() == num_events
 
-        response = self.client.post(url, [data, data], format='json', X_NGINX_SOURCE='internal',
+        response = self.client.post(url, data_batched, format='json', X_NGINX_SOURCE='internal',
                                     X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert Event.objects.count() == num_events

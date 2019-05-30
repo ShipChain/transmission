@@ -30,7 +30,7 @@ class EventViewSet(mixins.CreateModelMixin,
     permission_classes = (EngineRequest,)
 
     @staticmethod
-    def _process_event(event):
+    def _process_event(event, project):
         try:
             action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
             Event.objects.get_or_create(**event, eth_action=action)
@@ -40,21 +40,21 @@ class EventViewSet(mixins.CreateModelMixin,
             LOG.info(f"MultipleObjectsReturned during get/get_or_create for event {event['transaction_hash']}: {exc}")
         except ObjectDoesNotExist:
             log_metric('transmission.info', tags={'method': 'events.create', 'code': 'non_ethaction_event',
-                                                  'module': __name__})
+                                                  'module': __name__, 'project': project})
             LOG.info(f"Non-EthAction Event processed Tx: {event['transaction_hash']}")
 
     def create(self, request, *args, **kwargs):
         log_metric('transmission.info', tags={'method': 'events.create', 'module': __name__})
         LOG.debug('Events create')
 
-        is_many = isinstance(request.data, list)
-        serializer = EventSerializer(data=request.data, many=is_many)
+        is_many = isinstance(request.data['events'], list)
+        serializer = EventSerializer(data=request.data['events'], many=is_many)
         serializer.is_valid(raise_exception=True)
 
         events = serializer.data if is_many else [serializer.data]
 
         for event in events:
-            self._process_event(event)
+            self._process_event(event, request.data['project'])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
