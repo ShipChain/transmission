@@ -240,11 +240,6 @@ class PermissionLinkSerializer(serializers.ModelSerializer):
         required=False
     )
 
-    def __init__(self, *args, **kwargs):
-        super(PermissionLinkSerializer, self).__init__(*args, **kwargs)
-        self.subject = None
-        self.link = None
-
     class Meta:
         model = PermissionLink
         exclude = ('shipment',)
