@@ -50,10 +50,11 @@ class EventViewSet(mixins.CreateModelMixin,
             else:
                 LOG.info(f"Non-EthAction Event processed Tx: {event['transaction_hash']}")
                 log_metric('transmission.info', tags={'method': 'events.create', 'code': 'non_ethaction_event',
-                                                      'module': __name__})
+                                                      'module': __name__, 'project': project})
 
     def create(self, request, *args, **kwargs):
-        log_metric('transmission.info', tags={'method': 'events.create', 'module': __name__})
+        log_metric('transmission.info',
+                   tags={'method': 'events.create', 'module': __name__, 'project': request.data['project']})
         LOG.debug('Events create')
 
         is_many = isinstance(request.data['events'], list)
