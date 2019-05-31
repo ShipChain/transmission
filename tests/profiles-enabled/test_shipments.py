@@ -1635,7 +1635,7 @@ class ShipmentWithIoTAPITests(APITestCase):
                         ]
                     }
                 },
-                'project': 'TEST'
+                'project': 'LOAD'
             }
             response = self.client.post(url, data, format='json', X_NGINX_SOURCE='internal',
                                         X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')

@@ -38,11 +38,12 @@ class EventViewSet(mixins.CreateModelMixin,
             except RPCError as exc:
                 LOG.info(f"Engine RPC error processing event {event['transaction_hash']}: {exc}")
             except MultipleObjectsReturned as exc:
-                LOG.info(f"MultipleObjectsReturned during get/get_or_create for event {event['transaction_hash']}: {exc}")
+                LOG.info(f"MultipleObjectsReturned during get/get_or_create for event {event['transaction_hash']}: "
+                         f"{exc}")
             except ObjectDoesNotExist:
-                    LOG.info(f"Non-EthAction Event processed Tx: {event['transaction_hash']}")
-                    log_metric('transmission.info', tags={'method': 'events.create', 'code': 'non_ethaction_event',
-                                                          'module': __name__, 'project': project})
+                LOG.info(f"Non-EthAction Event processed Tx: {event['transaction_hash']}")
+                log_metric('transmission.info', tags={'method': 'events.create', 'code': 'non_ethaction_event',
+                                                      'module': __name__, 'project': project})
         elif project == 'SHIP' and event['event_name'] == 'Transfer':
             LOG.info(f"ShipToken Transfer processed Tx: {event['transaction_hash']}")
             log_metric('transmission.info',
@@ -52,7 +53,7 @@ class EventViewSet(mixins.CreateModelMixin,
                                'token_amount': float(event['return_values']['value']) / (10 ** 18),
                                'count': 1})
         else:
-            LOG.warn(f"Unexpected event {event} found with project: {project}")
+            LOG.warning(f"Unexpected event {event} found with project: {project}")
 
     def create(self, request, *args, **kwargs):
         log_metric('transmission.info',

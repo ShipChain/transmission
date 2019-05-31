@@ -50,12 +50,12 @@ class EventTests(APITestCase):
 
         data = {
             'events': event,
-            'project': 'TEST'
+            'project': 'LOAD'
         }
 
         data_batched = {
             'events': [event, event],
-            'project': 'TEST'
+            'project': 'LOAD'
         }
 
         response = self.client.post(url, data, format='json')
