@@ -1702,24 +1702,24 @@ components:
 
         deliveryAppt:
           properties:
-            delivery_appt:
-              title: delivery_appt
+            delivery_appt_act:
+              title: delivery_appt_act
               description: Delivery appointment timestamp
               type: string
               example: '2018-08-22T17:44:39.874352'
 
         arrivalPortEst:
           properties:
-            arrival_port_est:
-              title: arrival_port_est
+            port_arrival_est:
+              title: port_arrival_est
               description: Estimated timestamp of arrival at destination port
               type: string
               example: '2018-08-22T17:44:39.874352'
 
         arrivalPortAct:
           properties:
-            arrival_port_act:
-              title: arrival_port_act
+            port_arrival_act:
+              title: port_arrival_act
               description: Timestamp of actual arrival at destination port
               type: string
               example: '2018-08-22T17:44:39.874352'
@@ -1798,8 +1798,8 @@ components:
 
         arrivalLocode:
           properties:
-            arrival_locode:
-              title: arrival_locode
+            port_arrival_locode:
+              title: port_arrival_locode
               description: UN/LOCODE for destination port
               type: string
               example: 'USCHI'
@@ -3613,15 +3613,9 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/isHazmat'
 
       patchAttributes:
-#        required:
-#          - shipper_wallet_id
-#          - carrier_wallet_id
-#          - storage_credentials_id
+
         allOf:
-#          - $ref: '#/components/schemas/dataTypes/shipment/storageCredentialsId'
-#          - $ref: '#/components/schemas/dataTypes/shipment/vaultId'
-#          - $ref: '#/components/schemas/dataTypes/shipment/shipperWalletId'
-#          - $ref: '#/components/schemas/dataTypes/shipment/carrierWalletId'
+          - $ref: '#/components/schemas/dataTypes/shipment/deviceId'
           - $ref: '#/components/schemas/dataTypes/shipment/carriersScac'
           - $ref: '#/components/schemas/dataTypes/shipment/forwardersScac'
           - $ref: '#/components/schemas/dataTypes/shipment/nvoccScac'
@@ -3672,6 +3666,11 @@ components:
           - $ref: '#/components/schemas/dataTypes/shipment/usRouted'
           - $ref: '#/components/schemas/dataTypes/shipment/importCustomsMode'
           - $ref: '#/components/schemas/dataTypes/shipment/usExportPort'
+          - $ref: '#/components/schemas/dataTypes/shipment/trailerNumber'
+          - $ref: '#/components/schemas/dataTypes/shipment/sealNumber'
+          - $ref: '#/components/schemas/dataTypes/shipment/isMasterBOL'
+          - $ref: '#/components/schemas/dataTypes/shipment/isHazmat'
+          - $ref: '#/components/schemas/dataTypes/shipment/nmfcClass'
           - $ref: '#/components/schemas/dataTypes/shipment/customerFields'
 
       createRequest:
