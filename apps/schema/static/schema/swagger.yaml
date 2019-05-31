@@ -1700,7 +1700,7 @@ components:
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        deliveryAppt:
+        deliveryApptAct:
           properties:
             delivery_appt_act:
               title: delivery_appt_act
@@ -1708,7 +1708,7 @@ components:
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        arrivalPortEst:
+        portArrivalEst:
           properties:
             port_arrival_est:
               title: port_arrival_est
@@ -1716,7 +1716,7 @@ components:
               type: string
               example: '2018-08-22T17:44:39.874352'
 
-        arrivalPortAct:
+        portArrivalAct:
           properties:
             port_arrival_act:
               title: port_arrival_act
@@ -1796,7 +1796,7 @@ components:
               type: string
               example: 'BULK'
 
-        arrivalLocode:
+        portArrivalLocode:
           properties:
             port_arrival_locode:
               title: port_arrival_locode
@@ -2801,9 +2801,9 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/loadingAct'
         - $ref: '#/components/schemas/dataTypes/shipment/departureEst'
         - $ref: '#/components/schemas/dataTypes/shipment/departureAct'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppt'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEst'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryApptAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/portArrivalEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/portArrivalAct'
         - $ref: '#/components/schemas/dataTypes/shipment/deliveryEst'
         - $ref: '#/components/schemas/dataTypes/shipment/deliveryAct'
         - $ref: '#/components/schemas/dataTypes/shipment/deliveryAttempt'
@@ -2813,7 +2813,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateAct'
         - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateAct'
         - $ref: '#/components/schemas/dataTypes/shipment/containerType'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/portArrivalLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/finalPortLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/importLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
@@ -2941,9 +2941,9 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/loadingAct'
         - $ref: '#/components/schemas/dataTypes/shipment/departureEst'
         - $ref: '#/components/schemas/dataTypes/shipment/departureAct'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppt'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEst'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryApptAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/portArrivalEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/portArrivalAct'
         - $ref: '#/components/schemas/dataTypes/shipment/deliveryEst'
         - $ref: '#/components/schemas/dataTypes/shipment/deliveryAct'
         - $ref: '#/components/schemas/dataTypes/shipment/deliveryAttempt'
@@ -2953,7 +2953,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateAct'
         - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateAct'
         - $ref: '#/components/schemas/dataTypes/shipment/containerType'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/portArrivalLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/finalPortLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/importLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
@@ -3584,9 +3584,9 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/loadingAct'
         - $ref: '#/components/schemas/dataTypes/shipment/departureEst'
         - $ref: '#/components/schemas/dataTypes/shipment/departureAct'
-        - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppt'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEst'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/deliveryApptAct'
+        - $ref: '#/components/schemas/dataTypes/shipment/portArrivalEst'
+        - $ref: '#/components/schemas/dataTypes/shipment/portArrivalAct'
         - $ref: '#/components/schemas/dataTypes/shipment/deliveryEst'
         - $ref: '#/components/schemas/dataTypes/shipment/deliveryAct'
         - $ref: '#/components/schemas/dataTypes/shipment/deliveryAttempt'
@@ -3596,7 +3596,7 @@ components:
         - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateAct'
         - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateAct'
         - $ref: '#/components/schemas/dataTypes/shipment/containerType'
-        - $ref: '#/components/schemas/dataTypes/shipment/arrivalLocode'
+        - $ref: '#/components/schemas/dataTypes/shipment/portArrivalLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/finalPortLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/importLocode'
         - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
@@ -3646,9 +3646,9 @@ components:
           - $ref: '#/components/schemas/dataTypes/shipment/loadingAct'
           - $ref: '#/components/schemas/dataTypes/shipment/departureEst'
           - $ref: '#/components/schemas/dataTypes/shipment/departureAct'
-          - $ref: '#/components/schemas/dataTypes/shipment/deliveryAppt'
-          - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortEst'
-          - $ref: '#/components/schemas/dataTypes/shipment/arrivalPortAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/deliveryApptAct'
+          - $ref: '#/components/schemas/dataTypes/shipment/portArrivalEst'
+          - $ref: '#/components/schemas/dataTypes/shipment/portArrivalAct'
           - $ref: '#/components/schemas/dataTypes/shipment/deliveryEst'
           - $ref: '#/components/schemas/dataTypes/shipment/deliveryAct'
           - $ref: '#/components/schemas/dataTypes/shipment/deliveryAttempt'
@@ -3658,7 +3658,7 @@ components:
           - $ref: '#/components/schemas/dataTypes/shipment/customsHoldDateAct'
           - $ref: '#/components/schemas/dataTypes/shipment/customsReleaseDateAct'
           - $ref: '#/components/schemas/dataTypes/shipment/containerType'
-          - $ref: '#/components/schemas/dataTypes/shipment/arrivalLocode'
+          - $ref: '#/components/schemas/dataTypes/shipment/portArrivalLocode'
           - $ref: '#/components/schemas/dataTypes/shipment/finalPortLocode'
           - $ref: '#/components/schemas/dataTypes/shipment/importLocode'
           - $ref: '#/components/schemas/dataTypes/shipment/ladingLocode'
