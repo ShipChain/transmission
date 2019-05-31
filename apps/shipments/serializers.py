@@ -234,20 +234,10 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
 class PermissionLinkSerializer(serializers.ModelSerializer):
     shipment_id = serializers.CharField(max_length=36, required=False)
-    emails = serializers.ListField(
-        child=serializers.EmailField(),
-        min_length=0,
-        required=False
-    )
 
     class Meta:
         model = PermissionLink
         exclude = ('shipment',)
-
-    def create(self, validated_data):
-        if 'emails' in validated_data:
-            validated_data.pop('emails')
-        return PermissionLink.objects.create(**validated_data)
 
     def validate_expiration_date(self, expiration_date):
         if expiration_date <= datetime.now(timezone.utc):
@@ -255,12 +245,12 @@ class PermissionLinkSerializer(serializers.ModelSerializer):
         return expiration_date
 
 
-class PermissionLinkResponseSerializer(serializers.ModelSerializer):
-    shipment_id = serializers.CharField(max_length=36, required=False)
-
-    class Meta:
-        model = PermissionLink
-        exclude = ('shipment',)
+class PermissionLinkCreateSerializer(PermissionLinkSerializer):
+    emails = serializers.ListField(
+        child=serializers.EmailField(),
+        min_length=0,
+        required=False
+    )
 
 
 class ShipmentTxSerializer(serializers.ModelSerializer):
