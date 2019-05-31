@@ -81,27 +81,30 @@ class EventTests(APITestCase):
     def test_event_transfer(self):
         url = reverse('event-list', kwargs={'version': 'v1'})
         data = {
-            "address": "0x25Ff5dc79A7c4e34254ff0f4a19d69E491201DD3",
-            "blockNumber": 3,
-            "transactionHash": "0xc18a24a35052a5a3375ee6c2c5ddd6b0587cfa950b59468b67f63f284e2cc382",
-            "transactionIndex": 0,
-            "blockHash": "0x62469a8d113b27180c139d88a25f0348bb4939600011d33382b98e10842c85d9",
-            "logIndex": 0,
-            "removed": False,
-            "id": "log_25652065",
-            "returnValues": {
-                "from": "0xFCaf25bF38E7C86612a25ff18CB8e09aB07c9885",
-                "to": "0xFCaf25bF38E7C86612a25ff18CB8e09aB07c9885",
-                "value": 10000000000000000000000
+            'events': {
+                "address": "0x25Ff5dc79A7c4e34254ff0f4a19d69E491201DD3",
+                "blockNumber": 3,
+                "transactionHash": "0xc18a24a35052a5a3375ee6c2c5ddd6b0587cfa950b59468b67f63f284e2cc382",
+                "transactionIndex": 0,
+                "blockHash": "0x62469a8d113b27180c139d88a25f0348bb4939600011d33382b98e10842c85d9",
+                "logIndex": 0,
+                "removed": False,
+                "id": "log_25652065",
+                "returnValues": {
+                    "from": "0xFCaf25bF38E7C86612a25ff18CB8e09aB07c9885",
+                    "to": "0xFCaf25bF38E7C86612a25ff18CB8e09aB07c9885",
+                    "value": 10000000000000000000000
+                },
+                "event": "Transfer",
+                "signature": "0xbbbf32f08c8c0621e580dcf0a8e0024525ec357db61bb4faa1a639d4f958a824",
+                "raw": {
+                    "data": "0x000000000000000000000000fcaf25bf38e7c86612a25ff18cb8e09ab07c9885",
+                    "topics": [
+                        "0xbbbf32f08c8c0621e580dcf0a8e0024525ec357db61bb4faa1a639d4f958a824"
+                    ]
+                }
             },
-            "event": "Transfer",
-            "signature": "0xbbbf32f08c8c0621e580dcf0a8e0024525ec357db61bb4faa1a639d4f958a824",
-            "raw": {
-                "data": "0x000000000000000000000000fcaf25bf38e7c86612a25ff18cb8e09ab07c9885",
-                "topics": [
-                    "0xbbbf32f08c8c0621e580dcf0a8e0024525ec357db61bb4faa1a639d4f958a824"
-                ]
-            }
+            'project': 'SHIP'
         }
         response = self.client.post(url, data, format='json')
         assert response.status_code == status.HTTP_403_FORBIDDEN
