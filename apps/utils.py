@@ -3,6 +3,9 @@ import json
 
 import re
 from django.db import models
+from django.conf import settings
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 from enumfields.drf import EnumField
 
 
@@ -136,3 +139,12 @@ class AliasSerializerMixin:
                 self.first = False
         self.end_serialization()
         return self.getvalue()
+
+
+def send_templated_email(template, subject, context, recipients, sender=None):
+    request = context.get('request', None)
+    send_by = sender if sender else settings.DEFAULT_FROM_EMAIL
+    email_body = render_to_string(template, context=context, request=request)
+    email = EmailMessage(subject, email_body, send_by, recipients)
+    email.content_subtype = 'html'
+    email.send()

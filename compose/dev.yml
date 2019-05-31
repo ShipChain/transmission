@@ -38,6 +38,14 @@ services:
     volumes:
       - /data/shipchain/transmission/postgresql:/var/lib/postgresql
 
+  smtp:
+    image: elsdoerfer/exim-sender
+    environment:
+      - PRIMARY_HOST=smtp.shipchain.io.local
+      - ALLOWED_HOSTS=*
+    expose:
+      - "25"
+
   django_shell: # This is a one-shot command runner service, for manage.py or bash, it dies immediately
     image: transmission-django-dev
     volumes:
@@ -46,6 +54,7 @@ services:
       - psql
       - redis_db
       - minio
+      - smtp
     environment:
       - ENV
       - SECRET_KEY
@@ -79,6 +88,7 @@ services:
       - psql
       - redis_db
       - minio
+      - smtp
     volumes:
       - ../:/app
       - ./django/pip.cache:/build/pip.volume

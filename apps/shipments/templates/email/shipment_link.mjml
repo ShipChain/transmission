@@ -1,0 +1,63 @@
+{% load mjml %}
+{% load fullurl %}
+{% block html_body %}
+{% mjml %}
+    <mjml>
+      <mj-body background-color="#ec7143">
+          <mj-section>
+            <mj-column>
+
+              <mj-image src="{% fullstatic 'icon/shipchain-logo.png' %}"></mj-image>
+
+            </mj-column>
+          </mj-section>
+          <mj-section background-color="#FFFFFF" full-width="full-width">
+              <mj-column>
+                  <mj-divider border-color="#9C9C9C" border-width="1px" border-color="#7A7A7A"></mj-divider>
+                  <mj-text font-size="16px" color="#666666" font-family="helvetica">
+                    	<p>Hi,</p>
+                      <p>You're receiving this email because <a href="#" style="text-decoration:none">{{username}}</a> has granted you access to one of their shipments, which can be accessed using the URL below.</p>
+                    <br></br>
+                    <p><a href={{link}} style="text-decoration:none">{{link}}</a></p>
+                  </mj-text>
+                  <mj-text font-size="16px" color="#666666" font-family="helvetica">
+                      <p>Sincerely,</p>
+                    	<br></br>
+                      <p>The ShipChain team</p>
+                  </mj-text>
+                  <mj-divider border-color="#9C9C9C" border-width="1px" padding-top="60px" padding-bottom="0"></mj-divider>
+              </mj-column>
+          </mj-section>
+          <mj-section background-color="#FFFFFF" full-width="full-width" vertical-align="top" padding-top="0" padding-bottom="5px">
+              <mj-column vertical-align="top">
+                  <mj-text align="center" color="#666666" font-size="15px" padding-bottom="0">
+                      Stay Connected With Shipchain
+                  </mj-text>
+              </mj-column>
+          </mj-section>
+          <mj-section background-color="#FFFFFF" vertical-align="top" full-width="full-width" padding-top="0">
+            <mj-group>
+              <mj-column>
+                  <mj-image src="{% fullstatic 'icon/twitter_orange.png' %}" href="https://twitter.com/shipchain" width="40px"/>
+              </mj-column>
+              <mj-column>
+                  <mj-image src="{% fullstatic 'icon/facebook_orange.png' %}" href="https://www.facebook.com/shipchain" width="40px"/>
+              </mj-column>
+              <mj-column>
+                  <mj-image src="{% fullstatic 'icon/linkedin_orange.png' %}" href="https://www.linkedin.com/company/shipchain/" width="40px"/>
+              </mj-column>
+              <mj-column>
+                  <mj-image src="{% fullstatic 'icon/instagram_orange.png' %}" href="https://www.instagram.com/ship.chain/" width="40px"/>
+              </mj-column>
+            </mj-group>
+          </mj-section>
+          <mj-section background-color="#FFFFFF" full-width="full-width">
+            <mj-column>
+              <mj-text font-size="10px" color="#000" font-family="helvetica" align="center">
+                  <a href="https://portal.shipchain.io/privacy-policy" style="text-decoration:none">Privacy Policy</a>
+              </mj-text>
+            </mj-column>
+          </mj-section>
+      </mj-body>
+    </mjml>
+{% endmjml %}

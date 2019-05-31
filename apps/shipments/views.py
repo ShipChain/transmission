@@ -17,13 +17,14 @@ from influxdb_metrics.loader import log_metric
 from apps.authentication import get_jwt_from_request
 from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id
+from apps.utils import send_templated_email
 from .filters import ShipmentFilter
 from .geojson import render_point_features
 from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer
+    PermissionLinkSerializer, PermissionLinkCreateSerializer
 from .tasks import tracking_data_update
 
 LOG = logging.getLogger('transmission')
@@ -182,7 +183,7 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
                             viewsets.GenericViewSet):
 
     queryset = PermissionLink.objects.all()
-    permission_classes = ((permissions.IsAuthenticated, IsShipmentOwner) if settings.PROFILES_ENABLED
+    permission_classes = ((IsShipmentOwner, ) if settings.PROFILES_ENABLED
                           else (permissions.AllowAny,))
     serializer_class = PermissionLinkSerializer
     resource_name = 'PermissionLink'
@@ -190,19 +191,40 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset.filter(shipment__owner_id=get_owner_id(self.request))
+            queryset = queryset.filter(shipment_id=self.kwargs['shipment_pk'])
         return queryset
 
     def create(self, request, *args, **kwargs):
         """
         Creates a link to grant permission to read shipments
         """
-        LOG.debug('Creating permission link for shipment.')
+        shipment_id = kwargs['shipment_pk']
+        LOG.debug(f'Creating permission link for shipment {shipment_id}')
         log_metric('transmission.info', tags={'method': 'shipments.create_permission_link', 'module': __name__})
 
-        serializer = PermissionLinkSerializer(data=request.data, context={'shipment_id': kwargs['shipment_pk']})
-        serializer.is_valid(raise_exception=True)
+        create_serializer = PermissionLinkCreateSerializer(data=request.data)
+        create_serializer.is_valid(raise_exception=True)
 
-        permission_link = PermissionLink.objects.create(**serializer.validated_data)
+        emails = None
+        if 'emails' in create_serializer.validated_data:
+            emails = create_serializer.validated_data.pop('emails')
 
-        return Response(PermissionLinkSerializer(permission_link).data, status=status.HTTP_201_CREATED)
+        serializer = self.get_serializer(data=create_serializer.validated_data)
+        serializer.is_valid()
+        permission_link = serializer.save(shipment_id=shipment_id)
+
+        if settings.PROFILES_ENABLED and emails:
+            LOG.debug(f'Emailing permission link: {permission_link.id}')
+            username = request.user.username
+            protocol = 'https' if request.is_secure() else 'http'
+            subject = f'{username} shared a shipment details page with you.'
+            email_context = {
+                'username': username,
+                'link': f'{protocol}://{settings.FRONTEND_DOMAIN}/shipments/{shipment_id}/'
+                        f'?permission_link={permission_link.id}',
+                'request': request
+            }
+
+            send_templated_email('email/shipment_link.html', subject, email_context, emails)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

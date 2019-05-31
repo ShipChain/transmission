@@ -57,12 +57,18 @@ CORS_ORIGIN_ALLOW_ALL = True
 BOTO3_SESSION = None
 
 if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
-    if ENVIRONMENT in ('PROD', 'DEMO'):
+    if ENVIRONMENT == 'PROD':
         DEBUG = False
         LOG_LEVEL = 'INFO'
+        FRONTEND_DOMAIN = 'portal.shipchain.io'
+    elif ENVIRONMENT == 'DEMO':
+        DEBUG = False
+        LOG_LEVEL = 'INFO'
+        FRONTEND_DOMAIN = 'demo.shipchain.io'
     else:
         DEBUG = os.environ.get('FORCE_DEBUG', False)
         LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
+        FRONTEND_DOMAIN = 'portal-stage.ops.shipchain.io'
 
     import boto3
     BOTO3_SESSION = boto3.Session(region_name='us-east-1')
@@ -91,6 +97,7 @@ else:
     LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
     DEV_SECRET_KEY = 'devsecretkey' * 19  # noqa
     SECRET_KEY = os.environ.get('SECRET_KEY', DEV_SECRET_KEY)
+    FRONTEND_DOMAIN = 'localhost:3000'
 
 # Application definition
 
@@ -101,6 +108,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'fullurl',
     'django.contrib.gis',
     'django_extensions',
     'django_filters',
@@ -170,7 +178,9 @@ ROOT_URLCONF = 'apps.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'apps/shipments/templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -237,6 +247,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+DEFAULT_FROM_EMAIL = os.environ.get('FROM_EMAIL', 'noreply@smtp.shipchain.io.local')
+EMAIL_CONFIG = ENV.email_url('EMAIL_URL', default='smtp://:@smtp:25')
+vars().update(EMAIL_CONFIG)
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
