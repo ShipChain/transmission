@@ -107,17 +107,23 @@ class DeviceAWSIoTClient(AWSIoTClient):
         lat_range = (-90, 90)
         box_ranges = (long_range, lat_range, long_range, lat_range)
 
-        list_box = in_bbox.split(',')
-        if len(list_box) < 4:
-            return False, f'in_box parameter takes 4 position parameters but {len(list_box)}, were passed in.'
+        box_to_list = in_bbox.split(',')
+        if len(box_to_list) < 4:
+            return False, f'in_box parameter takes 4 position parameters but {len(box_to_list)}, were passed in.'
 
-        for box_value, rang, index in zip(list_box, box_ranges, range(1, 5)):
+        in_bbox_num = []
+        for box_value, rang, index in zip(box_to_list, box_ranges, range(1, 5)):
             try:
                 box_value = float(box_value)
+                in_bbox_num.append(box_value)
             except ValueError:
                 return False, f'in_bbox coordinate: {box_value}, should be type number'
 
             if not rang[0] <= box_value <= rang[1]:
                 return False, f'in_bbox coordinate in position: {index}, value: {box_value}, should be in range: {rang}'
+
+        if in_bbox_num[2] <= in_bbox_num[0] or in_bbox_num[3] <= in_bbox_num[1]:
+            return False, 'Invalid geo box, make sure that: ' \
+                          ' in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4].'
 
         return True, 'ok'

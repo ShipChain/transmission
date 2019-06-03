@@ -271,9 +271,6 @@ class CurrentDevicesLocations(APIView):
         in_bbox = request.query_params.get('in_bbox', None)
         devices = iot_client.get_list_owner_devices(owner_id, active=device_status, in_bbox=in_bbox)
 
-        if not devices:
-            raise NotFound()
-
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(devices, request, view=self)
         if page is not None:

@@ -2224,13 +2224,6 @@ class DevicesLocationsAPITests(APITestCase):
             self.assertEqual(page['meta']['pagination']['count'], 15)
             self.assertTrue(page['links']['next'])
 
-            # ------------------------------ Not found Test ----------------------------#
-            mock_get.reset_mock()
-            # The api call returns 0 result should trigger a 404 not found.
-            self.map_responses = {iot_enpoints[0]: self.iot_responses(OWNER_ID, num_devices=0)}
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
             # ---------------------------- in_bbox param validation test ----------------------------#
             mock_get.reset_mock()
             # A call with a non numeric value in in_bbox should fail with 400 status
@@ -2259,3 +2252,9 @@ class DevicesLocationsAPITests(APITestCase):
             self.map_responses = {iot_enpoints[2]: self.iot_responses(OWNER_ID)}
             response = self.client.get(in_bbox_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # valid box should respects the rule: the third element should be greater than the first
+            # and the fourth should be greater than the second: in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4]
+            in_bbox_url = f'{url}?in_bbox=82.5,34.5,-82,45'
+            response = self.client.get(in_bbox_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
