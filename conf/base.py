@@ -85,6 +85,10 @@ if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
     os.environ['DATABASE_URL'] = (f'postgis://{RDS_CREDS["username"]}:{RDS_CREDS["password"]}@'
                                   f'{RDS_CREDS["host"]}:{RDS_CREDS["port"]}/{RDS_CREDS["dbname"]}')
 
+    os.environ['EMAIL_URL'] = json.loads(SECRETS_MANAGER.get_secret_value(
+        SecretId=f'TRANSMISSION_EMAIL_URL_{ENVIRONMENT}'
+    )['SecretString'])['EMAIL_URL']
+
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -251,9 +255,6 @@ AUTH_PASSWORD_VALIDATORS = [
 DEFAULT_FROM_EMAIL = os.environ.get('FROM_EMAIL', 'noreply@smtp.shipchain.io.local')
 EMAIL_CONFIG = ENV.email_url('EMAIL_URL', default='smtp://:@smtp:25')
 vars().update(EMAIL_CONFIG)
-os.environ['EMAIL_URL'] = json.loads(SECRETS_MANAGER.get_secret_value(
-        SecretId=f'TRANSMISSION_EMAIL_URL_{ENVIRONMENT}'
-    )['SecretString'])['EMAIL_URL']
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
