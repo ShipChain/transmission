@@ -31,20 +31,33 @@ class EventViewSet(mixins.CreateModelMixin,
 
     @staticmethod
     def _process_event(event, project):
-        try:
-            action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
-            Event.objects.get_or_create(**event, eth_action=action)
-        except RPCError as exc:
-            LOG.info(f"Engine RPC error processing event {event['transaction_hash']}: {exc}")
-        except MultipleObjectsReturned as exc:
-            LOG.info(f"MultipleObjectsReturned during get/get_or_create for event {event['transaction_hash']}: {exc}")
-        except ObjectDoesNotExist:
-            log_metric('transmission.info', tags={'method': 'events.create', 'code': 'non_ethaction_event',
-                                                  'module': __name__, 'project': project})
-            LOG.info(f"Non-EthAction Event processed Tx: {event['transaction_hash']}")
+        if project == 'LOAD':
+            try:
+                action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
+                Event.objects.get_or_create(**event, eth_action=action)
+            except RPCError as exc:
+                LOG.info(f"Engine RPC error processing event {event['transaction_hash']}: {exc}")
+            except MultipleObjectsReturned as exc:
+                LOG.info(f"MultipleObjectsReturned during get/get_or_create for event {event['transaction_hash']}: "
+                         f"{exc}")
+            except ObjectDoesNotExist:
+                LOG.info(f"Non-EthAction Event processed Tx: {event['transaction_hash']}")
+                log_metric('transmission.info', tags={'method': 'events.create', 'code': 'non_ethaction_event',
+                                                      'module': __name__, 'project': project})
+        elif project == 'SHIP' and event['event_name'] == 'Transfer':
+            LOG.info(f"ShipToken Transfer processed Tx: {event['transaction_hash']}")
+            log_metric('transmission.info',
+                       tags={'method': 'event.transfer', 'module': __name__, 'project': project},
+                       fields={'from_address': event['return_values']['from'],
+                               'to_address': event['return_values']['to'],
+                               'token_amount': float(event['return_values']['value']) / (10 ** 18),
+                               'count': 1})
+        else:
+            LOG.warning(f"Unexpected event {event} found with project: {project}")
 
     def create(self, request, *args, **kwargs):
-        log_metric('transmission.info', tags={'method': 'events.create', 'module': __name__})
+        log_metric('transmission.info',
+                   tags={'method': 'events.create', 'module': __name__, 'project': request.data['project']})
         LOG.debug('Events create')
 
         is_many = isinstance(request.data['events'], list)
