@@ -4,6 +4,8 @@ import re
 import time
 import random
 from unittest import mock
+from urllib.parse import urlencode
+from collections import OrderedDict
 
 import boto3
 import httpretty
@@ -2139,6 +2141,15 @@ class DevicesLocationsAPITests(APITestCase):
     def side_effects(self, url, **kwargs):
         return mocked_rpc_response(self.map_responses[url])
 
+    def url_encode_params(self, owner_id, next_token='', box=''):
+        param_dict = OrderedDict(
+            ownerId=owner_id,
+            maxResults=test_settings.IOT_DEVICES_MAX_RESULTS,
+            in_bbox=box,
+            nextToken=next_token
+        )
+        return urlencode(param_dict)
+
     @mock_iot
     def test_get_devices_locations(self):
 
@@ -2148,12 +2159,9 @@ class DevicesLocationsAPITests(APITestCase):
 
         base_iot = f'https://{test_settings.IOT_AWS_HOST}/{test_settings.IOT_GATEWAY_STAGE}/'
         iot_enpoints = [
-            base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}'
-            f'&nextToken=&in_bbox=',
-            base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}'
-            f'&nextToken={NEXT_TOKEN}&in_bbox=',
-            base_iot + f'devices?ownerId={OWNER_ID}&maxResults={test_settings.IOT_DEVICES_MAX_RESULTS}'
-            f'&nextToken=&in_bbox=-82.5,34.5,-82,35',
+            base_iot + f'devices?{self.url_encode_params(OWNER_ID)}',
+            base_iot + f'devices?{self.url_encode_params(OWNER_ID, next_token=NEXT_TOKEN)}',
+            base_iot + f'devices?{self.url_encode_params(OWNER_ID, box="-82.5,34.5,-82,35")}',
         ]
 
         # The first called url doesn't have the nextToken value

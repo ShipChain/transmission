@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 import logging
+from urllib.parse import urlencode
+from collections import OrderedDict
 
 from django.conf import settings
 from rest_framework.exceptions import ParseError
@@ -57,9 +59,12 @@ class DeviceAWSIoTClient(AWSIoTClient):
         if not next_token:
             results = []
 
-        list_devices = self._get(f'devices?ownerId={owner_id}&maxResults={settings.IOT_DEVICES_MAX_RESULTS}'
-                                 f'&nextToken={next_token if next_token else ""}'
-                                 f'&in_bbox={in_bbox if in_bbox else ""}')
+        params_dict = OrderedDict(ownerId=owner_id,
+                                  maxResults=settings.IOT_DEVICES_MAX_RESULTS,
+                                  in_bbox=in_bbox if in_bbox else '',
+                                  nextToken=next_token if next_token else '',)
+
+        list_devices = self._get(f'devices?{urlencode(params_dict)}')
 
         if 'error' in list_devices:
             raise AWSIoTError("Error in response from AWS IoT")
