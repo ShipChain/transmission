@@ -10,7 +10,7 @@ from influxdb_metrics.loader import log_metric
 from apps.authentication import EngineRequest
 from apps.permissions import get_owner_id
 from apps.shipments.permissions import IsListenerOwner
-from .models import AsyncJob
+from .models import AsyncJob, Message
 from .serializers import AsyncJobSerializer, MessageSerializer
 
 LOG = logging.getLogger('transmission')
@@ -44,6 +44,6 @@ class JobsViewSet(mixins.ListModelMixin,
         serializer = MessageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        serializer.save(async_job_id=pk)
+        Message.objects.get_or_create(**serializer.data, async_job_id=pk)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

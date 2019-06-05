@@ -181,3 +181,29 @@ class JobsAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         async_job = AsyncJob.objects.get(pk=async_job.id)
         self.assertEqual(async_job.state, JobState.COMPLETE)
+
+    @mock_iot
+    def test_add_jobs_message_idempotency(self):
+        """
+        Test that if the same job message is posted twice, it only creates one Message object
+        """
+        message_count = Message.objects.count()
+        TRANSACTION_BODY['blockNumber'] += 1  # New unique message
+        success_message = {"type": "ETH_TRANSACTION", "body": TRANSACTION_BODY}
+
+        async_job = self.shipments[0].asyncjob_set.all()[:1].get()
+        url = reverse('job-message', kwargs={'version': 'v1', 'pk': async_job.id})
+
+        response = self.client.post(url, json.dumps(success_message), content_type="application/json",
+                                    X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                    X_SSL_CLIENT_DN='/CN=engine.test-internal')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        message_count += 1
+        assert Message.objects.count() == message_count
+
+        # Send the same message again
+        response = self.client.post(url, json.dumps(success_message), content_type="application/json",
+                                    X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                    X_SSL_CLIENT_DN='/CN=engine.test-internal')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        assert Message.objects.count() == message_count
