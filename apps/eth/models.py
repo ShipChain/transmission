@@ -51,8 +51,8 @@ class Transaction(models.Model):
             chain_id=camel_tx['chainId'],
             to_address=camel_tx['to'],
             value=camel_tx['value'],
-            gas_limit=camel_tx['gasLimit'],
-            gas_price=camel_tx['gasPrice'],
+            gas_limit='0' if 'gasLimit' not in camel_tx else camel_tx['gasLimit'],
+            gas_price='0' if 'gasPrice' not in camel_tx else camel_tx['gasPrice'],
             data=camel_tx['data']
         )
 
@@ -110,13 +110,14 @@ class TransactionReceipt(models.Model):
             'block_number':  receipt['blockNumber'],
             'contract_address':  receipt['contractAddress'],
             'cumulative_gas_used':  receipt['cumulativeGasUsed'],
-            'from_address':  receipt['from'],
+            'from_address':  "0x0" if 'from' not in receipt else receipt['from'],
             'gas_used':  receipt['gasUsed'],
             'logs':  receipt['logs'],
-            'logs_bloom': receipt['logsBloom'],
+            'logs_bloom': None if 'logsBloom' not in receipt else receipt['logsBloom'],
             'status':  receipt['status'],
-            'to_address':  receipt['to'],
-            'eth_action_id':  receipt['transactionHash'],
+            'to_address': None if 'to' not in receipt else receipt['to'],
+            'loom_tx_hash': None if 'ethTxHash' not in receipt else receipt['transactionHash'],
+            'eth_action_id': receipt['ethTxHash'] if 'ethTxHash' in receipt else receipt['transactionHash'],
             'transaction_index':  receipt['transactionIndex'],
         }
 
@@ -127,13 +128,14 @@ class TransactionReceipt(models.Model):
             block_number=receipt['blockNumber'],
             contract_address=receipt['contractAddress'],
             cumulative_gas_used=receipt['cumulativeGasUsed'],
-            from_address=receipt['from'],
+            from_address="0x0" if 'from' not in receipt else receipt['from'],
             gas_used=receipt['gasUsed'],
             logs=receipt['logs'],
-            logs_bloom=receipt['logsBloom'],
+            logs_bloom=None if 'logsBloom' not in receipt else receipt['logsBloom'],
             status=receipt['status'],
-            to_address=receipt['to'],
-            eth_action_id=receipt['transactionHash'],
+            to_address=None if 'to' not in receipt else receipt['to'],
+            loom_tx_hash=None if 'ethTxHash' not in receipt else receipt['transactionHash'],
+            eth_action_id=receipt['ethTxHash'] if 'ethTxHash' in receipt else receipt['transactionHash'],
             transaction_index=receipt['transactionIndex'],
         )
 
