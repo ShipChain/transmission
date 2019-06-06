@@ -15,7 +15,6 @@ limitations under the License.
 """
 
 import logging
-from urllib.parse import urlencode
 from collections import OrderedDict
 
 from django.conf import settings
@@ -61,7 +60,7 @@ class DeviceAWSIoTClient(AWSIoTClient):
                                   in_bbox=in_bbox if in_bbox else '',
                                   nextToken=next_token if next_token else '',)
 
-        list_devices = self._get(f'devices?{urlencode(params_dict)}')
+        list_devices = self._get('devices', query_params=params_dict)
 
         if 'error' in list_devices:
             raise AWSIoTError("Error in response from AWS IoT")

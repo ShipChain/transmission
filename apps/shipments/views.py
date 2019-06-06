@@ -30,7 +30,6 @@ from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentU
     PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer
 
 from .tasks import tracking_data_update
-from .pagination import ListDataPagination
 
 
 LOG = logging.getLogger('transmission')
@@ -261,7 +260,7 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
 class CurrentDevicesLocations(APIView):
     http_method_names = ['get', ]
     permission_classes = (permissions.IsAuthenticated, )
-    pagination_class = ListDataPagination
+    pagination_class = CustomResponsePagination
     renderer_classes = (renderers.JSONRenderer,)
 
     def get(self, request, *args, **kwargs):

@@ -17,6 +17,7 @@ limitations under the License.
 import json
 import logging
 import re
+from urllib.parse import urlencode
 
 import requests
 from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
@@ -61,13 +62,16 @@ class AWSIoTClient:
         self.session.headers = {'content-type': 'application/json'}
         self.session.auth = aws_auth
 
-    def _call(self, http_method, endpoint, payload=None):
+    def _call(self, http_method, endpoint, payload=None, params=None):
         generic_endpoint = AWSIoTClient._get_generic_endpoint_for_metric(http_method, endpoint)
 
         if payload:
             payload = json.dumps(payload)
 
         url = f'https://{settings.IOT_AWS_HOST}/{settings.IOT_GATEWAY_STAGE}/{endpoint}'
+
+        if isinstance(params, dict):
+            url += f'?{urlencode(params)}'
 
         try:
 
@@ -106,17 +110,17 @@ class AWSIoTClient:
 
         return response_json
 
-    def _post(self, endpoint, payload=None):
-        return self._call(AWSIoTClient.METHOD_POST, endpoint, payload)
+    def _post(self, endpoint, payload=None, query_params=None):
+        return self._call(AWSIoTClient.METHOD_POST, endpoint, payload, params=query_params)
 
-    def _put(self, endpoint, payload=None):
-        return self._call(AWSIoTClient.METHOD_PUT, endpoint, payload)
+    def _put(self, endpoint, payload=None, query_params=None):
+        return self._call(AWSIoTClient.METHOD_PUT, endpoint, payload, params=query_params)
 
-    def _get(self, endpoint):
-        return self._call(AWSIoTClient.METHOD_GET, endpoint)
+    def _get(self, endpoint, query_params=None):
+        return self._call(AWSIoTClient.METHOD_GET, endpoint, params=query_params)
 
-    def _delete(self, endpoint):
-        return self._call(AWSIoTClient.METHOD_DELETE, endpoint)
+    def _delete(self, endpoint, query_params=None):
+        return self._call(AWSIoTClient.METHOD_DELETE, endpoint, params=query_params)
 
     @staticmethod
     def _get_generic_endpoint_for_metric(http_method, endpoint):
