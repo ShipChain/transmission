@@ -37,7 +37,7 @@ class Transaction(models.Model):
     eth_action = models.OneToOneField(EthAction, db_column="hash", primary_key=True, on_delete=models.CASCADE)
 
     nonce = models.CharField(max_length=32)
-    chain_id = models.IntegerField()
+    chain_id = models.BigIntegerField()
     to_address = AddressField()
     value = models.CharField(max_length=32)
     gas_limit = models.CharField(max_length=32)
@@ -95,9 +95,10 @@ class TransactionReceipt(models.Model):
     from_address = AddressField()
     gas_used = models.IntegerField()
     logs = JSONField()
-    logs_bloom = models.CharField(max_length=514)
+    logs_bloom = models.CharField(max_length=514, null=True)
     status = models.BooleanField()
     to_address = AddressField(null=True)
+    loom_tx_hash = HashField(null=True, db_index=True)
     eth_action = models.OneToOneField(EthAction, db_column="transaction_hash",
                                       primary_key=True, on_delete=models.CASCADE)
     transaction_index = models.IntegerField(null=True)
