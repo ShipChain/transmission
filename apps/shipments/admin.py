@@ -125,6 +125,8 @@ class ShipmentAdmin(admin.ModelAdmin):
         AsyncJobInlineTab,
     ]
 
+    search_fields = ('id', 'shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id', )
+
     def has_delete_permission(self, request, obj=None):
         return False
 
@@ -156,11 +158,6 @@ class BaseModelHistory(SimpleHistoryAdmin):
                 obj = action_list.latest("history_date").instance
             except action_list.model.DoesNotExist:
                 raise http.Http404
-
-        if not self.has_change_permission(request, obj):
-            # We override this behavior for the moment
-            # raise PermissionDenied
-            pass
 
         for history_list_entry in history_list_display:
             value_for_entry = getattr(self, history_list_entry, None)
@@ -200,20 +197,9 @@ class BaseModelHistory(SimpleHistoryAdmin):
         ).instance
         obj._state.adding = False   # pylint:disable=protected-access
 
-        # We override this behavior for the moment
-        if not self.has_change_permission(request, obj):
-            # raise PermissionDenied
-            pass
-
-        change_history = bool(SIMPLE_HISTORY_EDIT)
-
-        if "_change_history" in request.POST and SIMPLE_HISTORY_EDIT:
-            obj = obj.history.get(pk=version_id).instance
-
+        change_history = SIMPLE_HISTORY_EDIT
         formsets = []
         form_class = self.get_form(request, obj)
-
-        # TODO: Implement POST method for changes save
 
         form = form_class(instance=obj)
 
@@ -282,7 +268,7 @@ class LocationAdmin(BaseModelHistory):
 
     readonly_fields = [field.name for field in Location._meta.get_fields()]
 
-    search_fields = ['id', 'name']
+    search_fields = ('id', 'name__contains', )
 
 
 admin.site.register(Shipment, HistoricalShipmentAdmin)
