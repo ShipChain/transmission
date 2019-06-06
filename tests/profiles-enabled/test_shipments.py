@@ -2199,7 +2199,7 @@ class DevicesLocationsAPITests(APITestCase):
             self.map_responses = {iot_enpoints[0]: iot_data}
 
             # There should be exactly 3 active devices
-            active_url = url + '?active=True&box=65,-65,41,75'
+            active_url = url + '?active=True'
             response = self.client.get(active_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
@@ -2251,6 +2251,11 @@ class DevicesLocationsAPITests(APITestCase):
 
             # A call with less than 4 in_bbox parameters should fail with 400 status
             in_bbox_url = f'{url}?in_bbox=-82.5,34.5,-82'
+            response = self.client.get(in_bbox_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # A call with more than 4 in_bbox parameters should fail with 400 status
+            in_bbox_url = f'{url}?in_bbox=-82.5,34.5,-82,45,-25'
             response = self.client.get(in_bbox_url)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

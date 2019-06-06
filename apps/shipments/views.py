@@ -21,8 +21,8 @@ from apps.pagination import CustomResponsePagination
 from apps.permissions import owner_access_filter, get_owner_id
 from apps.utils import send_templated_email
 from .filters import ShipmentFilter, HistoricalShipmentFilter
-from .iot_client import DeviceAWSIoTClient
 from .geojson import render_point_features
+from .iot_client import DeviceAWSIoTClient
 from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
@@ -260,7 +260,7 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
 
 class CurrentDevicesLocations(APIView):
     http_method_names = ['get', ]
-    permission_classes = (permissions.IsAuthenticated, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, )
+    permission_classes = (permissions.IsAuthenticated, )
     pagination_class = ListDataPagination
     renderer_classes = (renderers.JSONRenderer,)
 
@@ -269,6 +269,8 @@ class CurrentDevicesLocations(APIView):
         iot_client = DeviceAWSIoTClient()
         device_status = request.query_params.get('active', None)
         in_bbox = request.query_params.get('in_bbox', None)
+
+        iot_client.validate_params(device_status, in_bbox)
         devices = iot_client.get_list_owner_devices(owner_id, active=device_status, in_bbox=in_bbox)
 
         paginator = self.pagination_class()

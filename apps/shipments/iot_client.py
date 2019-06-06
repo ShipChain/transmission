@@ -47,14 +47,11 @@ class DeviceAWSIoTClient(AWSIoTClient):
         LOG.debug(f'Getting devices for: {owner_id} from AWS IoT')
         log_metric('transmission.info', tags={'method': 'DeviceAWSIoTClient.get_list_owner_devices'})
 
-        active = kwargs.get('active', None)
-        in_bbox = kwargs.get('in_bbox', None)
+        active = kwargs['active']
+        in_bbox = kwargs['in_bbox']
 
         if in_bbox:
             in_bbox = ','.join([c.strip() for c in in_bbox.split(',')])
-            in_bbox_is_valid, message = self.validate_in_bbox(in_bbox)
-            if not in_bbox_is_valid:
-                raise ParseError(message)
 
         if not next_token:
             results = []
@@ -76,15 +73,13 @@ class DeviceAWSIoTClient(AWSIoTClient):
         next_token = list_devices['data'].get('nextToken', None)
         if next_token:
             return self.get_list_owner_devices(owner_id, next_token=next_token, results=results, active=active,
-                                               in_box=in_bbox)
+                                               in_bbox=in_bbox)
         if active:
             device_status = active.lower()
             if device_status == 'true':
                 results = self.filter_list_devices(results)[0]
             elif device_status == 'false':
                 results = self.filter_list_devices(results)[1]
-            else:
-                raise ParseError(f'Invalid query parameter: {device_status}')
 
         return results
 
@@ -100,11 +95,11 @@ class DeviceAWSIoTClient(AWSIoTClient):
 
         return active_devices, list_device
 
-    def validate_in_bbox(self, in_bbox):
+    def validate_params(self, status, in_bbox):
         """
-        returns a tuple (bool, message) where bool indicates whether the passed in in_bbox is valid or not
-        and message is the related error message if any.
+        returns True if the passed in params are all valid otherwise, raises ParserError
 
+        :param status: Value of the active query parameter
         :param in_bbox: string tuple like, which defines the viewport rectangle boundaries
                         format: min Lon, min Lat, max Lon, max Lat
         """
@@ -112,23 +107,29 @@ class DeviceAWSIoTClient(AWSIoTClient):
         lat_range = (-90, 90)
         box_ranges = (long_range, lat_range, long_range, lat_range)
 
-        box_to_list = in_bbox.split(',')
-        if len(box_to_list) < 4:
-            return False, f'in_box parameter takes 4 position parameters but {len(box_to_list)}, were passed in.'
+        if isinstance(status, str) and status.lower() not in ('true', 'false', ):
+            raise ParseError(f'Invalid active status parameter! Should either be "true" or "false"')
 
-        in_bbox_num = []
-        for box_value, rang, index in zip(box_to_list, box_ranges, range(1, 5)):
-            try:
-                box_value = float(box_value)
-                in_bbox_num.append(box_value)
-            except ValueError:
-                return False, f'in_bbox coordinate: {box_value}, should be type number'
+        if isinstance(in_bbox, str):
+            box_to_list = in_bbox.split(',')
+            if not len(box_to_list) == 4:
+                raise ParseError(f'in_box parameter takes 4 position parameters but {len(box_to_list)}, '
+                                 f'were passed in.')
 
-            if not rang[0] <= box_value <= rang[1]:
-                return False, f'in_bbox coordinate in position: {index}, value: {box_value}, should be in range: {rang}'
+            in_bbox_num = []
+            for box_value, rang, index in zip(box_to_list, box_ranges, range(1, 5)):
+                try:
+                    box_value = float(box_value)
+                    in_bbox_num.append(box_value)
+                except ValueError:
+                    raise ParseError(f'in_bbox coordinate: {box_value}, should be type number')
 
-        if in_bbox_num[2] <= in_bbox_num[0] or in_bbox_num[3] <= in_bbox_num[1]:
-            return False, 'Invalid geo box, make sure that: ' \
-                          ' in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4].'
+                if not rang[0] <= box_value <= rang[1]:
+                    raise ParseError(f'in_bbox coordinate in position: '
+                                     f'{index}, value: {box_value}, should be in range: {rang}')
 
-        return True, 'ok'
+            if in_bbox_num[2] <= in_bbox_num[0] or in_bbox_num[3] <= in_bbox_num[1]:
+                raise ParseError('Invalid geo box, make sure that: '
+                                 'in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4].')
+
+        return True
