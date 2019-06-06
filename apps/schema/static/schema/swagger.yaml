@@ -611,14 +611,14 @@ paths:
 
   /api/v1/devices/status/:
     get:
-      summary: List devices
+      summary: List device statuses
       description: >
-        List of devices with most recent configurations
+        List all current `Device` statuses/configurations for an organization
       parameters:
         - $ref: '#/components/parameters/deviceStatus/active'
         - $ref: '#/components/parameters/deviceStatus/inBbox'
       tags:
-        - Shipments
+        - Devices
       responses:
         '200':
           description: *response_200
@@ -1539,7 +1539,7 @@ components:
           properties:
             deviceType:
               title: deviceType
-              description: Device category type
+              description: Device platform
               type: string
               enum: [ANDROID, AXLE_GATEWAY]
               example: 'AXLE_GATEWAY'
@@ -1557,7 +1557,7 @@ components:
           properties:
             environment:
               title: environment
-              description: Device working stage environment
+              description: Device environment
               type: string
               example: 'prod'
 
@@ -1567,28 +1567,30 @@ components:
               title: version
               description: Device's version
               type: string
-              example: 'v.1.1'
+              example: '1.1.0'
 
         registration:
           properties:
             registration:
-              <<: *uuid
+              type: string
               title: registration
-              description: Device UUID registration token
+              description: Registration method
+              example:
+                CMV
 
         owner:
           properties:
             owner:
               <<: *uuid
               title: owner
-              description: Device's owner UUID
+              description: Device owner's UUID
 
         location:
           properties:
             location:
               type: object
               title: location
-              description: location's GeoJson point coordinates
+              description: Location's GeoJson point coordinates
               allOf:
                 - $ref: '#/components/schemas/tracking/pointFeature'
 
@@ -1596,7 +1598,7 @@ components:
           properties:
             activated:
               title: activated
-              description: Whether the device is activated or not
+              description: Indicates whether the device is activated or not
               type: boolean
               example: true
 
@@ -1615,7 +1617,7 @@ components:
           properties:
             samplingInterval:
               title: samplingInterval
-              description: The device's reporting interval, in millisecond
+              description: The device's reporting interval, in milliseconds
               type: integer
               example: 600
 
@@ -1624,7 +1626,7 @@ components:
             shipmentId:
               <<: *uuid
               title: shipmentId
-              description: The shipment UUID currently associeted to the device
+              description: The shipment UUID currently associeted with the device
 
         deviceGroups:
           properties:
@@ -1634,14 +1636,14 @@ components:
               type: array
               items:
                 type: string
-              example: [fb2024be-5518-4b85-9564-ec24144f2b81]
+              example: ["fb2024be-5518-4b85-9564-ec24144f2b81"]
 
         reported:
           properties:
             reported:
               type: object
               title: reported
-              description: Device's current configurations, `might be abscent from the response depending on the device's conditions.`
+              description: Device's current configurations. _May be absent from the response depending on the device's conditions._
               allOf:
                 - $ref: '#/components/schemas/dataTypes/device/activated'
                 - $ref: '#/components/schemas/dataTypes/device/connected'
@@ -1656,7 +1658,7 @@ components:
             notSet:
               type: object
               title: notSet
-              description: Device's pending configurations, `might be abscent from response depending on the device's conditions.`
+              description: Device's pending configurations. _May be abscent from response depending on the device's conditions._
               allOf:
                 - $ref: '#/components/schemas/dataTypes/device/location'
                 - $ref: '#/components/schemas/dataTypes/device/ownerId'
@@ -1669,7 +1671,7 @@ components:
             shadowData:
               type: object
               title: shadowData
-              description: device's shadow
+              description: Device's shadow
               allOf:
                 - $ref: '#/components/schemas/dataTypes/device/reported'
                 - $ref: '#/components/schemas/dataTypes/device/notSet'
@@ -3800,7 +3802,6 @@ components:
 
       listResponse:
         allOf:
-          - $ref: '#/components/schemas/jsonApi/dataArray'
           - $ref: '#/components/schemas/jsonApi/linksAndMeta'
           - properties:
               data:
