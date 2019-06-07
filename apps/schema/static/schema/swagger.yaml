@@ -1569,15 +1569,6 @@ components:
               type: string
               example: '1.1.0'
 
-        registration:
-          properties:
-            registration:
-              type: string
-              title: registration
-              description: Registration method
-              example:
-                CMV
-
         owner:
           properties:
             owner:
@@ -3797,7 +3788,6 @@ components:
           - $ref: '#/components/schemas/dataTypes/device/creationDate'
           - $ref: '#/components/schemas/dataTypes/device/environment'
           - $ref: '#/components/schemas/dataTypes/device/version'
-          - $ref: '#/components/schemas/dataTypes/device/registration'
           - $ref: '#/components/schemas/dataTypes/device/owner'
 
       listResponse:
