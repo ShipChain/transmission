@@ -37,7 +37,7 @@ class Transaction(models.Model):
     eth_action = models.OneToOneField(EthAction, db_column="hash", primary_key=True, on_delete=models.CASCADE)
 
     nonce = models.CharField(max_length=32)
-    chain_id = models.IntegerField()
+    chain_id = models.BigIntegerField()
     to_address = AddressField()
     value = models.CharField(max_length=32)
     gas_limit = models.CharField(max_length=32)
@@ -51,8 +51,8 @@ class Transaction(models.Model):
             chain_id=camel_tx['chainId'],
             to_address=camel_tx['to'],
             value=camel_tx['value'],
-            gas_limit=camel_tx['gasLimit'],
-            gas_price=camel_tx['gasPrice'],
+            gas_limit=camel_tx['gasLimit'] if 'gasLimit' in camel_tx else '0',
+            gas_price=camel_tx['gasPrice'] if 'gasPrice' in camel_tx else '0',
             data=camel_tx['data']
         )
 
@@ -95,9 +95,10 @@ class TransactionReceipt(models.Model):
     from_address = AddressField()
     gas_used = models.IntegerField()
     logs = JSONField()
-    logs_bloom = models.CharField(max_length=514)
+    logs_bloom = models.CharField(max_length=514, null=True)
     status = models.BooleanField()
     to_address = AddressField(null=True)
+    loom_tx_hash = HashField(null=True, db_index=True)
     eth_action = models.OneToOneField(EthAction, db_column="transaction_hash",
                                       primary_key=True, on_delete=models.CASCADE)
     transaction_index = models.IntegerField(null=True)
@@ -109,13 +110,14 @@ class TransactionReceipt(models.Model):
             'block_number':  receipt['blockNumber'],
             'contract_address':  receipt['contractAddress'],
             'cumulative_gas_used':  receipt['cumulativeGasUsed'],
-            'from_address':  receipt['from'],
+            'from_address':  "0x0" if 'from' not in receipt else receipt['from'],
             'gas_used':  receipt['gasUsed'],
             'logs':  receipt['logs'],
-            'logs_bloom': receipt['logsBloom'],
+            'logs_bloom': receipt['logsBloom'] if 'logsBloom' in receipt else None,
             'status':  receipt['status'],
-            'to_address':  receipt['to'],
-            'eth_action_id':  receipt['transactionHash'],
+            'to_address': receipt['to'] if 'to' in receipt else None,
+            'loom_tx_hash': receipt['transactionHash'] if 'ethTxHash' in receipt else None,
+            'eth_action_id': receipt['transactionHash'] if 'ethTxHash' not in receipt else receipt['ethTxHash'],
             'transaction_index':  receipt['transactionIndex'],
         }
 
@@ -126,13 +128,14 @@ class TransactionReceipt(models.Model):
             block_number=receipt['blockNumber'],
             contract_address=receipt['contractAddress'],
             cumulative_gas_used=receipt['cumulativeGasUsed'],
-            from_address=receipt['from'],
+            from_address="0x0" if 'from' not in receipt else receipt['from'],
             gas_used=receipt['gasUsed'],
             logs=receipt['logs'],
-            logs_bloom=receipt['logsBloom'],
+            logs_bloom=receipt['logsBloom'] if 'logsBloom' in receipt else None,
             status=receipt['status'],
-            to_address=receipt['to'],
-            eth_action_id=receipt['transactionHash'],
+            to_address=receipt['to'] if 'to' in receipt else None,
+            loom_tx_hash=receipt['transactionHash'] if 'ethTxHash' in receipt else None,
+            eth_action_id=receipt['transactionHash'] if 'ethTxHash' not in receipt else receipt['ethTxHash'],
             transaction_index=receipt['transactionIndex'],
         )
 
