@@ -15,7 +15,6 @@ limitations under the License.
 """
 
 import logging
-from collections import OrderedDict
 
 from django.conf import settings
 from influxdb_metrics.loader import log_metric
@@ -40,37 +39,33 @@ class DeviceAWSIoTClient(AWSIoTClient):
 
         return iot_shadow['data']
 
-    def get_list_owner_devices(self, owner_id, next_token=None, results=None, **kwargs):
+    def get_list_owner_devices(self, owner_id, active=None, in_bbox=None):
         LOG.debug(f'Getting devices for: {owner_id} from AWS IoT')
         log_metric('transmission.info', tags={'method': 'DeviceAWSIoTClient.get_list_owner_devices'})
-
-        active = kwargs['active']
-        in_bbox = kwargs['in_bbox']
 
         if in_bbox:
             in_bbox = ','.join([c.strip() for c in in_bbox.split(',')])
 
-        if not next_token:
-            results = []
+        loop = True
+        next_token = None
+        results = []
+        while loop:
+            params_dict = dict(ownerId=owner_id,
+                               active=active if active is not None else '',
+                               in_bbox=in_bbox if in_bbox else '',
+                               maxResults=settings.IOT_DEVICES_PAGE_SIZE,
+                               nextToken=next_token if next_token else '',)
 
-        params_dict = OrderedDict(ownerId=owner_id,
-                                  maxResults=settings.IOT_DEVICES_PAGE_SIZE,
-                                  active=active if active is not None else '',
-                                  in_bbox=in_bbox if in_bbox else '',
-                                  nextToken=next_token if next_token else '',)
+            list_devices = self._get('devices', query_params=params_dict)
 
-        list_devices = self._get('devices', query_params=params_dict)
+            if 'error' in list_devices:
+                raise AWSIoTError("Error in response from AWS IoT")
 
-        if 'error' in list_devices:
-            raise AWSIoTError("Error in response from AWS IoT")
+            new_devices = list_devices['data'].get('devices', None)
+            if new_devices:
+                results.extend(new_devices)
 
-        new_devices = list_devices['data'].get('devices', None)
-        if new_devices:
-            results.extend(new_devices)
-
-        next_token = list_devices['data'].get('nextToken', None)
-        if next_token:
-            return self.get_list_owner_devices(owner_id, next_token=next_token, results=results, active=active,
-                                               in_bbox=in_bbox)
+            next_token = list_devices['data'].get('nextToken', None)
+            loop = True if next_token else False
 
         return results

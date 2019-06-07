@@ -2,6 +2,7 @@ import re
 import random
 from datetime import timedelta
 from unittest.mock import Mock
+from urllib import parse
 
 import jwt
 from django.conf import settings
@@ -77,3 +78,24 @@ def random_location():
         },
         "type": "Feature"
     }
+
+
+class Url:
+    """
+    A url object that can be compared with other url objects
+    without regard to the vagaries of encoding, escaping, and ordering
+    of parameters in query strings.
+    """
+
+    def __init__(self, url):
+        parts = parse.urlparse(url)
+        _query = frozenset(parse.parse_qsl(parts.query))
+        _path = parse.unquote_plus(parts.path)
+        parts = parts._replace(query=_query, path=_path)
+        self.parts = parts
+
+    def __eq__(self, other):
+        return self.parts == other.parts
+
+    def __hash__(self):
+        return hash(self.parts)
