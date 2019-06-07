@@ -18,11 +18,9 @@ import logging
 from collections import OrderedDict
 
 from django.conf import settings
-from rest_framework.exceptions import ParseError
 from influxdb_metrics.loader import log_metric
 
 from apps.iot_client import AWSIoTClient, AWSIoTError
-from apps.utils import is_uuid
 
 
 LOG = logging.getLogger('transmission')
@@ -56,7 +54,8 @@ class DeviceAWSIoTClient(AWSIoTClient):
             results = []
 
         params_dict = OrderedDict(ownerId=owner_id,
-                                  maxResults=settings.IOT_DEVICES_MAX_RESULTS,
+                                  maxResults=settings.IOT_DEVICES_PAGE_SIZE,
+                                  active=active if active is not None else '',
                                   in_bbox=in_bbox if in_bbox else '',
                                   nextToken=next_token if next_token else '',)
 
@@ -73,62 +72,5 @@ class DeviceAWSIoTClient(AWSIoTClient):
         if next_token:
             return self.get_list_owner_devices(owner_id, next_token=next_token, results=results, active=active,
                                                in_bbox=in_bbox)
-        if active:
-            device_status = active.lower()
-            if device_status == 'true':
-                results = self.filter_list_devices(results)[0]
-            elif device_status == 'false':
-                results = self.filter_list_devices(results)[1]
 
         return results
-
-    def filter_list_devices(self, list_device):
-        """
-        Returns the list of current active / inactive devices
-        """
-        active_devices = []
-        for device in list_device:
-            reported = device['shadowData']['reported']
-            if isinstance(reported, dict) and is_uuid(reported.get('shipmentId', None)):
-                active_devices.append(list_device.pop(list_device.index(device)))
-
-        return active_devices, list_device
-
-    def validate_params(self, status, in_bbox):
-        """
-        returns True if the passed in params are all valid otherwise, raises ParserError
-
-        :param status: Value of the active query parameter
-        :param in_bbox: string tuple like, which defines the viewport rectangle boundaries
-                        format: min Lon, min Lat, max Lon, max Lat
-        """
-        long_range = (-180, 180)
-        lat_range = (-90, 90)
-        box_ranges = (long_range, lat_range, long_range, lat_range)
-
-        if isinstance(status, str) and status.lower() not in ('true', 'false', ):
-            raise ParseError(f'Invalid active status parameter! Should either be "true" or "false"')
-
-        if isinstance(in_bbox, str):
-            box_to_list = in_bbox.split(',')
-            if not len(box_to_list) == 4:
-                raise ParseError(f'in_box parameter takes 4 position parameters but {len(box_to_list)}, '
-                                 f'were passed in.')
-
-            in_bbox_num = []
-            for box_value, rang, index in zip(box_to_list, box_ranges, range(1, 5)):
-                try:
-                    box_value = float(box_value)
-                    in_bbox_num.append(box_value)
-                except ValueError:
-                    raise ParseError(f'in_bbox coordinate: {box_value}, should be type number')
-
-                if not rang[0] <= box_value <= rang[1]:
-                    raise ParseError(f'in_bbox coordinate in position: '
-                                     f'{index}, value: {box_value}, should be in range: {rang}')
-
-            if in_bbox_num[2] <= in_bbox_num[0] or in_bbox_num[3] <= in_bbox_num[1]:
-                raise ParseError('Invalid geo box, make sure that: '
-                                 'in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4].')
-
-        return True

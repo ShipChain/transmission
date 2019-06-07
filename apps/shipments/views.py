@@ -27,8 +27,7 @@ from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer
-
+    PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer, DevicesQueryParamsSerializer
 from .tasks import tracking_data_update
 
 
@@ -266,11 +265,12 @@ class CurrentDevicesLocations(APIView):
     def get(self, request, *args, **kwargs):
         owner_id = get_owner_id(request)
         iot_client = DeviceAWSIoTClient()
-        device_status = request.query_params.get('active', None)
-        in_bbox = request.query_params.get('in_bbox', None)
 
-        iot_client.validate_params(device_status, in_bbox)
-        devices = iot_client.get_list_owner_devices(owner_id, active=device_status, in_bbox=in_bbox)
+        serializer = DevicesQueryParamsSerializer(data={'in_bbox': request.query_params.get('in_bbox'),
+                                                        'active': request.query_params.get('active')})
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
+        devices = iot_client.get_list_owner_devices(owner_id, active=params['active'], in_bbox=params['in_bbox'])
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(devices, request, view=self)

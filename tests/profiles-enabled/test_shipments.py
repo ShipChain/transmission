@@ -2090,7 +2090,7 @@ class DevicesLocationsAPITests(APITestCase):
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
-    def iot_responses(self, owner_id, num_devices=5, next_token=False):
+    def iot_responses(self, owner_id, num_devices=5, next_token=False, active=True):
 
         device_template = {
             "deviceId": "",
@@ -2131,6 +2131,11 @@ class DevicesLocationsAPITests(APITestCase):
             device['shadowData']['reported']['shipmentId'] = random_id()
             devices.append(device)
 
+        if not active:
+            rand_inactive_num = random.randint(1, num_devices-1)
+            for i in range(rand_inactive_num):
+                devices[random.randint(0, num_devices-1)]['shadowData']['reported']['shipmentId'] = 'na'
+
         return {
             'data': {
                 'devices': devices,
@@ -2141,10 +2146,11 @@ class DevicesLocationsAPITests(APITestCase):
     def side_effects(self, url, **kwargs):
         return mocked_rpc_response(self.map_responses[url])
 
-    def url_encode_params(self, owner_id, next_token='', box=''):
+    def url_encode_params(self, owner_id, next_token='', box='', active=None):
         param_dict = OrderedDict(
             ownerId=owner_id,
-            maxResults=test_settings.IOT_DEVICES_MAX_RESULTS,
+            maxResults=test_settings.IOT_DEVICES_PAGE_SIZE,
+            active=active if active is not None else '',
             in_bbox=box,
             nextToken=next_token
         )
@@ -2160,6 +2166,8 @@ class DevicesLocationsAPITests(APITestCase):
         base_iot = f'https://{test_settings.IOT_AWS_HOST}/{test_settings.IOT_GATEWAY_STAGE}/'
         iot_enpoints = [
             base_iot + f'devices?{self.url_encode_params(OWNER_ID)}',
+            base_iot + f'devices?{self.url_encode_params(OWNER_ID, active=True)}',
+            base_iot + f'devices?{self.url_encode_params(OWNER_ID, active=False)}',
             base_iot + f'devices?{self.url_encode_params(OWNER_ID, next_token=NEXT_TOKEN)}',
             base_iot + f'devices?{self.url_encode_params(OWNER_ID, box="-82.5,34.5,-82,35")}',
         ]
@@ -2182,37 +2190,35 @@ class DevicesLocationsAPITests(APITestCase):
             mock_get.reset_mock()
             self.map_responses = {
                 iot_enpoints[0]: self.iot_responses(OWNER_ID, next_token=True),
-                iot_enpoints[1]: self.iot_responses(OWNER_ID)
+                # iot_enpoints[1]: self.iot_responses(OWNER_ID),
+                iot_enpoints[3]: self.iot_responses(OWNER_ID)
             }
 
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
-            self.assertEqual(len(data), 2 * test_settings.IOT_DEVICES_MAX_RESULTS)
+            self.assertEqual(len(data), 2 * test_settings.IOT_DEVICES_PAGE_SIZE)
             assert mock_get.call_count == 2
 
-            # ----------------------- Filtering tests ------------------------- #
-            iot_data = self.iot_responses(OWNER_ID)
-            iot_data['data']['devices'][1]['shadowData']['reported']['shipmentId'] = 'bad-id'
-            iot_data['data']['devices'][3]['shadowData']['reported'] = None
+            # ----------------------- active param validation ------------------------- #
+            self.map_responses[iot_enpoints[1]] = self.iot_responses(OWNER_ID, active=True)
+            self.map_responses[iot_enpoints[2]] = self.iot_responses(OWNER_ID, active=False)
 
-            self.map_responses = {iot_enpoints[0]: iot_data}
-
-            # There should be exactly 3 active devices
-            active_url = url + '?active=True'
+            # Lower case boolean value should succeed with 200 status code
+            active_url = url + '?active=true'
             response = self.client.get(active_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            data = response.json()['data']
-            self.assertEqual(len(data), 3)
+            # data = response.json()['data']
+            # self.assertEqual(len(data), 3)
 
-            # There should be exactly 2 inactive devices
+            # Upper case boolean value should succeed with 200 status code
             inactive_url = url + '?active=FALSE'
             response = self.client.get(inactive_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            data = response.json()['data']
-            self.assertEqual(len(data), 2)
+            # data = response.json()['data']
+            # self.assertEqual(len(data), 2)
 
-            # A request with a query params other than true or false should return http400
+            # A request with a query params other than true or false should fail with status code 400
             bad_param_url = url + '?active=falso'
             response = self.client.get(bad_param_url)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -2262,7 +2268,7 @@ class DevicesLocationsAPITests(APITestCase):
             # A call with well formed in_bbox parameters should succeed with 200 status
             # even with a couple of blank spaces between values
             in_bbox_url = f'{url}?in_bbox=-82.5 ,34.5,-82, 35'
-            self.map_responses = {iot_enpoints[2]: self.iot_responses(OWNER_ID)}
+            self.map_responses = {iot_enpoints[4]: self.iot_responses(OWNER_ID)}
             response = self.client.get(in_bbox_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
