@@ -1,6 +1,7 @@
 import copy
 import json
 import re
+import time
 from unittest import mock
 
 import boto3
@@ -9,8 +10,8 @@ from datetime import datetime, timezone, timedelta
 from dateutil import parser
 from django.conf import settings as test_settings
 from django.core import mail
-from django.db import transaction
 from django.contrib.gis.geos import Point
+from freezegun import freeze_time
 from jose import jws
 from moto import mock_iot
 from rest_framework import status
@@ -835,6 +836,69 @@ class ShipmentAPITests(APITestCase):
             # delivery_act should be in the second most recent changed fields
             changed_fields = self.get_changed_fields(history_data[1]['fields'], 'field')
             self.assertIn('delivery_act', changed_fields)
+
+            # ------------------------------- datetime filtering test -------------------------------#
+            initial_datetime = datetime.now()
+            one_day_later = datetime.now() + timedelta(days=1)
+            two_day_later = datetime.now() + timedelta(days=2)
+            # We update the shipment 1 day in the future
+
+            with freeze_time(one_day_later.isoformat()) as date_in_future:
+                shipment_update_package_qty, content_type = create_form_content({
+                    'container_qty': '1',
+                })
+                response = self.client.patch(url_patch, shipment_update_package_qty, content_type=content_type)
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+                # We set the clock to two days in the future
+                date_in_future.move_to(two_day_later)
+                shipment_update_package_qty, content_type = create_form_content({
+                    'package_qty': '10',
+                })
+                response = self.client.patch(url_patch, shipment_update_package_qty, content_type=content_type)
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+            # The most recent change should be relative to the attribute 'package_qty'
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            num_changes = len(history_data)
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertIn('package_qty', changed_fields)
+
+            # Test changes less than the provided date time
+            filter_url = f'{history_url}?history_date__lte={initial_datetime.isoformat()}'
+            response = self.client.get(filter_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            # The changes here should be less than the total changes.
+            self.assertTrue(len(history_data) < num_changes)
+            # package_qty shouldn't be in the most recent changed fields
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertTrue('package_qty' not in changed_fields)
+
+            # Test changes greater than the provided date time
+            filter_url = f'{history_url}?history_date__gte={initial_datetime.isoformat()}'
+            response = self.client.get(filter_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            # There should be only one change for here, related to the package_qty attribute
+            self.assertTrue(len(history_data) == 1)
+            # package_qty should be the only field of the result
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertTrue('package_qty' in changed_fields)
+
+            # Combining two days later and the current date, should yield to the package_qty change
+            filter_url = f'{history_url}?history_date__lte{two_day_later.isoformat()}' \
+                         f'&history_date__gte={datetime.now().isoformat()}'
+            response = self.client.get(filter_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            # There should be only one change for here, related to the package_qty attribute
+            self.assertTrue(len(history_data) == 1)
+            # package_qty should be the only field of the result
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertTrue('package_qty' in changed_fields)
 
     @httpretty.activate
     def test_create(self):

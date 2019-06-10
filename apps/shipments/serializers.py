@@ -391,8 +391,9 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
 
 class ChangesDiffSerializer:
-    def __init__(self, queryset):
+    def __init__(self, queryset, request):
         self.queryset = queryset
+        self.request = request
 
         self.relation_fields = ('ship_from_location', 'ship_to_location', 'final_destination_location',
                                 'bill_to_location', )
@@ -443,7 +444,7 @@ class ChangesDiffSerializer:
             changes = None
             if historical_relation:
                 date_max = new_historical.history_date
-                date_min = date_max + timedelta(milliseconds=-500)
+                date_min = date_max - timedelta(milliseconds=settings.SIMPLE_HISTORY_RELATED_WINDOW_MS)
                 if new_historical.history_user == historical_relation.history_user and \
                         date_min <= historical_relation.history_date <= date_max:
                     # The relationship field has changed
@@ -468,6 +469,8 @@ class ChangesDiffSerializer:
                 old = queryset[index + 1]
                 index += 1
                 queryset_diff.append(self.diff_object_fields(old, new))
-        queryset_diff.append(self.diff_object_fields(None, queryset[index]))
+
+        if not self.request.query_params.get('history_date__gte'):
+            queryset_diff.append(self.diff_object_fields(None, queryset[index]))
 
         return queryset_diff

@@ -17,10 +17,9 @@ limitations under the License.
 from rest_framework_json_api.pagination import PageNumberPagination
 
 
-class ShipmentHistoryPagination(PageNumberPagination):
+class CustomResponsePagination(PageNumberPagination):
 
     def get_paginated_response(self, data):
-
-        response = super(ShipmentHistoryPagination, self).get_paginated_response(data)
+        response = super(CustomResponsePagination, self).get_paginated_response(data)
         response.data['data'] = response.data.pop('results')
         return response
