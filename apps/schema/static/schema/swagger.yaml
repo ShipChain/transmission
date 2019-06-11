@@ -448,6 +448,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/page_size'
+        - $ref: '#/components/parameters/shipmentHistory/historyDateLessThan'
+        - $ref: '#/components/parameters/shipmentHistory/historyDateGreaterThan'
       tags:
         - Shipments
       responses:
@@ -885,6 +887,27 @@ components:
         schema:
           type: string
           enum: [PENDING, COMPLETE, FAILED]
+
+    shipmentHistory:
+      historyDateLessThan:
+        required: false
+        in: query
+        name: history_date__lte
+        description: Query for changes with Date time less than the provided value
+        schema:
+          type: string
+          format: date-time
+          example: '2019-06-05T14:54:56-04:00'
+
+      historyDateGreaterThan:
+        required: false
+        in: query
+        name: history_date__gte
+        description: Query for changes with Date time grester than the provided value
+        schema:
+          type: string
+          format: date-time
+          example: '2019-06-05T18:54:56Z'
 
   schemas:
     dataTypes:
