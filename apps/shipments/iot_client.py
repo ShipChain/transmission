@@ -59,6 +59,8 @@ class DeviceAWSIoTClient(AWSIoTClient):
             list_devices = self._get('devices', query_params=params_dict)
 
             if 'error' in list_devices:
+                LOG.error(f'IoT was not able to fulfill the following request, endpoint: "devices",'
+                          f' params: {params_dict}. Error message: {list_devices["error"]}')
                 raise AWSIoTError("Error in response from AWS IoT")
 
             new_devices = list_devices['data'].get('devices', None)

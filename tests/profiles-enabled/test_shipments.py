@@ -2192,7 +2192,7 @@ class DevicesLocationsAPITests(APITestCase):
             # Only one Api call is made to IOT_AWS_HOST
             mock_get.assert_called_once()
 
-            # The response for first called url do have the nextToken value,
+            # The first called url's response does have the nextToken value,
             # there should be a second call to IOT_AWS_HOST
             mock_get.reset_mock()
             self.map_responses = {
@@ -2221,7 +2221,7 @@ class DevicesLocationsAPITests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
             # A request with a query params other than true or false should fail with status code 400
-            bad_param_url = url + '?active=falso'
+            bad_param_url = url + '?active=NONBOOLEAN'
             response = self.client.get(bad_param_url)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -2274,8 +2274,8 @@ class DevicesLocationsAPITests(APITestCase):
             response = self.client.get(in_bbox_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-            # valid box should respects the rule: the third element should be greater than the first
-            # and the fourth should be greater than the second: in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4]
+            # A valid bbox should respect the rule: the third element should be greater than the first
+            # and the fourth should be greater than the second: in_bbox[0] < in_bbox[2] and in_bbox[1] < in_bbox[3]
             in_bbox_url = f'{url}?in_bbox=82.5,34.5,-82,45'
             response = self.client.get(in_bbox_url)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
