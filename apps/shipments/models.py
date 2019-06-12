@@ -27,12 +27,13 @@ from apps.eth.fields import AddressField, HashField
 from apps.eth.models import EthListener
 from apps.jobs.models import JobListener, AsyncJob, JobState
 from apps.utils import random_id, AliasField
+from apps.simple_history import TxmHistoricalRecords, AnonymousHistoricalMixin
 from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')
 
 
-class Location(models.Model):
+class Location(AnonymousHistoricalMixin, models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
 
     phone_regex = RegexValidator(regex=r'^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}',
@@ -56,6 +57,9 @@ class Location(models.Model):
 
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Model's history tracking definition
+    history = TxmHistoricalRecords()
 
     def get_lat_long_from_address(self):
         LOG.debug(f'Creating lat/long point for location {self.id}')
@@ -183,7 +187,7 @@ class EscrowState(Enum):
     WITHDRAWN = 5
 
 
-class Shipment(models.Model):
+class Shipment(AnonymousHistoricalMixin, models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     owner_id = models.CharField(null=False, max_length=36)
 
@@ -286,6 +290,9 @@ class Shipment(models.Model):
     is_hazmat = models.NullBooleanField()
 
     customer_fields = JSONField(blank=True, null=True)
+
+    # Model's history tracking definition
+    history = TxmHistoricalRecords()
 
     def get_device_request_url(self):
         LOG.debug(f'Getting device request url for device with vault_id {self.vault_id}')

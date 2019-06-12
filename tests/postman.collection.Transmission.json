@@ -1036,6 +1036,33 @@
                   }
                 },
                 "response": []
+              },
+              {
+                "name": "Get Shipment history",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/history/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "shipments",
+                      "{{shipment_id}}",
+                      "history",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
               }
             ]
           },

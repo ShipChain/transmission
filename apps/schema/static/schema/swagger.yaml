@@ -440,6 +440,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/errors/401'
 
+  /api/v1/shipments/{shipment_id}/history/:
+    get:
+      summary: List Shipment history
+      description: >
+        Retrieve a list of historical changes to a `Shipment`.
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/page_size'
+        - $ref: '#/components/parameters/shipmentHistory/historyDateLessThan'
+        - $ref: '#/components/parameters/shipmentHistory/historyDateGreaterThan'
+      tags:
+        - Shipments
+      responses:
+        '200':
+          description: *response_200
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/shipmentHistory/listResponse'
+        '401':
+          description: *response_401
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/errors/401'
+
+
   /api/v1/jobs/:
     get:
       summary: List jobs
@@ -860,6 +887,27 @@ components:
         schema:
           type: string
           enum: [PENDING, COMPLETE, FAILED]
+
+    shipmentHistory:
+      historyDateLessThan:
+        required: false
+        in: query
+        name: history_date__lte
+        description: Query for changes with Date time less than the provided value
+        schema:
+          type: string
+          format: date-time
+          example: '2019-06-05T14:54:56-04:00'
+
+      historyDateGreaterThan:
+        required: false
+        in: query
+        name: history_date__gte
+        description: Query for changes with Date time grester than the provided value
+        schema:
+          type: string
+          format: date-time
+          example: '2019-06-05T18:54:56Z'
 
   schemas:
     dataTypes:
@@ -1962,6 +2010,73 @@ components:
                   <<: *uuid
                   title: id
                   description: LoadShipment UUID associated with the shipment
+
+      shipmentHistory:
+        historyDate:
+          properties:
+            history_date:
+              title: history_date
+              description: Date/time of the resource modification
+              type: string
+              format: date-time
+              example: '2018-06-18T14:54:56.652732Z'
+
+        author:
+          properties:
+            author:
+              <<: *uuid
+              title: author
+              description: UUID of the authoring User
+
+        shipmentField:
+          properties:
+            field:
+              title: field
+              description: Shipment's field name
+              type: string
+              example: 'pickup_est'
+
+        shipmentFieldNew:
+          properties:
+            new:
+              title: new
+              description: New value of the shipment's field
+              type: string
+              format: date-time
+              example: '2019-04-10T18:15:54.636787Z'
+
+        shipmentFieldOld:
+          properties:
+            old:
+              title: old
+              description: Previous value of the shipment's field
+              type: string
+              format: date-time
+              example: '2019-04-15T16:30:25.876787Z'
+
+        locationField:
+          properties:
+            field:
+              title: field
+              description: Location's field name
+              type: string
+              example: 'city'
+
+        locationFieldNew:
+          properties:
+            new:
+              title: new
+              description: New value of the location's field
+              type: string
+              example: 'Los Angeles'
+
+        locationFieldOld:
+          properties:
+            old:
+              title: old
+              description: Previous value of the location's field
+              type: string
+              example: 'Greenville'
 
       # General Job Parameters
       job:
@@ -3141,6 +3256,66 @@ components:
                     meta:
                       $ref: '#/components/schemas/dataTypes/document/presignedS3Get'
 
+    shipmentHistory:
+      shipmentFields:
+        properties:
+          fields:
+            type: array
+            title: fields
+            description: Changed values of the resource's field
+            items:
+              $ref: '#/components/schemas/shipmentHistory/shipmentFieldChanges'
+
+      shipmentFieldChanges:
+          type: object
+          description: Changes to the related field
+          allOf:
+            - $ref: '#/components/schemas/dataTypes/shipmentHistory/shipmentField'
+            - $ref: '#/components/schemas/dataTypes/shipmentHistory/shipmentFieldNew'
+            - $ref: '#/components/schemas/dataTypes/shipmentHistory/shipmentFieldOld'
+
+      locationFieldChanges:
+        type: object
+        description: Changes to the related field
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/shipmentHistory/locationField'
+          - $ref: '#/components/schemas/dataTypes/shipmentHistory/locationFieldNew'
+          - $ref: '#/components/schemas/dataTypes/shipmentHistory/locationFieldOld'
+
+      relationships:
+        properties:
+          relationships:
+            type: object
+            title: relationships
+            description: Changes of the related objects
+            allOf:
+              - $ref: '#/components/schemas/shipmentHistory/relatedObjectChanges'
+
+      relatedObjectChanges:
+        properties:
+          ship_to_location:
+            type: array
+            title: ship_to_location
+            description: Relationship field name
+            items:
+              $ref: '#/components/schemas/shipmentHistory/locationFieldChanges'
+
+      listResponse:
+        allOf:
+          - $ref: '#/components/schemas/jsonApi/linksAndMeta'
+          - properties:
+              data:
+                items:
+                  $ref: '#/components/schemas/shipmentHistory/getResource'
+
+      getResource:
+        allOf:
+          - $ref: '#/components/schemas/dataTypes/shipmentHistory/historyDate'
+          - $ref: '#/components/schemas/dataTypes/shipmentHistory/author'
+          - $ref: '#/components/schemas/shipmentHistory/shipmentFields'
+          - $ref: '#/components/schemas/shipmentHistory/relationships'
+
+
     tracking:
       collectionResource:
         properties:
@@ -3462,7 +3637,7 @@ components:
           description: Link to next page of the list
           type: string
           example: '/api/v1/{object-type}/?page=3'
-        previous:
+        prev:
           title: previous
           description: Link to previous page of the list
           type: string
@@ -3478,7 +3653,7 @@ components:
           properties:
             count:
               title: count
-              description: Total number of resources associated with user
+              description: Total number of resources
               type: integer
               format: int32
               example: '37'

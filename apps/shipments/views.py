@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, permissions, status, filters, mixins
+from rest_framework import viewsets, permissions, status, filters, mixins, renderers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -16,15 +16,17 @@ from influxdb_metrics.loader import log_metric
 
 from apps.authentication import get_jwt_from_request
 from apps.jobs.models import JobState
+from apps.pagination import CustomResponsePagination
 from apps.permissions import owner_access_filter, get_owner_id
 from apps.utils import send_templated_email
-from .filters import ShipmentFilter
+from .filters import ShipmentFilter, HistoricalShipmentFilter
 from .geojson import render_point_features
 from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer, PermissionLinkCreateSerializer
+    PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer
+
 from .tasks import tracking_data_update
 
 LOG = logging.getLogger('transmission')
@@ -228,3 +230,25 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
             send_templated_email('email/shipment_link.html', subject, email_context, emails)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ShipmentHistoryListView(viewsets.GenericViewSet):
+    http_method_names = ['get', ]
+    permission_classes = ((IsOwnerOrShared,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
+    pagination_class = CustomResponsePagination
+    filter_backends = (DjangoFilterBackend, )
+    filterset_class = HistoricalShipmentFilter
+    renderer_classes = (renderers.JSONRenderer, )
+
+    def list(self, request, *args, **kwargs):
+        shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
+        queryset = shipment.history.all()
+        queryset = self.filter_queryset(queryset)
+        serializer = ChangesDiffSerializer(queryset, request)
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(serializer.data, self.request, view=self)
+        if page is not None:
+            return paginator.get_paginated_response(page)
+
+        return Response(serializer.data)

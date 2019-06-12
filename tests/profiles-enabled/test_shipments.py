@@ -1,7 +1,7 @@
 import copy
 import json
-import os
 import re
+import time
 from unittest import mock
 
 import boto3
@@ -10,7 +10,8 @@ from datetime import datetime, timezone, timedelta
 from dateutil import parser
 from django.conf import settings as test_settings
 from django.core import mail
-from django.db import transaction
+from django.contrib.gis.geos import Point
+from freezegun import freeze_time
 from jose import jws
 from moto import mock_iot
 from rest_framework import status
@@ -22,7 +23,6 @@ from apps.eth.models import EthAction
 from apps.iot_client import BotoAWSRequestsAuth
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
 from apps.shipments.rpc import Load110RPCClient
-from apps.utils import random_id
 from tests.utils import get_jwt
 from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response
 
@@ -45,6 +45,7 @@ LOCATION_STATE = 'State'
 LOCATION_COUNTRY = 'US'
 BAD_COUNTRY_CODE = 'XY'
 LOCATION_NUMBER = '555-555-5555'
+LOCATION_POSTAL_CODE = '29600'
 
 mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
 google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
@@ -626,6 +627,278 @@ class ShipmentAPITests(APITestCase):
                 self.assertEqual(device.certificate_id, new_active_certificate)
                 data = response.json()['data']
                 self.assertEqual(device.shipment.id, data['id'])
+
+    def get_changed_fields(self, changes_list, field_name):
+        return [item[field_name] for item in changes_list]
+
+    @mock_iot
+    def test_shipment_history(self):
+        from apps.rpc_client import requests
+        from tests.utils import mocked_rpc_response
+
+        history = Shipment.history.all()
+        history.delete()
+        self.assertEqual(history.count(), 0)
+
+        device_id = 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'
+
+        device = Device.objects.create(id=device_id)
+
+        with mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_shipper_wallet_id') as mock_wallet_validation, \
+                mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_storage_credentials_id') as mock_storage_validation, \
+                mock.patch('apps.shipments.models.Device.get_or_create_with_permission') as mock_get_or_create_with_permission, \
+                mock.patch.object(requests.Session, 'post') as mock_rpc, \
+                mock.patch('apps.iot_client.requests.Session.put') as mock_shadow:
+
+            mock_wallet_validation.return_value = SHIPPER_WALLET_ID
+            mock_storage_validation.return_value = STORAGE_CRED_ID
+            mock_get_or_create_with_permission.return_value = device
+
+            mock_shadow.return_value = mocked_rpc_response({'data': {'shipmentId': 'Test'}})
+
+            mock_rpc.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_id": "TEST_VAULT_ID"
+                }
+            })
+
+            self.set_user(self.user_1)
+
+            create_shipment_data = {
+                'vault_id': VAULT_ID,
+                'carrier_wallet_id': CARRIER_WALLET_ID,
+                'shipper_wallet_id': SHIPPER_WALLET_ID,
+                'storage_credentials_id': STORAGE_CRED_ID
+            }
+
+            update_shipment_data = {
+                'package_qty': 5,
+                'pickup_act': datetime.utcnow()
+            }
+
+            url = reverse('shipment-list', kwargs={'version': 'v1'})
+
+            # Every shipment created should have tow historical objects, one for the shipment
+            # creation and one for shipment update with engine metadata.
+            response = self.client.post(url, create_shipment_data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+            data = response.json()['data']
+            shipment_id = data['id']
+            history = Shipment.history.all()
+            self.assertEqual(history.count(), 2)
+
+            history_url = reverse('shipment-history-list', kwargs={'version': 'v1', 'shipment_pk': shipment_id})
+
+            # On shipment creation, we should have the newly created values against null values.
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            self.assertEqual(len(history_data), 2)
+            old_values = self.get_changed_fields(history_data[1]['fields'], 'old')
+
+            for old in old_values:
+                assert old is None
+
+            engine_changes = self.get_changed_fields(history_data[0]['fields'], 'field')
+            assert 'vault_uri' in engine_changes
+            # On shipment creation, the most recent change is from a background task. Should have a null author.
+            self.assertIsNone(history_data[0]['author'])
+
+            url_patch = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
+
+            # Existing shipment updated with new fields values should have history diff
+            response = self.client.patch(url_patch, update_shipment_data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            fields = history_data[0]['fields']
+            self.assertTrue(len(fields) > 0)
+            changed_fields = self.get_changed_fields(fields, 'field')
+            self.assertTrue('package_qty' in changed_fields)
+            self.assertTrue('pickup_act' in changed_fields)
+
+            # ----------------------- Shipment update with a location field --------------------------#
+            # Equivalently valid for any location field
+            with mock.patch('apps.shipments.models.Location.get_lat_long_from_address') as mock_geocoder:
+                mock_geocoder.return_value = Point((53.1, -35.87))
+
+                shipment_creation_with_location, content_type = create_form_content({
+                    'vault_id': VAULT_ID,
+                    'carrier_wallet_id': CARRIER_WALLET_ID,
+                    'shipper_wallet_id': SHIPPER_WALLET_ID,
+                    'storage_credentials_id': STORAGE_CRED_ID,
+                    'ship_from_location.name': LOCATION_NAME,
+                    'ship_from_location.city': LOCATION_CITY,
+                    'ship_from_location.state': LOCATION_STATE
+                })
+
+                shipment_update_with_location, content_type = create_form_content({
+                    'ship_from_location.name': LOCATION_NAME,
+                    'ship_from_location.city': LOCATION_CITY,
+                    'ship_from_location.state': LOCATION_STATE,
+                })
+
+                # Creating a shipment with a location should be reflected in the initial diff history
+                response = self.client.post(url, shipment_creation_with_location, content_type=content_type)
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+                shipment2_id = response.json()['data']['id']
+
+                shipment2_history_url = reverse('shipment-history-list', kwargs={'version': 'v1', 'shipment_pk': shipment2_id})
+
+                response = self.client.get(shipment2_history_url)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                history_data = response.json()['data'][1]
+                changed_fields = self.get_changed_fields(history_data['fields'], 'field')
+                self.assertTrue('ship_from_location' in changed_fields)
+                self.assertTrue('ship_from_location' in history_data['relationships'].keys())
+
+                # Updating a shipment with a location object, should be reflected in both fields
+                # and relationships fields in response data
+                response = self.client.patch(url_patch, shipment_update_with_location, content_type=content_type)
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+                response = self.client.get(history_url)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                history_data = response.json()['data'][0]
+                changed_fields = self.get_changed_fields(history_data['fields'], 'field')
+                self.assertTrue('ship_from_location' in changed_fields)
+                self.assertTrue('ship_from_location' in history_data['relationships'].keys())
+
+                shipment_update_with_location, content_type = create_form_content({
+                    'ship_from_location.country': LOCATION_COUNTRY,
+                    'ship_from_location.postal_code': LOCATION_POSTAL_CODE,
+                    'ship_from_location.phone_number': LOCATION_NUMBER
+                })
+
+                # Updating an existing shipment location should yield to a diff location
+                # in the response's relationships field
+                response = self.client.patch(url_patch, shipment_update_with_location, content_type=content_type)
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+                response = self.client.get(history_url)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                history_data = response.json()['data']
+                ship_from_location_changes = history_data[0]['relationships'].get('ship_from_location', None)
+                self.assertTrue(bool(ship_from_location_changes))
+                ship_from_location_field_changes = self.get_changed_fields(ship_from_location_changes, 'field')
+                self.assertTrue('phone_number' in ship_from_location_field_changes)
+
+            # ----------------------- Shipment update by someone other than owner --------------------------#
+            with mock.patch('apps.permissions.is_shipper') as mock_shipper_permission:
+                mock_shipper_permission.return_value = True
+
+                self.set_user(self.user_2)
+
+                shipment_update_with_device, content_type = create_form_content({
+                    'device_id': device_id,
+                })
+
+                # User_2 is the shipment's shipper, any changes made by him should be reflected in the diff history
+                # and his ID in the 'author' field of the related diff change
+                response = self.client.patch(url_patch, shipment_update_with_device, content_type=content_type)
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+                # The is_shipper method is called twice, one for accessing the shipment
+                # and one for object edit permission
+                self.assertEqual(mock_shipper_permission.call_count, 2)
+
+                response = self.client.get(history_url)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                # is_shipper method is called once just ofr accessing the shipment history
+                self.assertEqual(mock_shipper_permission.call_count, 3)
+                history_data = response.json()['data']
+                changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+                self.assertIn('device', changed_fields)
+                self.assertIn('updated_by', changed_fields)
+                self.assertNotEqual(history_data[0]['author'], history_data[1]['author'])
+
+            # ------------------------------------ Shipment Signal update ---------------------------------------#
+            self.set_user(self.user_1)
+
+            shipment_update_delivery_act, content_type = create_form_content({
+                'delivery_act': datetime.utcnow().isoformat() + 'Z',
+            })
+
+            response = self.client.patch(url_patch, shipment_update_delivery_act, content_type=content_type)
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+            # The most recent change should be from the post save action with a null author
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            self.assertIsNone(history_data[0]['author'])
+            # device should be in the most recent changed fields
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertIn('device', changed_fields)
+            # delivery_act should be in the second most recent changed fields
+            changed_fields = self.get_changed_fields(history_data[1]['fields'], 'field')
+            self.assertIn('delivery_act', changed_fields)
+
+            # ------------------------------- datetime filtering test -------------------------------#
+            initial_datetime = datetime.now()
+            one_day_later = datetime.now() + timedelta(days=1)
+            two_day_later = datetime.now() + timedelta(days=2)
+            # We update the shipment 1 day in the future
+
+            with freeze_time(one_day_later.isoformat()) as date_in_future:
+                shipment_update_package_qty, content_type = create_form_content({
+                    'container_qty': '1',
+                })
+                response = self.client.patch(url_patch, shipment_update_package_qty, content_type=content_type)
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+                # We set the clock to two days in the future
+                date_in_future.move_to(two_day_later)
+                shipment_update_package_qty, content_type = create_form_content({
+                    'package_qty': '10',
+                })
+                response = self.client.patch(url_patch, shipment_update_package_qty, content_type=content_type)
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+            # The most recent change should be relative to the attribute 'package_qty'
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            num_changes = len(history_data)
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertIn('package_qty', changed_fields)
+
+            # Test changes less than the provided date time
+            filter_url = f'{history_url}?history_date__lte={initial_datetime.isoformat()}'
+            response = self.client.get(filter_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            # The changes here should be less than the total changes.
+            self.assertTrue(len(history_data) < num_changes)
+            # package_qty shouldn't be in the most recent changed fields
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertTrue('package_qty' not in changed_fields)
+
+            # Test changes greater than the provided date time
+            filter_url = f'{history_url}?history_date__gte={initial_datetime.isoformat()}'
+            response = self.client.get(filter_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            # There should be only one change for here, related to the package_qty attribute
+            self.assertTrue(len(history_data) == 1)
+            # package_qty should be the only field of the result
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertTrue('package_qty' in changed_fields)
+
+            # Combining two days later and the current date, should yield to the package_qty change
+            filter_url = f'{history_url}?history_date__lte{two_day_later.isoformat()}' \
+                         f'&history_date__gte={datetime.now().isoformat()}'
+            response = self.client.get(filter_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            # There should be only one change for here, related to the package_qty attribute
+            self.assertTrue(len(history_data) == 1)
+            # package_qty should be the only field of the result
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertTrue('package_qty' in changed_fields)
 
     @httpretty.activate
     def test_create(self):

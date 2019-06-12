@@ -44,6 +44,7 @@ nested_router = drf_nested_routers.NestedSimpleRouter(router, f'{API_PREFIX[1:]}
 nested_router.register(r'documents', documents.DocumentViewSet, base_name='shipment-documents')
 nested_router.register(r'transactions', eth.TransactionViewSet, base_name='shipment-transactions')
 nested_router.register(r'permission_links', shipments.PermissionLinkViewSet, base_name='shipment-permissions')
+nested_router.register(r'history', shipments.ShipmentHistoryListView, base_name='shipment-history')
 
 urlpatterns = [
     url(
@@ -52,7 +53,7 @@ urlpatterns = [
         name='api_schema'
     ),
     url(r'^admin/', admin.site.urls),
-    url(f'{API_PREFIX[1:]}/documents/events', documents.S3Events.as_view(), name='document-events')
+    url(f'{API_PREFIX[1:]}/documents/events', documents.S3Events.as_view(), name='document-events'),
 ]
 urlpatterns += router.urls
 

@@ -1,7 +1,7 @@
 import json
 import logging
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import boto3
 from botocore.exceptions import ClientError, BotoCoreError
@@ -136,7 +136,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             if not device.shipment.delivery_act:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
-                Shipment.objects.filter(device_id=device.id).update(device=None)
+                shipment = Shipment.objects.filter(device_id=device.id).first()
+                shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
         self.context['device'] = device
 
         return device_id
@@ -221,7 +222,8 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             if not device.shipment.delivery_act:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
-                Shipment.objects.filter(device_id=device.id).update(device=None)
+                shipment = Shipment.objects.filter(device_id=device.id).first()
+                shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
         self.context['device'] = device
 
         return device_id
@@ -386,3 +388,88 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
     def create(self, validated_data):
         return TrackingData.objects.create(**validated_data, **self.context)
+
+
+class ChangesDiffSerializer:
+    def __init__(self, queryset, request):
+        self.queryset = queryset
+        self.request = request
+
+        self.relation_fields = settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys()
+
+        self.excluded_fields = ('history_user', )
+
+    def diff_object_fields(self, old, new):
+        changes = new.diff(old)
+
+        flat_changes = self.build_list_changes(changes)
+
+        relation_changes = self.relation_changes(new)
+
+        return {
+            'history_date': new.history_date,
+            'fields': flat_changes,
+            'relationships': relation_changes if relation_changes else None,
+            'author': new.history_user,
+        }
+
+    def build_list_changes(self, changes):
+        field_list = []
+        if changes is None:
+            return field_list
+
+        changes_list = [change for change in changes.changes if change.field not in self.excluded_fields]
+        for change in changes_list:
+            field = {
+                'field': change.field,
+                'old': change.old,
+                'new': change.new
+            }
+
+            if change.field in self.relation_fields:
+                if change.old is None:
+                    field['new'] = Location.history.filter(pk=change.new).first().instance.id
+                if change.old and change.new:
+                    continue
+
+            field_list.append(field)
+        return field_list
+
+    def relation_changes(self, new_historical):
+
+        relations_map = {}
+        for relation in self.relation_fields:
+            historical_relation = getattr(new_historical, relation, None)
+            changes = None
+            if historical_relation:
+                date_max = new_historical.history_date
+                date_min = date_max - timedelta(milliseconds=settings.SIMPLE_HISTORY_RELATED_WINDOW_MS)
+                if new_historical.history_user == historical_relation.history_user and \
+                        date_min <= historical_relation.history_date <= date_max:
+                    # The relationship field has changed
+                    changes = historical_relation.diff(historical_relation.prev_record)
+            if changes:
+                relations_map[relation] = self.build_list_changes(changes)
+
+        return relations_map
+
+    @property
+    def data(self):
+        queryset = self.queryset
+        count = queryset.count()
+
+        queryset_diff = []
+        if count == 0:
+            return queryset_diff
+        index = 0
+        if count > 1:
+            while index + 1 < count:
+                new = queryset[index]
+                old = queryset[index + 1]
+                index += 1
+                queryset_diff.append(self.diff_object_fields(old, new))
+
+        if not self.request.query_params.get('history_date__gte'):
+            queryset_diff.append(self.diff_object_fields(None, queryset[index]))
+
+        return queryset_diff
