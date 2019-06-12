@@ -16,6 +16,7 @@ limitations under the License.
 import copy
 import logging
 
+from django.conf import settings
 from django.db import models
 from django.utils.timezone import now
 from django.db.models.fields.proxy import OrderWrt
@@ -25,14 +26,6 @@ from simple_history.models import HistoricalRecords, ModelChange, ModelDelta, tr
 
 
 LOG = logging.getLogger('transmission')
-
-
-RELATED_FIELDS_WITH_HISTORY_MAP = {
-    'ship_from_location': 'Location',
-    'ship_to_location': 'Location',
-    'final_destination_location': 'Location',
-    'bill_to_location': 'Location'
-}
 
 
 def get_user(request=None, **kwargs):
@@ -112,8 +105,9 @@ class TxmHistoricalRecords(HistoricalRecords):
                     field_type = models.ForeignKey
                     field_model_name = old_field.name
 
-                    if field_model_name in RELATED_FIELDS_WITH_HISTORY_MAP.keys():
-                        field_args["to"] = f'shipments.Historical{RELATED_FIELDS_WITH_HISTORY_MAP[field_model_name]}'
+                    if field_model_name in settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys():
+                        field_args["to"] = f'shipments.Historical' \
+                                           f'{settings.RELATED_FIELDS_WITH_HISTORY_MAP[field_model_name]}'
                 else:
                     field_type = type(old_field)
 
@@ -149,7 +143,7 @@ class TxmHistoricalRecords(HistoricalRecords):
         attrs = {}
         if instance.__class__.__name__ == 'Shipment':
             for field in self.fields_included(instance):
-                if field.name in RELATED_FIELDS_WITH_HISTORY_MAP.keys():
+                if field.name in settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys():
                     related_instance = getattr(instance, field.name, None)
                     if related_instance:
                         attrs[field.name] = related_instance.history.first()

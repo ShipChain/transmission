@@ -395,8 +395,7 @@ class ChangesDiffSerializer:
         self.queryset = queryset
         self.request = request
 
-        self.relation_fields = ('ship_from_location', 'ship_to_location', 'final_destination_location',
-                                'bill_to_location', )
+        self.relation_fields = settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys()
 
         self.excluded_fields = ('history_user', )
 
