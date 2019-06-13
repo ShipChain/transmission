@@ -56,7 +56,14 @@ class DeviceAWSIoTClient(AWSIoTClient):
                                maxResults=settings.IOT_DEVICES_PAGE_SIZE,
                                nextToken=next_token if next_token else '',)
 
-            list_devices = self._get('devices', query_params=params_dict)
+            try:
+                list_devices = self._get('devices', query_params=params_dict)
+            except AWSIoTError as exc:
+                if 'NotFoundError' in str(exc):
+                    # AwsIoT couldn't list any device for the authenticated User/Org
+                    break
+                else:
+                    raise AWSIoTError(str(exc))
 
             if 'error' in list_devices:
                 LOG.error(f'IoT was not able to fulfill the following request, endpoint: "devices",'
