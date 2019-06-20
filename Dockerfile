@@ -10,7 +10,7 @@ ENV PYTHONUNBUFFERED 1
 # Essential packages for our app environment
 RUN apk add --no-cache bash curl binutils && \
     apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/main/ libcrypto1.1 && \
-    apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj4-dev gdal geos && \
+    apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj-dev gdal geos && \
     curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && \
     apk del curl
 RUN ln -s /usr/lib/libgeos_c.so.1 /usr/local/lib/libgeos_c.so && ln -s /usr/lib/libgdal.so.20 /usr/lib/libgdal.so
