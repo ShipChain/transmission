@@ -19,12 +19,12 @@ from django.views.generic import TemplateView
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework_nested import routers as drf_nested_routers
 
-from apps.routing import OptionalSlashRouter
-from apps.jobs import views as jobs
-from apps.shipments import views as shipments
-from apps.eth import views as eth
 from apps.documents import views as documents
-
+from apps.eth import views as eth
+from apps.jobs import views as jobs
+from apps.management import views as management
+from apps.routing import OptionalSlashRouter
+from apps.shipments import views as shipments
 
 API_PREFIX = r'^api/(?P<version>(v1|v2))'
 
@@ -47,6 +47,7 @@ nested_router.register(r'permission_links', shipments.PermissionLinkViewSet, bas
 nested_router.register(r'history', shipments.ShipmentHistoryListView, base_name='shipment-history')
 
 urlpatterns = [
+    url('health', management.health_check, name='health'),
     url(
         r'(^(api/v1/schema)|^$)',
         TemplateView.as_view(template_name='apidoc.html'),

@@ -18,7 +18,6 @@ then
     echo "Deactivating AWS CLI virtualenv"
     deactivate
 
-    python manage.py migrate
 else
     echo "Waiting for dependencies to come up in the stack"
     /wait-for-it.sh ${REDIS_NAME:-redis_db}:6379
