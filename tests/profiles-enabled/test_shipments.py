@@ -1,11 +1,9 @@
 import copy
 import json
 import re
-import time
 import random
 from unittest import mock
 from urllib.parse import urlencode
-from collections import OrderedDict
 
 import boto3
 import httpretty
@@ -26,6 +24,7 @@ from apps.eth.models import EthAction
 from apps.iot_client import BotoAWSRequestsAuth
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
 from apps.shipments.rpc import Load110RPCClient
+from apps.utils import random_id
 from tests.utils import get_jwt
 from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response, random_timestamp, \
     random_location, Url

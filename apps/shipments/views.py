@@ -256,7 +256,7 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
         return Response(serializer.data)
 
 
-class CurrentDevicesLocations(APIView):
+class ListDevicesStatus(APIView):
     http_method_names = ['get', ]
     permission_classes = (permissions.IsAuthenticated, )
     pagination_class = CustomResponsePagination
