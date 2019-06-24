@@ -18,6 +18,7 @@ then
     echo "Deactivating AWS CLI virtualenv"
     deactivate
 
+    exec "$@"
 else
     echo "Waiting for dependencies to come up in the stack"
     /wait-for-it.sh ${REDIS_NAME:-redis_db}:6379
@@ -28,6 +29,9 @@ else
     then
         python manage.py migrate
     fi
+    USER_ID=${LOCAL_USER_ID:0}
+    GROUP_ID=${LOCAL_GROUP_ID:0}
+    echo "Starting with GUID:UID : $GROUP_ID:$USER_ID"
+    addgroup -g $GROUP_ID -S username && adduser -u $USER_ID -S username -G username
+    exec su-exec $USER_ID:$GROUP_ID "$@"
 fi
-
-exec "$@"

@@ -1,2 +1,2 @@
 #!/bin/bash
-bin/dc run --rm --entrypoint /entrypoint.sh -e IS_DDO=1 django_shell $*
+bin/dc run --rm -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $USER` --entrypoint /entrypoint.sh -e IS_DDO=1 django_shell $*

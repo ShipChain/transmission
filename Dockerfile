@@ -32,7 +32,13 @@ ENTRYPOINT ["/entrypoint.sh"]
 FROM base AS build
 
 # Essential packages for building python packages
-RUN apk add --no-cache build-base git libffi-dev linux-headers jpeg-dev libressl2.7-libssl freetype-dev postgresql-dev
+RUN apk add --no-cache build-base git libffi-dev linux-headers jpeg-dev libressl2.7-libssl freetype-dev postgresql-dev su-exec
+
+
+## Image with additional dependencies for local docker usage ##
+## ========================================================= ##
+FROM build as local
+RUN chmod -R 777 /root/  ## Grant all local users access to poetry
 
 
 ## Image with dev-dependencies ##
