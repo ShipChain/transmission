@@ -72,7 +72,7 @@ services:
   runserver:
     build:
       context: ../
-      target: build
+      target: local
     image: transmission-django-dev
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     ports:

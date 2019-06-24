@@ -35,6 +35,13 @@ FROM base AS build
 RUN apk add --no-cache build-base git libffi-dev linux-headers jpeg-dev libressl2.7-libssl freetype-dev postgresql-dev
 
 
+## Image with additional dependencies for local docker usage ##
+## ========================================================= ##
+FROM build as local
+RUN chmod -R 777 /root/  ## Grant all local users access to poetry
+RUN apk add --no-cache su-exec
+
+
 ## Image with dev-dependencies ##
 ## =========================== ##
 FROM build AS test
