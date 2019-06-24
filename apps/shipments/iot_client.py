@@ -51,7 +51,7 @@ class DeviceAWSIoTClient(AWSIoTClient):
                 'active': active if active is not None else '',
                 'in_bbox': in_bbox if in_bbox else '',
                 'maxResults': settings.IOT_DEVICES_PAGE_SIZE,
-                'nextToken': next_token if (next_token and not (next_token is True)) else ''
+                'nextToken': next_token if next_token and not isinstance(next_token, bool) else ''
             }
 
             try:

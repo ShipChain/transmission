@@ -3,7 +3,6 @@ import json
 import re
 import random
 from unittest import mock
-from urllib.parse import urlencode
 
 import boto3
 import httpretty
@@ -27,7 +26,7 @@ from apps.shipments.rpc import Load110RPCClient
 from apps.utils import random_id
 from tests.utils import get_jwt
 from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response, random_timestamp, \
-    random_location, Url
+    random_location
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
 
@@ -2143,33 +2142,32 @@ class DevicesLocationsAPITests(APITestCase):
         }
 
     @property
-    def iot_enpoints(self):
-        base_iot = f'https://{test_settings.IOT_AWS_HOST}/{test_settings.IOT_GATEWAY_STAGE}/'
-        return [
-            base_iot + f'devices?{self.url_encode_params(OWNER_ID)}',
-            base_iot + f'devices?{self.url_encode_params(OWNER_ID, active=True)}',
-            base_iot + f'devices?{self.url_encode_params(OWNER_ID, active=False)}',
-            base_iot + f'devices?{self.url_encode_params(OWNER_ID, next_token=NEXT_TOKEN)}',
-            base_iot + f'devices?{self.url_encode_params(OWNER_ID, box="-82.5,34.5,-82,35")}',
-        ]
+    def query_params_map(self):
+        return {
+            'call_type_1': self.query_params_dict(OWNER_ID),
+            'call_type_2': self.query_params_dict(OWNER_ID, active=True),
+            'call_type_3': self.query_params_dict(OWNER_ID, active=False),
+            'call_type_4': self.query_params_dict(OWNER_ID, next_token=NEXT_TOKEN),
+            'call_type_5': self.query_params_dict(OWNER_ID, box="-82.5,34.5,-82,35"),
+        }
 
     def side_effects(self, iot_url, **kwargs):
-        url = iot_url
-        for endpoint in self.iot_enpoints:
-            if Url(iot_url) == Url(endpoint):
-                url = endpoint
+        iot_params = kwargs.get('params')
+        found_key = None
+        for key, params in self.query_params_map.items():
+            if params == iot_params:
+                found_key = key
                 break
-        return mocked_rpc_response(self.map_responses[url])
+        return mocked_rpc_response(self.map_responses[found_key])
 
-    def url_encode_params(self, owner_id, next_token='', box='', active=None):
-        param_dict = dict(
-            active=active if active is not None else '',
-            ownerId=owner_id,
-            maxResults=test_settings.IOT_DEVICES_PAGE_SIZE,
-            in_bbox=box,
-            nextToken=next_token
-        )
-        return urlencode(param_dict)
+    def query_params_dict(self, owner_id, next_token='', box='', active=None):
+        return {
+            'active': active if active is not None else '',
+            'ownerId': owner_id,
+            'maxResults': test_settings.IOT_DEVICES_PAGE_SIZE,
+            'in_bbox': box,
+            'nextToken': next_token
+        }
 
     @mock_iot
     def test_get_devices_locations(self):
@@ -2179,7 +2177,7 @@ class DevicesLocationsAPITests(APITestCase):
         url = reverse('devices-status', kwargs={'version': 'v1'})
 
         # The first called url doesn't have the nextToken value
-        self.map_responses[self.iot_enpoints[0]] = self.iot_responses(OWNER_ID)
+        self.map_responses['call_type_1'] = self.iot_responses(OWNER_ID)
 
         with mock.patch('apps.iot_client.requests.Session.get') as mock_get:
             mock_get.side_effect = self.side_effects
@@ -2195,8 +2193,8 @@ class DevicesLocationsAPITests(APITestCase):
             # there should be a second call to IOT_AWS_HOST
             mock_get.reset_mock()
             self.map_responses = {
-                self.iot_enpoints[0]: self.iot_responses(OWNER_ID, next_token=True),
-                self.iot_enpoints[3]: self.iot_responses(OWNER_ID)
+                'call_type_1': self.iot_responses(OWNER_ID, next_token=True),
+                'call_type_4': self.iot_responses(OWNER_ID)
             }
 
             response = self.client.get(url)
@@ -2206,8 +2204,8 @@ class DevicesLocationsAPITests(APITestCase):
             assert mock_get.call_count == 2
 
             # ----------------------- active param validation ------------------------- #
-            self.map_responses[self.iot_enpoints[1]] = self.iot_responses(OWNER_ID, active=True)
-            self.map_responses[self.iot_enpoints[2]] = self.iot_responses(OWNER_ID, active=False)
+            self.map_responses['call_type_2'] = self.iot_responses(OWNER_ID, active=True)
+            self.map_responses['call_type_3'] = self.iot_responses(OWNER_ID, active=False)
 
             # Lower case boolean value should succeed with 200 status code
             active_url = url + '?active=true'
@@ -2227,7 +2225,7 @@ class DevicesLocationsAPITests(APITestCase):
             # ------------------------- Results Pagination test -----------------------#
             mock_get.reset_mock()
             # The api call returns 15 results which should yield 2 pages.
-            self.map_responses = {self.iot_enpoints[0]: self.iot_responses(OWNER_ID, num_devices=15)}
+            self.map_responses = {'call_type_1': self.iot_responses(OWNER_ID, num_devices=15)}
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             page = response.json()
@@ -2269,7 +2267,7 @@ class DevicesLocationsAPITests(APITestCase):
             # A call with well formed in_bbox parameters should succeed with 200 status
             # even with a couple of blank spaces between values
             in_bbox_url = f'{url}?in_bbox=-82.5 ,34.5,-82, 35'
-            self.map_responses = {self.iot_enpoints[4]: self.iot_responses(OWNER_ID)}
+            self.map_responses = {'call_type_5': self.iot_responses(OWNER_ID)}
             response = self.client.get(in_bbox_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
