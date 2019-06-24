@@ -266,11 +266,11 @@ class ListDevicesStatus(APIView):
         owner_id = get_owner_id(request)
         iot_client = DeviceAWSIoTClient()
 
-        serializer = DevicesQueryParamsSerializer(data={'in_bbox': request.query_params.get('in_bbox'),
-                                                        'active': request.query_params.get('active')})
+        serializer = DevicesQueryParamsSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         params = serializer.validated_data
-        devices = iot_client.get_list_owner_devices(owner_id, active=params['active'], in_bbox=params['in_bbox'])
+        devices = iot_client.get_list_owner_devices(owner_id, active=params.get('active'),
+                                                    in_bbox=params.get('in_bbox'))
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(devices, request, view=self)

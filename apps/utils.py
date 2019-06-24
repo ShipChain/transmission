@@ -17,16 +17,6 @@ def random_id():
     return str(uuid4())
 
 
-def is_uuid(uid, version=4):
-
-    from uuid import UUID
-    try:
-        uuid_object = UUID(uid, version=version)
-    except ValueError:
-        return False
-    return bool(uuid_object)
-
-
 def assertDeepAlmostEqual(test_case, expected, actual, *args, **kwargs):  # nopep8 pylint: disable=invalid-name
     """
     Assert that two complex structures have almost equal contents.

@@ -43,38 +43,35 @@ class DeviceAWSIoTClient(AWSIoTClient):
         LOG.debug(f'Getting devices for: {owner_id} from AWS IoT')
         log_metric('transmission.info', tags={'method': 'DeviceAWSIoTClient.get_list_owner_devices'})
 
-        if in_bbox:
-            in_bbox = ','.join([c.strip() for c in in_bbox.split(',')])
-
-        loop = True
-        next_token = None
+        next_token = True
         results = []
-        while loop:
-            params_dict = dict(ownerId=owner_id,
-                               active=active if active is not None else '',
-                               in_bbox=in_bbox if in_bbox else '',
-                               maxResults=settings.IOT_DEVICES_PAGE_SIZE,
-                               nextToken=next_token if next_token else '',)
+        while next_token:
+            params_dict = {
+                'ownerId': owner_id,
+                'active': active if active is not None else '',
+                'in_bbox': in_bbox if in_bbox else '',
+                'maxResults': settings.IOT_DEVICES_PAGE_SIZE,
+                'nextToken': next_token if (next_token and not (next_token is True)) else ''
+            }
 
             try:
                 list_devices = self._get('devices', query_params=params_dict)
             except AWSIoTError as exc:
-                if 'NotFoundError' in str(exc):
+                if 'NotFoundError' in exc.detail:
                     # AwsIoT couldn't list any device for the authenticated User/Org
                     break
                 else:
-                    raise AWSIoTError(str(exc))
+                    raise exc
 
             if 'error' in list_devices:
                 LOG.error(f'IoT was not able to fulfill the following request, endpoint: "devices",'
                           f' params: {params_dict}. Error message: {list_devices["error"]}')
-                raise AWSIoTError("Error in response from AWS IoT")
+                raise AWSIoTError(f'Error in AWS IoT response: {list_devices["error"]}')
 
             new_devices = list_devices['data'].get('devices', None)
             if new_devices:
                 results.extend(new_devices)
 
             next_token = list_devices['data'].get('nextToken', None)
-            loop = True if next_token else False
 
         return results

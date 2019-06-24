@@ -17,7 +17,6 @@ limitations under the License.
 import json
 import logging
 import re
-from urllib.parse import urlencode
 
 import requests
 from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
@@ -70,22 +69,19 @@ class AWSIoTClient:
 
         url = f'https://{settings.IOT_AWS_HOST}/{settings.IOT_GATEWAY_STAGE}/{endpoint}'
 
-        if isinstance(params, dict):
-            url += f'?{urlencode(params)}'
-
         try:
 
             with TimingMetric('transmission_aws_iot.call', tags={'method': generic_endpoint}) as timer:
 
                 if http_method == AWSIoTClient.METHOD_POST:
-                    response = self.session.post(url, data=payload)
+                    response = self.session.post(url, data=payload, params=params)
                     response_json = response.json()
 
                     if response.status_code != status.HTTP_201_CREATED:
                         self._process_error_object(generic_endpoint, response, response_json)
 
                 elif http_method in AWSIoTClient.RESPONSE_200_METHODS:
-                    response = getattr(self.session, http_method)(url, data=payload)
+                    response = getattr(self.session, http_method)(url, data=payload, params=params)
                     response_json = response.json()
 
                     if response.status_code != status.HTTP_200_OK:

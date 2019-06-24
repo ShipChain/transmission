@@ -476,15 +476,15 @@ class ChangesDiffSerializer:
 
 
 class DevicesQueryParamsSerializer(serializers.Serializer):
-    active = serializers.BooleanField(required=False, allow_null=True)
-    in_bbox = serializers.CharField(required=False, allow_null=True)
+    active = serializers.BooleanField(required=False, allow_null=True, default=None)
+    in_bbox = serializers.CharField(required=False, allow_null=True, default=None)
 
     def validate_in_bbox(self, in_bbox):
         long_range = (-180, 180)
         lat_range = (-90, 90)
         box_ranges = (long_range, lat_range, long_range, lat_range)
 
-        if isinstance(in_bbox, str):
+        if in_bbox:
             box_to_list = in_bbox.split(',')
             if not len(box_to_list) == 4:
                 raise exceptions.ValidationError(f'in_box parameter takes 4 position parameters but '
@@ -505,7 +505,7 @@ class DevicesQueryParamsSerializer(serializers.Serializer):
             if in_bbox_num[2] <= in_bbox_num[0] or in_bbox_num[3] <= in_bbox_num[1]:
                 raise exceptions.ValidationError('Invalid geo box, make sure that: '
                                                  'in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4].')
-        if in_bbox:
+
             return ','.join([c.strip() for c in in_bbox.split(',')])
 
         return None
