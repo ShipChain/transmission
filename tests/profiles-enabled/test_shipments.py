@@ -1,7 +1,7 @@
 import copy
 import json
 import re
-import time
+import random
 from unittest import mock
 
 import boto3
@@ -23,8 +23,10 @@ from apps.eth.models import EthAction
 from apps.iot_client import BotoAWSRequestsAuth
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
 from apps.shipments.rpc import Load110RPCClient
+from apps.utils import random_id
 from tests.utils import get_jwt
-from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response
+from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response, random_timestamp, \
+    random_location
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
 
@@ -46,6 +48,7 @@ LOCATION_COUNTRY = 'US'
 BAD_COUNTRY_CODE = 'XY'
 LOCATION_NUMBER = '555-555-5555'
 LOCATION_POSTAL_CODE = '29600'
+NEXT_TOKEN = 'DummyIotNextToken'
 
 mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
 google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
@@ -2073,3 +2076,203 @@ class ShipmentWithIoTAPITests(APITestCase):
             assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
+
+
+class DevicesLocationsAPITests(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user_1 = passive_credentials_auth(get_jwt(username='user1@shipchain.io', sub=OWNER_ID))
+        self.map_responses = {}
+
+    def set_user(self, user, token=None):
+        self.client.force_authenticate(user=user, token=token)
+
+    def iot_responses(self, owner_id, num_devices=5, next_token=False, active=True):
+
+        device_template = {
+            "deviceId": "",
+            "deviceType": "AXLE_GATEWAY",
+            "attributes": {
+                "creationDate": "2019-04-01T00:56:24.037787",
+                "environment": "test",
+                "version": "v.1.1",
+                "registration": "",
+                "owner": owner_id
+            },
+            "deviceGroups": [
+                owner_id,
+            ],
+            "shadowData": {
+                "reported": {
+                    "activated": True,
+                    "connected": True,
+                    "deviceId": "",
+                    "location": {},
+                    "ownerId": owner_id,
+                    "samplingInterval": 600,
+                    "shipmentId": ''
+                },
+                "notSet": None
+            }
+        }
+
+        devices = []
+        for i in range(num_devices):
+            device = copy.deepcopy(device_template)
+            device['deviceId'] = random_id()
+            device['attributes']['creationDate'] = random_timestamp()
+            device['attributes']['registration'] = random_id()
+            device['shadowData']['reported']['location'] = random_location()
+            device['shadowData']['reported']['deviceId'] = device['deviceId']
+            device['shadowData']['reported']['samplingInterval'] = random.randint(60, 900)
+            device['shadowData']['reported']['shipmentId'] = random_id()
+            devices.append(device)
+
+        if not active:
+            devices = devices[:random.randint(1, num_devices)]
+            for device in devices:
+                device['shadowData']['reported']['shipmentId'] = 'na'
+
+        return {
+            'data': {
+                'devices': devices,
+                'nextToken': NEXT_TOKEN if next_token else ''
+            }
+        }
+
+    @property
+    def query_params_map(self):
+        return {
+            'call_type_1': self.query_params_dict(OWNER_ID),
+            'call_type_2': self.query_params_dict(OWNER_ID, active=True),
+            'call_type_3': self.query_params_dict(OWNER_ID, active=False),
+            'call_type_4': self.query_params_dict(OWNER_ID, next_token=NEXT_TOKEN),
+            'call_type_5': self.query_params_dict(OWNER_ID, box="-82.5,34.5,-82,35"),
+        }
+
+    def side_effects(self, iot_url, **kwargs):
+        iot_params = kwargs.get('params')
+        found_key = None
+        for key, params in self.query_params_map.items():
+            if params == iot_params:
+                found_key = key
+                break
+        return mocked_rpc_response(self.map_responses[found_key])
+
+    def query_params_dict(self, owner_id, next_token='', box='', active=None):
+        return {
+            'active': active if active is not None else '',
+            'ownerId': owner_id,
+            'maxResults': test_settings.IOT_DEVICES_PAGE_SIZE,
+            'in_bbox': box,
+            'nextToken': next_token
+        }
+
+    @mock_iot
+    def test_get_devices_locations(self):
+
+        self.set_user(self.user_1)
+
+        url = reverse('devices-status', kwargs={'version': 'v1'})
+
+        # The first called url doesn't have the nextToken value
+        self.map_responses['call_type_1'] = self.iot_responses(OWNER_ID)
+
+        with mock.patch('apps.iot_client.requests.Session.get') as mock_get:
+            mock_get.side_effect = self.side_effects
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()
+            self.assertEqual(len(data['data']), 5)
+            # Only one Api call is made to IOT_AWS_HOST
+            mock_get.assert_called_once()
+
+            # The first called url's response does have the nextToken value,
+            # there should be a second call to IOT_AWS_HOST
+            mock_get.reset_mock()
+            self.map_responses = {
+                'call_type_1': self.iot_responses(OWNER_ID, next_token=True),
+                'call_type_4': self.iot_responses(OWNER_ID)
+            }
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 2 * test_settings.IOT_DEVICES_PAGE_SIZE)
+            assert mock_get.call_count == 2
+
+            # ----------------------- active param validation ------------------------- #
+            self.map_responses['call_type_2'] = self.iot_responses(OWNER_ID, active=True)
+            self.map_responses['call_type_3'] = self.iot_responses(OWNER_ID, active=False)
+
+            # Lower case boolean value should succeed with 200 status code
+            active_url = url + '?active=true'
+            response = self.client.get(active_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # Upper case boolean value should succeed with 200 status code
+            inactive_url = url + '?active=FALSE'
+            response = self.client.get(inactive_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # A request with a query params other than true or false should fail with status code 400
+            bad_param_url = url + '?active=NONBOOLEAN'
+            response = self.client.get(bad_param_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # ------------------------- Results Pagination test -----------------------#
+            mock_get.reset_mock()
+            # The api call returns 15 results which should yield 2 pages.
+            self.map_responses = {'call_type_1': self.iot_responses(OWNER_ID, num_devices=15)}
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            page = response.json()
+            # Two pages results
+            self.assertEqual(len(page['data']), 10)
+            self.assertTrue(page.get('meta', None))
+            self.assertTrue(page.get('links', None))
+            self.assertEqual(page['meta']['pagination']['pages'], 2)
+            self.assertEqual(page['meta']['pagination']['count'], 15)
+            self.assertTrue(page['links']['next'])
+
+            # ---------------------------- in_bbox param validation test ----------------------------#
+            mock_get.reset_mock()
+            # A call with a non numeric value in in_bbox should fail with 400 status
+            in_bbox_url = f'{url}?in_bbox=-82.5,34.5,-82a,35'
+            response = self.client.get(in_bbox_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # A call with a longitude value out of range in in_bbox should fail with 400 status
+            in_bbox_url = f'{url}?in_bbox=-181,34.5,-82,35'
+            response = self.client.get(in_bbox_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # A call with a latitude value out of range in in_bbox should fail with 400 status
+            in_bbox_url = f'{url}?in_bbox=-82.5,34.5,-82,95'
+            response = self.client.get(in_bbox_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # A call with less than 4 in_bbox parameters should fail with 400 status
+            in_bbox_url = f'{url}?in_bbox=-82.5,34.5,-82'
+            response = self.client.get(in_bbox_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # A call with more than 4 in_bbox parameters should fail with 400 status
+            in_bbox_url = f'{url}?in_bbox=-82.5,34.5,-82,45,-25'
+            response = self.client.get(in_bbox_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # A call with well formed in_bbox parameters should succeed with 200 status
+            # even with a couple of blank spaces between values
+            in_bbox_url = f'{url}?in_bbox=-82.5 ,34.5,-82, 35'
+            self.map_responses = {'call_type_5': self.iot_responses(OWNER_ID)}
+            response = self.client.get(in_bbox_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # A valid bbox should respect the rule: the third element should be greater than the first
+            # and the fourth should be greater than the second: in_bbox[0] < in_bbox[2] and in_bbox[1] < in_bbox[3]
+            in_bbox_url = f'{url}?in_bbox=82.5,34.5,-82,45'
+            response = self.client.get(in_bbox_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

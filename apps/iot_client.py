@@ -61,7 +61,7 @@ class AWSIoTClient:
         self.session.headers = {'content-type': 'application/json'}
         self.session.auth = aws_auth
 
-    def _call(self, http_method, endpoint, payload=None):
+    def _call(self, http_method, endpoint, payload=None, params=None):
         generic_endpoint = AWSIoTClient._get_generic_endpoint_for_metric(http_method, endpoint)
 
         if payload:
@@ -74,14 +74,14 @@ class AWSIoTClient:
             with TimingMetric('transmission_aws_iot.call', tags={'method': generic_endpoint}) as timer:
 
                 if http_method == AWSIoTClient.METHOD_POST:
-                    response = self.session.post(url, data=payload)
+                    response = self.session.post(url, data=payload, params=params)
                     response_json = response.json()
 
                     if response.status_code != status.HTTP_201_CREATED:
                         self._process_error_object(generic_endpoint, response, response_json)
 
                 elif http_method in AWSIoTClient.RESPONSE_200_METHODS:
-                    response = getattr(self.session, http_method)(url, data=payload)
+                    response = getattr(self.session, http_method)(url, data=payload, params=params)
                     response_json = response.json()
 
                     if response.status_code != status.HTTP_200_OK:
@@ -106,17 +106,17 @@ class AWSIoTClient:
 
         return response_json
 
-    def _post(self, endpoint, payload=None):
-        return self._call(AWSIoTClient.METHOD_POST, endpoint, payload)
+    def _post(self, endpoint, payload=None, query_params=None):
+        return self._call(AWSIoTClient.METHOD_POST, endpoint, payload, params=query_params)
 
-    def _put(self, endpoint, payload=None):
-        return self._call(AWSIoTClient.METHOD_PUT, endpoint, payload)
+    def _put(self, endpoint, payload=None, query_params=None):
+        return self._call(AWSIoTClient.METHOD_PUT, endpoint, payload, params=query_params)
 
-    def _get(self, endpoint):
-        return self._call(AWSIoTClient.METHOD_GET, endpoint)
+    def _get(self, endpoint, query_params=None):
+        return self._call(AWSIoTClient.METHOD_GET, endpoint, params=query_params)
 
-    def _delete(self, endpoint):
-        return self._call(AWSIoTClient.METHOD_DELETE, endpoint)
+    def _delete(self, endpoint, query_params=None):
+        return self._call(AWSIoTClient.METHOD_DELETE, endpoint, params=query_params)
 
     @staticmethod
     def _get_generic_endpoint_for_metric(http_method, endpoint):

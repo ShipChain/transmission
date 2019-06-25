@@ -473,3 +473,39 @@ class ChangesDiffSerializer:
             queryset_diff.append(self.diff_object_fields(None, queryset[index]))
 
         return queryset_diff
+
+
+class DevicesQueryParamsSerializer(serializers.Serializer):
+    active = serializers.BooleanField(required=False, allow_null=True, default=None)
+    in_bbox = serializers.CharField(required=False, allow_null=True, default=None)
+
+    def validate_in_bbox(self, in_bbox):
+        long_range = (-180, 180)
+        lat_range = (-90, 90)
+        box_ranges = (long_range, lat_range, long_range, lat_range)
+
+        if in_bbox:
+            box_to_list = in_bbox.split(',')
+            if not len(box_to_list) == 4:
+                raise exceptions.ValidationError(f'in_box parameter takes 4 position parameters but '
+                                                 f'{len(box_to_list)}, were passed in.')
+
+            in_bbox_num = []
+            for box_value, rang, index in zip(box_to_list, box_ranges, range(1, 5)):
+                try:
+                    box_value = float(box_value)
+                    in_bbox_num.append(box_value)
+                except ValueError:
+                    raise exceptions.ValidationError(f'in_bbox coordinate: {box_value}, should be type number')
+
+                if not rang[0] <= box_value <= rang[1]:
+                    raise exceptions.ValidationError(f'in_bbox coordinate in position: '
+                                                     f'{index}, value: {box_value}, should be in range: {rang}')
+
+            if in_bbox_num[2] <= in_bbox_num[0] or in_bbox_num[3] <= in_bbox_num[1]:
+                raise exceptions.ValidationError('Invalid geo box, make sure that: '
+                                                 'in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4].')
+
+            return ','.join([c.strip() for c in in_bbox.split(',')])
+
+        return None

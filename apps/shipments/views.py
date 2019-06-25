@@ -11,6 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, status, filters, mixins, renderers
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound, PermissionDenied
 from influxdb_metrics.loader import log_metric
 
@@ -21,13 +22,14 @@ from apps.permissions import owner_access_filter, get_owner_id
 from apps.utils import send_templated_email
 from .filters import ShipmentFilter, HistoricalShipmentFilter
 from .geojson import render_point_features
+from .iot_client import DeviceAWSIoTClient
 from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer
-
+    PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer, DevicesQueryParamsSerializer
 from .tasks import tracking_data_update
+
 
 LOG = logging.getLogger('transmission')
 
@@ -252,3 +254,26 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
             return paginator.get_paginated_response(page)
 
         return Response(serializer.data)
+
+
+class ListDevicesStatus(APIView):
+    http_method_names = ['get', ]
+    permission_classes = (permissions.IsAuthenticated, )
+    pagination_class = CustomResponsePagination
+    renderer_classes = (renderers.JSONRenderer,)
+
+    def get(self, request, *args, **kwargs):
+        owner_id = get_owner_id(request)
+        iot_client = DeviceAWSIoTClient()
+
+        serializer = DevicesQueryParamsSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
+        devices = iot_client.get_list_owner_devices(owner_id, active=params.get('active'),
+                                                    in_bbox=params.get('in_bbox'))
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(devices, request, view=self)
+        if page is not None:
+            return paginator.get_paginated_response(page)
+        return Response(devices, status=status.HTTP_200_OK)

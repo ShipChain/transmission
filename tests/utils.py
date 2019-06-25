@@ -1,6 +1,8 @@
 import re
+import random
 from datetime import timedelta
 from unittest.mock import Mock
+from urllib import parse
 
 import jwt
 from django.conf import settings
@@ -47,3 +49,33 @@ def get_jwt(exp=None, sub='00000000-0000-0000-0000-000000000000', username='fake
 
     return jwt.encode(payload=payload, key=settings.SIMPLE_JWT['PRIVATE_KEY'], algorithm='RS256',
                       headers={'kid': '230498151c214b788dd97f22b85410a5'}).decode('utf-8')
+
+
+def random_timestamp():
+    def is_one(a, b):
+        value = str(random.randint(a, b))
+        if len(value) == 1:
+            return '0' + value
+        return value
+
+    return f'201{random.randint(6,9)}-{is_one(1,9)}-{is_one(1,30)}T{is_one(0,24)}:{is_one(0,59)}:{is_one(0,59)}.' \
+        f'{random.randint(1000,9999)}'
+
+
+def random_location():
+    """
+    :return: Randomly generated location geo point.
+    """
+    return {
+        "geometry": {
+            "coordinates": [random.uniform(-180, 180), random.uniform(-90, 90)],
+            "type": "Point"
+        },
+        "properties": {
+            "source": "Gps",
+            "time": random_timestamp(),
+            "uncertainty": random.randint(0, 99)
+        },
+        "type": "Feature"
+    }
+
