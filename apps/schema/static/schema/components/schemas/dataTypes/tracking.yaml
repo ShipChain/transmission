@@ -1,0 +1,133 @@
+uuid: &uuid
+  $ref: 'dataTypes.yaml#/uuid'
+
+walletId:
+  properties:
+    wallet_id:
+      <<: *uuid
+      title: wallet_id
+      description: Wallet UUID associated with the transaction
+
+version:
+  properties:
+    version:
+      title: version
+      description: Version of the tracking data format
+      type: string
+      example: '1.0.0'
+
+time:
+  properties:
+    time:
+      title: time
+      description: Timestamp of the GPS fix (ISO 8601 format)
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+latitude:
+  properties:
+    latitude:
+      title: latitude
+      description: Latitude at the device's position
+      type: number
+      format: double
+      example: -81.048253
+
+longitude:
+  properties:
+    longitude:
+      title: longitude
+      description: Longitude at the device's position
+      type: number
+      format: double
+      example: 34.628643
+
+altitude:
+  properties:
+    altitude:
+      title: altitude
+      description: Altitude at the device's position
+      type: number
+      example: 924
+
+uncertainty:
+  properties:
+    uncertainty:
+      title: uncertainty
+      description: Estimated accuracy of the GPS fix in meters
+      type: number
+      example: 95
+
+speed:
+  properties:
+    speed:
+      title: speed
+      description: The device's current velocity in m/s
+      type: number
+      example: 34
+
+source:
+  properties:
+    source:
+      title: source
+      description: Geolocation method
+      type: string
+      example: gps
+
+pointCoordinates:
+  title: coordinates
+  description: Tuple of the Latitude and Longitude of the device location
+  example: [-80.123635, 33.018413333333335]
+  type: array
+  items:
+    type: number
+
+lineCoordinates:
+  title: coordinates
+  description: Array of tuples of the Latitude and Longitude of the device location
+  example: [[-80.123635, 33.018413333333335], [-81.123635, 34.018413333333335]]
+  type: array
+  items:
+    type: array
+    items:
+      type: number
+
+linestringTimestamps:
+  properties:
+    linestringTimestamps:
+      title: linestringTimestamps
+      description: Array of timestamps associated with tracking points
+      example: ['2018-07-27T21:07:14', '2018-07-28T21:10:14']
+      type: array
+      items:
+        type: string
+
+point:
+  type: object
+  properties:
+    geometry:
+      type: object
+      description: The GeoJSON geometry associated with this feature
+      properties:
+        type:
+          title: type
+          description: Type of geometry object
+          example: Point
+          type: string
+        coordinates:
+          $ref: '#/pointCoordinates'
+
+line:
+  type: object
+  properties:
+    geometry:
+      type: object
+      description: The GeoJSON geometry associated with this feature
+      properties:
+        type:
+          title: type
+          description: Type of geometry object
+          example: LineString
+          type: string
+        coordinates:
+          $ref: '#/lineCoordinates'

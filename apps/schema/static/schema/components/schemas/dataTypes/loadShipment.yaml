@@ -1,0 +1,162 @@
+shipmentStatus:
+  properties:
+    shipment_status:
+      title: shipment_status
+      description: Status of the shipment
+      type: string
+      enum: [PENDING, RUNNING, FAILED, COMPLETE]
+      example: 'PENDING'
+
+escrowStatus:
+  properties:
+    escrow_status:
+      title: escrow_status
+      description: Status of the escrow
+      type: string
+      enum: [CONTRACT_INITIATED, CONTRACT_SETUP, CONTRACT_COMMITTED, CONTRACT_COMPLETED, CONTRACT_ACCEPTED, CONTRACT_CANCELED]
+      example: 'CONTRACT_INITIATED'
+
+fundingType:
+  properties:
+    funding_type:
+      title: funding_type
+      description: Type of funding for the shipmet
+      type: string
+      enum: [ship, cash, eth]
+      example: 'ship'
+
+shipmentId:
+  properties:
+    shipment_id:
+      title: shipment_id
+      description: Id for the shipment on the engine
+      type: number
+      format: int32
+      example: 0
+
+shipmentAmount:
+  properties:
+    shipment_amount:
+      title: shipment_amount
+      description: Amount for the shipment
+      type: number
+      format: int32
+      example: 1
+
+paidAmount:
+  properties:
+    paid_amount:
+      title: paid_amount
+      description: Cost of the shipment transaction
+      type: number
+      format: int32
+      example: 1
+
+paidTokens:
+  properties:
+    paid_tokens:
+      title: paid_tokens
+      description: Amount of tokens paid with
+      type: number
+      format: double
+      example: '0.000000000000000000'
+
+contractFunded:
+  properties:
+    contract_funded:
+      title: contract_funded
+      description: Whether or not the contract has been funded
+      type: boolean
+      example: true
+
+shipmentCreated:
+  properties:
+    shipment_created:
+      title: shipment_created
+      description: Whether or not the shipment has been created
+      type: boolean
+      example: true
+
+validUntil:
+  properties:
+    valid_until:
+      title: valid_until
+      description: How long the hash is valid
+      type: number
+      format: int32
+      example: 24
+
+startBlock:
+  properties:
+    start_block:
+      title: start_block
+      description: What block the hash starts at
+      type: number
+      format: int32
+      example: 1
+
+endBlock:
+  properties:
+    end_block:
+      title: end_block
+      description: What block the hash ends at
+      type: number
+      format: int32
+      example: 5
+
+escrowFunded:
+  properties:
+    escrow_funded:
+      title: escrow_funded
+      description: Whether or not the escrow has been funded
+      type: boolean
+      example: true
+
+shipmentCommittedByCarrier:
+  properties:
+    shipment_committed_by_carrier:
+      title: shipment_committed_by_carrier
+      description: Whether or not the shipment has been committed by carrier
+      type: boolean
+      example: true
+
+commitmentConfirmedDate:
+  properties:
+    commitment_confirmed_date:
+      title: commitment_confirmed_date
+      description: Whether or not the shipment has been completed by carrier
+      type: string
+      format: date-time
+      example: '2018-06-18T14:54:56.652732Z'
+
+shipmentCompletedByCarrier:
+  properties:
+    shipment_completed_by_carrier:
+      title: shipment_completed_by_carrier
+      description: Whether or not the shipment has been completed by carrier
+      type: boolean
+      example: false
+
+shipmentAcceptedByShipper:
+  properties:
+    shipment_accepted_by_shipper:
+      title: shipment_accepted_by_shipper
+      description: Whether or not the shipment has been accepted by carrier
+      type: boolean
+      example: true
+
+shipmentCanceledByShipper:
+  properties:
+    shipment_canceled_by_shipper:
+      title: shipment_canceled_by_shipper
+      description: Whether or not the shipment has been canceled by shipper
+      type: boolean
+      example: false
+
+escrowPaid:
+  properties:
+    escrow_paid:
+      title: escrow_paid
+      description: Whether or not the escrow has been paid
+      type: boolean
+      example: false

@@ -1,0 +1,62 @@
+resource:
+    properties:
+      type:
+        example: Message
+
+logs:
+  type: object
+  properties:
+    logs:
+      type: array
+      items:
+      - anyOf:
+        - type: string
+        - type: number
+
+attributes:
+  allOf:
+  - $ref: '#/message/type'
+  - $ref: '#/body'
+  - $ref: '#/dataTypes/createdAt'
+
+body:
+  type: object
+  properties:
+    body:
+      type: object
+      allOf:
+      - $ref: '#/message/to'
+      - $ref: '#/message/from'
+      - $ref: '#/logs'
+      - $ref: '#/message/status'
+      - $ref: '#/message/gasUsed'
+      - $ref: '#/message/blockHash'
+      - $ref: '#/message/logsBloom'
+      - $ref: '#/message/blockNumber'
+      - $ref: '#/message/contractAddress'
+      - $ref: '#/message/transactionHash'
+      - $ref: '#/message/transactionIndex'
+      - $ref: '#/message/cumulativeGasUsed'
+
+getResource:
+  allOf:
+  - $ref: '#/resource'
+  - properties:
+      attributes:
+        $ref: '#/attributes'
+
+getResponse:
+  allOf:
+  - $ref: '#/jsonApi/data'
+  - properties:
+      data:
+        $ref: '#/getResource'
+
+jsonApi:
+  $ref: jsonApi.yaml
+
+message:
+  $ref: dataTypes/message.yaml
+
+dataTypes:
+  $ref: dataTypes/dataTypes.yaml

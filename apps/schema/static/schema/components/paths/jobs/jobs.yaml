@@ -1,0 +1,22 @@
+get:
+  summary: List jobs
+  description: >
+    Retrieve an array of `AsyncJob` actions initiated by the user ordered by the `AsyncJob.created_at` date.
+  parameters:
+    - $ref: '../../parameters/parameters.yaml#/page'
+    - $ref: '../../parameters/parameters.yaml#/page_size'
+  tags:
+  - AsyncJobs
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../../schemas/job.yaml#/listResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../../schemas/errors.yaml#/401'

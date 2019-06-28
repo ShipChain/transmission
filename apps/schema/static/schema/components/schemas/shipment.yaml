@@ -1,0 +1,271 @@
+resource:
+  properties:
+    type:
+      example: Shipment
+
+attributes:
+  allOf:
+  - $ref: '#/shipment/ownerId'
+  - $ref: '#/shipment/storageCredentialsId'
+  - $ref: '#/shipment/vaultId'
+  - $ref: '#/shipment/shipperWalletId'
+  - $ref: '#/shipment/carrierWalletId'
+  - $ref: '#/shipment/deviceId'
+  - $ref: '#/dataTypes/createdAt'
+  - $ref: '#/dataTypes/updatedAt'
+  - $ref: '#/shipment/carriersScac'
+  - $ref: '#/shipment/forwardersScac'
+  - $ref: '#/shipment/nvoccScac'
+  - $ref: '#/shipment/shippersReference'
+  - $ref: '#/shipment/forwardersReference'
+  - $ref: '#/shipment/forwardersShipperId'
+  - $ref: '#/shipment/carriersInstructions'
+  - $ref: '#/shipment/proNumber'
+  - $ref: '#/shipment/billMaster'
+  - $ref: '#/shipment/billHouse'
+  - $ref: '#/shipment/billSubhouse'
+  - $ref: '#/shipment/paymentTerms'
+  - $ref: '#/shipment/vesselName'
+  - $ref: '#/shipment/voyageNumber'
+  - $ref: '#/shipment/modeOfTransportCode'
+  - $ref: '#/shipment/packageQty'
+  - $ref: '#/shipment/weightGross'
+  - $ref: '#/shipment/volume'
+  - $ref: '#/shipment/containerQty'
+  - $ref: '#/shipment/weightDim'
+  - $ref: '#/shipment/weightChargeable'
+  - $ref: '#/shipment/docsReceivedAct'
+  - $ref: '#/shipment/docsApprovedAct'
+  - $ref: '#/shipment/pickupAppt'
+  - $ref: '#/shipment/pickupEst'
+  - $ref: '#/shipment/pickupAct'
+  - $ref: '#/shipment/loadingEst'
+  - $ref: '#/shipment/loadingAct'
+  - $ref: '#/shipment/departureEst'
+  - $ref: '#/shipment/departureAct'
+  - $ref: '#/shipment/deliveryApptAct'
+  - $ref: '#/shipment/portArrivalEst'
+  - $ref: '#/shipment/portArrivalAct'
+  - $ref: '#/shipment/deliveryEst'
+  - $ref: '#/shipment/deliveryAct'
+  - $ref: '#/shipment/deliveryAttempt'
+  - $ref: '#/shipment/cancelRequestedDateAct'
+  - $ref: '#/shipment/cancelConfirmedDateAct'
+  - $ref: '#/shipment/customsFiledDateAct'
+  - $ref: '#/shipment/customsHoldDateAct'
+  - $ref: '#/shipment/customsReleaseDateAct'
+  - $ref: '#/shipment/containerType'
+  - $ref: '#/shipment/portArrivalLocode'
+  - $ref: '#/shipment/finalPortLocode'
+  - $ref: '#/shipment/importLocode'
+  - $ref: '#/shipment/ladingLocode'
+  - $ref: '#/shipment/originLocode'
+  - $ref: '#/shipment/usRouted'
+  - $ref: '#/shipment/importCustomsMode'
+  - $ref: '#/shipment/usExportPort'
+  - $ref: '#/shipment/customerFields'
+  - $ref: '#/shipment/specialInstructions'
+  - $ref: '#/shipment/trailerNumber'
+  - $ref: '#/shipment/sealNumber'
+  - $ref: '#/shipment/isMasterBOL'
+  - $ref: '#/shipment/nmfcClass'
+  - $ref: '#/shipment/isHazmat'
+
+meta:
+  allOf:
+  - $ref: '#/dataTypes/asyncJobId'
+
+getResource:
+  allOf:
+  - $ref: '#/resource'
+  - properties:
+      attributes:
+        $ref: '#/attributes'
+      relationships:
+        $ref: '#/relationships'
+
+getResponse:
+  allOf:
+  - $ref: '#/jsonApi/data'
+  - properties:
+      data:
+        $ref: '#/getResource'
+      included:
+        $ref: '#/included'
+
+loadData:
+  type: object
+  title: load_data
+  description: Smart contract data associated with the shipment
+  properties:
+    load_data:
+      $ref: '#/loadData'
+
+shipToLocation:
+  type: object
+  title: ship_to_location
+  description: ship_to_location associated with the shipment
+  properties:
+    ship_to_location:
+      $ref: '#/shipment/locationData'
+
+shipFromLocation:
+  type: object
+  title: ship_from_location
+  description: ship_from_location associated with the shipment
+  properties:
+    ship_from_location:
+      $ref: '#/shipment/locationData'
+
+finalDestinationLocation:
+  type: object
+  title: final_destination_location
+  description: final_destination_location associated with the shipment
+  properties:
+    final_destination_location:
+      $ref: '#/shipment/locationData'
+
+billToLocation:
+  type: object
+  title: bill_to_location
+  description: bill_to_location associated with the shipment
+  properties:
+    bill_to_location:
+      $ref: '#/shipment/locationData'
+
+relationships:
+  type: array
+  items:
+  - allOf:
+    - $ref: '#/loadData'
+    - $ref: '#/shipToLocation'
+    - $ref: '#/shipFromLocation'
+    - $ref: '#/finalDestinationLocation'
+    - $ref: '#/billToLocation'
+
+createAttributes:
+  allOf:
+  - $ref: '#/shipment/storageCredentialsId'
+  - $ref: '#/shipment/ownerId'
+  - $ref: '#/shipment/vaultId'
+  - $ref: '#/shipment/shipperWalletId'
+  - $ref: '#/shipment/carrierWalletId'
+  - $ref: '#/shipment/deviceId'
+  - $ref: '#/dataTypes/createdAt'
+  - $ref: '#/dataTypes/updatedAt'
+  - $ref: '#/shipment/carriersScac'
+  - $ref: '#/shipment/forwardersScac'
+  - $ref: '#/shipment/nvoccScac'
+  - $ref: '#/shipment/shippersReference'
+  - $ref: '#/shipment/forwardersReference'
+  - $ref: '#/shipment/forwardersShipperId'
+  - $ref: '#/shipment/carriersInstructions'
+  - $ref: '#/shipment/proNumber'
+  - $ref: '#/shipment/billMaster'
+  - $ref: '#/shipment/billHouse'
+  - $ref: '#/shipment/billSubhouse'
+  - $ref: '#/shipment/paymentTerms'
+  - $ref: '#/shipment/vesselName'
+  - $ref: '#/shipment/voyageNumber'
+  - $ref: '#/shipment/modeOfTransportCode'
+  - $ref: '#/shipment/packageQty'
+  - $ref: '#/shipment/weightGross'
+  - $ref: '#/shipment/volume'
+  - $ref: '#/shipment/containerQty'
+  - $ref: '#/shipment/weightDim'
+  - $ref: '#/shipment/weightChargeable'
+  - $ref: '#/shipment/docsReceivedAct'
+  - $ref: '#/shipment/docsApprovedAct'
+  - $ref: '#/shipment/pickupAppt'
+  - $ref: '#/shipment/pickupEst'
+  - $ref: '#/shipment/pickupAct'
+  - $ref: '#/shipment/loadingEst'
+  - $ref: '#/shipment/loadingAct'
+  - $ref: '#/shipment/departureEst'
+  - $ref: '#/shipment/departureAct'
+  - $ref: '#/shipment/deliveryApptAct'
+  - $ref: '#/shipment/portArrivalEst'
+  - $ref: '#/shipment/portArrivalAct'
+  - $ref: '#/shipment/deliveryEst'
+  - $ref: '#/shipment/deliveryAct'
+  - $ref: '#/shipment/deliveryAttempt'
+  - $ref: '#/shipment/cancelRequestedDateAct'
+  - $ref: '#/shipment/cancelConfirmedDateAct'
+  - $ref: '#/shipment/customsFiledDateAct'
+  - $ref: '#/shipment/customsHoldDateAct'
+  - $ref: '#/shipment/customsReleaseDateAct'
+  - $ref: '#/shipment/containerType'
+  - $ref: '#/shipment/portArrivalLocode'
+  - $ref: '#/shipment/finalPortLocode'
+  - $ref: '#/shipment/importLocode'
+  - $ref: '#/shipment/ladingLocode'
+  - $ref: '#/shipment/originLocode'
+  - $ref: '#/shipment/usRouted'
+  - $ref: '#/shipment/importCustomsMode'
+  - $ref: '#/shipment/usExportPort'
+  - $ref: '#/shipment/customerFields'
+  - $ref: '#/shipment/specialInstructions'
+  - $ref: '#/shipment/trailerNumber'
+  - $ref: '#/shipment/sealNumber'
+  - $ref: '#/shipment/isMasterBOL'
+  - $ref: '#/shipment/nmfcClass'
+  - $ref: '#/shipment/isHazmat'
+
+createResource:
+  allOf:
+  - $ref: '#/resource'
+  - properties:
+      attributes:
+        $ref: '#/createAttributes'
+      relationships:
+        $ref: '#/relationships'
+      meta:
+        $ref: '#/meta'
+
+createResponse:
+  allOf:
+  - $ref: '#/getResponse'
+  - properties:
+      data:
+        properties:
+          meta:
+            $ref: '#/meta'
+
+included:
+  type: array
+  items:
+  - $ref: '#/loadShipment/getResource'
+  - $ref: '#/location/getResource'
+  - $ref: '#/location/getResource'
+  - $ref: '#/location/getResource'
+  - $ref: '#/location/getResource'
+
+listResponse:
+  allOf:
+  - $ref: '#/jsonApi/dataArray'
+  - $ref: '#/jsonApi/linksAndMeta'
+  - properties:
+      data:
+        items:
+          $ref: '#/getResource'
+      included:
+        items:
+          $ref: '#/included'
+
+shipment:
+  $ref: dataTypes/shipment.yaml
+
+dataTypes:
+  $ref: dataTypes/dataTypes.yaml
+
+loadShipment:
+  $ref: loadShipment.yaml
+
+location:
+  $ref: location.yaml
+
+messageRef:
+  $ref: message.yaml
+
+jsonApi:
+  $ref: jsonApi.yaml

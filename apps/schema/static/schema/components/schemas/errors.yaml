@@ -1,0 +1,35 @@
+strings:
+- &response_401 "Unauthorized"
+- &response_500 "Internal server error"
+
+401:
+  allOf:
+  - $ref: '#/jsonApi/error'
+  - $ref: '#/jsonApi/errorPointer'
+  - properties:
+      errors:
+        items:
+          properties:
+            detail:
+              example: *response_401
+            source:
+              properties:
+                pointer:
+                  example: "/data"
+            status:
+              example: "401"
+
+500:
+  allOf:
+  - $ref: '#/jsonApi/error'
+  - properties:
+      errors:
+        items:
+          properties:
+            detail:
+              example: *response_500
+            status:
+              example: "500"
+
+jsonApi:
+  $ref: jsonApi.yaml

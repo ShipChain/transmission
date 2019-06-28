@@ -1,0 +1,18 @@
+delete:
+  summary: Delete a permission link
+  description: >
+    Delete the `PermissionLink` object from Transmission.
+  parameters:
+  - $ref: '../../parameters/shipmentParams.yaml#/permissionLinkId'
+  - $ref: '../../parameters/shipmentParams.yaml#/path'
+  tags:
+  - Shipments
+  responses:
+    '204':
+      description: "Success"
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../../schemas/errors.yaml#/401'

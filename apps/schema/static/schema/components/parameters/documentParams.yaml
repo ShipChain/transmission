@@ -1,0 +1,37 @@
+path:
+  required: true
+  name: document_id
+  in: path
+  description: ID of the Document
+  schema:
+    $ref: '#/dataTypes/uuid'
+
+fileType:
+  required: false
+  in: query
+  name: file_type
+  description: Type of file extension to filter by
+  schema:
+    type: string
+    enum: [PDF, JPEG, PNG]
+
+documentType:
+  required: false
+  in: query
+  name: document_type
+  description: Document category to filter by
+  schema:
+    type: string
+    enum: [BOL, IMAGE, OTHER]
+
+uploadStatus:
+  required: false
+  in: query
+  name: upload_status
+  description: Upload status of the files to filter by
+  schema:
+    type: string
+    enum: [PENDING, COMPLETE, FAILED]
+
+dataTypes:
+  $ref: ../schemas/dataTypes/dataTypes.yaml

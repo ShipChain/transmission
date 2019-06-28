@@ -1,0 +1,62 @@
+resource:
+  properties:
+    type:
+      example: PermissionLink
+
+attributes:
+  allOf:
+    - $ref: '#/permissionLinks/name'
+    - $ref: '#/permissionLinks/expirationDate'
+    - $ref: '#/permissionLinks/shipmentId'
+    - $ref: '#/dataTypes/createdAt'
+
+createAttributes:
+  allOf:
+    - $ref: '#/permissionLinks/name'
+    - $ref: '#/permissionLinks/expirationDate'
+
+getResource:
+  allOf:
+    - $ref: '#/resource'
+    - properties:
+        attributes:
+          $ref: '#/attributes'
+
+getResponse:
+  allOf:
+    - $ref: '#/jsonApi/data'
+    - properties:
+        data:
+          $ref: '#/getResource'
+
+listResponse:
+  allOf:
+    - $ref: '#/jsonApi/dataArray'
+    - $ref: '#/jsonApi/linksAndMeta'
+    - properties:
+        data:
+          items:
+            $ref: '#/getResource'
+
+createRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/createResource'
+
+createResource:
+  allOf:
+    - $ref: '#/resource'
+    - properties:
+        attributes:
+          $ref: '#/createAttributes'
+
+permissionLinks:
+  $ref: dataTypes/permissionLinks.yaml
+
+dataTypes:
+  $ref: dataTypes/dataTypes.yaml
+
+jsonApi:
+  $ref: jsonApi.yaml

@@ -1,0 +1,64 @@
+uuid: &uuid
+  type: string
+  format: uuid
+  description: Unique UUID for this resource
+  example: '1243d23b-e2fc-475a-8290-0e4f53479553'
+
+email:
+  title: email
+  description: Recepient email address
+  type: string
+  format: email
+  example: user@email.com
+
+shipmentId:
+  properties:
+    shipment_id:
+      <<: *uuid
+      title: shipment_id
+      description: Shipment's UUID
+
+documentId:
+  properties:
+    document_id:
+      <<: *uuid
+      title: document_id
+      description: Document's UUID
+
+asyncJobId:
+  properties:
+    async_job_id:
+      <<: *uuid
+      title: async_job_id
+      description: AsyncJob's UUID
+
+walletId:
+  properties:
+    wallet_id:
+      <<: *uuid
+      title: wallet_id
+      description: Wallet's UUID
+
+resourceId:
+  properties:
+    id:
+      <<: *uuid
+      title: id
+
+createdAt:
+  properties:
+    created_at:
+      title: created_at
+      description: Date/time of resource creation
+      type: string
+      format: date-time
+      example: '2018-06-18T14:54:56.652732Z'
+
+updatedAt:
+  properties:
+    updated_at:
+      title: updated_at
+      description: Date/time of last resource modification
+      type: string
+      format: date-time
+      example: '2018-06-18T14:54:56.652732Z'

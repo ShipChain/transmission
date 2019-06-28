@@ -1,0 +1,58 @@
+get:
+  summary: List permission links
+  description: >
+    Get list of `PermissionLink`s associated with the `Shipment`.
+  parameters:
+   - $ref: '../../parameters/parameters.yaml#/page'
+   - $ref: '../../parameters/parameters.yaml#/page_size'
+   - $ref: '../../parameters/shipmentParams.yaml#/path'
+  tags:
+    - Shipments
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../../schemas/permissionLinks.yaml#/listResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../../schemas/errors.yaml#/401'
+
+post:
+  summary: Create permission link
+  description: |
+    Create a new `PermissionLink` associated with the `Shipment` and e-mail a list of recipients if provited.
+
+    This `PermissionLink` provides read-only access to the `Shipment`.
+  tags:
+    - Shipments
+  responses:
+    '201':
+      description: "Created"
+      content:
+        application/json:
+          schema:
+            $ref: '../../schemas/permissionLinks.yaml#/getResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../../schemas/errors.yaml#/401'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: '../../requestBodies/permissionLinks.yaml#/createRequest'
+      application/json:
+        schema:
+          allOf:
+            - $ref: '../../requestBodies/permissionLinks.yaml#/createAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+            - $ref: '../../requestBodies/permissionLinks.yaml#/createAttributes'

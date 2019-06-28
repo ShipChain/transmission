@@ -1,0 +1,7 @@
+JWT:
+  description: >
+    All authenticated service calls must contain a valid JWT id_token obtained from the [ShipChain Profiles](https://profiles.shipchain.io)
+    OIDC provider and passed via the Authentication header.
+  type: http
+  scheme: bearer
+  bearerFormat: JWT {id_token}

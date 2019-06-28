@@ -1,0 +1,22 @@
+get:
+  summary: Get tracking data
+  description: >
+    Retrieve GPS tracking data associated with a `Shipment` as a GeoJSON FeatureCollection of points (content returned in 'data' attribute conforms to the [GeoJSON](https://tools.ietf.org/html/rfc7946) spec).
+  parameters:
+  - $ref: '../../parameters/shipmentParams.yaml#/path'
+  tags:
+  - Shipments
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            oneOf:
+            - $ref: '../../schemas/tracking.yaml#/pointResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../../schemas/errors.yaml#/401'

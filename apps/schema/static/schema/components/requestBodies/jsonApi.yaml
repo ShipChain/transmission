@@ -1,0 +1,18 @@
+createResource:
+  type: object
+  description: Primary data related to the resource
+  properties:
+    type:
+      type: string
+      title: type
+      description: Type of resource
+    attributes:
+      type: object
+      title: attributes
+      description: Properties of the resource
+
+createData:
+  properties:
+    data:
+      type: object
+      $ref: '#/createResource'
