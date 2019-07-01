@@ -56,31 +56,7 @@ paths:
     $ref: components/paths/shipments/tracking.yaml
 
   /api/v1/shipments/{shipment_id}/history/:
-    get:
-      summary: List Shipment history
-      description: >
-        Retrieve a list of historical changes to a `Shipment`.
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/page_size'
-        - $ref: '#/components/parameters/shipmentHistory/historyDateLessThan'
-        - $ref: '#/components/parameters/shipmentHistory/historyDateGreaterThan'
-      tags:
-        - Shipments
-      responses:
-        '200':
-          description: *response_200
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/shipmentHistory/listResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
-
+    $ref: components/paths/shipments/shipmentHistory.yaml
 
   /api/v1/jobs/:
     $ref: components/paths/jobs/jobs.yaml
@@ -98,28 +74,7 @@ paths:
     $ref: components/paths/devices/deviceTracking.yaml
 
   /api/v1/devices/status/:
-    get:
-      summary: List device statuses
-      description: >
-        List all current `Device` statuses/configurations for an organization
-      parameters:
-        - $ref: '#/components/parameters/deviceStatus/active'
-        - $ref: '#/components/parameters/deviceStatus/inBbox'
-      tags:
-        - Devices
-      responses:
-        '200':
-          description: *response_200
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/device/listResponse'
-        '401':
-          description: *response_401
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/errors/401'
+    $ref: components/paths/devices/deviceStatus.yaml
 
 components:
   securitySchemes:

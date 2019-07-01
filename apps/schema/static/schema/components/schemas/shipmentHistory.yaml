@@ -1,0 +1,63 @@
+shipmentFields:
+  properties:
+    fields:
+      type: array
+      title: fields
+      description: Changed values of the resource's field
+      items:
+        $ref: '#/shipmentFieldChanges'
+
+shipmentFieldChanges:
+    type: object
+    description: Changes to the related field
+    allOf:
+      - $ref: '#/shipmentHistory/shipmentField'
+      - $ref: '#/shipmentHistory/shipmentFieldNew'
+      - $ref: '#/shipmentHistory/shipmentFieldOld'
+
+locationFieldChanges:
+  type: object
+  description: Changes to the related field
+  allOf:
+    - $ref: '#/shipmentHistory/locationField'
+    - $ref: '#/shipmentHistory/locationFieldNew'
+    - $ref: '#/shipmentHistory/locationFieldOld'
+
+relationships:
+  properties:
+    relationships:
+      type: object
+      title: relationships
+      description: Changes of the related objects
+      allOf:
+        - $ref: '#/relatedObjectChanges'
+
+relatedObjectChanges:
+  properties:
+    ship_to_location:
+      type: array
+      title: ship_to_location
+      description: Relationship field name
+      items:
+        $ref: '#/locationFieldChanges'
+
+listResponse:
+  allOf:
+    - $ref: '#/jsonApi/linksAndMeta'
+    - properties:
+        data:
+          items:
+            $ref: '#/getResource'
+
+getResource:
+  allOf:
+    - $ref: '#/shipmentHistory/historyDate'
+    - $ref: '#/shipmentHistory/author'
+    - $ref: '#/shipmentFields'
+    - $ref: '#/relationships'
+
+shipmentHistory:
+  $ref: dataTypes/shipmentHistory.yaml
+
+jsonApi:
+  $ref: jsonApi.yaml

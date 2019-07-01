@@ -1,0 +1,17 @@
+active:
+  name: active
+  in: query
+  description: Device's location reporting status at the moment of the request
+  required: false
+  schema:
+    type: boolean
+    enum: [true, false]
+
+inBbox:
+  name: in_bbox
+  in: query
+  description: Device's location viewport box coordinates, in the form `minLon, minLat, maxLon, maxLat`
+  required: false
+  schema:
+    type: string
+    example: -82.5,34.5,-83,36

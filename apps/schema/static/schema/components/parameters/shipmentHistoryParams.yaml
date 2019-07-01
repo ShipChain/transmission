@@ -1,0 +1,18 @@
+historyDateLessThan:
+  required: false
+  in: query
+  name: history_date__lte
+  description: Query for changes with Date time less than the provided value
+  schema:
+    type: string
+    format: date-time
+    example: '2019-06-05T14:54:56-04:00'
+
+historyDateGreaterThan:
+  required: false
+  in: query
+  name: history_date__gte
+  description: Query for changes with Date time grester than the provided value
+  schema:
+    type: string
+    format: date-time
