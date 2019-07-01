@@ -242,24 +242,23 @@ class PermissionLinkSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only = ('shipment',)
 
+    def validate_expiration_date(self, expiration_date):
+        if expiration_date <= datetime.now(timezone.utc):
+            raise exceptions.ValidationError('The expiration date should be greater than actual date')
+        return expiration_date
 
-class PermissionLinkCreateSerializer(serializers.ModelSerializer):
+
+class PermissionLinkCreateSerializer(PermissionLinkSerializer):
     emails = serializers.ListField(
         child=serializers.EmailField(),
         min_length=0,
         required=False
     )
-    shipment_id = serializers.CharField(max_length=36, required=False)
 
     class Meta:
         model = PermissionLink
-        fields = ('name', 'expiration_date', 'emails', 'shipment_id')
+        fields = ('name', 'expiration_date', 'emails')
         read_only = ('shipment',)
-
-    def validate_expiration_date(self, expiration_date):
-        if expiration_date <= datetime.now(timezone.utc):
-            raise exceptions.ValidationError('The expiration date should be greater than actual date')
-        return expiration_date
 
 
 class ShipmentTxSerializer(serializers.ModelSerializer):
