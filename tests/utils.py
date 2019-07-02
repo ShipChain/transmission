@@ -32,12 +32,16 @@ def mocked_rpc_response(json, code=200):
     return response
 
 
-def get_jwt(exp=None, sub='00000000-0000-0000-0000-000000000000', username='fake@shipchain.io', organization_id=None):
+def get_jwt(exp=None, sub='00000000-0000-0000-0000-000000000000', username='fake@shipchain.io',
+            organization_id=None, monthly_rate_limit=None):
     payload = {'email': username, 'username': username, 'sub': sub,
                'aud': '892633'}
 
     if organization_id:
         payload['organization_id'] = organization_id
+
+    if monthly_rate_limit:
+        payload['monthly_rate_limit'] = monthly_rate_limit
 
     now = aware_utcnow()
     if exp:
