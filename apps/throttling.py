@@ -1,6 +1,11 @@
+import logging
 from calendar import monthrange
 from datetime import datetime
+from influxdb_metrics.loader import log_metric
+
 from rest_framework import throttling
+
+LOG = logging.getLogger('transmission')
 
 
 # pylint: disable=attribute-defined-outside-init
@@ -20,6 +25,7 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
         return request.user.token.get('organization_id', None)
 
     def allow_request(self, request, view):
+        LOG.debug('Checking request for throttling')
 
         if request.method == 'GET':
             return True
@@ -29,8 +35,8 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
         if not self.key:
             return True
 
+
         self.history = self.cache.get(cache_key, [])
-        # self.now = datetime.now().day * 86400
         self.now = datetime.now().timestamp()
         self.num_requests = request.user.token.get('monthly_rate_limit', None)
 
@@ -39,7 +45,13 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
         while self.history and self.history[-1] <= self.now - self.duration:
             self.history.pop()
         if not self.num_requests:
+            log_metric('transmission.info', tags={'method': 'throttling.MonthlyRateThrottle', 'module': __name__,
+                                                  'organization_id': self.key, 'success': True})
             return self.throttle_success()
         if len(self.history) >= self.num_requests:
+            log_metric('transmission.info', tags={'method': 'throttling.MonthlyRateThrottle', 'module': __name__,
+                                                  'organization_id': self.key, 'success': False})
             return self.throttle_failure()
+        log_metric('transmission.info', tags={'method': 'throttling.MonthlyRateThrottle', 'module': __name__,
+                                              'organization_id': self.key, 'success': True})
         return self.throttle_success()
