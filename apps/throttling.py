@@ -8,15 +8,16 @@ from rest_framework import throttling
 LOG = logging.getLogger('transmission')
 
 
-# pylint: disable=attribute-defined-outside-init
+# pylint: disable=attribute-defined-outside-init, super-init-not-called
 class MonthlyRateThrottle(throttling.SimpleRateThrottle):
-    scope = 'user'
+    def __init__(self):
+        self.parse_rate()
+        # Rate limit is dynamically extracted from JWT
 
-    def parse_rate(self, rate):
+    def parse_rate(self, rate=None):
         month = datetime.now().month
         year = datetime.now().year
-        duration = monthrange(year, month)[1] * 86400
-        return (None, duration)
+        self.duration = monthrange(year, month)[1] * 86400
 
     def get_cache_key(self, request, view):
         if not request.user.is_authenticated:
@@ -34,7 +35,6 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
 
         if not self.key:
             return True
-
 
         self.history = self.cache.get(cache_key, [])
         self.now = datetime.now().timestamp()
