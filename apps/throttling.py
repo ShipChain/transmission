@@ -11,13 +11,10 @@ LOG = logging.getLogger('transmission')
 # pylint: disable=attribute-defined-outside-init, super-init-not-called
 class MonthlyRateThrottle(throttling.SimpleRateThrottle):
     def __init__(self):
-        self.parse_rate()
-        # Rate limit is dynamically extracted from JWT
-
-    def parse_rate(self, rate=None):
         month = datetime.now().month
         year = datetime.now().year
         self.duration = monthrange(year, month)[1] * 86400
+        # Rate limit is dynamically extracted from JWT
 
     def get_cache_key(self, request, view):
         if not request.user.is_authenticated:
