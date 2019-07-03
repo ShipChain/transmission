@@ -37,6 +37,9 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
         self.now = datetime.now().timestamp()
         self.num_requests = request.user.token.get('monthly_rate_limit', None)
 
+        if not self.num_requests:
+            return True
+
         # Drop any requests from the history which have now passed the
         # throttle duration
         while self.history and self.history[-1] <= self.now - self.duration:
