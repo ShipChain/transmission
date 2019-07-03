@@ -1,0 +1,31 @@
+createResource:
+  allOf:
+    - $ref: 'schema.yaml#/resource'
+    - properties:
+        attributes:
+          $ref: '#/createAttributes'
+
+createAttributes:
+  required:
+    - file_type
+    - document_type
+    - name
+  allOf:
+    - $ref: '#/document/name'
+    - $ref: '#/document/description'
+    - $ref: '#/document/documentType'
+    - $ref: '#/document/fileType'
+    - $ref: '#/document/uploadStatus'
+
+createRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/createResource'
+
+document:
+  $ref: dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/requestBody.yaml

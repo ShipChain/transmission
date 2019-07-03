@@ -1,0 +1,126 @@
+resource:
+  allOf:
+  - $ref: '../core/dataTypes.yaml#/resourceId'
+  - $ref: '#/jsonApi/createResource'
+  - type: object
+    description: Primary data related to the resource
+
+dataArray:
+  properties:
+    data:
+      type: array
+      description: A list of resources returned for this request
+      items:
+        $ref: '#/resource'
+
+linksAndMeta:
+  properties:
+    links:
+      $ref: '#/links'
+    meta:
+      $ref: '#/meta'
+
+data:
+  properties:
+    data:
+      $ref: '#/resource'
+
+links:
+  type: object
+  description: Links related to the primary data.
+  properties:
+    first:
+      title: first
+      description: Link to first page of the list
+      type: string
+      example: '/api/v1/{object-type}/?page=1'
+    last:
+      title: last
+      description: Link to last page of the list
+      type: string
+      example: '/api/v1/{object-type}/?page=4'
+    next:
+      title: next
+      description: Link to next page of the list
+      type: string
+      example: '/api/v1/{object-type}/?page=3'
+    previous:
+      title: previous
+      description: Link to previous page of the list
+      type: string
+      example: '/api/v1/{object-type}/?page=2'
+
+meta:
+  type: object
+  description: Non-standard meta-information.
+  properties:
+    pagination:
+      type: object
+      properties:
+        count:
+          title: count
+          description: Total number of resources associated with user
+          type: integer
+          format: int32
+          example: '1'
+        page:
+          title: page
+          description: Current page
+          type: integer
+          format: int32
+          example: '1'
+        pages:
+          title: pages
+          description: Number of pages of resources
+          type: integer
+          format: int32
+          example: '1'
+
+error:
+  properties:
+    errors:
+      type: array
+      items:
+        type: object
+        properties:
+          status:
+            description: The HTTP status code applicable to this problem, expressed as a string value.
+            type: string
+          detail:
+            description: A human-readable explanation specific to this occurrence of the problem.
+            type: string
+
+errorPointer:
+  properties:
+    errors:
+      type: array
+      description: An array of error objects
+      items:
+        type: object
+        description: Error objects provide additional information about problems encountered while performing an operation.
+        properties:
+          source:  # Not present on all errors
+            description: An object containing references to the source of the error, optionally including any of the following members.
+            type: object
+            properties:
+              pointer:
+                description: A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].
+                type: string
+
+errorParameter:
+  properties:
+    errors:
+      type: array
+      items:
+        type: object
+        properties:
+          source:  # Not present on all errors
+            description: An object containing references to the source of the error, optionally including any of the following members.
+            type: object
+            properties:
+              parameter:
+                description: A string indicating which URI query parameter caused the error.
+                type: string
+
+jsonApi:
+  $ref: requestBody.yaml

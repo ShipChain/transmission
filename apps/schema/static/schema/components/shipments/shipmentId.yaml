@@ -1,0 +1,75 @@
+get:
+  summary: Get shipment details
+  description: >
+    Get additional info about a `Shipment`.
+  parameters:
+    - $ref: 'parameters.yaml#/permissionLinkId'
+    - $ref: 'parameters.yaml#/path'
+  tags:
+  - Shipments
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/getResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+
+delete:
+  summary: Delete a shipment
+  description: >
+    Delete the `Shipment` object from Transmission.
+  parameters:
+  - $ref: 'parameters.yaml#/path'
+  tags:
+  - Shipments
+  responses:
+    '204':
+      description: "Success"
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+
+patch:
+  summary: Update a shipment
+  description: >
+    Update a `Shipment` object with the provided parameters.
+  parameters:
+    - $ref: 'parameters.yaml#/path'
+  tags:
+  - Shipments
+  responses:
+    '202':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/createResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: 'requestBody.yaml#/patchRequest'
+      application/json:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/patchAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/patchAttributes'

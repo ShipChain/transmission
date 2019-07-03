@@ -1,0 +1,177 @@
+createResource:
+  allOf:
+  - $ref: 'schema.yaml#/resource'
+  - properties:
+      attributes:
+        $ref: '#/createAttributes'
+
+patchResource:
+  allOf:
+    - $ref: 'schema.yaml#/resource'
+    - properties:
+        attributes:
+          $ref: '#/patchAttributes'
+
+createAttributes:
+  required:
+  - shipper_wallet_id
+  - carrier_wallet_id
+  - storage_credentials_id
+  allOf:
+  - $ref: '#/shipment/storageCredentialsId'
+  - $ref: '#/shipment/vaultId'
+  - $ref: '#/shipment/shipperWalletId'
+  - $ref: '#/shipment/carrierWalletId'
+  - $ref: '#/shipment/deviceId'
+  - $ref: '#/shipment/carriersScac'
+  - $ref: '#/shipment/forwardersScac'
+  - $ref: '#/shipment/nvoccScac'
+  - $ref: '#/shipment/shippersReference'
+  - $ref: '#/shipment/forwardersReference'
+  - $ref: '#/shipment/forwardersShipperId'
+  - $ref: '#/shipment/carriersInstructions'
+  - $ref: '#/shipment/proNumber'
+  - $ref: '#/shipment/billMaster'
+  - $ref: '#/shipment/billHouse'
+  - $ref: '#/shipment/billSubhouse'
+  - $ref: '#/shipment/paymentTerms'
+  - $ref: '#/shipment/vesselName'
+  - $ref: '#/shipment/voyageNumber'
+  - $ref: '#/shipment/modeOfTransportCode'
+  - $ref: '#/shipment/packageQty'
+  - $ref: '#/shipment/weightGross'
+  - $ref: '#/shipment/volume'
+  - $ref: '#/shipment/containerQty'
+  - $ref: '#/shipment/weightDim'
+  - $ref: '#/shipment/weightChargeable'
+  - $ref: '#/shipment/docsReceivedAct'
+  - $ref: '#/shipment/docsApprovedAct'
+  - $ref: '#/shipment/pickupAppt'
+  - $ref: '#/shipment/pickupEst'
+  - $ref: '#/shipment/pickupAct'
+  - $ref: '#/shipment/loadingEst'
+  - $ref: '#/shipment/loadingAct'
+  - $ref: '#/shipment/departureEst'
+  - $ref: '#/shipment/departureAct'
+  - $ref: '#/shipment/deliveryApptAct'
+  - $ref: '#/shipment/portArrivalEst'
+  - $ref: '#/shipment/portArrivalAct'
+  - $ref: '#/shipment/deliveryEst'
+  - $ref: '#/shipment/deliveryAct'
+  - $ref: '#/shipment/deliveryAttempt'
+  - $ref: '#/shipment/cancelRequestedDateAct'
+  - $ref: '#/shipment/cancelConfirmedDateAct'
+  - $ref: '#/shipment/customsFiledDateAct'
+  - $ref: '#/shipment/customsHoldDateAct'
+  - $ref: '#/shipment/customsReleaseDateAct'
+  - $ref: '#/shipment/containerType'
+  - $ref: '#/shipment/portArrivalLocode'
+  - $ref: '#/shipment/finalPortLocode'
+  - $ref: '#/shipment/importLocode'
+  - $ref: '#/shipment/ladingLocode'
+  - $ref: '#/shipment/originLocode'
+  - $ref: '#/shipment/usRouted'
+  - $ref: '#/shipment/importCustomsMode'
+  - $ref: '#/shipment/usExportPort'
+  - $ref: '#/shipment/customerFields'
+  - $ref: '#/shipment/specialInstructions'
+  - $ref: '#/shipment/trailerNumber'
+  - $ref: '#/shipment/sealNumber'
+  - $ref: '#/shipment/isMasterBOL'
+  - $ref: '#/shipment/nmfcClass'
+  - $ref: '#/shipment/isHazmat'
+
+patchAttributes:
+  allOf:
+    - $ref: '#/shipment/deviceId'
+    - $ref: '#/shipment/carriersScac'
+    - $ref: '#/shipment/forwardersScac'
+    - $ref: '#/shipment/nvoccScac'
+    - $ref: '#/shipment/shippersReference'
+    - $ref: '#/shipment/forwardersReference'
+    - $ref: '#/shipment/forwardersShipperId'
+    - $ref: '#/shipment/carriersInstructions'
+    - $ref: '#/shipment/proNumber'
+    - $ref: '#/shipment/billMaster'
+    - $ref: '#/shipment/billHouse'
+    - $ref: '#/shipment/billSubhouse'
+    - $ref: '#/shipment/paymentTerms'
+    - $ref: '#/shipment/vesselName'
+    - $ref: '#/shipment/voyageNumber'
+    - $ref: '#/shipment/modeOfTransportCode'
+    - $ref: '#/shipment/packageQty'
+    - $ref: '#/shipment/weightGross'
+    - $ref: '#/shipment/volume'
+    - $ref: '#/shipment/containerQty'
+    - $ref: '#/shipment/weightDim'
+    - $ref: '#/shipment/weightChargeable'
+    - $ref: '#/shipment/docsReceivedAct'
+    - $ref: '#/shipment/docsApprovedAct'
+    - $ref: '#/shipment/pickupAppt'
+    - $ref: '#/shipment/pickupEst'
+    - $ref: '#/shipment/pickupAct'
+    - $ref: '#/shipment/loadingEst'
+    - $ref: '#/shipment/loadingAct'
+    - $ref: '#/shipment/departureEst'
+    - $ref: '#/shipment/departureAct'
+    - $ref: '#/shipment/deliveryApptAct'
+    - $ref: '#/shipment/portArrivalEst'
+    - $ref: '#/shipment/portArrivalAct'
+    - $ref: '#/shipment/deliveryEst'
+    - $ref: '#/shipment/deliveryAct'
+    - $ref: '#/shipment/deliveryAttempt'
+    - $ref: '#/shipment/cancelRequestedDateAct'
+    - $ref: '#/shipment/cancelConfirmedDateAct'
+    - $ref: '#/shipment/customsFiledDateAct'
+    - $ref: '#/shipment/customsHoldDateAct'
+    - $ref: '#/shipment/customsReleaseDateAct'
+    - $ref: '#/shipment/containerType'
+    - $ref: '#/shipment/portArrivalLocode'
+    - $ref: '#/shipment/finalPortLocode'
+    - $ref: '#/shipment/importLocode'
+    - $ref: '#/shipment/ladingLocode'
+    - $ref: '#/shipment/originLocode'
+    - $ref: '#/shipment/usRouted'
+    - $ref: '#/shipment/importCustomsMode'
+    - $ref: '#/shipment/usExportPort'
+    - $ref: '#/shipment/trailerNumber'
+    - $ref: '#/shipment/sealNumber'
+    - $ref: '#/shipment/isMasterBOL'
+    - $ref: '#/shipment/isHazmat'
+    - $ref: '#/shipment/nmfcClass'
+    - $ref: '#/shipment/customerFields'
+
+createRequest:
+  allOf:
+  - $ref: '#/jsonApi/createData'
+  - properties:
+      data:
+        $ref: '#/createResource'
+
+patchRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/patchResource'
+
+tracking:
+  payload:
+    properties:
+      payload:
+        title: payload
+        description: Tracking data payload JWS
+        type: string
+        example: >-
+          eyJraWQiOiJlNjZhMmFiNjI0OGQxYzZkNTMxNmQ0MTIzNTlmNWU4ZGM1MzY2ZThkMTQ0ZDMwYTRlYzFmNzg3YmNhYjQ0MTQ2IiwiYWxn
+          IjoiRVMyNTYifQ.eyJkZXZpY2VfaWQiOiIzMjFhMWYzYy0zYmVjLTQ1ZDktYTM5OS00ODM5MmUzYTJiMTQiLCJwb3NpdGlvbiI6eyJhb
+          HRpdHVkZSI6MjcxLjAsImxhdGl0dWRlIjozNC44NTIwNTU1LCJsb25naXR1ZGUiOi04Mi40MDAwOTQ3LCJzb3VyY2UiOiJHUFMiLCJzc
+          GVlZCI6MC4wLCJ1bmNlcnRhaW50eSI6OTl9LCJ0aW1lc3RhbXAiOiIyMDE4LTExLTI5VDIwOjI4OjA3WiIsInZlcnNpb24iOiIxLjAuM
+          SJ9.jNWQj7kC8iacZwpEYlWexcDsP8ed-wIaebwSwOsrB7nTIoMOmbMWVHL3JC5dMzs8yCA3rReSkqbOu3TG0ACudw
+
+
+shipment:
+  $ref: dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/requestBody.yaml

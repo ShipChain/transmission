@@ -1,0 +1,70 @@
+address: &address
+  $ref: '../ethereum/dataTypes.yaml#/address'
+
+transactionHash: &transactionHash
+  $ref: '../ethereum/dataTypes.yaml#/transactionHash'
+
+hash:
+  properties:
+    hash:
+      <<: *transactionHash
+      title: hash
+
+nonce:
+  properties:
+    nonce:
+      title: nonce
+      description: Nonce of the transaction
+      type: string
+      example: '0x01'
+
+chainId:
+  properties:
+    chain_id:
+      title: chain_id
+      description: The ID of the Ethereum network for this transaction
+      type: integer
+      example: 1
+
+toAddress:
+  properties:
+    to_address:
+      <<: *address
+      title: to_address
+      description: The account that the transaction is sent to
+
+value:
+  properties:
+    value:
+      title: value
+      description: The value (in wei, hex encoded) included in this transaction
+      type: string
+      example: '0x0'
+
+gasLimit:
+  properties:
+    gas_limit:
+      title: gas_limit
+      description: The maximum amount of gas that this transaction is allowed to consume
+      type: string
+      example: '0x7a120'
+
+gasPrice:
+  properties:
+    gas_price:
+      title: gas_price
+      description: The amount of wei the transaction is willing to pay per gas-unit (hex encoded)
+      type: string
+      example: '0x4a817c800'
+
+data:
+  properties:
+    data:
+      title: data
+      description: Arbitrary binary data included in the transaction
+      type: string
+      example: >
+        0x2147b6890000000000000000000000003cb6c364d772e1135700953e69a0ae7a5104f2820000000000000000000000003cb6
+        c364d772e1135700953e69a0ae7a5104f282000000000000000000000000000000000000000000000000000000000000001800
+        000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000001

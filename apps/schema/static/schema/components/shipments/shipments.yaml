@@ -1,0 +1,72 @@
+get:
+  summary: List shipments
+  description: >
+    Retrieve an array of `Shipment` objects associated with the current user ordered by the `Shipment.created_at` date.
+  parameters:
+  - $ref: '../core/parameters.yaml#/page'
+  - $ref: '../core/parameters.yaml#/page_size'
+  - $ref: '../core/parameters.yaml#/search'
+  - $ref: '../core/parameters.yaml#/ordering'
+  - $ref: 'parameters.yaml#/has_ship_from_location'
+  - $ref: 'parameters.yaml#/has_ship_to_location'
+  - $ref: 'parameters.yaml#/has_final_destination_location'
+  - $ref: 'parameters.yaml#/ship_from_location__city'
+  - $ref: 'parameters.yaml#/ship_from_location__state'
+  - $ref: 'parameters.yaml#/ship_from_location__postal_code'
+  - $ref: 'parameters.yaml#/ship_from_location__country'
+  - $ref: 'parameters.yaml#/ship_to_location__city'
+  - $ref: 'parameters.yaml#/ship_to_location__state'
+  - $ref: 'parameters.yaml#/ship_to_location__postal_code'
+  - $ref: 'parameters.yaml#/ship_to_location__country'
+  - $ref: 'parameters.yaml#/final_destination_location__city'
+  - $ref: 'parameters.yaml#/final_destination_location__state'
+  - $ref: 'parameters.yaml#/final_destination_location__postal_code'
+  - $ref: 'parameters.yaml#/final_destination_location__country'
+  tags:
+  - Shipments
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/listResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+
+post:
+  summary: Create shipment
+  description: >
+    Create a new `Shipment` owned by the current user.
+  tags:
+  - Shipments
+  responses:
+    '201':
+      description: "Created"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/createResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: 'requestBody.yaml#/createRequest'
+      application/json:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/createAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/createAttributes'

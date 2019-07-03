@@ -32,49 +32,49 @@ info:
 
 paths:
   /api/v1/shipments/:
-    $ref: components/paths/shipments/shipments.yaml
+    $ref: components/shipments/shipments.yaml
 
   /api/v1/shipments/{shipment_id}/:
-    $ref: components/paths/shipments/shipmentId.yaml
+    $ref: components/shipments/shipmentId.yaml
 
   /api/v1/shipments/{shipment_id}/documents/:
-    $ref: components/paths/documents/documents.yaml
+    $ref: components/documents/documents.yaml
 
   /api/v1/shipments/{shipment_id}/documents/{document_id}/:
-    $ref: components/paths/documents/documentId.yaml
+    $ref: components/documents/documentId.yaml
 
   /api/v1/shipments/{shipment_id}/transactions/:
-    $ref: components/paths/shipments/transactions.yaml
+    $ref: components/shipments/transactions.yaml
 
   /api/v1/shipments/{shipment_id}/permission_links/:
-    $ref: components/paths/permissionLinks/permissionLinks.yaml
+    $ref: components/permissionLinks/permissionLinks.yaml
 
   /api/v1/shipments/{shipment_id}/permission_links/{permission_links_id}/:
-    $ref: components/paths/permissionLinks/permissionLinksId.yaml
+    $ref: components/permissionLinks/permissionLinksId.yaml
 
   /api/v1/shipments/{shipment_id}/tracking/:
-    $ref: components/paths/shipments/tracking.yaml
+    $ref: components/shipments/tracking.yaml
 
   /api/v1/shipments/{shipment_id}/history/:
-    $ref: components/paths/shipments/shipmentHistory.yaml
+    $ref: components/shipmentHistory/shipmentHistory.yaml
 
   /api/v1/jobs/:
-    $ref: components/paths/jobs/jobs.yaml
+    $ref: components/jobs/jobs.yaml
 
   /api/v1/jobs/{job_id}/:
-    $ref: components/paths/jobs/jobId.yaml
+    $ref: components/jobs/jobId.yaml
 
   /api/v1/transactions/:
-    $ref: components/paths/transactions/transactions.yaml
+    $ref: components/transactions/transactions.yaml
 
   /api/v1/transactions/{transaction_hash}/:
-    $ref: components/paths/transactions/transactionHash.yaml
+    $ref: components/transactions/transactionHash.yaml
 
   /api/v1/devices/{device_id}/tracking/:
-    $ref: components/paths/devices/deviceTracking.yaml
+    $ref: components/devices/deviceTracking.yaml
 
   /api/v1/devices/status/:
-    $ref: components/paths/devices/deviceStatus.yaml
+    $ref: components/devices/deviceStatus.yaml
 
 components:
   securitySchemes:
