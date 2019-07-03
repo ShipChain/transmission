@@ -15,7 +15,7 @@ from apps.permissions import get_owner_id
 from .filters import DocumentFilterSet
 from .models import Document, CsvDocument
 from .models import UploadStatus
-from .permissions import UserHasPermission
+from .permissions import UserHasPermission, UserHasCsvFilePermission
 from .rpc import DocumentRPCClient
 from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
@@ -108,7 +108,10 @@ class CsvDocumentViewSet(mixins.CreateModelMixin,
                          viewsets.GenericViewSet):
     queryset = CsvDocument.objects.all()
     serializer_class = CsvDocumentSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated, UserHasCsvFilePermission, )
+
+    def get_queryset(self):
+        return self.queryset.filter(updated_by=self.request.user.id)
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:

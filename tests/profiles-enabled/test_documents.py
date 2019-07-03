@@ -676,7 +676,7 @@ class CsvDocumentViewSetAPITests(APITestCase):
         self.client = APIClient()
 
         self.user_1 = passive_credentials_auth(get_jwt(username='test_user1@shipchain.io', sub=OWNER_ID))
-        self.user_2 = passive_credentials_auth(get_jwt(username='test_user2@shipchain.io', sub=OWNER_ID))
+        self.user_2 = passive_credentials_auth(get_jwt(username='test_user2@shipchain.io'))
 
         self.s3 = settings.S3_RESOURCE
 
@@ -751,8 +751,9 @@ class CsvDocumentViewSetAPITests(APITestCase):
         response = self.client.post(url, csv_file_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # --------------------- Upload csv file --------------------#
         self.set_user(self.user_1)
+
+        # --------------------- Upload csv file --------------------#
         # Authenticated request should succeed
         response = self.client.post(url, csv_file_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -822,99 +823,28 @@ class CsvDocumentViewSetAPITests(APITestCase):
         # The file_type cannot change on patch
         self.assertEqual(data['attributes']['file_type'], 'CSV')
         self.assertEqual(data['attributes']['report'], patch_csv_data['report'])
-        self.assertEqual(data['attributes']['processing_status'], 'COMPETE')
+        self.assertEqual(data['attributes']['processing_status'], 'COMPLETE')
+
+        self.set_user(self.user_2)
 
         # ------------------ permissions test -----------------------#
+        # user_2 can create an xls file object
+        response = self.client.post(url, xlsx_file_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        # self.s3.Bucket(settings.S3_BUCKET).download_file(fields['key'], './tests/tmp/downloaded.pdf')
-        #
-        # # We verify the integrity of the uploaded file
-        # downloaded_file = Path('./tests/tmp/downloaded.pdf')
-        # self.assertTrue(downloaded_file.exists())
-        #
-        # # Update document object upon upload completion
-        # url_patch = url + f'{document[0].id}/'
-        # file_data, content_type = create_form_content({
-        #     'upload_status': 'COMPLETE',
-        # })
-        # response = self.client.patch(url_patch, file_data, content_type=content_type)
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
-        #
-        # # Tentative to update a fields other than upload_status should fail
-        # file_data, content_type = create_form_content({
-        #     'document_type': DocumentType.IMAGE,
-        # })
-        # response = self.client.patch(url_patch, file_data, content_type=content_type)
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # self.assertNotEqual(document[0].document_type, DocumentType.IMAGE)
-        #
-        # # Get a document
-        # url_get = url + f'{document[0].id}/'
-        # response = self.client.get(url_get)
-        # data = response.json()['data']
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        #
-        # # Download document from pre-signed s3 generated url
-        # s3_url = data['meta']['presigned_s3']
-        # res = requests.get(s3_url)
-        # with open('./tests/tmp/from_presigned_s3_url.pdf', 'wb') as f:
-        #     f.write(res.content)
-        #
-        # # Second pdf document
-        # f_path = './tests/tmp/second_test_upload.pdf'
-        # message = "Second upload pdf test. This should be larger in size!"
-        # self.make_pdf_file(f_path, message=message)
-        # file_data, content_type = create_form_content({
-        #     'name': os.path.basename(f_path),
-        #     'document_type': 'Bol',
-        #     'file_type': 'Pdf'
-        # })
-        #
-        # response = self.client.post(url, file_data, content_type=content_type)
-        # self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        # document = Document.objects.all().order_by('created_at')
-        # self.assertEqual(document.count(), 2)
-        #
-        # # Update second uploaded document status to complete
-        # url_patch = url + f'{document[1].id}/'
-        # file_data, content_type = create_form_content({
-        #     'upload_status': 'Complete',
-        # })
-        # response = self.client.patch(url_patch, file_data, content_type=content_type)
-        # data = response.json()['data']
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # self.assertEqual(document[1].upload_status, UploadStatus.COMPLETE)
-        # self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
-        #
-        # # Get list of documents
-        # response = self.client.get(url)
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        #
-        # # Get list of pdf documents via query params, it should return 2 elements
-        # url_pdf = url + '?file_type=Pdf'
-        # response = self.client.get(url_pdf)
-        # data = response.json()['data']
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # self.assertEqual(len(data), 2)
-        #
-        # # Querying for png files should return an empty list at this stage
-        # url_png = url + '?file_type=Png'
-        # response = self.client.get(url_png)
-        # data = response.json()['data']
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # self.assertEqual(len(data), 0)
-        #
-        # # Get list of BOL documents via query params, it should return 2 elements
-        # url_bol = url + '?document_type=Bol'
-        # response = self.client.get(url_bol)
-        # data = response.json()['data']
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # self.assertEqual(len(data), 2)
-        #
-        # # Querying for file objects with upload_status FAILED, should return an empty list at this stage
-        # url_failed_satus = url + '?upload_status=FAIled'
-        # response = self.client.get(url_failed_satus)
-        # data = response.json()['data']
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # self.assertEqual(len(data), 0)
+        # user_2 cannot access a document object not owned
+        user_1_xlsx_url = f'{url}/{xlsx_obj.id}/'
+        response = self.client.get(user_1_xlsx_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # user_2 cannot modify a document object not owned
+        user_1_xlsx_url = f'{url}/{xlsx_obj.id}/'
+        response = self.client.patch(user_1_xlsx_url, data=patch_csv_data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # user_2 can list only document owned
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['attributes']['updated_by'], self.user_2.id)
