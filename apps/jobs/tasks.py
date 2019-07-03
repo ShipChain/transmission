@@ -88,9 +88,7 @@ class AsyncTask:
             })
             if created:
                 LOG.debug(f'Created new EthAction {eth_action.transaction_hash}')
-                for job_listener in self.async_job.joblistener_set.all():
-                    eth_action.ethlistener_set.create(listener=job_listener.listener)
-
+                eth_action.shipment = self.async_job.shipment
                 eth_action.transaction = Transaction.from_unsigned_tx(unsigned_tx)
                 eth_action.transaction.hash = hash_tx
                 eth_action.transaction.save()

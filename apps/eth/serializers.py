@@ -131,7 +131,7 @@ class EthActionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EthAction
-        exclude = ('listeners',)
+        fields = '__all__'
 
     included_serializers = {
         'transaction': TransactionSerializer,

@@ -8,10 +8,11 @@ from django.dispatch import Signal, receiver
 from redis.lock import LockError
 from influxdb_metrics.loader import log_metric
 
+from apps.shipments.models import Shipment
 from .models import Message, MessageType, JobState
 
 # pylint:disable=invalid-name
-job_update = Signal(providing_args=["message", "listener"])
+job_update = Signal(providing_args=["message", "shipment"])
 channel_layer = get_channel_layer()
 LOG = logging.getLogger('transmission')
 
@@ -33,10 +34,8 @@ def message_post_save(sender, instance, **kwargs):
         instance.async_job.state = JobState.FAILED
         instance.async_job.save()
 
-    # Update has been received, send signal to listener class
-    for listener in instance.async_job.joblistener_set.all():
-        LOG.debug(f'Update has been received, and signal sent to listener {instance.id}.')
-        job_update.send(sender=listener.listener_type.model_class(),
-                        message=instance, listener=listener.listener)
-        async_to_sync(channel_layer.group_send)(listener.listener.owner_id,
-                                                {"type": "jobs.update", "async_job_id": instance.async_job.id})
+    # Update has been received, send signal to listener
+    LOG.debug(f'Update has been received, and signal sent to listener {instance.id}.')
+    job_update.send(sender=Shipment, message=instance, shipment=instance.async_job.shipment)
+    async_to_sync(channel_layer.group_send)(instance.async_job.shipment.owner_id,
+                                            {"type": "jobs.update", "async_job_id": instance.async_job.id})

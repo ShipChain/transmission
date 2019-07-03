@@ -1,64 +1,45 @@
 from django import http
 from django.contrib import admin
-from django.contrib.contenttypes.admin import GenericTabularInline
-from django.utils.html import format_html
 from django.contrib.admin import helpers
 from django.contrib.admin.utils import unquote
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.encoding import force_text
+from django.utils.html import format_html
 from django.utils.html import mark_safe
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
-
 from simple_history.admin import SimpleHistoryAdmin, USER_NATURAL_KEY, SIMPLE_HISTORY_EDIT
 
-from apps.admin import admin_change_url
 from apps.shipments.models import Shipment, Location
+from apps.jobs.models import AsyncJob
 
 
-class AsyncJobInlineTab(GenericTabularInline):
-    model = Shipment.asyncjob_set.through
-    ct_field = 'listener_type'
-    ct_fk_field = 'listener_id'
-
-    exclude = (
-        'async_job',
+class AsyncJobInlineTab(admin.TabularInline):
+    model = AsyncJob
+    fields = (
+        'id',
+        'state',
+        'method',
+        'created_at',
+        'last_try',
     )
-
     readonly_fields = (
-        'async_job_id',
-        'async_job_state',
-        'async_job_method',
-        'async_job_created_at',
-        'async_job_last_try',
+        'id',
+        'state',
+        'method',
+        'created_at',
+        'last_try',
     )
 
-    def async_job_id(self, obj):
-        url = admin_change_url(obj.async_job)
-        return format_html(
-            '<a href="{}">{}</a>',
-            url,
-            obj.async_job.id
-        )
-
-    def async_job_state(self, obj):
-        return obj.async_job.state
-
-    def async_job_method(self, obj):
+    def method(self, obj):
         try:
-            params = obj.async_job.parameters
+            params = obj.parameters
             return params['rpc_method']
         except KeyError:
             pass
         return "??"
-
-    def async_job_created_at(self, obj):
-        return obj.async_job.created_at
-
-    def async_job_last_try(self, obj):
-        return obj.async_job.last_try
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -90,8 +71,6 @@ NON_SCHEMA_FIELDS = [
     'created_at',
     'contract_version',
     'updated_by',
-    'job_listeners',
-    'eth_listeners',
     'asyncjob_set_relation',
     'ethaction_set_relation',
 ]

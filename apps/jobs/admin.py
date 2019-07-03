@@ -5,7 +5,6 @@ from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 
 from django.contrib import admin
-from django.contrib.contenttypes.models import ContentType
 from django.utils.html import format_html
 from enumfields.admin import EnumFieldListFilter
 
@@ -128,7 +127,7 @@ class AsyncJobAdmin(admin.ModelAdmin):
     ]
 
     def shipment_display(self, obj):
-        shipment = obj.listeners.filter(Model='shipments.Shipment').first()
+        shipment = obj.shipment
         url = admin_change_url(shipment)
         return format_html(
             '<a href="{}">{}</a>',
@@ -166,8 +165,7 @@ class AsyncJobAdmin(admin.ModelAdmin):
         searched_queryset, use_distinct = super().get_search_results(request, queryset, search_term)
 
         shipment_queryset = queryset.filter(
-            joblistener__listener_type=ContentType.objects.get(app_label="shipments", model="shipment").id,
-            joblistener__listener_id__contains=search_term
+            shipment__id=search_term
         )
 
         queryset = searched_queryset | shipment_queryset

@@ -25,7 +25,7 @@ channel_layer = get_channel_layer()  # pylint:disable=invalid-name
 
 
 @receiver(job_update, sender=Shipment, dispatch_uid='shipment_job_update')
-def shipment_job_update(sender, message, listener, **kwargs):
+def shipment_job_update(sender, message, shipment, **kwargs):
     LOG.debug(f'Shipment job update with message {message.id}.')
 
     if message.type == MessageType.ETH_TRANSACTION:
@@ -39,9 +39,9 @@ def shipment_job_update(sender, message, listener, **kwargs):
 
 
 @receiver(event_update, sender=Shipment, dispatch_uid='shipment_event_update')
-def shipment_event_update(sender, event, listener, **kwargs):
-    LOG.debug(f'Shipment event update ({event.event_name}) with listener {listener.id}.')
-    LoadEventHandler.handle(event, listener)
+def shipment_event_update(sender, event, shipment, **kwargs):
+    LOG.debug(f'Shipment event update ({event.event_name}) with listener {shipment.id}.')
+    LoadEventHandler.handle(event, shipment)
 
 
 @receiver(post_save, sender=Shipment, dispatch_uid='shipment_post_save')
@@ -94,7 +94,7 @@ def loadshipment_post_save(sender, **kwargs):
                             instance.funding_type.value,
                             instance.contracted_amount],
             signing_wallet_id=instance.shipment.shipper_wallet_id,
-            listener=instance.shipment
+            shipment=instance.shipment
         )
 
 
