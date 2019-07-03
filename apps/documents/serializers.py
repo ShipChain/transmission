@@ -34,15 +34,15 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
         if file_extension in IMAGE_TYPES:
             content_type = f"image/{file_extension}"
         elif file_extension == 'csv':
-            content_type = f"text/csv"
+            content_type = "text/csv"
         elif file_extension == 'xls':
-            content_type = f"application/vnd.ms-excel"
+            content_type = "application/vnd.ms-excel"
         elif file_extension == 'xlsx':
-            content_type = f"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         else:
             content_type = f"application/{file_extension}"
 
-        if obj.__class__.name == 'Document':
+        if obj.__class__.__name__ == 'Document':
             s3_bucket = settings.S3_BUCKET
         else:
             s3_bucket = settings.CSV_S3_BUCKET

@@ -4,8 +4,10 @@ import json
 from pathlib import Path
 from unittest import mock
 
+import copy
 import os
 import requests
+import pyexcel
 from PIL import Image, ImageDraw, ImageFont
 from django.conf import settings
 from django.db.models import signals
@@ -19,7 +21,7 @@ from apps.documents.models import Document, UploadStatus, DocumentType, FileType
 from apps.documents.rpc import DocumentRPCClient
 from apps.shipments.models import Shipment, LoadShipment
 from apps.shipments.signals import shipment_post_save
-from tests.utils import create_form_content, get_jwt
+from tests.utils import create_form_content, get_jwt, random_timestamp
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'
 FAKE_ID = '00000000-0000-0000-0000-000000000000'
@@ -668,3 +670,194 @@ class ImageDocumentViewSetAPITests(APITestCase):
         self.assertIsNone(data['meta']['presigned_s3'])
 
 
+class CsvDocumentViewSetAPITests(APITestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+
+        self.user_1 = passive_credentials_auth(get_jwt(username='test_user1@shipchain.io', sub=OWNER_ID))
+        self.user_2 = passive_credentials_auth(get_jwt(username='test_user2@shipchain.io', sub=OWNER_ID))
+
+        s3_resource = settings.S3_RESOURCE
+
+        for bucket in s3_resource.buckets.all():
+            for key in bucket.objects.all():
+                key.delete()
+            bucket.delete()
+
+        try:
+            s3_resource.create_bucket(Bucket=settings.CSV_S3_BUCKET)
+        except Exception as exc:
+            pass
+
+    def tearDown(self):
+        files = glob.glob('./tests/tmp/*.*')
+        for f in files:
+            os.remove(f)
+
+    def set_user(self, user, token=None):
+        self.client.force_authenticate(user=user, token=token)
+
+    def make_csv_file(self, file_path, data=None):
+        default_data = [
+            {
+                'shipment_name': 'Test shipment 1',
+                'creation-date': random_timestamp()
+            },
+            {
+                'shipment_name': 'Test shipment 2',
+                'creation-date': random_timestamp()
+            }
+        ]
+        data_to_save = data if data else default_data
+        pyexcel.save_as(records=data_to_save, dest_file_name=file_path)
+
+    def test_CRUD_csv_documents(self):
+
+        url = reverse('csv-list', kwargs={'version': 'v1'})
+
+        csv_path = './tests/tmp/test.csv'
+        xls_path = './tests/tmp/test.xls'
+        xlsx_path = './tests/tmp/test.xlsx'
+
+        self.make_csv_file(csv_path)
+        self.make_csv_file(xls_path)
+        self.make_csv_file(xlsx_path)
+
+        csv_file_data = {
+            'name': 'Test csv file',
+            'description': 'Auto generated file for test purposes',
+            'file_type': 'csv'
+        }
+
+        xls_file_data = copy.deepcopy(csv_file_data)
+        xls_file_data['name'] = 'Test xls file'
+        xls_file_data['file_type'] = 'Xls'
+
+        xlsx_file_data = copy.deepcopy(csv_file_data)
+        xlsx_file_data['name'] = 'Test xlsx file'
+        xlsx_file_data['file_type'] = '2'
+
+        # Unauthenticated user should fail
+        response = self.client.post(url, csv_file_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Authenticated request should succeed
+        self.set_user(self.user_1)
+        response = self.client.post(url, csv_file_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # document = Document.objects.all()
+        # self.assertEqual(document.count(), 1)
+        # self.assertEqual(self.shipment.id, document[0].shipment_id)
+        #
+        # # Check s3 path integrity in db
+        # shipment = document[0].shipment
+        # doc_id = document[0].id
+        # s3_path = f"s3://{settings.S3_BUCKET}/{shipment.storage_credentials_id}/{shipment.shipper_wallet_id}/" \
+        #     f"{shipment.vault_id}/{doc_id}.pdf"
+        # self.assertEqual(document[0].s3_path, s3_path)
+        #
+        # data = response.json()['data']
+        # fields = data['meta']['presigned_s3']['fields']
+        #
+        # s3_resource = settings.S3_RESOURCE
+        #
+        # # File upload
+        # put_url = data['meta']['presigned_s3']['url']
+        # with open(f_path, 'rb') as pdf:
+        #     res = requests.post(put_url, data=fields, files={'file': pdf})
+        #
+        # self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        # s3_resource.Bucket(settings.S3_BUCKET).download_file(fields['key'], './tests/tmp/downloaded.pdf')
+        #
+        # # We verify the integrity of the uploaded file
+        # downloaded_file = Path('./tests/tmp/downloaded.pdf')
+        # self.assertTrue(downloaded_file.exists())
+        #
+        # # Update document object upon upload completion
+        # url_patch = url + f'{document[0].id}/'
+        # file_data, content_type = create_form_content({
+        #     'upload_status': 'COMPLETE',
+        # })
+        # response = self.client.patch(url_patch, file_data, content_type=content_type)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
+        #
+        # # Tentative to update a fields other than upload_status should fail
+        # file_data, content_type = create_form_content({
+        #     'document_type': DocumentType.IMAGE,
+        # })
+        # response = self.client.patch(url_patch, file_data, content_type=content_type)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertNotEqual(document[0].document_type, DocumentType.IMAGE)
+        #
+        # # Get a document
+        # url_get = url + f'{document[0].id}/'
+        # response = self.client.get(url_get)
+        # data = response.json()['data']
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        #
+        # # Download document from pre-signed s3 generated url
+        # s3_url = data['meta']['presigned_s3']
+        # res = requests.get(s3_url)
+        # with open('./tests/tmp/from_presigned_s3_url.pdf', 'wb') as f:
+        #     f.write(res.content)
+        #
+        # # Second pdf document
+        # f_path = './tests/tmp/second_test_upload.pdf'
+        # message = "Second upload pdf test. This should be larger in size!"
+        # self.make_pdf_file(f_path, message=message)
+        # file_data, content_type = create_form_content({
+        #     'name': os.path.basename(f_path),
+        #     'document_type': 'Bol',
+        #     'file_type': 'Pdf'
+        # })
+        #
+        # response = self.client.post(url, file_data, content_type=content_type)
+        # self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # document = Document.objects.all().order_by('created_at')
+        # self.assertEqual(document.count(), 2)
+        #
+        # # Update second uploaded document status to complete
+        # url_patch = url + f'{document[1].id}/'
+        # file_data, content_type = create_form_content({
+        #     'upload_status': 'Complete',
+        # })
+        # response = self.client.patch(url_patch, file_data, content_type=content_type)
+        # data = response.json()['data']
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertEqual(document[1].upload_status, UploadStatus.COMPLETE)
+        # self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
+        #
+        # # Get list of documents
+        # response = self.client.get(url)
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        #
+        # # Get list of pdf documents via query params, it should return 2 elements
+        # url_pdf = url + '?file_type=Pdf'
+        # response = self.client.get(url_pdf)
+        # data = response.json()['data']
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertEqual(len(data), 2)
+        #
+        # # Querying for png files should return an empty list at this stage
+        # url_png = url + '?file_type=Png'
+        # response = self.client.get(url_png)
+        # data = response.json()['data']
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertEqual(len(data), 0)
+        #
+        # # Get list of BOL documents via query params, it should return 2 elements
+        # url_bol = url + '?document_type=Bol'
+        # response = self.client.get(url_bol)
+        # data = response.json()['data']
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertEqual(len(data), 2)
+        #
+        # # Querying for file objects with upload_status FAILED, should return an empty list at this stage
+        # url_failed_satus = url + '?upload_status=FAIled'
+        # response = self.client.get(url_failed_satus)
+        # data = response.json()['data']
+        # self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # self.assertEqual(len(data), 0)
