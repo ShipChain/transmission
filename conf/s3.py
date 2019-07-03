@@ -5,6 +5,7 @@ from .base import ENVIRONMENT, BOTO3_SESSION
 
 # s3 buckets names
 S3_BUCKET = f"document-management-s3-{ENVIRONMENT.lower()}"
+CSV_S3_BUCKET = f'document-management-s3-{ENVIRONMENT.lower()}-csv'
 
 # s3 Pre-signed url life in seconds
 S3_URL_LIFE = 1800

@@ -1,6 +1,7 @@
 import logging
 
 from django.conf import settings
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from enumfields import Enum
 from enumfields import EnumIntegerField
@@ -36,6 +37,17 @@ class FileType(Enum):
         PNG = 'PNG'
 
 
+class CsvFileType(Enum):
+    CSV = 0
+    XLS = 1
+    XLSX = 2
+
+    class Labels:
+        CSV = 'CSV'
+        XLS = 'XLS'
+        XLSX = 'XLSX'
+
+
 IMAGE_TYPES = (FileType.JPEG.name.lower(), FileType.PNG.name.lower())
 
 
@@ -43,11 +55,24 @@ class UploadStatus(Enum):
     PENDING = 0
     COMPLETE = 1
     FAILED = 2
+    PROCESSING = 3
 
     class Labels:
         PENDING = 'PENDING'
         COMPLETE = 'COMPLETE'
         FAILED = 'FAILED'
+        PROCESSING = 'PROCESSING'
+
+
+class ProcessingStatus(Enum):
+    PENDING = 0
+    RUNNING = 1
+    COMPLETE = 2
+
+    class Labels:
+        PENDING = 'PENDING'
+        RUNNING = 'RUNNING'
+        COMPLETE = 'COMPLETE'
 
 
 class Document(models.Model):
@@ -85,3 +110,25 @@ class Document(models.Model):
     @property
     def vault_id(self):
         return f"{self.shipment.vault_id}"
+
+
+class CsvDocument(models.Model):
+    id = models.CharField(primary_key=True, default=random_id, max_length=36)
+    name = models.CharField(max_length=36, null=False, blank=False)
+    description = models.CharField(max_length=250, null=True, blank=True)
+    owner_id = models.CharField(null=False, max_length=36)
+    updated_by = models.CharField(null=False, max_length=36)
+    file_type = EnumIntegerField(enum=CsvFileType, default=CsvFileType.CSV)
+    upload_status = EnumIntegerField(enum=UploadStatus, default=UploadStatus.PENDING)
+    processing_status = EnumIntegerField(enum=ProcessingStatus, default=ProcessingStatus.PENDING)
+    report = JSONField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def s3_key(self):
+        return f"{self.owner_id}/{self.updated_by}/{self.filename}"
+
+    @property
+    def filename(self):
+        return f"{self.id}.{self.file_type.name.lower()}"

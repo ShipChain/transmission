@@ -9,7 +9,7 @@ from rest_framework_json_api import serializers
 from influxdb_metrics.loader import log_metric
 
 from apps.utils import UpperEnumField
-from .models import Document, DocumentType, FileType, UploadStatus, IMAGE_TYPES
+from .models import Document, CsvDocument, DocumentType, FileType, UploadStatus, IMAGE_TYPES
 from .rpc import DocumentRPCClient
 
 LOG = logging.getLogger('transmission')
@@ -32,11 +32,20 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
         if file_extension in IMAGE_TYPES:
             content_type = f"image/{file_extension}"
+        elif file_extension == 'xls':
+            content_type = f"application/vnd.ms-excel"
+        elif file_extension == 'xlsx':
+            content_type = f"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         else:
             content_type = f"application/{file_extension}"
 
+        if obj.__class__.name == 'Document':
+            s3_bucket = settings.S3_BUCKET
+        else:
+            s3_bucket = settings.CSV_S3_BUCKET
+
         pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
-            Bucket=settings.S3_BUCKET,
+            Bucket=s3_bucket,
             Key=obj.s3_key,
             Fields={"acl": "private", "Content-Type": content_type},
             Conditions=[
@@ -128,3 +137,19 @@ class DocumentRetrieveSerializer(DocumentSerializer):
                                               'module': __name__})
 
         return url
+
+
+class CsvDocumentSerializer(DocumentSerializer):
+    file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
+    upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
+    processing_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
+    presigned_s3 = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CsvDocument
+        if settings.PROFILES_ENABLED:
+            exclude = ('owner_id',)
+        else:
+            fields = '__all__'
+
+        meta_fields = ('presigned_s3',)

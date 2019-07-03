@@ -13,13 +13,14 @@ from apps.authentication import DocsLambdaRequest
 from apps.jobs.models import AsyncActionType
 from apps.permissions import get_owner_id
 from .filters import DocumentFilterSet
-from .models import Document
+from .models import Document, CsvDocument
 from .models import UploadStatus
 from .permissions import UserHasPermission
 from .rpc import DocumentRPCClient
 from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
-                          DocumentRetrieveSerializer, )
+                          DocumentRetrieveSerializer,
+                          CsvDocumentSerializer, )
 
 LOG = logging.getLogger('transmission')
 
@@ -96,7 +97,37 @@ class DocumentViewSet(mixins.CreateModelMixin,
 
         serializer = DocumentRetrieveSerializer(queryset, many=True)
 
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CsvDocumentViewSet(mixins.CreateModelMixin,
+                         mixins.RetrieveModelMixin,
+                         mixins.UpdateModelMixin,
+                         mixins.ListModelMixin,
+                         viewsets.GenericViewSet):
+    queryset = CsvDocument.objects.all()
+    serializer_class = CsvDocumentSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def perform_create(self, serializer):
+        if settings.PROFILES_ENABLED:
+            created = serializer.save(owner_id=get_owner_id(self.request))
+        else:
+            created = serializer.save()
+        return created
+
+    def create(self, request, *args, **kwargs):
+        """
+        Create a pre-signed s3 post and create a corresponding pdf document object with pending status
+        """
+        LOG.debug(f'Creating a CSV document object.')
+        log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
+
+        serializer = self.serializer_class(data=request.data, context={'owner_id': get_owner_id(self.request)})
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class S3Events(APIView):
