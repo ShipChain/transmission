@@ -165,7 +165,7 @@ class AsyncJobAdmin(admin.ModelAdmin):
         searched_queryset, use_distinct = super().get_search_results(request, queryset, search_term)
 
         shipment_queryset = queryset.filter(
-            shipment__id=search_term
+            shipment__id__contains=search_term
         )
 
         queryset = searched_queryset | shipment_queryset
