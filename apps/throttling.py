@@ -44,6 +44,9 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
         self.history = self.cache.get(cache_key, [])
         self.now = datetime.now().timestamp()
 
+        if not self.num_requests:
+            return True
+
         # Drop any requests from the history which have now passed the
         # throttle duration
         while self.history and self.history[-1] <= self.now - self.duration:
