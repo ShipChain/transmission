@@ -16,6 +16,7 @@ pylint:
     - unused-wildcard-import
     - too-many-ancestors
     - logging-fstring-interpolation
+    - super-init-not-called
   options:
     good-names:
       - pk
