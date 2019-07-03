@@ -68,11 +68,13 @@ class ProcessingStatus(Enum):
     PENDING = 0
     RUNNING = 1
     COMPLETE = 2
+    FAILED = 3
 
     class Labels:
         PENDING = 'PENDING'
         RUNNING = 'RUNNING'
         COMPLETE = 'COMPLETE'
+        FAILED = 'FAILED'
 
 
 class Document(models.Model):

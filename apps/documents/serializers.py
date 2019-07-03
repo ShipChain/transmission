@@ -9,7 +9,8 @@ from rest_framework_json_api import serializers
 from influxdb_metrics.loader import log_metric
 
 from apps.utils import UpperEnumField
-from .models import Document, CsvDocument, DocumentType, FileType, UploadStatus, IMAGE_TYPES
+from .models import Document, CsvDocument, DocumentType, FileType, CsvFileType, UploadStatus, ProcessingStatus, \
+    IMAGE_TYPES
 from .rpc import DocumentRPCClient
 
 LOG = logging.getLogger('transmission')
@@ -32,6 +33,8 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
         if file_extension in IMAGE_TYPES:
             content_type = f"image/{file_extension}"
+        elif file_extension == 'csv':
+            content_type = f"text/csv"
         elif file_extension == 'xls':
             content_type = f"application/vnd.ms-excel"
         elif file_extension == 'xlsx':
@@ -140,16 +143,32 @@ class DocumentRetrieveSerializer(DocumentSerializer):
 
 
 class CsvDocumentSerializer(DocumentSerializer):
-    file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
+    file_type = UpperEnumField(CsvFileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
-    processing_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
+    processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True)
+    presigned_s3 = None
+
+    class Meta:
+        model = CsvDocument
+        if settings.PROFILES_ENABLED:
+            exclude = ('owner_id', )
+        else:
+            fields = '__all__'
+
+
+class CsvDocumentCreateSerializer(DocumentSerializer):
+    file_type = UpperEnumField(CsvFileType, lenient=True, ints_as_names=True)
+    upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True, required=False)
+    processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True, read_only=True,
+                                       required=False)
+    updated_by = serializers.CharField(required=False)
     presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
         model = CsvDocument
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id',)
+            exclude = ('owner_id', )
         else:
             fields = '__all__'
 
-        meta_fields = ('presigned_s3',)
+        meta_fields = ('presigned_s3', )

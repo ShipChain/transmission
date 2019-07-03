@@ -20,7 +20,8 @@ from .rpc import DocumentRPCClient
 from .serializers import (DocumentSerializer,
                           DocumentCreateSerializer,
                           DocumentRetrieveSerializer,
-                          CsvDocumentSerializer, )
+                          CsvDocumentSerializer,
+                          CsvDocumentCreateSerializer, )
 
 LOG = logging.getLogger('transmission')
 
@@ -111,19 +112,26 @@ class CsvDocumentViewSet(mixins.CreateModelMixin,
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=get_owner_id(self.request))
+            created = serializer.save(owner_id=get_owner_id(self.request), updated_by=self.request.user.id)
         else:
             created = serializer.save()
         return created
 
+    def perform_update(self, serializer):
+        if settings.PROFILES_ENABLED:
+            updated = serializer.save(updated_by=self.request.user.id)
+        else:
+            updated = serializer.save()
+        return updated
+
     def create(self, request, *args, **kwargs):
         """
-        Create a pre-signed s3 post and create a corresponding pdf document object with pending status
+        Create a pre-signed s3 post and create a corresponding document object with pending status
         """
         LOG.debug(f'Creating a CSV document object.')
         log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
 
-        serializer = self.serializer_class(data=request.data, context={'owner_id': get_owner_id(self.request)})
+        serializer = CsvDocumentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
