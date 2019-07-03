@@ -17,7 +17,7 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 
 from apps.authentication import passive_credentials_auth
-from apps.documents.models import Document, UploadStatus, DocumentType, FileType
+from apps.documents.models import Document, CsvDocument, UploadStatus, DocumentType, FileType
 from apps.documents.rpc import DocumentRPCClient
 from apps.shipments.models import Shipment, LoadShipment
 from apps.shipments.signals import shipment_post_save
@@ -678,15 +678,15 @@ class CsvDocumentViewSetAPITests(APITestCase):
         self.user_1 = passive_credentials_auth(get_jwt(username='test_user1@shipchain.io', sub=OWNER_ID))
         self.user_2 = passive_credentials_auth(get_jwt(username='test_user2@shipchain.io', sub=OWNER_ID))
 
-        s3_resource = settings.S3_RESOURCE
+        self.s3 = settings.S3_RESOURCE
 
-        for bucket in s3_resource.buckets.all():
+        for bucket in self.s3.buckets.all():
             for key in bucket.objects.all():
                 key.delete()
             bucket.delete()
 
         try:
-            s3_resource.create_bucket(Bucket=settings.CSV_S3_BUCKET)
+            self.s3.create_bucket(Bucket=settings.CSV_S3_BUCKET)
         except Exception as exc:
             pass
 
@@ -712,6 +712,13 @@ class CsvDocumentViewSetAPITests(APITestCase):
         data_to_save = data if data else default_data
         pyexcel.save_as(records=data_to_save, dest_file_name=file_path)
 
+    def s3_object_exists(self, key):
+        try:
+            self.s3.Object(settings.CSV_S3_BUCKET, key).get()
+        except Exception:
+            return False
+        return True
+
     def test_CRUD_csv_documents(self):
 
         url = reverse('csv-list', kwargs={'version': 'v1'})
@@ -733,43 +740,93 @@ class CsvDocumentViewSetAPITests(APITestCase):
         xls_file_data = copy.deepcopy(csv_file_data)
         xls_file_data['name'] = 'Test xls file'
         xls_file_data['file_type'] = 'Xls'
+        xls_file_data['upload_status'] = 'complete'
 
         xlsx_file_data = copy.deepcopy(csv_file_data)
         xlsx_file_data['name'] = 'Test xlsx file'
         xlsx_file_data['file_type'] = '2'
+        xlsx_file_data['processing_status'] = 'failed'
 
         # Unauthenticated user should fail
         response = self.client.post(url, csv_file_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # Authenticated request should succeed
+        # --------------------- Upload csv file --------------------#
         self.set_user(self.user_1)
+        # Authenticated request should succeed
         response = self.client.post(url, csv_file_data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        data = response.json()['data']
+        self.assertEqual(data['attributes']['upload_status'], 'PENDING')
+        csv_obj = CsvDocument.objects.get(id=data['id'])
+        fields = data['meta']['presigned_s3']['fields']
 
-        # document = Document.objects.all()
-        # self.assertEqual(document.count(), 1)
-        # self.assertEqual(self.shipment.id, document[0].shipment_id)
-        #
-        # # Check s3 path integrity in db
-        # shipment = document[0].shipment
-        # doc_id = document[0].id
-        # s3_path = f"s3://{settings.S3_BUCKET}/{shipment.storage_credentials_id}/{shipment.shipper_wallet_id}/" \
-        #     f"{shipment.vault_id}/{doc_id}.pdf"
-        # self.assertEqual(document[0].s3_path, s3_path)
-        #
-        # data = response.json()['data']
-        # fields = data['meta']['presigned_s3']['fields']
-        #
-        # s3_resource = settings.S3_RESOURCE
-        #
-        # # File upload
-        # put_url = data['meta']['presigned_s3']['url']
-        # with open(f_path, 'rb') as pdf:
-        #     res = requests.post(put_url, data=fields, files={'file': pdf})
-        #
-        # self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-        # s3_resource.Bucket(settings.S3_BUCKET).download_file(fields['key'], './tests/tmp/downloaded.pdf')
+        # csv file upload
+        put_url = data['meta']['presigned_s3']['url']
+        with open(csv_path, 'rb') as csv:
+            res = requests.post(put_url, data=fields, files={'file': csv})
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(self.s3_object_exists(csv_obj.s3_key))
+
+        # --------------------- Upload xls file --------------------#
+        response = self.client.post(url, xls_file_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        data = response.json()['data']
+        # upload_status field is not configurable at creation
+        self.assertEqual(data['attributes']['upload_status'], 'PENDING')
+        self.assertEqual(data['attributes']['processing_status'], 'PENDING')
+        xls_obj = CsvDocument.objects.get(id=data['id'])
+        fields = data['meta']['presigned_s3']['fields']
+
+        # xls file upload
+        put_url = data['meta']['presigned_s3']['url']
+        with open(xls_path, 'rb') as xls:
+            res = requests.post(put_url, data=fields, files={'file': xls})
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(self.s3_object_exists(xls_obj.s3_key))
+
+        # --------------------- Upload xlsx file --------------------#
+        response = self.client.post(url, xlsx_file_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        data = response.json()['data']
+        self.assertEqual(data['attributes']['upload_status'], 'PENDING')
+        # processing_status field is not configurable at creation
+        self.assertEqual(data['attributes']['processing_status'], 'PENDING')
+        xlsx_obj = CsvDocument.objects.get(id=data['id'])
+        fields = data['meta']['presigned_s3']['fields']
+
+        # xlsx file upload
+        put_url = data['meta']['presigned_s3']['url']
+        with open(xlsx_path, 'rb') as xlsx:
+            res = requests.post(put_url, data=fields, files={'file': xlsx})
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertTrue(self.s3_object_exists(xlsx_obj.s3_key))
+
+        # -------------------- test patch object -------------------#
+        patch_csv_data = {
+            'name': 'Can update name',
+            'file_type': 'XLS',     # Connot be modified
+            "processing_status": "Complete",
+            "report": {
+                "success": 15,
+                "failed": 0
+            }
+        }
+        csv_patch_url = f'{url}/{csv_obj.id}/'
+        response = self.client.patch(csv_patch_url, data=patch_csv_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        # The file_type cannot change on patch
+        self.assertEqual(data['attributes']['file_type'], 'CSV')
+        self.assertEqual(data['attributes']['report'], patch_csv_data['report'])
+        self.assertEqual(data['attributes']['processing_status'], 'COMPETE')
+
+        # ------------------ permissions test -----------------------#
+
+        # self.s3.Bucket(settings.S3_BUCKET).download_file(fields['key'], './tests/tmp/downloaded.pdf')
         #
         # # We verify the integrity of the uploaded file
         # downloaded_file = Path('./tests/tmp/downloaded.pdf')

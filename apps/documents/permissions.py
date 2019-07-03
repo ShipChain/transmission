@@ -48,3 +48,9 @@ class UserHasPermission(permissions.BasePermission):
             return False
 
         return check_has_shipment_owner_access(request, shipment)
+
+
+class UserHasCsvFilePermission(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        return obj.updated_by == request.user.id
