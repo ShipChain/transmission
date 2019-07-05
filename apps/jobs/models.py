@@ -5,10 +5,6 @@ from django.urls import reverse
 # TODO: Should this be a Postgres field?
 from django.contrib.postgres.fields import JSONField
 
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
-
-from gm2m import GM2MField
 from enumfields import Enum, EnumIntegerField
 
 from apps.eth.fields import HashField
@@ -45,7 +41,7 @@ class AsyncJob(models.Model):
     def get_callback_url(self):
         return settings.INTERNAL_URL + reverse('job-message', kwargs={'version': 'v1', 'pk': self.id})
 
-    listeners = GM2MField('shipments.Shipment', through='JobListener')
+    shipment = models.ForeignKey('shipments.Shipment', on_delete=models.CASCADE)
 
     def fire(self, delay=None):
         # Use send_task to avoid cyclic import
@@ -56,7 +52,7 @@ class AsyncJob(models.Model):
         return celery.current_app.AsyncResult(self.id)
 
     @staticmethod
-    def rpc_job_for_listener(rpc_method, rpc_parameters, signing_wallet_id, listener, delay=0):
+    def rpc_job_for_listener(rpc_method, rpc_parameters, signing_wallet_id, shipment, delay=0):
         rpc_module = rpc_method.__module__
         rpc_class, rpc_method = rpc_method.__qualname__.rsplit('.')[-2:]
         with transaction.atomic():
@@ -65,9 +61,7 @@ class AsyncJob(models.Model):
                 'rpc_method': f'{rpc_method}',
                 'rpc_parameters': rpc_parameters,
                 'signing_wallet_id': signing_wallet_id,
-            }, delay=delay)
-            job.joblistener_set.create(listener=listener)
-            job.save()
+            }, shipment=shipment, delay=delay)
             transaction.on_commit(lambda: job.fire(delay))
         return job
 
@@ -116,12 +110,3 @@ class Message(models.Model):
     type = EnumIntegerField(MessageType)
     body = JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
-
-
-class JobListener(models.Model):
-    async_job = models.ForeignKey(AsyncJob, on_delete=models.CASCADE)
-
-    # Polymorphic listener
-    listener_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    listener_id = models.CharField(max_length=36)
-    listener = GenericForeignKey('listener_type', 'listener_id')

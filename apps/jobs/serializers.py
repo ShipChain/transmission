@@ -28,7 +28,7 @@ class AsyncJobSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     class Meta:
         model = AsyncJob
-        exclude = ('listeners', 'wallet_lock_token')
+        exclude = ('wallet_lock_token',)
         include = {
             "actions": ActionSerializer(),
         }

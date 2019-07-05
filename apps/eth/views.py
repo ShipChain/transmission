@@ -92,15 +92,15 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
             if 'wallet_id' in self.request.query_params:
-                queryset = queryset.filter(Q(ethlistener__shipments__owner_id=get_owner_id(self.request)) |
-                                           Q(ethlistener__shipments__shipper_wallet_id=
+                queryset = queryset.filter(Q(shipment__owner_id=get_owner_id(self.request)) |
+                                           Q(shipment__shipper_wallet_id=
                                              self.request.query_params.get('wallet_id')) |
-                                           Q(ethlistener__shipments__moderator_wallet_id=
+                                           Q(shipment__moderator_wallet_id=
                                              self.request.query_params.get('wallet_id')) |
-                                           Q(ethlistener__shipments__carrier_wallet_id=
+                                           Q(shipment__carrier_wallet_id=
                                              self.request.query_params.get('wallet_id')))
             else:
-                queryset = queryset.filter(ethlistener__shipments__owner_id=get_owner_id(self.request))
+                queryset = queryset.filter(shipment__owner_id=get_owner_id(self.request))
 
         return queryset
 
@@ -112,7 +112,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
         if shipment_pk:
             LOG.debug(f'Getting transactions for shipment: {shipment_pk}.')
 
-            queryset = self.queryset.filter(ethlistener__shipments__id=shipment_pk)
+            queryset = self.queryset.filter(shipment__id=shipment_pk)
         else:
             LOG.debug('Getting tx details filtered by wallet address.')
             if not settings.PROFILES_ENABLED:

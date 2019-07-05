@@ -10,7 +10,6 @@ import boto3
 from botocore.exceptions import ClientError
 
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Point
 from django.contrib.postgres.fields import JSONField
@@ -24,8 +23,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 
 from apps.eth.fields import AddressField, HashField
-from apps.eth.models import EthListener
-from apps.jobs.models import JobListener, AsyncJob, JobState
+from apps.jobs.models import AsyncJob, JobState
 from apps.utils import random_id, AliasField
 from apps.simple_history import TxmHistoricalRecords, AnonymousHistoricalMixin
 from .rpc import RPCClientFactory
@@ -201,10 +199,6 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    job_listeners = GenericRelation(JobListener, related_query_name='shipments',
-                                    content_type_field='listener_type', object_id_field='listener_id')
-    eth_listeners = GenericRelation(EthListener, related_query_name='shipments',
-                                    content_type_field='listener_type', object_id_field='listener_id')
     contract_version = models.CharField(null=False, max_length=36)
 
     updated_by = models.CharField(null=True, max_length=36)
@@ -310,7 +304,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                 self.id,
                                 self.carrier_wallet_id],
                 signing_wallet_id=self.shipper_wallet_id,
-                listener=self)
+                shipment=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_carrier before contract shipment was created.')
             log_metric('transmission.error', tags={'method': 'shipment.set_carrier', 'code': 'call_too_early',
@@ -329,7 +323,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                 self.id,
                                 self.moderator_wallet_id],
                 signing_wallet_id=self.shipper_wallet_id,
-                listener=self)
+                shipment=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_moderator before contract shipment was created.')
             log_metric('transmission.error', tags={'method': 'shipment.set_moderator', 'code': 'call_too_early',
@@ -348,7 +342,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                 self.id,
                                 vault_uri],
                 signing_wallet_id=self.shipper_wallet_id,
-                listener=self)
+                shipment=self)
         else:
             LOG.info(f'Shipment {self.id} tried to set_vault_uri before contract shipment was created.')
             log_metric('transmission.error', tags={'method': 'shipment.set_vault_uri', 'code': 'call_too_early',
@@ -362,7 +356,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
         if self.loadshipment and self.loadshipment.shipment_state is not ShipmentState.NOT_CREATED:
             rpc_client = RPCClientFactory.get_client(self.contract_version)
             job_queryset = AsyncJob.objects.filter(
-                joblistener__shipments__id=self.id,
+                shipment__id=self.id,
                 state=JobState.PENDING,
                 parameters__rpc_method=rpc_client.set_vault_hash_tx.__name__,
                 parameters__signing_wallet_id=self.shipper_wallet_id,
@@ -397,7 +391,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                     self.id,
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
-                    listener=self,
+                    shipment=self,
                     delay=rate_limit)
                 async_job.actions.create(action_type=action_type,
                                          vault_hash=vault_hash,
@@ -410,7 +404,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                     self.id,
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
-                    listener=self)
+                    shipment=self)
                 async_job.actions.create(action_type=action_type,
                                          vault_hash=vault_hash,
                                          user_id=self.updated_by if use_updated_by else None)

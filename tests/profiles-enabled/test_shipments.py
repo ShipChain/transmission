@@ -1980,8 +1980,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             shipment_obj = Shipment.objects.filter(id=shipment['id']).first()
             Shipment.objects.filter(id=shipment['id']).update(contract_version='1.1.0')
             tx_hash = "0x398bb373a52c1d6533820b17d3938e7c19a6a6cf0c965b9923a5b65d34bf7d29"
-            eth_action = EthAction.objects.create(transaction_hash=tx_hash, async_job_id=shipment_obj.asyncjob_set.first().id)
-            eth_action.ethlistener_set.create(listener=shipment_obj)
+            EthAction.objects.create(transaction_hash=tx_hash, async_job_id=shipment_obj.asyncjob_set.first().id, shipment=shipment_obj)
             url = reverse('event-list', kwargs={'version': 'v1'})
             data = {
                 'events': {

@@ -20,20 +20,21 @@ import pytest
 from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.db import models
-from django_mock_queries.mocks import mocked_relations
-from mock import patch
 
 from apps.consumers import EventTypes
-from apps.jobs.models import AsyncJob, JobListener, MessageType
+from apps.jobs.models import AsyncJob, MessageType
+from apps.jobs.signals import job_update
 from apps.routing import application
 from apps.shipments.models import Shipment, Device, TrackingData
-from apps.shipments.signals import shipment_post_save
+from apps.shipments.signals import shipment_post_save, shipment_job_update
 from tests.utils import get_jwt
 
-USER_ID = '00000000-0000-0000-0000-000000000000'
+USER_ID = '00000000-0000-0000-0000-000000000009'
 
 
 async def async_get_jwt(**kwargs):
+    if 'sub' not in kwargs:
+        kwargs['sub'] = USER_ID
     return await sync_to_async(get_jwt)(**kwargs)
 
 
@@ -111,29 +112,36 @@ async def test_job_notification(communicator):
         def do_whatever(self):
             pass
 
-    class DummyListener(models.Model):
-        id = models.CharField(primary_key=True, max_length=36)
-        owner_id = models.CharField(null=False, max_length=36)
+    # Disable Shipment post-save signal
+    await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
 
-        class Meta:
-            app_label = 'apps.jobs'
+    shipment, _ = await sync_to_async(Shipment.objects.get_or_create)(
+        id='FAKE_SHIPMENT_ID',
+        owner_id=USER_ID,
+        storage_credentials_id='FAKE_STORAGE_CREDENTIALS_ID',
+        shipper_wallet_id='FAKE_SHIPPER_WALLET_ID',
+        carrier_wallet_id='FAKE_CARRIER_WALLET_ID',
+        contract_version='1.0.0'
+    )
 
-    listener = DummyListener(id='FAKE_LISTENER_ID', owner_id=USER_ID)
+    # Re-enable Shipment post-save signal
+    await sync_to_async(models.signals.post_save.connect)(shipment_post_save, sender=Shipment,
+                                                          dispatch_uid='shipment_post_save')
 
-    with mocked_relations(JobListener):
-        job = await sync_to_async(AsyncJob.rpc_job_for_listener)(rpc_method=DummyRPCClient.do_whatever, rpc_parameters=[],
-                                                                 signing_wallet_id='FAKE_WALLET_ID', listener=listener)
-        from django_mock_queries.query import MockSet, Mock
-        from django_mock_queries.mocks import MockOneToManyMap
+    job = await sync_to_async(AsyncJob.rpc_job_for_listener)(rpc_method=DummyRPCClient.do_whatever, rpc_parameters=[],
+                                                             signing_wallet_id='FAKE_WALLET_ID', shipment=shipment)
 
-        with patch.object(AsyncJob, 'joblistener_set', MockOneToManyMap(AsyncJob.joblistener_set)):
-            job.joblistener_set = MockSet(Mock(listener=listener))
+    # Disable Shipment job update signal
+    await sync_to_async(job_update.disconnect)(shipment_job_update, sender=Shipment, dispatch_uid='shipment_job_update')
 
-            await sync_to_async(job.message_set.create)(type=MessageType.ETH_TRANSACTION, body=json.dumps({'foo': 'bar'}))
-            assert job.joblistener_set.count() == 1
-            response = await communicator.receive_json_from()
-            assert response['event'] == EventTypes.asyncjob_update.name
-            assert response['data']['id'] == job.id
+    await sync_to_async(job.message_set.create)(type=MessageType.ETH_TRANSACTION, body=json.dumps({'foo': 'bar'}))
+
+    # Enable Shipment job update signal
+    await sync_to_async(job_update.connect)(shipment_job_update, sender=Shipment, dispatch_uid='shipment_job_update')
+
+    response = await communicator.receive_json_from()
+    assert response['event'] == EventTypes.asyncjob_update.name
+    assert response['data']['id'] == job.id
 
     await communicator.disconnect()
 
@@ -145,7 +153,7 @@ async def test_trackingdata_notification(communicator):
     # Disable Shipment post-save signal
     await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
 
-    shipment = await sync_to_async(Shipment.objects.create)(
+    shipment, _ = await sync_to_async(Shipment.objects.get_or_create)(
         id='FAKE_SHIPMENT_ID',
         owner_id=USER_ID,
         storage_credentials_id='FAKE_STORAGE_CREDENTIALS_ID',

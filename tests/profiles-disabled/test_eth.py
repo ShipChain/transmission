@@ -30,21 +30,16 @@ USER_ID = '00000000-0000-0000-0000-000000000000'
 
 
 class TransactionReceiptTestCase(APITestCase):
-    def createAsyncJobs(self):
+    def createAsyncJobs(self, shipment):
         self.asyncJobs = []
-        self.asyncJobs.append(AsyncJob.objects.create())
+        self.asyncJobs.append(AsyncJob.objects.create(shipment=shipment))
 
     def createEthAction(self, listener):
         self.ethActions = []
-        self.ethActions.append(EthAction.objects.create(transaction_hash=TRANSACTION_HASH, async_job=self.asyncJobs[0]))
+        self.ethActions.append(EthAction.objects.create(transaction_hash=TRANSACTION_HASH, async_job=self.asyncJobs[0],
+                                                        shipment=listener))
         self.ethActions.append(EthAction.objects.create(transaction_hash=TRANSACTION_HASH_2,
-                                                        async_job=self.asyncJobs[0]))
-
-        self.ethActions[0].ethlistener_set.create(listener=listener)
-        self.ethActions[0].save()
-
-        self.ethActions[1].ethlistener_set.create(listener=listener)
-        self.ethActions[1].save()
+                                                        async_job=self.asyncJobs[0], shipment=listener))
 
     def createTransactionReceipts(self):
         self.transactionReceipts = []
@@ -99,7 +94,7 @@ class TransactionReceiptTestCase(APITestCase):
                                            shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
                                            storage_credentials_id=WALLET_ID)
 
-        self.createAsyncJobs()
+        self.createAsyncJobs(listener)
         self.createEthAction(listener)
         self.createTransactionReceipts()
 
@@ -112,16 +107,16 @@ class TransactionReceiptTestCase(APITestCase):
         self.assertEqual(response_json['included'][1]['attributes']['from_address'], FROM_ADDRESS)
 
     def test_transaction_list(self):
-        class DummyEthListener(models.Model):
-            id = models.CharField(primary_key=True, max_length=36)
-            owner_id = models.CharField(null=False, max_length=36)
+        listener, _ = Shipment.objects.get_or_create(
+            id='FAKE_LISTENER_ID',
+            owner_id=USER_ID,
+            storage_credentials_id='FAKE_STORAGE_CREDENTIALS_ID',
+            shipper_wallet_id='FAKE_SHIPPER_WALLET_ID',
+            carrier_wallet_id='FAKE_CARRIER_WALLET_ID',
+            contract_version='1.0.0'
+        )
 
-            class Meta:
-                app_label = 'apps.jobs'
-
-        listener = DummyEthListener(id='FAKE_LISTENER_ID', owner_id=USER_ID)
-
-        self.createAsyncJobs()
+        self.createAsyncJobs(listener)
         self.createEthAction(listener)
         self.createTransactionReceipts()
 

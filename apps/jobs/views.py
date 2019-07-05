@@ -31,7 +31,7 @@ class JobsViewSet(mixins.ListModelMixin,
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(joblistener__shipments__owner_id=get_owner_id(self.request))
+            queryset = queryset.filter(shipment__owner_id=get_owner_id(self.request))
         return queryset
 
     @action(detail=True, methods=['post'],

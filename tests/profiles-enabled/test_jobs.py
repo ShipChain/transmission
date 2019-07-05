@@ -76,21 +76,23 @@ class JobsAPITests(APITestCase):
 
         self.async_jobs.append(AsyncJob.objects.create(state=JobState.PENDING,
                                                        parameters=RPC_PARAMS,
-                                                       wallet_lock_token='wallet_lock_token'))
+                                                       wallet_lock_token='wallet_lock_token',
+                                                       shipment=shipment))
 
         self.async_jobs.append(AsyncJob.objects.create(state=JobState.PENDING,
                                                        parameters=RPC_PARAMS,
-                                                       wallet_lock_token='wallet_lock_token'))
+                                                       wallet_lock_token='wallet_lock_token',
+                                                       shipment=shipment))
 
         self.async_jobs.append(AsyncJob.objects.create(state=JobState.FAILED,
                                                        parameters=RPC_PARAMS,
-                                                       wallet_lock_token='wallet_lock_token'))
+                                                       wallet_lock_token='wallet_lock_token',
+                                                       shipment=shipment))
 
         self.async_jobs.append(AsyncJob.objects.create(state=JobState.COMPLETE,
                                                        parameters=RPC_PARAMS,
-                                                       wallet_lock_token='wallet_lock_token'))
-        for job in self.async_jobs:
-            job.joblistener_set.create(listener=shipment)
+                                                       wallet_lock_token='wallet_lock_token',
+                                                       shipment=shipment))
 
     def create_shipment(self):
         from apps.rpc_client import requests

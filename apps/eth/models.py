@@ -1,14 +1,11 @@
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django_extensions.db.fields.json import JSONField
 from rest_framework.reverse import reverse
 
-from gm2m import GM2MField
-
-from apps.utils import random_id
 from apps.jobs.models import AsyncJob
+from apps.shipments.models import Shipment
+from apps.utils import random_id
 from .fields import AddressField, HashField
 
 
@@ -20,7 +17,7 @@ class EthAction(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    listeners = GM2MField('shipments.Shipment', through='EthListener')
+    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
 
 
 class Transaction(models.Model):
@@ -107,18 +104,18 @@ class TransactionReceipt(models.Model):
     def convert_receipt(receipt):
         return {
             'block_hash': receipt['blockHash'],
-            'block_number':  receipt['blockNumber'],
-            'contract_address':  receipt['contractAddress'],
-            'cumulative_gas_used':  receipt['cumulativeGasUsed'],
-            'from_address':  "0x0" if 'from' not in receipt else receipt['from'],
-            'gas_used':  receipt['gasUsed'],
-            'logs':  receipt['logs'],
+            'block_number': receipt['blockNumber'],
+            'contract_address': receipt['contractAddress'],
+            'cumulative_gas_used': receipt['cumulativeGasUsed'],
+            'from_address': "0x0" if 'from' not in receipt else receipt['from'],
+            'gas_used': receipt['gasUsed'],
+            'logs': receipt['logs'],
             'logs_bloom': receipt['logsBloom'] if 'logsBloom' in receipt else None,
-            'status':  receipt['status'],
+            'status': receipt['status'],
             'to_address': receipt['to'] if 'to' in receipt else None,
             'loom_tx_hash': receipt['transactionHash'] if 'ethTxHash' in receipt else None,
             'eth_action_id': receipt['transactionHash'] if 'ethTxHash' not in receipt else receipt['ethTxHash'],
-            'transaction_index':  receipt['transactionIndex'],
+            'transaction_index': receipt['transactionIndex'],
         }
 
     @staticmethod
@@ -186,12 +183,3 @@ class Event(models.Model):
     @staticmethod
     def get_event_subscription_url():
         return settings.INTERNAL_URL + reverse('event-list', kwargs={'version': 'v1'})
-
-
-class EthListener(models.Model):
-    eth_action = models.ForeignKey(EthAction, on_delete=models.CASCADE)
-
-    # Polymorphic listener
-    listener_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    listener_id = models.CharField(max_length=36)
-    listener = GenericForeignKey('listener_type', 'listener_id')

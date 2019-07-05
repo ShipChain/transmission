@@ -43,21 +43,16 @@ class TransactionReceiptTestCase(APITestCase):
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
-    def createAsyncJobs(self):
+    def createAsyncJobs(self, shipment):
         self.asyncJobs = []
-        self.asyncJobs.append(AsyncJob.objects.create())
+        self.asyncJobs.append(AsyncJob.objects.create(shipment=shipment))
 
     def createEthAction(self, listener):
         self.ethActions = []
-        self.ethActions.append(EthAction.objects.create(transaction_hash=TRANSACTION_HASH, async_job=self.asyncJobs[0]))
+        self.ethActions.append(EthAction.objects.create(transaction_hash=TRANSACTION_HASH, async_job=self.asyncJobs[0],
+                                                        shipment=listener))
         self.ethActions.append(EthAction.objects.create(transaction_hash=TRANSACTION_HASH_2,
-                                                        async_job=self.asyncJobs[0]))
-
-        self.ethActions[0].ethlistener_set.create(listener=listener)
-        self.ethActions[0].save()
-
-        self.ethActions[1].ethlistener_set.create(listener=listener)
-        self.ethActions[1].save()
+                                                        async_job=self.asyncJobs[0], shipment=listener))
 
     def createTransactionReceipts(self):
         self.transactionReceipts = []
@@ -112,7 +107,7 @@ class TransactionReceiptTestCase(APITestCase):
                                            shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
                                            storage_credentials_id=WALLET_ID)
 
-        self.createAsyncJobs()
+        self.createAsyncJobs(listener)
         self.createEthAction(listener)
         self.createTransactionReceipts()
 
@@ -165,7 +160,7 @@ class TransactionReceiptTestCase(APITestCase):
             shipment=listener
         )
 
-        self.createAsyncJobs()
+        self.createAsyncJobs(listener)
         self.createEthAction(listener)
         self.createTransactionReceipts()
 

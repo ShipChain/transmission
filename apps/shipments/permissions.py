@@ -64,10 +64,7 @@ class IsListenerOwner(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Permissions are allowed to anyone who owns a shipment listening to this job
-        for shipment in obj.listeners.filter(Model='shipments.Shipment'):
-            if has_owner_access(request, shipment):
-                return True
-        return False
+        return has_owner_access(request, obj.shipment)
 
 
 class IsOwnerOrShared(permissions.IsAuthenticated):

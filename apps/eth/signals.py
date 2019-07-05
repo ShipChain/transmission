@@ -5,8 +5,10 @@ from django.dispatch import Signal, receiver
 
 # pylint:disable=invalid-name
 from apps.eth.models import Event
+from apps.shipments.models import Shipment
 
-event_update = Signal(providing_args=["event", "listener"])
+
+event_update = Signal(providing_args=["event", "shipment"])
 LOG = logging.getLogger('transmission')
 
 
@@ -16,7 +18,5 @@ def event_post_save(sender, instance, **kwargs):
 
     # Update has been received, send signal to listener class
     if instance.eth_action:
-        LOG.debug(f'Sending signals to all listeners for EthAction {instance.eth_action.transaction_hash}.')
-        for listener in instance.eth_action.ethlistener_set.all():
-            event_update.send(sender=listener.listener_type.model_class(),
-                              event=instance, listener=listener.listener)
+        LOG.debug(f'Sending signals to Shipment for EthAction {instance.eth_action.transaction_hash}.')
+        event_update.send(sender=Shipment, event=instance, shipment=instance.eth_action.shipment)
