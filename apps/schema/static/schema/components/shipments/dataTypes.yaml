@@ -1,0 +1,534 @@
+uuid: &uuid
+  $ref: '../core/dataTypes.yaml#/uuid'
+
+storageCredentialsId:
+  properties:
+    storage_credentials_id:
+      <<: *uuid
+      title: storage_credentials_id
+      description: Storage credential UUID associated with the shipment
+
+vaultId:
+  properties:
+    vault_id:
+      <<: *uuid
+      title: vault_id
+      description: Vault UUID associated with the shipment
+
+ownerId:
+  properties:
+    owner_id:
+      <<: *uuid
+      title: owner_id
+      description: Owner UUID of the shipment
+
+deviceId:
+  properties:
+    device_id:
+      <<: *uuid
+      title: device_id
+      description: Device UUID associated with the shipment
+
+shipperWalletId:
+  properties:
+    shipper_wallet_id:
+      <<: *uuid
+      title: shipper_wallet_id
+      description: Shipper's Wallet UUID associated with the shipment
+
+carrierWalletId:
+  properties:
+    carrier_wallet_id:
+      <<: *uuid
+      title: carrier_wallet_id
+      description: Carrier's Wallet UUID associated with the shipment
+
+carriersScac:
+  properties:
+    carriers_scac:
+      title: carriers_scac
+      description: Standard Carrier Alpha Code used for the carrier
+      type: string
+      example: 'SCAC'
+
+forwardersScac:
+  properties:
+    forwarders_scac:
+      title: forwarders_scac
+      description: Standard Carrier Alpha Code used for the forwarder
+      type: string
+      example: 'SCAC'
+
+nvoccScac:
+  properties:
+    nvocc_scac:
+      title: nvocc_scac
+      description: Standard Carrier Alpha Code used for the Non-Vessel Operating Common Carrier (NVOCC)
+      type: string
+      example: 'SCAC'
+
+shippersReference:
+  properties:
+    shippers_reference:
+      title: shippers_reference
+      description: Reference number of this shipment assigned by the Shipper
+      type: string
+      example: 'Shipper Reference'
+
+forwardersReference:
+  properties:
+    forwarders_reference:
+      title: forwarders_reference
+      description: Reference number of this shipment assigned by the Forwarder
+      type: string
+      example: 'Forwarder Reference'
+
+forwardersShipperId:
+  properties:
+    forwarders_shipper_id:
+      title: forwarders_shipper_id
+      description: ID of the Shipper assigned by the Forwarder
+      type: string
+      example: 'Forwarder ID'
+
+carriersInstructions:
+  properties:
+    carriers_instructions:
+      title: carriers_instructions
+      description: Instructions for Carrier
+      type: string
+      example: 'deliver to dock #2'
+
+proNumber:
+  properties:
+    pro_number:
+      title: pro_number
+      description: PRO number for LTL shipments
+      type: string
+      example: '12345678'
+
+billMaster:
+  properties:
+    bill_master:
+      title: bill_master
+      description: Master bill number
+      type: string
+      example: 'MBLN12345'
+
+billHouse:
+  properties:
+    bill_house:
+      title: bill_house
+      description: House bill Number
+      type: string
+      example: 'HBLN12345'
+
+billSubhouse:
+  properties:
+    bill_subhouse:
+      title: bill_subhouse
+      description: Sub-House bill Number
+      type: string
+      example: 'SHBLN12345'
+
+paymentTerms:
+  properties:
+    payment_terms:
+      title: payment_terms
+      description: Shipment payment terms
+      type: string
+      example: 'Paid'
+
+vesselName:
+  properties:
+    vessel_name:
+      title: vessel_name
+      description: Vessel or ship name carrying shipment
+      type: string
+      example: 'Shippy'
+
+voyageNumber:
+  properties:
+    voyage_number:
+      title: voyage_number
+      description: Unique voyage number
+      type: string
+      example: 'A113'
+
+packageQty:
+  properties:
+    package_qty:
+      title: package_qty
+      description: Number of packages in shipment
+      type: integer
+      format: int32
+      example: 123
+
+weightGross:
+  properties:
+    weight_gross:
+      title: weight_gross
+      description: Gross weight in kilograms
+      type: number
+      example: 12345.67
+
+volume:
+  properties:
+    volume:
+      title: volume
+      description: Volume in cubic meters
+      type: number
+      example: 12345.67
+
+containerQty:
+  properties:
+    container_qty:
+      title: container_qty
+      description: Number of containers in the shipment
+      type: integer
+      format: int32
+      example: 12345
+
+weightDim:
+  properties:
+    weight_dim:
+      title: weight_dim
+      description: Estimated weight that is calculated from the length, width, and height of shipment
+      type: number
+      example: 12345.67
+
+weightChargeable:
+  properties:
+    weight_chargeable:
+      title: weight_chargeable
+      description: Weight of the shipment used for billing
+      type: number
+      example: 12345.67
+
+docsReceivedAct:
+  properties:
+    docs_received_act:
+      title: docs_received_act
+      description: Timestamp of when the transporter received the shipment
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+docsApprovedAct:
+  properties:
+    docs_approved_act:
+      title: docs_approved_act
+      description: Timestamp of when the transporter confirmed the shipment's details were complete and valid
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+pickupAppt:
+  properties:
+    pickup_appt:
+      title: pickup_appt
+      description: Appointment timestamp for pickup from origin
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+pickupEst:
+  properties:
+    pickup_est:
+      title: pickup_est
+      description: Estimated timestamp for pickup from origin
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+pickupAct:
+  properties:
+    pickup_act:
+      title: pickup_act
+      description: Actual timestamp pickup occured at point of origin
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+loadingEst:
+  properties:
+    loading_est:
+      title: loading_est
+      description: Estimated timestamp for loading to begin
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+loadingAct:
+  properties:
+    loading_act:
+      title: loading_act
+      description: Actual timestamp that loading began
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+departureEst:
+  properties:
+    departure_est:
+      title: departure_est
+      description: Estimated timestamp of departure
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+departureAct:
+  properties:
+    departure_act:
+      title: departure_act
+      description: Actual timestamp of departure
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+deliveryApptAct:
+  properties:
+    delivery_appt_act:
+      title: delivery_appt_act
+      description: Delivery appointment timestamp
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+portArrivalEst:
+  properties:
+    port_arrival_est:
+      title: port_arrival_est
+      description: Estimated timestamp of arrival at destination port
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+portArrivalAct:
+  properties:
+    port_arrival_act:
+      title: port_arrival_act
+      description: Timestamp of actual arrival at destination port
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+deliveryEst:
+  properties:
+    delivery_est:
+      title: delivery_est
+      description: Estimated timestamp of delivery
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+deliveryAct:
+  properties:
+    delivery_act:
+      title: delivery_act
+      description: Actual timestamp of delivery, cannot be set to a time in the future
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+deliveryAttempt:
+  properties:
+    delivery_attempt:
+      title: delivery_attempt
+      description: Timestamp of last attempted delivery
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+cancelRequestedDateAct:
+  properties:
+    cancel_requested_date_act:
+      title: cancel_requested_date_act
+      description: Timestamp for cancellation request
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+cancelConfirmedDateAct:
+  properties:
+    cancel_confirmed_date_act:
+      title: cancel_confirmed_date_act
+      description: Timestamp for cancellation confirmation
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+customsFiledDateAct:
+  properties:
+    customs_filed_date_act:
+      title: customs_filed_date_act
+      description: Timestamp of actual customs filed date
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+customsHoldDateAct:
+  properties:
+    customs_hold_date_act:
+      title: customs_hold_date_act
+      description: Timestamp of hold by customs
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+customsReleaseDateAct:
+  properties:
+    customs_release_date_act:
+      title: customs_release_date_act
+      description: Timestamp of release by customs
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+containerType:
+  properties:
+    container_type:
+      title: container_type
+      description: Type of container being used for the shipment
+      type: string
+      example: 'BULK'
+
+portArrivalLocode:
+  properties:
+    port_arrival_locode:
+      title: port_arrival_locode
+      description: UN/LOCODE for destination port
+      type: string
+      example: 'USCHI'
+
+finalPortLocode:
+  properties:
+    final_port_locode:
+      title: final_port_locode
+      description: UN/LOCODE for final destination port
+      type: string
+      example: 'USCHI'
+
+importLocode:
+  properties:
+    import_locode:
+      title: import_locode
+      description: UN/LOCODE for import
+      type: string
+      example: 'USCHI'
+
+ladingLocode:
+  properties:
+    lading_locode:
+      title: lading_locode
+      description: UN/LOCODE for lading
+      type: string
+      example: 'USCHI'
+
+originLocode:
+  properties:
+    origin_locode:
+      title: origin_locode
+      description: UN/LOCODE for origin
+      type: string
+      example: 'USCHI'
+
+usRouted:
+  properties:
+    us_routed:
+      title: us_routed
+      description: Whether the US export is routed
+      type: boolean
+      example: true
+
+importCustomsMode:
+  properties:
+    import_customs_mode:
+      title: import_customs_mode
+      description: Mode of Transportation code used by the customs authority for the country where the shipment's import declaration will be filed
+      type: string
+      example: '29601'
+
+modeOfTransportCode:
+  properties:
+    mode_of_transport_code:
+      title: mode_of_transport_code
+      description: Type of transport shipment will be using
+      type: string
+      example: '29601'
+
+usExportPort:
+  properties:
+    us_export_port:
+      title: us_export_port
+      description: US Customs code for port of export
+      type: string
+      example: '29601'
+
+customerFields:
+  properties:
+    customer_fields:
+      title: customer_fields
+      description: Customer fields for shipment
+      type: JSON object
+      example: {}
+
+specialInstructions:
+  properties:
+    special_instructions:
+      title: special_instructions
+      description: General instructions or information about the shipment
+      type: string
+      example: 'Keep refrigerated'
+
+trailerNumber:
+  properties:
+    trailer_number:
+      title: trailer_number
+      description: Number of trailer hauling goods
+      type: string
+      example: 'TA664231'
+
+sealNumber:
+  properties:
+    seal_number:
+      title: seal_number
+      description: If trailer is sealed, seal number provided
+      type: string
+      example: 'Z88654Q63'
+
+isMasterBOL:
+  properties:
+    is_master_bol:
+      title: is_master_bol
+      description: Boolean on whether the shipment is master or house bill of lading
+      type: boolean
+      example: false
+
+nmfcClass:
+  properties:
+    nmfc_class:
+      title: nmfc_class
+      description: National Motor Freight Traffic Association classification. Freight class between 50 and 500
+      type: string
+      example: '55'
+
+isHazmat:
+  properties:
+    is_hazmat:
+      title: is_hazmat
+      description: Boolean on whether the shipment contains hazardous contents
+      type: boolean
+      example: false
+
+locationData:
+  properties:
+    data:
+      title: data
+      type: object
+      properties:
+        type:
+          type: string
+          description: Name of model
+          title: type
+          example: 'Location'
+        id:
+          <<: *uuid
+          title: id
+          description: Location UUID associated with the shipment
+
+loadData:
+  properties:
+    data:
+      title: data
+      type: object
+      properties:
+        type:
+          type: string
+          description: Name of model
+          title: type
+          example: 'LoadShipment'
+        id:
+          <<: *uuid
+          title: id
+          description: LoadShipment UUID associated with the shipment

@@ -1,0 +1,111 @@
+address: &address
+  $ref: '../ethereum/dataTypes.yaml#/address'
+
+ethTransactionHash: &transactionHash
+  $ref: '../ethereum/dataTypes.yaml#/transactionHash'
+
+transactionHash:
+  properties:
+    transaction_hash:
+      <<: *transactionHash
+
+transactionIndex:
+  properties:
+    transaction_index:
+      title: transaction_index
+      description: Integer of the transactions index position in the block.
+      type: integer
+      example: 9
+
+blockHash:
+  properties:
+    block_hash:
+      title: block_hash
+      description: Hash of the block that this transaction was included in
+      type: string
+      example: '0xca0dda8d80ccc3b17470b8b8ab9594c75f5ac27c98222f4913bed84d56419b0d'
+
+blockNumber:
+  properties:
+    block_number:
+      title: block_number
+      description: Block number that the transaction was included in
+      type: integer
+      example: 6271965
+
+contractAddress:
+  properties:
+    contract_address:
+      title: contract_address
+      description: The contract address created, if the transaction was a contract creation, otherwise `null`
+      type: string
+      example: '0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe'
+
+cumulativeGasUsed:
+  properties:
+    cumulative_gas_used:
+      title: cumulative_gas_used
+      description: The total amount of gas used when this transaction was executed in the block
+      type: integer
+      example: 7130108
+
+gasUsed:
+  properties:
+    gas_used:
+      title: gas_used
+      description: The amount of gas used by this specific transaction alone
+      type: integer
+      example: 240114
+
+logs:
+  properties:
+    logs:
+      title: logs
+      description: Array of log objects, which this transaction generated
+      type: string
+      example: >
+        [{\"address\": \"0x6DF432De968758Ffd24acb764c439ac8166342b3\", \"blockHash\":
+        \"0xca0dda8d80ccc3b17470b8b8ab9594c75f5ac27c98222f4913bed84d56419b0d\", \"blockNumber\": 6271965,
+        \"data\": \"0x0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000
+        3cb6c364d772e1135700953e69a0ae7a5104f2820000000000000000000000003cb6c364d772e1135700953e69a0ae7a5104f2
+        820000000000000000000000000000000000000000000000000000000000000000\", \"logIndex\": 77,
+        \"removed\": false, \"topics\": [\"0x485397dbe4d658daac8124e3080f66a255b9207fa36d7e757ba4d52fe6c21f54\"],
+        \"transactionHash\": \"0xf53ffac288474d65dc7ad79ea484ab742cc452ccc119053a8274b29f4bdfc888\",
+        \"transactionIndex\": 9, \"id\": \"log_43b39da9\"}]
+
+logsBloom:
+  properties:
+    logsBloom:
+      title: logsBloom
+      description: Hash of the log entries
+      type: string
+      example: >
+        0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000000000000020000000200000000000000000000000
+        002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+        000000000000000000400000000000000020000000000000000000000000000000000000000000000000000000000000000000
+        0000
+
+status:
+  properties:
+    status:
+      title: status
+      description: true if the transaction was successful, false if the EVM reverted the transaction
+      type: boolean
+      example: true
+
+fromAddress:
+  properties:
+    from_address:
+      <<: *address
+      title: from_address
+      description: The account that the transaction is sent from
+
+toAddress:
+  properties:
+    to_address:
+      <<: *address
+      title: to_address
+      description: The account that the transaction is sent to
+

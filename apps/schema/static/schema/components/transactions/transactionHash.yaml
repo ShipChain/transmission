@@ -1,0 +1,21 @@
+get:
+  summary: Get transaction
+  description: >
+    Get more details about an `EthAction` (association between an Eth `Transaction` and `TransactionReceipt`) and its state.
+  parameters:
+  - $ref: 'parameters.yaml#/path'
+  tags:
+  - Transactions
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../ethAction/schema.yaml#/getResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'

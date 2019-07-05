@@ -1,0 +1,22 @@
+get:
+  summary: List device statuses
+  description: >
+    List all current `Device` statuses/configurations for an organization
+  parameters:
+    - $ref: 'parameters.yaml#/active'
+    - $ref: 'parameters.yaml#/inBbox'
+  tags:
+    - Devices
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/listResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'

@@ -1,0 +1,89 @@
+name:
+  properties:
+    name:
+      title: name
+      description: Name of the location
+      type: string
+      example: 'Location Name'
+
+address_1:
+  properties:
+    address_1:
+      title: address_1
+      description: Street and address of the location
+      type: string
+      example: '123 Fake St.'
+
+address_2:
+  properties:
+    address_2:
+      title: address_2
+      description: Secondary information of the location
+      type: string
+      example: 'Apartment 404'
+
+city:
+  properties:
+    city:
+      title: city
+      description: City of the location
+      type: string
+      example: 'Greenville'
+
+state:
+  properties:
+    state:
+      title: state
+      description: State of the location
+      type: string
+      example: 'South Carolina'
+
+country:
+  properties:
+    country:
+      title: country
+      description: Country of the location
+      type: string
+      example: 'United States of America'
+
+postalCode:
+  properties:
+    postal_code:
+      title: postal_code
+      description: Postal Code of the location
+      type: string
+      example: '29601'
+
+phoneNumber:
+  properties:
+    phone_number:
+      title: phone_number
+      description: Phone Number of the location
+      type: string
+      example: '555-555-5555'
+
+faxNumber:
+  properties:
+    fax_number:
+      title: fax_number
+      description: Fax Number of the location
+      type: string
+      example: '555-555-5555'
+
+coordinates:
+  properties:
+    coordinates:
+      title: coordinates
+      description: Latitude and Longitude of location
+      type: array
+      items:
+        type: number
+        example: 50.924085, -1.475295
+
+type:
+  properties:
+    type:
+      title: type
+      description: Type of field
+      type: string
+      example: 'Point'

@@ -1,0 +1,133 @@
+to:
+  properties:
+    to:
+      title: to
+      description: Receiver ethereum address
+      type: string
+      example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+from:
+  properties:
+    from:
+      title: from
+      description: Sender ethereum address
+      type: string
+      example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+status:
+  properties:
+    status:
+      title: status
+      description: Whether the transaction is still active
+      type: boolean
+      example: true
+
+gasUsed:
+  properties:
+    gasUsed:
+      title: gasUsed
+      description: Amount of gas used for this transaction
+      type: number
+      format: int32
+      example: 55688
+
+blockHash:
+  properties:
+    blockHash:
+      title: blockHash
+      description: Block hash associated
+      type: string
+      example: '0x989518435f288d967eb6f8ce87b048958b1794a2477f8e88bb5ad1036584b6c5'
+
+logsBloom:
+  properties:
+    logsBloom:
+      title: logsBloom
+      description: Hash of the log entries
+      type: string
+      example: '0x989518435f288d967eb6f8ce87b048958b1794a2477f8e88bb5ad1036584b6c5'
+
+blockNumber:
+  properties:
+    blockNumber:
+      title: blockNumber
+      description: Block number of the trasaction
+      type: number
+      format: int32
+      example: 32
+
+contractAddress:
+  properties:
+    contractAddress:
+      title: contractAddress
+      description: Contract address created
+      type: string
+      example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+address:
+  properties:
+    address:
+      title: address
+      description: Address of the receiver
+      type: string
+      example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+
+transactionHash:
+  properties:
+    transactionHash:
+      title: transactionHash
+      description: Hash of the transaction
+      type: string
+      example: '0x2f08ab71181bf55b3f978d8ce47c193ca61ec3b2b65ec1ecacf4997a58b013b7'
+
+transactionIndex:
+  properties:
+    transactionIndex:
+      title: transactionIndex
+      description: Transaction's index position within the block
+      type: number
+      format: int32
+      example: 1
+
+cumulativeGasUsed:
+  properties:
+    cumulativeGasUsed:
+      title: cumulativeGasUsed
+      description: Cumulative amount of gas used when this transaction was executed
+      type: number
+      format: int32
+      example: 55688
+
+removed:
+  properties:
+    removed:
+      title: removed
+      description: Whether the transaction has been removed
+      type: boolean
+      example: true
+
+logIndex:
+  properties:
+    logIndex:
+      title: logIndex
+      description: Index of the log
+      type: number
+      format: int32
+      example: 0
+
+id:
+  properties:
+    id:
+      title: id
+      description: id of the transaction
+      type: string
+      example: 'log_80ef40ab'
+
+type:
+  properties:
+    type:
+      title: type
+      description: Type of the object
+      type: string
+      example: 'Message'

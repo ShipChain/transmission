@@ -1,0 +1,37 @@
+uuid: &uuid
+  $ref: '#/dataTypes/uuid'
+
+name:
+  properties:
+    name:
+      title: name
+      description: Name of the PermissionLink
+      type: string
+      example: 'Public Access Link #1'
+
+shipmentId:
+  properties:
+    shipment_id:
+      <<: *uuid
+      title: shipment_id
+      description: Shipment UUID associated with the permission
+
+expirationDate:
+  properties:
+    expiration_date:
+      title: expiration_date
+      description: Timestamp of when the PermissionLink will expire and be unusable
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+emails:
+  properties:
+    emails:
+      title: emails
+      description: List of email recipients
+      type: array
+      items:
+        $ref: '#/dataTypes/email'
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml

@@ -1,0 +1,45 @@
+transactionHash:
+  properties:
+    transaction_hash: &transactionHash
+      title: transaction_hash
+      description: Hash of a signed Ethereum transaction
+      type: string
+      example: '0x869335bea9131d496acb844b1ce25db22093f81f74d64c8e3e96930cbe4f129c'
+
+resourceId:
+  properties:
+    id:
+      <<: *transactionHash
+      title: id
+
+address:
+  properties:
+    address: &address
+      title: address
+      description: Ethereum address
+      type: string
+      example: '0x369974bFb76b656C0c45a84D00b1877340b45fA2'
+
+moderator:
+  properties:
+    moderator:
+      title: moderator
+      description: Moderator's ethereum address
+      type: string
+      example: '0x369974bFb76b656C0c45a84D00b1877340b45fA2'
+
+publicKey:
+  properties:
+    public_key:
+      title: public_key
+      description: Public key of the wallet
+      type: string
+      example: '8afaded2fc0f7b4566c303fccb9d3b445aa88a1d213d972f38c1c2fe173f7adc8e67596ddab0dd342ec9cd4f907884b5b7ae7b873437fb8a1cb2e58ece473f81'
+
+privateKey:
+  properties:
+    private_key:
+      title: private_key
+      description: Private key of the wallet
+      type: string
+      example: '2146c3dfeab8621830f5aa4d22cb3ee8ba13c9f9513988ec3fb154c0a43a596a'

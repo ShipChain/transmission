@@ -1,0 +1,25 @@
+get:
+  summary: List Shipment history
+  description: >
+    Retrieve a list of historical changes to a `Shipment`.
+  parameters:
+    - $ref: '../shipments/parameters.yaml#/path'
+    - $ref: '../core/parameters.yaml#/page'
+    - $ref: '../core/parameters.yaml#/page_size'
+    - $ref: 'parameters.yaml#/historyDateLessThan'
+    - $ref: 'parameters.yaml#/historyDateGreaterThan'
+  tags:
+    - Shipments
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../shipments/schema.yaml#/listResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'

@@ -1,0 +1,123 @@
+collectionResource:
+  properties:
+    type:
+      description: Type of GeoJSON object
+      example: FeatureCollection
+
+singularResource:
+  properties:
+    type:
+      description: Type of GeoJSON object
+      example: Feature
+
+pointProperties:
+  type: object
+  properties:
+    properties:
+      type: object
+      description: Metadata associated with this `Point` feature
+      allOf:
+      - $ref: '#/tracking/time'
+      - $ref: '#/tracking/uncertainty'
+      - $ref: '#/tracking/source'
+
+lineProperties:
+  type: object
+  properties:
+    properties:
+      type: object
+      description: Metadata associated with this `Line` feature
+      allOf:
+      - $ref: '#/tracking/linestringTimestamps'
+
+getPointResource:
+  type: object
+  properties:
+    data:
+      type: object
+      description: A GeoJSON FeatureCollection containing Point data.
+      properties:
+        type:
+          type: string
+          description: Type of GeoJSON object
+          example: FeatureCollection
+        features:
+          type: array
+          description: GeoJSON `Feature`s in the `FeatureCollection`
+          items:
+           $ref: '#/pointFeature'
+
+pointResponse:
+  title: Point Collection
+  description: Response data with parameter as_point
+  allOf:
+  - $ref: '#/getPointResource'
+
+getLineResource:
+  type: object
+  properties:
+    data:
+      type: object
+      description: A GeoJSON FeatureCollection containing Line data.
+      properties:
+        type:
+          type: string
+          description: Type of GeoJSON object
+          example: FeatureCollection
+        features:
+          type: array
+          description: GeoJSON `Feature`s in the `FeatureCollection`
+          items:
+            $ref: '#/lineFeature'
+
+lineResponse:
+  title: Line Collection
+  description: Response data with parameter as_line
+  allOf:
+  - $ref: '#/getLineResource'
+
+pointFeature:
+  allOf:
+  - $ref: '#/singularResource'
+  - $ref: '#/tracking/point'
+  - $ref: '#/pointProperties'
+
+lineFeature:
+  allOf:
+  - $ref: '#/singularResource'
+  - $ref: '#/tracking/line'
+  - $ref: '#/lineProperties'
+
+getFeatures:
+  type: object
+  description: A GeoJSON FeatureCollection containing Point and Line data.
+  properties:
+    type:
+      type: string
+      description: Type of GeoJSON object
+      example: FeatureCollection
+    features:
+      type: array
+      description: GeoJSON `Feature`s in the `FeatureCollection`
+      items:
+      - $ref: '#/pointFeature'
+      - $ref: '#/lineFeature'
+
+getResource:
+  allOf:
+  - type: object
+  - properties:
+      data:
+       $ref: '#/getFeatures'
+
+getResponse:
+  title: Point and Line Collection
+  description: Normal response data
+  allOf:
+  - $ref: '#/getResource'
+
+tracking:
+  $ref: dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/requestBody.yaml
