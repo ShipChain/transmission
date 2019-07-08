@@ -61,9 +61,8 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
         """
         log_metric('transmission.info', tags={'method': 'throttling.MonthlyRateThrottle', 'module': __name__,
                                               'organization_id': self.key, 'success': True})
-        self.history.insert(0, self.now)
-        self.cache.set(self.key, self.history, self.duration)
-        return True
+
+        return super(MonthlyRateThrottle, self).throttle_success()
 
     def throttle_failure(self):
         """
@@ -71,4 +70,4 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
         """
         log_metric('transmission.info', tags={'method': 'throttling.MonthlyRateThrottle', 'module': __name__,
                                               'organization_id': self.key, 'success': False})
-        return False
+        return super(MonthlyRateThrottle, self).throttle_failure()
