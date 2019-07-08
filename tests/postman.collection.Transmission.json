@@ -1488,6 +1488,182 @@
             ]
           },
           {
+            "name": "Csv Documents",
+            "description": null,
+            "item": [
+              {
+                "name": "Create Csv Document",
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "name",
+                        "value": "name",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "file_type",
+                        "value": "xls",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "description",
+                        "value": "description",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "upload_status",
+                        "value": "Pending",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "processing_status",
+                        "value": "Running",
+                        "type": "text",
+                        "disabled": true
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/documents/csv/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      "csv",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Update Csv Document",
+                "request": {
+                  "method": "PATCH",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "name",
+                        "value": "name",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "description",
+                        "value": "description",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "upload_status",
+                        "value": "Pending",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "processing_status",
+                        "value": "Running",
+                        "type": "text",
+                        "disabled": true
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/documents/csv/{{document_id}}/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      "csv",
+                      "{{document_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "List Csv Documents",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/documents/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Get Csv Document",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/documents/{{document_id}}/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "documents",
+                      "{{document_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              }
+            ]
+          },
+          {
             "name":  "Devices",
             "description": null,
             "item": [
