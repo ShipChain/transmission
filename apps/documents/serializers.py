@@ -6,11 +6,11 @@ from django.conf import settings
 
 from enumfields.drf import EnumSupportSerializerMixin
 from rest_framework_json_api import serializers
+from rest_framework import exceptions
 from influxdb_metrics.loader import log_metric
 
 from apps.utils import UpperEnumField
-from .models import Document, CsvDocument, DocumentType, FileType, CsvFileType, UploadStatus, ProcessingStatus, \
-    IMAGE_TYPES
+from .models import Document, CsvDocument, DocumentType, FileType, CsvFileType, UploadStatus, ProcessingStatus
 from .rpc import DocumentRPCClient
 
 LOG = logging.getLogger('transmission')
@@ -36,16 +36,9 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
             s3_bucket = settings.CSV_S3_BUCKET
             file_extension = obj.csv_file_type.name.lower()
 
-        if file_extension in IMAGE_TYPES:
-            content_type = f"image/{file_extension}"
-        elif file_extension == 'csv':
-            content_type = "text/csv"
-        elif file_extension == 'xls':
-            content_type = "application/vnd.ms-excel"
-        elif file_extension == 'xlsx':
-            content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        else:
-            content_type = f"application/{file_extension}"
+        content_type = settings.MIME_TYPE_MAP.get(file_extension)
+        if not content_type:
+            raise exceptions.ValidationError(f'Unsupported file type "{file_extension}"')
 
         pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
             Bucket=s3_bucket,

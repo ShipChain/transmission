@@ -48,20 +48,15 @@ class CsvFileType(Enum):
         XLSX = 'XLSX'
 
 
-IMAGE_TYPES = (FileType.JPEG.name.lower(), FileType.PNG.name.lower())
-
-
 class UploadStatus(Enum):
     PENDING = 0
     COMPLETE = 1
     FAILED = 2
-    PROCESSING = 3
 
     class Labels:
         PENDING = 'PENDING'
         COMPLETE = 'COMPLETE'
         FAILED = 'FAILED'
-        PROCESSING = 'PROCESSING'
 
 
 class ProcessingStatus(Enum):
