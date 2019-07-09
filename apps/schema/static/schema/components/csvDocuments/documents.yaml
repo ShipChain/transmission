@@ -1,0 +1,61 @@
+get:
+  summary: Get csv documents
+  description: >
+    Get all user `CsvDocument` objects.
+  parameters:
+    - $ref: '../core/parameters.yaml#/page'
+    - $ref: '../core/parameters.yaml#/page_size'
+    - $ref: 'parameters.yaml#/fileType'
+    - $ref: 'parameters.yaml#/uploadStatus'
+    - $ref: 'parameters.yaml#/processingStatus'
+  tags:
+  - Documents
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/listResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+
+post:
+  summary: Create csv document
+  description: |
+    Create a new `CsvDocument` owned by the current user.
+
+    A presigned S3 request will be generated with credentials to POST a new file of the specified type to S3.
+
+  tags:
+    - Documents
+  responses:
+    '201':
+      description: "Created"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: './schema.yaml#/createResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: './requestBody.yaml#/createRequest'
+      application/json:
+        schema:
+          allOf:
+            - $ref: './requestBody.yaml#/createAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+            - $ref: './requestBody.yaml#/createAttributes'

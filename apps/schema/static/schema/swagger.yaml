@@ -79,6 +79,12 @@ paths:
   /api/v1/devices/status/:
     $ref: components/devices/deviceStatus.yaml
 
+  /api/v1/documents/csv/:
+    $ref: components/csvDocuments/documents.yaml
+
+  /api/v1/documents/csv/{document_id}/:
+    $ref: components/csvDocuments/documentId.yaml
+
 components:
   securitySchemes:
     $ref: components/securitySchemes.yaml

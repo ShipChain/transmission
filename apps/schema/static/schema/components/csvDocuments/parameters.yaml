@@ -1,0 +1,37 @@
+path:
+  required: true
+  name: document_id
+  in: path
+  description: ID of the Document
+  schema:
+    $ref: '#/dataTypes/uuid'
+
+fileType:
+  required: false
+  in: query
+  name: file_type
+  description: Type of file extension to filter by
+  schema:
+    type: string
+    enum: [CSV, XLS, XLSX]
+
+uploadStatus:
+  required: false
+  in: query
+  name: upload_status
+  description: Upload status of the files to filter by
+  schema:
+    type: string
+    enum: [PENDING, COMPLETE, FAILED]
+
+processingStatus:
+  required: false
+  in: query
+  name: processing_status
+  description: Processing status of the uploaded file
+  schema:
+    type: string
+    enum: [PENDING, RUNNING, COMPLETE, FAILED]
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml
