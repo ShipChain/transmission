@@ -17,9 +17,8 @@ from .models import Document, CsvDocument
 from .models import UploadStatus
 from .permissions import UserHasPermission, UserHasCsvFilePermission
 from .rpc import DocumentRPCClient
-from .serializers import (DocumentSerializer,
-                          DocumentCreateSerializer,
-                          DocumentRetrieveSerializer,
+from .serializers import (ShipmentDocumentSerializer,
+                          ShipmentDocumentCreateSerializer,
                           CsvDocumentSerializer,
                           CsvDocumentCreateSerializer, )
 
@@ -32,7 +31,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
                       mixins.ListModelMixin,
                       viewsets.GenericViewSet):
     queryset = Document.objects.all()
-    serializer_class = DocumentSerializer
+    serializer_class = ShipmentDocumentSerializer
     permission_classes = (permissions.IsAuthenticated, UserHasPermission,)
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet
@@ -59,7 +58,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
         log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
 
         shipment_id = self.kwargs['shipment_pk']
-        serializer = DocumentCreateSerializer(data=request.data, context={'shipment_id': shipment_id})
+        serializer = ShipmentDocumentCreateSerializer(data=request.data, context={'shipment_id': shipment_id})
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
@@ -74,29 +73,10 @@ class DocumentViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Updating document {instance.id} with new details.')
         log_metric('transmission.info', tags={'method': 'documents.update', 'module': __name__})
 
-        serializer = DocumentRetrieveSerializer(instance, data=request.data, partial=partial,
-                                                context={'auth': request.auth})
+        serializer = self.serializer_class(instance, data=request.data, partial=partial, context={'auth': request.auth})
         serializer.is_valid(raise_exception=True)
 
         self.perform_update(serializer)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = DocumentRetrieveSerializer(instance)
-        return Response(serializer.data)
-
-    def list(self, request, *args, **kwargs):
-
-        queryset = self.filter_queryset(self.get_queryset().order_by('updated_at'))
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = DocumentRetrieveSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = DocumentRetrieveSerializer(queryset, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -109,7 +89,7 @@ class CsvDocumentViewSet(mixins.CreateModelMixin,
     queryset = CsvDocument.objects.all()
     serializer_class = CsvDocumentSerializer
     permission_classes = (permissions.IsAuthenticated, UserHasCsvFilePermission, )
-    filter_backends = (filters.DjangoFilterBackend,)
+    filter_backends = (filters.DjangoFilterBackend, )
     filter_class = CsvDocumentFilterSet
 
     def get_queryset(self):
@@ -139,8 +119,8 @@ class CsvDocumentViewSet(mixins.CreateModelMixin,
         serializer = CsvDocumentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class S3Events(APIView):

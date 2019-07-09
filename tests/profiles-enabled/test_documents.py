@@ -719,7 +719,7 @@ class CsvDocumentViewSetAPITests(APITestCase):
             return False
         return True
 
-    def test_CRUD_csv_documents(self):
+    def test_csv_documents(self):
 
         url = reverse('csv-list', kwargs={'version': 'v1'})
 
@@ -734,17 +734,17 @@ class CsvDocumentViewSetAPITests(APITestCase):
         csv_file_data = {
             'name': 'Test csv file',
             'description': 'Auto generated file for test purposes',
-            'file_type': 'csv'
+            'csv_file_type': 'csv'
         }
 
         xls_file_data = copy.deepcopy(csv_file_data)
         xls_file_data['name'] = 'Test xls file'
-        xls_file_data['file_type'] = 'Xls'
+        xls_file_data['csv_file_type'] = 'Xls'
         xls_file_data['upload_status'] = 'complete'
 
         xlsx_file_data = copy.deepcopy(csv_file_data)
         xlsx_file_data['name'] = 'Test xlsx file'
-        xlsx_file_data['file_type'] = '2'
+        xlsx_file_data['csv_file_type'] = '2'
         xlsx_file_data['processing_status'] = 'failed'
 
         # Unauthenticated user should fail
@@ -809,7 +809,7 @@ class CsvDocumentViewSetAPITests(APITestCase):
         # -------------------- test patch object -------------------#
         patch_csv_data = {
             'name': 'Can update name',
-            'file_type': 'XLS',     # Connot be modified
+            'csv_file_type': 'XLS',     # Connot be modified
             "processing_status": "Complete",
             "report": {
                 "success": 15,
@@ -821,7 +821,7 @@ class CsvDocumentViewSetAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         # The file_type cannot change on patch
-        self.assertEqual(data['attributes']['file_type'], 'CSV')
+        self.assertEqual(data['attributes']['csv_file_type'], 'CSV')
         self.assertEqual(data['attributes']['report'], patch_csv_data['report'])
         self.assertEqual(data['attributes']['processing_status'], 'COMPLETE')
 
@@ -847,4 +847,5 @@ class CsvDocumentViewSetAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['attributes']['updated_by'], self.user_2.id)
+        user_2_csv_document = CsvDocument.objects.get(id=data[0]['id'])
+        self.assertEqual(user_2_csv_document.updated_by, self.user_2.id)

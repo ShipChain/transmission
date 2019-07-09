@@ -89,6 +89,9 @@ class Document(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ('updated_at',)
+
     @property
     def s3_key(self):
         return f"{self.storage_id}/{self.shipper_wallet_id}/{self.vault_id}/{self.filename}"
@@ -126,6 +129,9 @@ class CsvDocument(models.Model):
     report = JSONField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('updated_at',)
 
     @property
     def s3_key(self):

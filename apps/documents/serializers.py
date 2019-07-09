@@ -29,7 +29,12 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
         read_only_fields = ('shipment',)
 
     def get_presigned_s3(self, obj):
-        file_extension = obj.file_type.name.lower()
+        if obj.__class__.__name__ == 'Document':
+            s3_bucket = settings.S3_BUCKET
+            file_extension = obj.file_type.name.lower()
+        else:
+            s3_bucket = settings.CSV_S3_BUCKET
+            file_extension = obj.csv_file_type.name.lower()
 
         if file_extension in IMAGE_TYPES:
             content_type = f"image/{file_extension}"
@@ -41,11 +46,6 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
             content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         else:
             content_type = f"application/{file_extension}"
-
-        if obj.__class__.__name__ == 'Document':
-            s3_bucket = settings.S3_BUCKET
-        else:
-            s3_bucket = settings.CSV_S3_BUCKET
 
         pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
             Bucket=s3_bucket,
@@ -62,13 +62,14 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
         return pre_signed_post
 
 
-class DocumentCreateSerializer(DocumentSerializer):
+class ShipmentDocumentCreateSerializer(DocumentSerializer):
     """
     Model serializer for documents validation for s3 signing
     """
     document_type = UpperEnumField(DocumentType, lenient=True, ints_as_names=True)
     file_type = UpperEnumField(FileType, lenient=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, read_only=True, ints_as_names=True)
+    presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -81,7 +82,11 @@ class DocumentCreateSerializer(DocumentSerializer):
         return Document.objects.create(**validated_data, **self.context)
 
 
-class DocumentRetrieveSerializer(DocumentSerializer):
+class ShipmentDocumentSerializer(DocumentSerializer):
+    document_type = UpperEnumField(DocumentType, lenient=True, read_only=True, ints_as_names=True)
+    file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
+    upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
+    presigned_s3 = serializers.SerializerMethodField()
     presigned_s3_thumbnail = serializers.SerializerMethodField()
 
     class Meta:
@@ -143,10 +148,9 @@ class DocumentRetrieveSerializer(DocumentSerializer):
 
 
 class CsvDocumentSerializer(DocumentSerializer):
-    file_type = UpperEnumField(CsvFileType, lenient=True, read_only=True, ints_as_names=True)
+    csv_file_type = UpperEnumField(CsvFileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
     processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True)
-    presigned_s3 = None
 
     class Meta:
         model = CsvDocument
@@ -157,11 +161,10 @@ class CsvDocumentSerializer(DocumentSerializer):
 
 
 class CsvDocumentCreateSerializer(DocumentSerializer):
-    file_type = UpperEnumField(CsvFileType, lenient=True, ints_as_names=True)
+    csv_file_type = UpperEnumField(CsvFileType, lenient=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True, required=False)
     processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True, read_only=True,
                                        required=False)
-    updated_by = serializers.CharField(required=False)
     presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
