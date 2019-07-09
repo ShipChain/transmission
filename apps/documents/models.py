@@ -120,7 +120,7 @@ class CsvDocument(models.Model):
     description = models.CharField(max_length=250, null=True, blank=True)
     owner_id = models.CharField(null=False, max_length=36)
     updated_by = models.CharField(null=False, max_length=36)
-    file_type = EnumIntegerField(enum=CsvFileType, default=CsvFileType.CSV)
+    csv_file_type = EnumIntegerField(enum=CsvFileType, default=CsvFileType.CSV)
     upload_status = EnumIntegerField(enum=UploadStatus, default=UploadStatus.PENDING)
     processing_status = EnumIntegerField(enum=ProcessingStatus, default=ProcessingStatus.PENDING)
     report = JSONField(blank=True, null=True)
@@ -133,4 +133,4 @@ class CsvDocument(models.Model):
 
     @property
     def filename(self):
-        return f"{self.id}.{self.file_type.name.lower()}"
+        return f"{self.id}.{self.csv_file_type.name.lower()}"

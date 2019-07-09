@@ -12,7 +12,7 @@ from influxdb_metrics.loader import log_metric
 from apps.authentication import DocsLambdaRequest
 from apps.jobs.models import AsyncActionType
 from apps.permissions import get_owner_id
-from .filters import DocumentFilterSet
+from .filters import DocumentFilterSet, CsvDocumentFilterSet
 from .models import Document, CsvDocument
 from .models import UploadStatus
 from .permissions import UserHasPermission, UserHasCsvFilePermission
@@ -109,6 +109,8 @@ class CsvDocumentViewSet(mixins.CreateModelMixin,
     queryset = CsvDocument.objects.all()
     serializer_class = CsvDocumentSerializer
     permission_classes = (permissions.IsAuthenticated, UserHasCsvFilePermission, )
+    filter_backends = (filters.DjangoFilterBackend,)
+    filter_class = CsvDocumentFilterSet
 
     def get_queryset(self):
         return self.queryset.filter(updated_by=self.request.user.id)

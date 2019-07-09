@@ -151,7 +151,7 @@ class CsvDocumentSerializer(DocumentSerializer):
     class Meta:
         model = CsvDocument
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', )
+            exclude = ('owner_id', 'updated_by', )
         else:
             fields = '__all__'
 
@@ -167,7 +167,7 @@ class CsvDocumentCreateSerializer(DocumentSerializer):
     class Meta:
         model = CsvDocument
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', )
+            exclude = ('owner_id', 'updated_by', )
         else:
             fields = '__all__'
 

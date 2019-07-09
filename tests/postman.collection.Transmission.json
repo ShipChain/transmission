@@ -1511,7 +1511,7 @@
                         "disabled": false
                       },
                       {
-                        "key": "file_type",
+                        "key": "csv_file_type",
                         "value": "xls",
                         "type": "text",
                         "disabled": false
@@ -1620,7 +1620,7 @@
                   ],
                   "body": {},
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/documents/",
+                    "raw": "{{transmission_url}}/api/v1/documents/csv/",
                     "host": [
                       "{{transmission_url}}"
                     ],
@@ -1628,6 +1628,7 @@
                       "api",
                       "v1",
                       "documents",
+                      "csv",
                       ""
                     ]
                   }
@@ -1646,7 +1647,7 @@
                   ],
                   "body": {},
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/documents/{{document_id}}/",
+                    "raw": "{{transmission_url}}/api/v1/documents/csv/{{document_id}}/",
                     "host": [
                       "{{transmission_url}}"
                     ],
@@ -1654,6 +1655,7 @@
                       "api",
                       "v1",
                       "documents",
+                      "csv",
                       "{{document_id}}",
                       ""
                     ]

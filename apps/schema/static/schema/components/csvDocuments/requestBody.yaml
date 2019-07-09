@@ -14,7 +14,7 @@ patchResource:
 
 createAttributes:
   required:
-    - file_type
+    - csv_file_type
     - name
   allOf:
     - $ref: '#/document/name'
