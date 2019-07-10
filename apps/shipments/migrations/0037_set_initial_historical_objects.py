@@ -2,7 +2,6 @@
 
 from django.db import migrations
 from apps.simple_history import TxmHistoricalRecords
-from apps.shipments.models import Shipment, Location
 
 
 def set_initial_historical(apps, schema_editor):
@@ -10,6 +9,9 @@ def set_initial_historical(apps, schema_editor):
     Create an initial  HistoricalShipment, HistoricalLocation
     object for every shipment, location respectively with a null history_user
     """
+    Shipment = apps.get_model('shipments', 'Shipment')
+    Location = apps.get_model('shipments', 'Location')
+
     def create_historical_instance(obj):
         TxmHistoricalRecords().create_historical_record(obj, '~')
         h_instance = obj.history.first()
@@ -32,6 +34,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(
-            code=set_initial_historical,
+            code=set_initial_historical, reverse_code=migrations.RunPython.noop
         ),
     ]
