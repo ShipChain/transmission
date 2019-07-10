@@ -2031,10 +2031,10 @@ class ShipmentWithIoTAPITests(APITestCase):
             assert mocked.call_count == mocked_call_count
 
             # Devices can be reused after deliveries are complete and should be removed from old shipment
-            shipment_obj.refresh_from_db()
+            shipment_obj.refresh_from_db(fields=('device',))
             shipment_obj.delivery_act = datetime.now()
             shipment_obj.save()
-            shipment_obj.refresh_from_db()
+            shipment_obj.refresh_from_db(fields=('device',))
 
             self.assertIsNone(shipment_obj.device)
             response = self.create_shipment()
@@ -2054,7 +2054,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             shipment.save()
 
             response = self.set_device_id(shipment.id, None, None)
-            shipment.refresh_from_db()
+            shipment.refresh_from_db(fields=('device',))
             assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
