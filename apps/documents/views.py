@@ -13,8 +13,7 @@ from apps.authentication import DocsLambdaRequest
 from apps.jobs.models import AsyncActionType
 from apps.permissions import get_owner_id
 from .filters import DocumentFilterSet, CsvDocumentFilterSet
-from .models import Document, CsvDocument
-from .models import UploadStatus
+from .models import Document, CsvDocument, UploadStatus
 from .permissions import UserHasPermission, UserHasCsvFilePermission
 from .rpc import DocumentRPCClient
 from .serializers import (ShipmentDocumentSerializer,
