@@ -722,7 +722,7 @@ class ShipmentAPITests(APITestCase):
             self.assertTrue(len(fields) > 0)
             changed_fields = self.get_changed_fields(fields, 'field')
             self.assertTrue('package_qty' in changed_fields)
-            self.assertTrue('pickup_act' in changed_fields)
+            self.assertFalse('pickup_act' in changed_fields)  # pickup_act should not be editable
 
             # ----------------------- Shipment update with a location field --------------------------#
             # Equivalently valid for any location field
@@ -818,29 +818,8 @@ class ShipmentAPITests(APITestCase):
                 self.assertIn('updated_by', changed_fields)
                 self.assertNotEqual(history_data[0]['author'], history_data[1]['author'])
 
-            # ------------------------------------ Shipment Signal update ---------------------------------------#
-            self.set_user(self.user_1)
-
-            shipment_update_delivery_act, content_type = create_form_content({
-                'delivery_act': datetime.utcnow().isoformat() + 'Z',
-            })
-
-            response = self.client.patch(url_patch, shipment_update_delivery_act, content_type=content_type)
-            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-
-            # The most recent change should be from the post save action with a null author
-            response = self.client.get(history_url)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            history_data = response.json()['data']
-            self.assertIsNone(history_data[0]['author'])
-            # device should be in the most recent changed fields
-            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
-            self.assertIn('device', changed_fields)
-            # delivery_act should be in the second most recent changed fields
-            changed_fields = self.get_changed_fields(history_data[1]['fields'], 'field')
-            self.assertIn('delivery_act', changed_fields)
-
             # ------------------------------- datetime filtering test -------------------------------#
+            self.set_user(self.user_1)
             initial_datetime = datetime.now()
             one_day_later = datetime.now() + timedelta(days=1)
             two_day_later = datetime.now() + timedelta(days=2)
@@ -2032,7 +2011,11 @@ class ShipmentWithIoTAPITests(APITestCase):
 
             # Devices can be reused after deliveries are complete and should be removed from old shipment
             shipment_obj.refresh_from_db(fields=('device',))
-            shipment_obj.delivery_act = datetime.now()
+            shipment_obj.pick_up()
+            shipment_obj.save()
+            shipment_obj.arrival()
+            shipment_obj.save()
+            shipment_obj.drop_off()
             shipment_obj.save()
             shipment_obj.refresh_from_db(fields=('device',))
 

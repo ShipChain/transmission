@@ -119,17 +119,6 @@ def trackingdata_post_save(sender, **kwargs):
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})
 
 
-@receiver(post_save_changed, sender=Shipment, fields=['delivery_act'], dispatch_uid='shipment_delivery_act_post_save')
-def shipment_delivery_act_changed(sender, instance, changed_fields, **kwargs):
-    logging.info(f'Shipment with id {instance.id} ended on {instance.delivery_act}.')
-
-    device_id = instance.device_id
-
-    instance.anonymous_historical_change(filter_dict={'id': instance.id}, device_id=None)
-
-    shipment_device_id_changed(Shipment, instance, {Shipment.device.field: (device_id, None)})
-
-
 @receiver(post_save_changed, sender=Shipment, fields=['device'], dispatch_uid='shipment_device_id_post_save')
 def shipment_device_id_changed(sender, instance, changed_fields, **kwargs):
     if settings.IOT_THING_INTEGRATION:

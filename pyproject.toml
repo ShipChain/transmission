@@ -36,6 +36,7 @@ django-environ = "==0.4.5"
 django-extensions = "==2.0.6"
 django-fieldsignals = "~0.4"
 django-filter = "~2.1"
+django-fsm = "~2.6.1"
 django-fullurl= "==0.5"
 django-gm2m = "==0.6.1"  # TODO: remove this after gm2m refactor migrations have been deployed to all envs
 django-influxdb-metrics = {git = "git://github.com/lwbco/django-influxdb-tagged-metrics.git", rev = "add895558ed6ab59c621b19beae026f8933d4848"}
