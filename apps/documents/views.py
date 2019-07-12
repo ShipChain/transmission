@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from influxdb_metrics.loader import log_metric
 
-from apps.authentication import DocsLambdaRequest
+from apps.authentication import DocsLambdaRequest, get_jwt_from_request
 from apps.jobs.models import AsyncActionType
 from apps.permissions import get_owner_id
 from .filters import DocumentFilterSet, CsvDocumentFilterSet
@@ -19,7 +19,8 @@ from .rpc import DocumentRPCClient
 from .serializers import (ShipmentDocumentSerializer,
                           ShipmentDocumentCreateSerializer,
                           CsvDocumentSerializer,
-                          CsvDocumentCreateSerializer, )
+                          CsvDocumentCreateSerializer,
+                          CsvDocumentCreateResponseSerializer, )
 
 LOG = logging.getLogger('transmission')
 
@@ -115,11 +116,11 @@ class CsvDocumentViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Creating a CSV document object.')
         log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
 
-        serializer = CsvDocumentCreateSerializer(data=request.data)
+        serializer = CsvDocumentCreateSerializer(data=request.data, context={'auth': get_jwt_from_request(request)})
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        doc_obj = self.perform_create(serializer)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(CsvDocumentCreateResponseSerializer(doc_obj).data, status=status.HTTP_201_CREATED)
 
 
 class S3Events(APIView):

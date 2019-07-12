@@ -115,9 +115,12 @@ class Document(models.Model):
 class CsvDocument(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     name = models.CharField(max_length=36, null=False, blank=False)
-    description = models.CharField(max_length=250, null=True, blank=True)
+    storage_credentials_id = models.CharField(null=False, max_length=36)
+    shipper_wallet_id = models.CharField(null=False, max_length=36)
+    carrier_wallet_id = models.CharField(null=False, max_length=36)
     owner_id = models.CharField(null=False, max_length=36)
     updated_by = models.CharField(null=False, max_length=36)
+    description = models.CharField(max_length=250, null=True, blank=True)
     csv_file_type = EnumIntegerField(enum=CsvFileType, default=CsvFileType.CSV)
     upload_status = EnumIntegerField(enum=UploadStatus, default=UploadStatus.PENDING)
     processing_status = EnumIntegerField(enum=ProcessingStatus, default=ProcessingStatus.PENDING)
@@ -130,7 +133,8 @@ class CsvDocument(models.Model):
 
     @property
     def s3_key(self):
-        return f"{self.owner_id}/{self.updated_by}/{self.filename}"
+        return f"{self.storage_credentials_id}/{self.shipper_wallet_id}/{self.carrier_wallet_id}/" \
+            f"{self.updated_by}/{self.filename}"
 
     @property
     def filename(self):

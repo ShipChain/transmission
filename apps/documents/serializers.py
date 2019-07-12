@@ -6,7 +6,7 @@ from django.conf import settings
 
 from enumfields.drf import EnumSupportSerializerMixin
 from rest_framework_json_api import serializers
-from rest_framework import exceptions
+from rest_framework import exceptions, status
 from influxdb_metrics.loader import log_metric
 
 from apps.utils import UpperEnumField
@@ -148,7 +148,7 @@ class CsvDocumentSerializer(DocumentSerializer):
     class Meta:
         model = CsvDocument
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'updated_by', )
+            exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
         else:
             fields = '__all__'
 
@@ -164,6 +164,39 @@ class CsvDocumentCreateSerializer(DocumentSerializer):
         model = CsvDocument
         if settings.PROFILES_ENABLED:
             exclude = ('owner_id', 'updated_by', )
+        else:
+            fields = '__all__'
+
+        meta_fields = ('presigned_s3', )
+
+    def validate_shipper_wallet_id(self, shipper_wallet_id):
+        if settings.PROFILES_ENABLED:
+            response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
+                                                     headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
+
+            if response.status_code != status.HTTP_200_OK:
+                raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
+
+        return shipper_wallet_id
+
+    def validate_storage_credentials_id(self, storage_credentials_id):
+        if settings.PROFILES_ENABLED:
+            response = settings.REQUESTS_SESSION.get(
+                f'{settings.PROFILES_URL}/api/v1/storage_credentials/{storage_credentials_id}/',
+                headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
+
+            if response.status_code != status.HTTP_200_OK:
+                raise serializers.ValidationError(
+                    'User does not have access to this storage credential in ShipChain Profiles')
+
+        return storage_credentials_id
+
+
+class CsvDocumentCreateResponseSerializer(CsvDocumentCreateSerializer):
+    class Meta:
+        model = CsvDocument
+        if settings.PROFILES_ENABLED:
+            exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
         else:
             fields = '__all__'
 
