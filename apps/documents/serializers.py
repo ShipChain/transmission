@@ -144,6 +144,7 @@ class CsvDocumentSerializer(DocumentSerializer):
     csv_file_type = UpperEnumField(CsvFileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
     processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True)
+    presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
         model = CsvDocument
@@ -151,6 +152,12 @@ class CsvDocumentSerializer(DocumentSerializer):
             exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
         else:
             fields = '__all__'
+        meta_fields = ('presigned_s3',)
+
+    def get_presigned_s3(self, obj):
+        if obj.upload_status != UploadStatus.COMPLETE:
+            return super(CsvDocumentSerializer, self).get_presigned_s3(obj)
+        return None
 
 
 class CsvDocumentCreateSerializer(DocumentSerializer):
