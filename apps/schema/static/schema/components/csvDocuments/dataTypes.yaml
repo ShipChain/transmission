@@ -6,6 +6,16 @@ name:
       type: string
       example: 'Import Shipments'
 
+storageCredentialsId:
+  $ref: '../shipments/dataTypes.yaml#/storageCredentialsId'
+
+shipperWalletId:
+  $ref: '../shipments/dataTypes.yaml#/shipperWalletId'
+
+carrierWalletId:
+  $ref: '../shipments/dataTypes.yaml#/carrierWalletId'
+
+
 description:
   properties:
     description:

@@ -1517,20 +1517,26 @@
                         "disabled": false
                       },
                       {
+                        "key": "storage_credentials_id",
+                        "value": "storage_credentials_id",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "shipper_wallet_id",
+                        "value": "shipper_wallet_id",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "carrier_wallet_id",
+                        "value": "carrier_wallet_id",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
                         "key": "description",
                         "value": "description",
-                        "type": "text",
-                        "disabled": true
-                      },
-                      {
-                        "key": "upload_status",
-                        "value": "Pending",
-                        "type": "text",
-                        "disabled": true
-                      },
-                      {
-                        "key": "processing_status",
-                        "value": "Running",
                         "type": "text",
                         "disabled": true
                       }

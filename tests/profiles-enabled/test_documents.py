@@ -787,6 +787,10 @@ class CsvDocumentViewSetAPITests(APITestCase):
             # upload_status field is not configurable at creation
             self.assertEqual(data['attributes']['upload_status'], 'PENDING')
             self.assertEqual(data['attributes']['processing_status'], 'PENDING')
+            # Wallets and storage should not be present in response
+            self.assertIsNone(data['attributes'].get('storage_credentials_id'))
+            self.assertIsNone(data['attributes'].get('shipper_wallet_id'))
+            self.assertIsNone(data['attributes'].get('carrier_wallet_id'))
             xls_obj = CsvDocument.objects.get(id=data['id'])
             fields = data['meta']['presigned_s3']['fields']
 
@@ -834,10 +838,30 @@ class CsvDocumentViewSetAPITests(APITestCase):
             self.assertEqual(data['attributes']['csv_file_type'], 'CSV')
             self.assertEqual(data['attributes']['report'], patch_csv_data['report'])
             self.assertEqual(data['attributes']['processing_status'], 'COMPLETE')
+            # Wallets and storage should not be present in response
+            self.assertIsNone(data['attributes'].get('storage_credentials_id'))
+            self.assertIsNone(data['attributes'].get('shipper_wallet_id'))
+            self.assertIsNone(data['attributes'].get('carrier_wallet_id'))
 
-            self.set_user(self.user_2)
+            # wallet and storage are non modifiable fields
+            new_wallet_id = 'Wallet_is_Non_Modifiable'
+            mock_wallet_validation.reset_mock()
+            mock_wallet_validation.return_value = new_wallet_id
+
+            patch_csv_data['shipper_wallet_id'] = new_wallet_id
+
+            response = self.client.patch(csv_patch_url, data=patch_csv_data, format='json')
+            self.assertEqual(mock_wallet_validation.call_count, 0)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            # The shipper_wallet_id attribute cannot be patched
+            self.assertIsNone(data['attributes'].get('shipper_wallet_id'))
+            csv_obj.refresh_from_db()
+            self.assertEqual(csv_obj.shipper_wallet_id, SHIPPER_WALLET_ID)
 
             # ------------------ permissions test -----------------------#
+            self.set_user(self.user_2)
+
             # user_2 can create an xls file object
             response = self.client.post(url, xlsx_file_data, format='json')
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)

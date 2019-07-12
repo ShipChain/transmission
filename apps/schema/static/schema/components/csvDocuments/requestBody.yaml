@@ -16,10 +16,16 @@ createAttributes:
   required:
     - csv_file_type
     - name
+    - storage_credentials_id
+    - shipper_wallet_id
+    - carrier_wallet_id
   allOf:
     - $ref: '#/document/name'
     - $ref: '#/document/description'
     - $ref: '#/document/fileType'
+    - $ref: '#/document/storageCredentialsId'
+    - $ref: '#/document/shipperWalletId'
+    - $ref: '#/document/carrierWalletId'
 
 patchAttributes:
   allOf:
