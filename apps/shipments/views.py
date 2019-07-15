@@ -229,7 +229,7 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
 
             send_templated_email('email/shipment_link.html', subject, email_context, emails)
 
-        return Response(PermissionLinkSerializer(permission_link).data, status=status.HTTP_201_CREATED)
+        return Response(self.get_serializer(permission_link).data, status=status.HTTP_201_CREATED)
 
 
 class ShipmentHistoryListView(viewsets.GenericViewSet):
