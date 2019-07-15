@@ -16,7 +16,7 @@ relationships:
   properties:
     shipment:
       type: object
-      description: Shipment associated with this document
+      description: Shipment associated with this permission link
       properties:
         data:
           allOf:
