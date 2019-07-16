@@ -10,10 +10,9 @@ LOG = logging.getLogger('transmission')
 
 class MonthlyRateThrottle(throttling.SimpleRateThrottle):
     def __init__(self):
-        month = datetime.now().month
-        year = datetime.now().year
+        now = datetime.now()
         # Rate limit is dynamically extracted from JWT
-        self.duration = monthrange(year, month)[1] * 86400
+        self.duration = monthrange(now.year, now.month)[1] * 86400
         # Initialize here to avoid pylint error
         self.key = None
         self.history = None
@@ -31,21 +30,18 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
         if request.method == 'GET':
             return True
 
-        self.key = cache_key = self.get_cache_key(request, view)
-
-        if not self.key:
-            return True
-
         self.num_requests = request.user.token.get('monthly_rate_limit', None)
 
         if not self.num_requests:
             return True
 
+        self.key = cache_key = self.get_cache_key(request, view)
+
+        if not self.key:
+            return True
+
         self.history = self.cache.get(cache_key, [])
         self.now = datetime.now().timestamp()
-
-        if not self.num_requests:
-            return True
 
         # Drop any requests from the history which have now passed the
         # throttle duration
