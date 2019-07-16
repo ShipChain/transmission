@@ -10,6 +10,19 @@ attributes:
     - $ref: '#/permissionLinks/shipmentId'
     - $ref: '#/dataTypes/createdAt'
 
+relationships:
+  type: object
+  description: Shipment Relation for this resource
+  properties:
+    shipment:
+      type: object
+      description: Shipment associated with this permission link
+      properties:
+        data:
+          allOf:
+            - $ref: '#/shipments/resource'
+            - $ref: '#/dataTypes/resourceId'
+
 createAttributes:
   allOf:
     - $ref: '#/permissionLinks/name'
@@ -21,6 +34,8 @@ getResource:
     - properties:
         attributes:
           $ref: '#/attributes'
+        relationships:
+          $ref: '#/relationships'
 
 getResponse:
   allOf:
@@ -54,6 +69,9 @@ createResource:
 
 permissionLinks:
   $ref: dataTypes.yaml
+
+shipments:
+  $ref: ../shipments/schema.yaml
 
 dataTypes:
   $ref: ../core/dataTypes.yaml

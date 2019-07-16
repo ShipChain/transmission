@@ -239,7 +239,8 @@ class PermissionLinkSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PermissionLink
-        exclude = ('shipment',)
+        fields = '__all__'
+        read_only = ('shipment',)
 
     def validate_expiration_date(self, expiration_date):
         if expiration_date <= datetime.now(timezone.utc):
@@ -253,6 +254,11 @@ class PermissionLinkCreateSerializer(PermissionLinkSerializer):
         min_length=0,
         required=False
     )
+
+    class Meta:
+        model = PermissionLink
+        fields = ('name', 'expiration_date', 'emails')
+        read_only = ('shipment',)
 
 
 class ShipmentTxSerializer(serializers.ModelSerializer):

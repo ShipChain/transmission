@@ -24,9 +24,8 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     class Meta:
         model = Document
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'shipment',)
-        else:
-            exclude = ('shipment',)
+            exclude = ('owner_id',)
+        read_only_fields = ('shipment',)
 
     def get_presigned_s3(self, obj):
         file_extension = obj.file_type.name.lower()
@@ -62,9 +61,8 @@ class DocumentCreateSerializer(DocumentSerializer):
     class Meta:
         model = Document
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'shipment',)
-        else:
-            exclude = ('shipment',)
+            exclude = ('owner_id',)
+        read_only_fields = ('shipment',)
         meta_fields = ('presigned_s3',)
 
     def create(self, validated_data):
@@ -76,7 +74,7 @@ class DocumentRetrieveSerializer(DocumentSerializer):
 
     class Meta:
         model = Document
-        exclude = ('shipment',)
+        fields = "__all__"
         if settings.PROFILES_ENABLED:
             read_only_fields = ('owner_id', 'document_type', 'file_type',)
         else:

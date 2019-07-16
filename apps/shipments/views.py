@@ -213,9 +213,7 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
         if 'emails' in create_serializer.validated_data:
             emails = create_serializer.validated_data.pop('emails')
 
-        serializer = self.get_serializer(data=create_serializer.validated_data)
-        serializer.is_valid()
-        permission_link = serializer.save(shipment_id=shipment_id)
+        permission_link = create_serializer.save(shipment_id=shipment_id)
 
         if settings.PROFILES_ENABLED and emails:
             LOG.debug(f'Emailing permission link: {permission_link.id}')
@@ -231,7 +229,7 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
 
             send_templated_email('email/shipment_link.html', subject, email_context, emails)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(self.get_serializer(permission_link).data, status=status.HTTP_201_CREATED)
 
 
 class ShipmentHistoryListView(viewsets.GenericViewSet):
