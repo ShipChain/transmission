@@ -30,14 +30,14 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
         if request.method == 'GET':
             return True
 
-        self.num_requests = request.user.token.get('monthly_rate_limit', None)
-
-        if not self.num_requests:
-            return True
-
         self.key = cache_key = self.get_cache_key(request, view)
 
         if not self.key:
+            return True
+
+        self.num_requests = request.user.token.get('monthly_rate_limit', None)
+
+        if not self.num_requests:
             return True
 
         self.history = self.cache.get(cache_key, [])
