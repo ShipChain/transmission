@@ -23,14 +23,16 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
 from apps.authentication import passive_credentials_auth
-from apps.shipments.models import Shipment, TransitState
+from apps.shipments.models import Shipment, TransitState, Device
+from apps.shipments.serializers import ActionType
 from apps.utils import random_id
-from tests.utils import get_jwt
+from tests.utils import get_jwt, datetimeAlmostEqual, mocked_rpc_response
 
 USER_ID = random_id()
 ORGANIZATION_ID = random_id()
 VAULT_ID = random_id()
 TRANSACTION_HASH = 'txHash'
+DEVICE_ID = random_id()
 
 
 @pytest.fixture(scope='session')
@@ -50,7 +52,7 @@ def api_client(user, token):
     return client
 
 
-@pytest.fixture()
+@pytest.fixture
 def mocked_engine_rpc(mocker):
     mocker.patch('apps.shipments.rpc.Load110RPCClient.create_vault', return_value=(VAULT_ID, 's3://fake-vault-uri/'))
     mocker.patch('apps.shipments.rpc.Load110RPCClient.add_shipment_data', return_value={'hash': TRANSACTION_HASH})
@@ -77,12 +79,28 @@ def mocked_engine_rpc(mocker):
 
 
 @pytest.fixture
-def shipment(mocked_engine_rpc):
+def mocked_iot_api(mocker):
+    return mocker.patch('apps.iot_client.requests.Session.put', return_value=mocked_rpc_response({'data': {
+        'shipmentId': 'dunno yet',
+        'shipmentState': 'dunno yet'
+    }}))
+
+
+@pytest.fixture
+def shipment(mocked_engine_rpc, mocked_iot_api):
     return Shipment.objects.create(vault_id=VAULT_ID,
                                    carrier_wallet_id=random_id(),
                                    shipper_wallet_id=random_id(),
                                    storage_credentials_id=random_id(),
                                    owner_id=USER_ID)
+
+
+@pytest.fixture
+def shipment_with_device(shipment):
+    shipment.device = Device.objects.create(id=DEVICE_ID)
+    shipment.save()
+    shipment.refresh_from_db(fields=('device',))
+    return shipment
 
 
 @pytest.mark.django_db
@@ -112,3 +130,141 @@ def test_protected_shipment_date_updates(api_client, shipment):
             assert updated_parameters[field] is None, f'Field: {field}'
         else:
             assert dt_parse(parameters[field]) == dt_parse(updated_parameters[field]), f'Field: {field}'
+
+
+@pytest.mark.django_db
+def test_pickup(api_client, shipment):
+    assert shipment.pickup_act is None
+    url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
+    action = {
+        'action_type': ActionType.PICK_UP.name
+    }
+
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_200_OK
+
+    updated_parameters = response.json()['data']['attributes']
+
+    assert updated_parameters['state'] == TransitState.IN_TRANSIT.name
+    assert datetimeAlmostEqual(dt_parse(updated_parameters['pickup_act']))
+
+    # Can't pickup when IN_TRANSIT
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+def test_arrival(api_client, shipment):
+    assert shipment.port_arrival_act is None
+    url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
+    action = {
+        'action_type': ActionType.ARRIVAL.name
+    }
+
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST  # Can't go from AWAITING_PICKUP -> AWAITING_DELIVERY
+    shipment.pick_up()
+    shipment.save()
+
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_200_OK
+
+    updated_parameters = response.json()['data']['attributes']
+
+    assert updated_parameters['state'] == TransitState.AWAITING_DELIVERY.name
+    assert datetimeAlmostEqual(dt_parse(updated_parameters['port_arrival_act']))
+
+    # Can't pickup or arrive when AWAITING_DELIVERY
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    action = {
+        'action_type': ActionType.PICK_UP.name
+    }
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+def test_dropoff(api_client, shipment):
+    assert shipment.delivery_act is None
+    url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
+    action = {
+        'action_type': ActionType.DROP_OFF.name
+    }
+
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST  # Can't go from AWAITING_PICKUP -> DELIVERED
+    shipment.pick_up()
+    shipment.save()
+
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST  # Can't go from IN_TRANSIT -> DELIVERED
+    shipment.arrival()
+    shipment.save()
+
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_200_OK
+
+    updated_parameters = response.json()['data']['attributes']
+    assert updated_parameters['state'] == TransitState.DELIVERED.name
+    assert datetimeAlmostEqual(dt_parse(updated_parameters['delivery_act']))
+
+    # Can't pickup/arrive/deliver when DELIVERED
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    action = {
+        'action_type': ActionType.PICK_UP.name
+    }
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    action = {
+        'action_type': ActionType.ARRIVAL.name
+    }
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    action = {
+        'action_type': ActionType.DROP_OFF.name
+    }
+    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+def test_delivery_releases_device(api_client, shipment_with_device):
+    assert shipment_with_device.device_id is not None
+    shipment_with_device.pick_up()
+    shipment_with_device.save()
+    shipment_with_device.refresh_from_db(fields=('device',))
+    assert shipment_with_device.device_id is not None
+    shipment_with_device.arrival()
+    shipment_with_device.save()
+    shipment_with_device.refresh_from_db(fields=('device',))
+    assert shipment_with_device.device_id is not None
+    shipment_with_device.drop_off()
+    shipment_with_device.save()
+    shipment_with_device.refresh_from_db(fields=('device',))
+    assert shipment_with_device.device_id is None
+
+
+@pytest.mark.django_db
+def test_readonly_state(api_client, shipment):
+    assert TransitState(shipment.state) == TransitState.AWAITING_PICKUP
+
+    with pytest.raises(AttributeError):
+        shipment.state = TransitState.IN_TRANSIT
+    shipment.save()
+
+    assert TransitState(shipment.state) == TransitState.AWAITING_PICKUP
+
+
+@pytest.mark.django_db
+def test_shadow_state_updates(api_client, mocked_iot_api, shipment_with_device):
+    call_count = mocked_iot_api.call_count
+    shipment_with_device.pick_up()
+    shipment_with_device.save()
+    call_count += 1  # Status should have been updated in the shadow
+    assert call_count == mocked_iot_api.call_count

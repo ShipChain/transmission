@@ -15,7 +15,7 @@ from apps.jobs.models import JobState, MessageType, AsyncJob, AsyncActionType
 from apps.jobs.signals import job_update
 from .events import LoadEventHandler
 from .iot_client import DeviceAWSIoTClient
-from .models import Shipment, LoadShipment, Location, TrackingData
+from .models import Shipment, LoadShipment, Location, TrackingData, TransitState
 from .rpc import RPCClientFactory
 from .serializers import ShipmentVaultSerializer
 
@@ -117,6 +117,22 @@ def trackingdata_post_save(sender, **kwargs):
     LOG.debug(f'New tracking_data committed to db and will be pushed to the UI. Tracking_data: {instance.id}.')
     async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})
+
+
+@receiver(post_save_changed, sender=Shipment, fields=['state'], dispatch_uid='shipment_state_post_save')
+def shipment_state_changed(sender, instance, changed_fields, **kwargs):
+    if settings.IOT_THING_INTEGRATION:
+        old, new = changed_fields[Shipment.state.field]
+
+        logging.info(f'Shipment state changed from {old} to {new} for Shipment {instance.id}, updating shadow')
+
+        if instance.device_id:
+            try:
+                iot_client = DeviceAWSIoTClient()
+                iot_client.update_shadow(old, {'deviceId': instance.device_id,
+                                               'shipmentState': TransitState(instance.state).name})
+            except AWSIoTError as exc:
+                logging.error(f'Error communicating with AWS IoT during Device shadow shipmentState update: {exc}')
 
 
 @receiver(post_save_changed, sender=Shipment, fields=['device'], dispatch_uid='shipment_device_id_post_save')

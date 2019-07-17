@@ -1,8 +1,8 @@
 import re
 import random
-from datetime import timedelta
+import pytz
+from datetime import datetime, timedelta
 from unittest.mock import Mock
-from urllib import parse
 
 import jwt
 from django.conf import settings
@@ -83,3 +83,8 @@ def random_location():
         "type": "Feature"
     }
 
+
+def datetimeAlmostEqual(dt1, dt2=None):
+    if not dt2:
+        dt2 = datetime.now().replace(tzinfo=pytz.UTC)
+    return dt1.replace(second=0, microsecond=0) == dt2.replace(second=0, microsecond=0)
