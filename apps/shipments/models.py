@@ -445,7 +445,6 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
             # TODO: Validate that ID is a BOL Document?
             pass
         self.pickup_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
-        # TODO: update shadow
 
     @transition(field=state, source=TransitState.IN_TRANSIT.value, target=TransitState.AWAITING_DELIVERY.value)
     def arrival(self, tracking_data=None, **kwargs):
@@ -453,16 +452,13 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
             # TODO: Validate that tracking update is within bbox around delivery location?
             pass
         self.port_arrival_act = datetime.now(timezone.utc)
-        # TODO: update shadow
 
     @transition(field=state, source=TransitState.AWAITING_DELIVERY.value, target=TransitState.DELIVERED.value)
     def drop_off(self, document_id=None, **kwargs):
         if document_id:
             # TODO: Validate that ID is a BOL Document?
             pass
-        self.device = None
         self.delivery_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
-        # TODO: update shadow
 
     # Defaults
     FUNDING_TYPE = FundingType.NO_FUNDING.value

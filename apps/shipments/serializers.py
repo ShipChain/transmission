@@ -143,7 +143,10 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
                 shipment = Shipment.objects.filter(device_id=device.id).first()
-                shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
+                shipment.anonymous_historical_change(device_id=None)
+                shipment.device_id = None
+                from apps.shipments.signals import shipment_iot_fields_changed
+                shipment_iot_fields_changed(Shipment, shipment, {Shipment.device.field: (device.id, None)})
         self.context['device'] = device
 
         return device_id
@@ -178,7 +181,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         model = Shipment
         exclude = ('owner_id', 'version') if settings.PROFILES_ENABLED else ('version',)
         read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
-                            'storage_credentials_id', 'contract_version')
+                            'storage_credentials_id', 'contract_version', 'state')
 
     def update(self, instance, validated_data):
         if 'device' in self.context:
@@ -218,7 +221,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         if not device_id:
             if not self.instance.device:
                 return None
-            if not self.instance.delivery_act or self.instance.delivery_act >= datetime.now(timezone.utc):
+            if not self.instance.delivery_act or self.instance.delivery_act > datetime.now(timezone.utc):
                 raise serializers.ValidationError('Cannot remove device from Shipment in progress')
             return None
 
@@ -229,7 +232,10 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
                 shipment = Shipment.objects.filter(device_id=device.id).first()
-                shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
+                shipment.anonymous_historical_change(device_id=None)
+                shipment.device_id = None
+                from apps.shipments.signals import shipment_iot_fields_changed
+                shipment_iot_fields_changed(Shipment, shipment, {Shipment.device.field: (device.id, None)})
         self.context['device'] = device
 
         return device_id

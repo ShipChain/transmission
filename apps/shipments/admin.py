@@ -88,6 +88,7 @@ class ShipmentAdmin(admin.ModelAdmin):
                 ('owner_id', 'updated_by',),
                 ('shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id',),
                 ('storage_credentials_id', 'vault_id',),
+                'state',
                 'vault_uri',
                 'device',
                 'contract_version',

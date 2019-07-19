@@ -67,9 +67,12 @@ def shipment_post_save(sender, **kwargs):
                                     funding_type=Shipment.FUNDING_TYPE,
                                     contracted_amount=Shipment.SHIPMENT_AMOUNT)
 
-        instance.anonymous_historical_change(filter_dict={'id': instance.id}, vault_id=vault_id, vault_uri=vault_uri)
+        instance.anonymous_historical_change(vault_id=vault_id, vault_uri=vault_uri)
 
-        shipment_device_id_changed(Shipment, instance, {Shipment.device.field: (None, instance.device_id)})
+        shipment_iot_fields_changed(Shipment, instance, {
+            Shipment.device.field: (None, instance.device_id),
+            Shipment.state.field: (None, instance.state)
+        })
     else:
         # Update Shipment vault data
         rpc_client = RPCClientFactory.get_client()
@@ -119,34 +122,28 @@ def trackingdata_post_save(sender, **kwargs):
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})
 
 
-@receiver(post_save_changed, sender=Shipment, fields=['state'], dispatch_uid='shipment_state_post_save')
-def shipment_state_changed(sender, instance, changed_fields, **kwargs):
+@receiver(post_save_changed, sender=Shipment, fields=['device', 'state'], dispatch_uid='shipment_iot_fields_post_save')
+def shipment_iot_fields_changed(sender, instance, changed_fields, **kwargs):
     if settings.IOT_THING_INTEGRATION:
-        old, new = changed_fields[Shipment.state.field]
+        iot_client = DeviceAWSIoTClient()
 
-        logging.info(f'Shipment state changed from {old} to {new} for Shipment {instance.id}, updating shadow')
+        shadow_update = {}
+        if Shipment.device.field in changed_fields:
+            old, new = changed_fields[Shipment.device.field]
+            logging.info(f'Device ID changed from {old} to {new} for Shipment {instance.id}, updating shadow')
+            if old:
+                iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': '', 'shipmentState': ''})
+            if new:
+                shadow_update['deviceId'] = new
+                shadow_update['shipmentId'] = instance.id
+
+        if Shipment.state.field in changed_fields:
+            old, new = changed_fields[Shipment.state.field]
+            logging.info(f'Shipment state changed from {old} to {new} for Shipment {instance.id}, updating shadow')
+            shadow_update['shipmentState'] = TransitState(instance.state).name
 
         if instance.device_id:
             try:
-                iot_client = DeviceAWSIoTClient()
-                iot_client.update_shadow(old, {'deviceId': instance.device_id,
-                                               'shipmentState': TransitState(instance.state).name})
+                iot_client.update_shadow(instance.device_id, shadow_update)
             except AWSIoTError as exc:
-                logging.error(f'Error communicating with AWS IoT during Device shadow shipmentState update: {exc}')
-
-
-@receiver(post_save_changed, sender=Shipment, fields=['device'], dispatch_uid='shipment_device_id_post_save')
-def shipment_device_id_changed(sender, instance, changed_fields, **kwargs):
-    if settings.IOT_THING_INTEGRATION:
-        old, new = changed_fields[Shipment.device.field]
-
-        logging.info(f'Device ID changed from {old} to {new} for Shipment {instance.id}, updating shadow')
-
-        try:
-            iot_client = DeviceAWSIoTClient()
-            if old:
-                iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': ''})
-            if new:
-                iot_client.update_shadow(new, {'deviceId': new, 'shipmentId': instance.id})
-        except AWSIoTError as exc:
-            logging.error(f'Error communicating with AWS IoT during Device shadow shipmentId update: {exc}')
+                logging.error(f'Error communicating with AWS IoT during Device shadow update: {exc}')

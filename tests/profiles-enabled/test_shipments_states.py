@@ -15,7 +15,6 @@ from datetime import datetime
 from dateutil.parser import parse as dt_parse
 from dateutil.relativedelta import relativedelta
 
-import json
 import pytz
 import pytest
 from rest_framework import status
@@ -120,7 +119,7 @@ def test_protected_shipment_date_updates(api_client, shipment):
     for field in parameters:
         assert getattr(shipment, field) != parameters[field], f'Field: {field}'
 
-    response = api_client.patch(url, data=json.dumps(parameters), content_type='application/json')
+    response = api_client.patch(url, data=parameters, format='json')
     assert response.status_code == status.HTTP_202_ACCEPTED
     updated_parameters = response.json()['data']['attributes']
 
@@ -140,7 +139,7 @@ def test_pickup(api_client, shipment):
         'action_type': ActionType.PICK_UP.name
     }
 
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_200_OK
 
     updated_parameters = response.json()['data']['attributes']
@@ -149,7 +148,7 @@ def test_pickup(api_client, shipment):
     assert datetimeAlmostEqual(dt_parse(updated_parameters['pickup_act']))
 
     # Can't pickup when IN_TRANSIT
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
@@ -161,12 +160,12 @@ def test_arrival(api_client, shipment):
         'action_type': ActionType.ARRIVAL.name
     }
 
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST  # Can't go from AWAITING_PICKUP -> AWAITING_DELIVERY
     shipment.pick_up()
     shipment.save()
 
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_200_OK
 
     updated_parameters = response.json()['data']['attributes']
@@ -175,13 +174,13 @@ def test_arrival(api_client, shipment):
     assert datetimeAlmostEqual(dt_parse(updated_parameters['port_arrival_act']))
 
     # Can't pickup or arrive when AWAITING_DELIVERY
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     action = {
         'action_type': ActionType.PICK_UP.name
     }
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
@@ -193,17 +192,17 @@ def test_dropoff(api_client, shipment):
         'action_type': ActionType.DROP_OFF.name
     }
 
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST  # Can't go from AWAITING_PICKUP -> DELIVERED
     shipment.pick_up()
     shipment.save()
 
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST  # Can't go from IN_TRANSIT -> DELIVERED
     shipment.arrival()
     shipment.save()
 
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_200_OK
 
     updated_parameters = response.json()['data']['attributes']
@@ -211,43 +210,26 @@ def test_dropoff(api_client, shipment):
     assert datetimeAlmostEqual(dt_parse(updated_parameters['delivery_act']))
 
     # Can't pickup/arrive/deliver when DELIVERED
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     action = {
         'action_type': ActionType.PICK_UP.name
     }
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     action = {
         'action_type': ActionType.ARRIVAL.name
     }
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     action = {
         'action_type': ActionType.DROP_OFF.name
     }
-    response = api_client.post(url, data=json.dumps(action), content_type='application/json')
+    response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-
-@pytest.mark.django_db
-def test_delivery_releases_device(api_client, shipment_with_device):
-    assert shipment_with_device.device_id is not None
-    shipment_with_device.pick_up()
-    shipment_with_device.save()
-    shipment_with_device.refresh_from_db(fields=('device',))
-    assert shipment_with_device.device_id is not None
-    shipment_with_device.arrival()
-    shipment_with_device.save()
-    shipment_with_device.refresh_from_db(fields=('device',))
-    assert shipment_with_device.device_id is not None
-    shipment_with_device.drop_off()
-    shipment_with_device.save()
-    shipment_with_device.refresh_from_db(fields=('device',))
-    assert shipment_with_device.device_id is None
 
 
 @pytest.mark.django_db
