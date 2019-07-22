@@ -6,17 +6,16 @@ from django.conf import settings
 
 from enumfields.drf import EnumSupportSerializerMixin
 from rest_framework_json_api import serializers
-from rest_framework import exceptions, status
 from influxdb_metrics.loader import log_metric
 
-from apps.utils import UpperEnumField
-from .models import Document, CsvDocument, DocumentType, FileType, CsvFileType, UploadStatus, ProcessingStatus
+from apps.utils import UpperEnumField, S3PreSignedMixin
+from .models import Document, DocumentType, FileType, UploadStatus
 from .rpc import DocumentRPCClient
 
 LOG = logging.getLogger('transmission')
 
 
-class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
+class DocumentSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
     document_type = UpperEnumField(DocumentType, lenient=True, read_only=True, ints_as_names=True)
     file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
@@ -36,23 +35,11 @@ class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
             s3_bucket = settings.CSV_S3_BUCKET
             file_extension = obj.csv_file_type.name.lower()
 
-        content_type = settings.MIME_TYPE_MAP.get(file_extension)
-        if not content_type:
-            raise exceptions.ValidationError(f'Unsupported file type "{file_extension}"')
-
-        pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
-            Bucket=s3_bucket,
-            Key=obj.s3_key,
-            Fields={"acl": "private", "Content-Type": content_type},
-            Conditions=[
-                {"acl": "private"},
-                {"Content-Type": content_type},
-                ["content-length-range", 0, settings.S3_MAX_BYTES]
-            ],
-            ExpiresIn=settings.S3_URL_LIFE
-        )
-
-        return pre_signed_post
+    class Meta:
+        model = Document
+        if settings.PROFILES_ENABLED:
+            exclude = ('owner_id',)
+        read_only_fields = ('shipment',)
 
 
 class ShipmentDocumentCreateSerializer(DocumentSerializer):
@@ -62,7 +49,6 @@ class ShipmentDocumentCreateSerializer(DocumentSerializer):
     document_type = UpperEnumField(DocumentType, lenient=True, ints_as_names=True)
     file_type = UpperEnumField(FileType, lenient=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, read_only=True, ints_as_names=True)
-    presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -76,10 +62,6 @@ class ShipmentDocumentCreateSerializer(DocumentSerializer):
 
 
 class ShipmentDocumentSerializer(DocumentSerializer):
-    document_type = UpperEnumField(DocumentType, lenient=True, read_only=True, ints_as_names=True)
-    file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
-    upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
-    presigned_s3 = serializers.SerializerMethodField()
     presigned_s3_thumbnail = serializers.SerializerMethodField()
 
     class Meta:
@@ -138,73 +120,3 @@ class ShipmentDocumentSerializer(DocumentSerializer):
                                               'module': __name__})
 
         return url
-
-
-class CsvDocumentSerializer(DocumentSerializer):
-    csv_file_type = UpperEnumField(CsvFileType, lenient=True, read_only=True, ints_as_names=True)
-    upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
-    processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True)
-    presigned_s3 = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CsvDocument
-        if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
-        else:
-            fields = '__all__'
-        meta_fields = ('presigned_s3',)
-
-    def get_presigned_s3(self, obj):
-        if obj.upload_status != UploadStatus.COMPLETE:
-            return super(CsvDocumentSerializer, self).get_presigned_s3(obj)
-        return None
-
-
-class CsvDocumentCreateSerializer(DocumentSerializer):
-    csv_file_type = UpperEnumField(CsvFileType, lenient=True, ints_as_names=True)
-    upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True, required=False)
-    processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True, read_only=True,
-                                       required=False)
-    presigned_s3 = serializers.SerializerMethodField()
-
-    class Meta:
-        model = CsvDocument
-        if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'updated_by', )
-        else:
-            fields = '__all__'
-
-        meta_fields = ('presigned_s3', )
-
-    def validate_shipper_wallet_id(self, shipper_wallet_id):
-        if settings.PROFILES_ENABLED:
-            response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
-                                                     headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
-
-            if response.status_code != status.HTTP_200_OK:
-                raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
-
-        return shipper_wallet_id
-
-    def validate_storage_credentials_id(self, storage_credentials_id):
-        if settings.PROFILES_ENABLED:
-            response = settings.REQUESTS_SESSION.get(
-                f'{settings.PROFILES_URL}/api/v1/storage_credentials/{storage_credentials_id}/',
-                headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
-
-            if response.status_code != status.HTTP_200_OK:
-                raise serializers.ValidationError(
-                    'User does not have access to this storage credential in ShipChain Profiles')
-
-        return storage_credentials_id
-
-
-class CsvDocumentCreateResponseSerializer(CsvDocumentCreateSerializer):
-    class Meta:
-        model = CsvDocument
-        if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
-        else:
-            fields = '__all__'
-
-        meta_fields = ('presigned_s3', )

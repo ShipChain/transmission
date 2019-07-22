@@ -25,6 +25,7 @@ from apps.jobs import views as jobs
 from apps.management import views as management
 from apps.routing import OptionalSlashRouter
 from apps.shipments import views as shipments
+from apps.imports import views as imports_app
 
 API_PREFIX = r'^api/(?P<version>(v1|v2))'
 
@@ -38,7 +39,7 @@ router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, base_name='job')
 router.register(f'{API_PREFIX[1:]}/events', eth.EventViewSet, base_name='event')
 router.register(f'{API_PREFIX[1:]}/transactions', eth.TransactionViewSet, base_name='transaction')
 router.register(f'{API_PREFIX[1:]}/devices', shipments.DeviceViewSet, base_name='device')
-router.register(f'{API_PREFIX[1:]}/documents/csv', documents.CsvDocumentViewSet, base_name='csv')
+# router.register(f'{API_PREFIX[1:]}/imports/shipments', imports_app.CsvDocumentViewSet, base_name='csv')
 
 # Shipment's nested routes definition
 nested_router = drf_nested_routers.NestedSimpleRouter(router, f'{API_PREFIX[1:]}/shipments', lookup='shipment')

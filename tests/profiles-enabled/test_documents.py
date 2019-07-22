@@ -18,7 +18,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework_json_api.serializers import ValidationError
 
 from apps.authentication import passive_credentials_auth
-from apps.documents.models import Document, CsvDocument, UploadStatus, DocumentType, FileType
+from apps.documents.models import Document, UploadStatus, DocumentType, FileType
 from apps.documents.rpc import DocumentRPCClient
 from apps.shipments.models import Shipment, LoadShipment
 from apps.shipments.signals import shipment_post_save
@@ -671,240 +671,240 @@ class ImageDocumentViewSetAPITests(APITestCase):
         self.assertIsNone(data['meta']['presigned_s3'])
 
 
-class CsvDocumentViewSetAPITests(APITestCase):
+# class CsvDocumentViewSetAPITests(APITestCase):
+#
+#     def setUp(self):
+#         self.client = APIClient()
+#
+#         self.user_1 = passive_credentials_auth(get_jwt(username='test_user1@shipchain.io', sub=OWNER_ID))
+#         self.user_2 = passive_credentials_auth(get_jwt(username='test_user2@shipchain.io'))
+#
+#         self.s3 = settings.S3_RESOURCE
+#
+#         for bucket in self.s3.buckets.all():
+#             for key in bucket.objects.all():
+#                 key.delete()
+#             bucket.delete()
+#
+#         try:
+#             self.s3.create_bucket(Bucket=settings.CSV_S3_BUCKET)
+#         except Exception as exc:
+#             pass
+#
+#     def tearDown(self):
+#         files = glob.glob('./tests/tmp/*.*')
+#         for f in files:
+#             os.remove(f)
+#
+#     def set_user(self, user, token=None):
+#         self.client.force_authenticate(user=user, token=token)
+#
+#     def make_csv_file(self, file_path, data=None):
+#         default_data = [
+#             {
+#                 'shipment_name': 'Test shipment 1',
+#                 'creation-date': random_timestamp()
+#             },
+#             {
+#                 'shipment_name': 'Test shipment 2',
+#                 'creation-date': random_timestamp()
+#             }
+#         ]
+#         data_to_save = data if data else default_data
+#         pyexcel.save_as(records=data_to_save, dest_file_name=file_path)
+#
+#     def s3_object_exists(self, key):
+#         try:
+#             self.s3.Object(settings.CSV_S3_BUCKET, key).get()
+#         except Exception:
+#             return False
+#         return True
+#
+#     def test_csv_documents(self):
+#
+#         url = reverse('csv-list', kwargs={'version': 'v1'})
+#
+#         csv_path = './tests/tmp/test.csv'
+#         xls_path = './tests/tmp/test.xls'
+#         xlsx_path = './tests/tmp/test.xlsx'
+#
+#         self.make_csv_file(csv_path)
+#         self.make_csv_file(xls_path)
+#         self.make_csv_file(xlsx_path)
+#
+#         csv_file_data = {
+#             'name': 'Test csv file',
+#             'description': 'Auto generated file for test purposes',
+#             'csv_file_type': 'csv',
+#             'storage_credentials_id': STORAGE_CRED_ID,
+#             'shipper_wallet_id': SHIPPER_WALLET_ID,
+#             'carrier_wallet_id': CARRIER_WALLET_ID
+#         }
+#
+#         xls_file_data = copy.deepcopy(csv_file_data)
+#         xls_file_data['name'] = 'Test xls file'
+#         xls_file_data['csv_file_type'] = 'Xls'
+#         xls_file_data['upload_status'] = 'complete'
+#
+#         xlsx_file_data = copy.deepcopy(csv_file_data)
+#         xlsx_file_data['name'] = 'Test xlsx file'
+#         xlsx_file_data['csv_file_type'] = '2'
+#         xlsx_file_data['processing_status'] = 'failed'
+#
+#         # Unauthenticated user should fail
+#         response = self.client.post(url, csv_file_data, format='json')
+#         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+#
+#         self.set_user(self.user_1)
+#
+#         with mock.patch('apps.documents.serializers.CsvDocumentCreateSerializer.validate_shipper_wallet_id') as mock_wallet_validation, \
+#                 mock.patch('apps.documents.serializers.CsvDocumentCreateSerializer.validate_storage_credentials_id') as mock_storage_validation:
+#
+#             mock_wallet_validation.return_value = SHIPPER_WALLET_ID
+#             mock_storage_validation.return_value = STORAGE_CRED_ID
+#
+#             # --------------------- Upload csv file --------------------#
+#             # Authenticated request should succeed
+#             response = self.client.post(url, csv_file_data, format='json')
+#             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+#             data = response.json()['data']
+#             self.assertEqual(data['attributes']['upload_status'], 'PENDING')
+#             csv_obj = CsvDocument.objects.get(id=data['id'])
+#             fields = data['meta']['presigned_s3']['fields']
+#
+#             # csv file upload
+#             put_url = data['meta']['presigned_s3']['url']
+#             with open(csv_path, 'rb') as csv:
+#                 res = requests.post(put_url, data=fields, files={'file': csv})
+#
+#             self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+#             self.assertTrue(self.s3_object_exists(csv_obj.s3_key))
+#
+#             # --------------------- Upload xls file --------------------#
+#             response = self.client.post(url, xls_file_data, format='json')
+#             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+#             data = response.json()['data']
+#             # upload_status field is not configurable at creation
+#             self.assertEqual(data['attributes']['upload_status'], 'PENDING')
+#             self.assertEqual(data['attributes']['processing_status'], 'PENDING')
+#             # Wallets and storage should not be present in response
+#             self.assertIsNone(data['attributes'].get('storage_credentials_id'))
+#             self.assertIsNone(data['attributes'].get('shipper_wallet_id'))
+#             self.assertIsNone(data['attributes'].get('carrier_wallet_id'))
+#             xls_obj = CsvDocument.objects.get(id=data['id'])
+#             fields = data['meta']['presigned_s3']['fields']
+#
+#             # xls file upload
+#             put_url = data['meta']['presigned_s3']['url']
+#             with open(xls_path, 'rb') as xls:
+#                 res = requests.post(put_url, data=fields, files={'file': xls})
+#
+#             self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+#             self.assertTrue(self.s3_object_exists(xls_obj.s3_key))
+#
+#             # --------------------- Upload xlsx file --------------------#
+#             response = self.client.post(url, xlsx_file_data, format='json')
+#             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+#             data = response.json()['data']
+#             self.assertEqual(data['attributes']['upload_status'], 'PENDING')
+#             # processing_status field is not configurable at creation
+#             self.assertEqual(data['attributes']['processing_status'], 'PENDING')
+#             xlsx_obj = CsvDocument.objects.get(id=data['id'])
+#             fields = data['meta']['presigned_s3']['fields']
+#
+#             # xlsx file upload
+#             put_url = data['meta']['presigned_s3']['url']
+#             with open(xlsx_path, 'rb') as xlsx:
+#                 res = requests.post(put_url, data=fields, files={'file': xlsx})
+#
+#             self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+#             self.assertTrue(self.s3_object_exists(xlsx_obj.s3_key))
+#
+#             # -------------------- test patch object -------------------#
+#             patch_csv_data = {
+#                 'name': 'Can update name',
+#                 'csv_file_type': 'XLS',     # Connot be modified
+#                 "processing_status": "Complete",
+#                 "report": {
+#                     "success": 15,
+#                     "failed": 0
+#                 }
+#             }
+#             csv_patch_url = f'{url}/{csv_obj.id}/'
+#             response = self.client.patch(csv_patch_url, data=patch_csv_data, format='json')
+#             self.assertEqual(response.status_code, status.HTTP_200_OK)
+#             data = response.json()['data']
+#             # The file_type cannot change on patch
+#             self.assertEqual(data['attributes']['csv_file_type'], 'CSV')
+#             self.assertEqual(data['attributes']['report'], patch_csv_data['report'])
+#             self.assertEqual(data['attributes']['processing_status'], 'COMPLETE')
+#             # Wallets and storage should not be present in response
+#             self.assertIsNone(data['attributes'].get('storage_credentials_id'))
+#             self.assertIsNone(data['attributes'].get('shipper_wallet_id'))
+#             self.assertIsNone(data['attributes'].get('carrier_wallet_id'))
+#
+#             # wallet and storage are non modifiable fields
+#             new_wallet_id = 'Wallet_is_Non_Modifiable'
+#             mock_wallet_validation.reset_mock()
+#             mock_wallet_validation.return_value = new_wallet_id
+#
+#             patch_csv_data['shipper_wallet_id'] = new_wallet_id
+#
+#             response = self.client.patch(csv_patch_url, data=patch_csv_data, format='json')
+#             self.assertEqual(mock_wallet_validation.call_count, 0)
+#             self.assertEqual(response.status_code, status.HTTP_200_OK)
+#             data = response.json()['data']
+#             # The shipper_wallet_id attribute cannot be patched
+#             self.assertIsNone(data['attributes'].get('shipper_wallet_id'))
+#             csv_obj.refresh_from_db()
+#             self.assertEqual(csv_obj.shipper_wallet_id, SHIPPER_WALLET_ID)
+#
+#             # ------------------ permissions test -----------------------#
+#             self.set_user(self.user_2)
 
-    def setUp(self):
-        self.client = APIClient()
-
-        self.user_1 = passive_credentials_auth(get_jwt(username='test_user1@shipchain.io', sub=OWNER_ID))
-        self.user_2 = passive_credentials_auth(get_jwt(username='test_user2@shipchain.io'))
-
-        self.s3 = settings.S3_RESOURCE
-
-        for bucket in self.s3.buckets.all():
-            for key in bucket.objects.all():
-                key.delete()
-            bucket.delete()
-
-        try:
-            self.s3.create_bucket(Bucket=settings.CSV_S3_BUCKET)
-        except Exception as exc:
-            pass
-
-    def tearDown(self):
-        files = glob.glob('./tests/tmp/*.*')
-        for f in files:
-            os.remove(f)
-
-    def set_user(self, user, token=None):
-        self.client.force_authenticate(user=user, token=token)
-
-    def make_csv_file(self, file_path, data=None):
-        default_data = [
-            {
-                'shipment_name': 'Test shipment 1',
-                'creation-date': random_timestamp()
-            },
-            {
-                'shipment_name': 'Test shipment 2',
-                'creation-date': random_timestamp()
-            }
-        ]
-        data_to_save = data if data else default_data
-        pyexcel.save_as(records=data_to_save, dest_file_name=file_path)
-
-    def s3_object_exists(self, key):
-        try:
-            self.s3.Object(settings.CSV_S3_BUCKET, key).get()
-        except Exception:
-            return False
-        return True
-
-    def test_csv_documents(self):
-
-        url = reverse('csv-list', kwargs={'version': 'v1'})
-
-        csv_path = './tests/tmp/test.csv'
-        xls_path = './tests/tmp/test.xls'
-        xlsx_path = './tests/tmp/test.xlsx'
-
-        self.make_csv_file(csv_path)
-        self.make_csv_file(xls_path)
-        self.make_csv_file(xlsx_path)
-
-        csv_file_data = {
-            'name': 'Test csv file',
-            'description': 'Auto generated file for test purposes',
-            'csv_file_type': 'csv',
-            'storage_credentials_id': STORAGE_CRED_ID,
-            'shipper_wallet_id': SHIPPER_WALLET_ID,
-            'carrier_wallet_id': CARRIER_WALLET_ID
-        }
-
-        xls_file_data = copy.deepcopy(csv_file_data)
-        xls_file_data['name'] = 'Test xls file'
-        xls_file_data['csv_file_type'] = 'Xls'
-        xls_file_data['upload_status'] = 'complete'
-
-        xlsx_file_data = copy.deepcopy(csv_file_data)
-        xlsx_file_data['name'] = 'Test xlsx file'
-        xlsx_file_data['csv_file_type'] = '2'
-        xlsx_file_data['processing_status'] = 'failed'
-
-        # Unauthenticated user should fail
-        response = self.client.post(url, csv_file_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.set_user(self.user_1)
-
-        with mock.patch('apps.documents.serializers.CsvDocumentCreateSerializer.validate_shipper_wallet_id') as mock_wallet_validation, \
-                mock.patch('apps.documents.serializers.CsvDocumentCreateSerializer.validate_storage_credentials_id') as mock_storage_validation:
-
-            mock_wallet_validation.return_value = SHIPPER_WALLET_ID
-            mock_storage_validation.return_value = STORAGE_CRED_ID
-
-            # --------------------- Upload csv file --------------------#
-            # Authenticated request should succeed
-            response = self.client.post(url, csv_file_data, format='json')
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-            data = response.json()['data']
-            self.assertEqual(data['attributes']['upload_status'], 'PENDING')
-            csv_obj = CsvDocument.objects.get(id=data['id'])
-            fields = data['meta']['presigned_s3']['fields']
-
-            # csv file upload
-            put_url = data['meta']['presigned_s3']['url']
-            with open(csv_path, 'rb') as csv:
-                res = requests.post(put_url, data=fields, files={'file': csv})
-
-            self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-            self.assertTrue(self.s3_object_exists(csv_obj.s3_key))
-
-            # --------------------- Upload xls file --------------------#
-            response = self.client.post(url, xls_file_data, format='json')
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-            data = response.json()['data']
-            # upload_status field is not configurable at creation
-            self.assertEqual(data['attributes']['upload_status'], 'PENDING')
-            self.assertEqual(data['attributes']['processing_status'], 'PENDING')
-            # Wallets and storage should not be present in response
-            self.assertIsNone(data['attributes'].get('storage_credentials_id'))
-            self.assertIsNone(data['attributes'].get('shipper_wallet_id'))
-            self.assertIsNone(data['attributes'].get('carrier_wallet_id'))
-            xls_obj = CsvDocument.objects.get(id=data['id'])
-            fields = data['meta']['presigned_s3']['fields']
-
-            # xls file upload
-            put_url = data['meta']['presigned_s3']['url']
-            with open(xls_path, 'rb') as xls:
-                res = requests.post(put_url, data=fields, files={'file': xls})
-
-            self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-            self.assertTrue(self.s3_object_exists(xls_obj.s3_key))
-
-            # --------------------- Upload xlsx file --------------------#
-            response = self.client.post(url, xlsx_file_data, format='json')
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-            data = response.json()['data']
-            self.assertEqual(data['attributes']['upload_status'], 'PENDING')
-            # processing_status field is not configurable at creation
-            self.assertEqual(data['attributes']['processing_status'], 'PENDING')
-            xlsx_obj = CsvDocument.objects.get(id=data['id'])
-            fields = data['meta']['presigned_s3']['fields']
-
-            # xlsx file upload
-            put_url = data['meta']['presigned_s3']['url']
-            with open(xlsx_path, 'rb') as xlsx:
-                res = requests.post(put_url, data=fields, files={'file': xlsx})
-
-            self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-            self.assertTrue(self.s3_object_exists(xlsx_obj.s3_key))
-
-            # -------------------- test patch object -------------------#
-            patch_csv_data = {
-                'name': 'Can update name',
-                'csv_file_type': 'XLS',     # Connot be modified
-                "processing_status": "Complete",
-                "report": {
-                    "success": 15,
-                    "failed": 0
-                }
-            }
-            csv_patch_url = f'{url}/{csv_obj.id}/'
-            response = self.client.patch(csv_patch_url, data=patch_csv_data, format='json')
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            data = response.json()['data']
-            # The file_type cannot change on patch
-            self.assertEqual(data['attributes']['csv_file_type'], 'CSV')
-            self.assertEqual(data['attributes']['report'], patch_csv_data['report'])
-            self.assertEqual(data['attributes']['processing_status'], 'COMPLETE')
-            # Wallets and storage should not be present in response
-            self.assertIsNone(data['attributes'].get('storage_credentials_id'))
-            self.assertIsNone(data['attributes'].get('shipper_wallet_id'))
-            self.assertIsNone(data['attributes'].get('carrier_wallet_id'))
-
-            # wallet and storage are non modifiable fields
-            new_wallet_id = 'Wallet_is_Non_Modifiable'
-            mock_wallet_validation.reset_mock()
-            mock_wallet_validation.return_value = new_wallet_id
-
-            patch_csv_data['shipper_wallet_id'] = new_wallet_id
-
-            response = self.client.patch(csv_patch_url, data=patch_csv_data, format='json')
-            self.assertEqual(mock_wallet_validation.call_count, 0)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            data = response.json()['data']
-            # The shipper_wallet_id attribute cannot be patched
-            self.assertIsNone(data['attributes'].get('shipper_wallet_id'))
-            csv_obj.refresh_from_db()
-            self.assertEqual(csv_obj.shipper_wallet_id, SHIPPER_WALLET_ID)
-
-            # ------------------ permissions test -----------------------#
-            self.set_user(self.user_2)
-
-            # user_2 can create an xls file object
-            response = self.client.post(url, xlsx_file_data, format='json')
-            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-            # user_2 cannot access a document object not owned
-            user_1_xlsx_url = f'{url}/{xlsx_obj.id}/'
-            response = self.client.get(user_1_xlsx_url)
-            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-            # user_2 cannot modify a document object not owned
-            user_1_xlsx_url = f'{url}/{xlsx_obj.id}/'
-            response = self.client.patch(user_1_xlsx_url, data=patch_csv_data)
-            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-            # user_2 can list only document owned
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            data = response.json()['data']
-            self.assertEqual(len(data), 1)
-            user_2_csv_document = CsvDocument.objects.get(id=data[0]['id'])
-            self.assertEqual(user_2_csv_document.updated_by, self.user_2.id)
-
-            mock_wallet_validation.reset_mock()
-
-            # Trying to upload a document without a shipper wallet should fail
-            csv_file_data_without_shipper_wallet = copy.deepcopy(csv_file_data)
-            csv_file_data_without_shipper_wallet.pop('shipper_wallet_id')
-
-            response = self.client.post(url, csv_file_data_without_shipper_wallet, format='json')
-            self.assertEqual(mock_wallet_validation.call_count, 0)
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-            # Trying to upload a document with a wallet / storage not owned by the requester should fail
-            error_message = 'User does not have access to this wallet in ShipChain Profiles'
-            mock_wallet_validation.side_effect = ValidationError(error_message)
-            mock_wallet_validation.return_value = None
-
-            csv_file_data_with_invalid_shipper_wallet = copy.deepcopy(csv_file_data)
-            csv_file_data_with_invalid_shipper_wallet['shipper_wallet_id'] = 'Non_Accessible_Wallet'
-
-            response = self.client.post(url, csv_file_data_with_invalid_shipper_wallet, format='json')
-            self.assertEqual(mock_wallet_validation.call_count, 1)
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            data = response.json()['errors'][0]
-            self.assertEqual(data['detail'], error_message)
+            # # user_2 can create an xls file object
+            # response = self.client.post(url, xlsx_file_data, format='json')
+            # self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            #
+            # # user_2 cannot access a document object not owned
+            # user_1_xlsx_url = f'{url}/{xlsx_obj.id}/'
+            # response = self.client.get(user_1_xlsx_url)
+            # self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            #
+            # # user_2 cannot modify a document object not owned
+            # user_1_xlsx_url = f'{url}/{xlsx_obj.id}/'
+            # response = self.client.patch(user_1_xlsx_url, data=patch_csv_data)
+            # self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            #
+            # # user_2 can list only document owned
+            # response = self.client.get(url)
+            # self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # data = response.json()['data']
+            # self.assertEqual(len(data), 1)
+            # user_2_csv_document = CsvDocument.objects.get(id=data[0]['id'])
+            # self.assertEqual(user_2_csv_document.updated_by, self.user_2.id)
+            #
+            # mock_wallet_validation.reset_mock()
+            #
+            # # Trying to upload a document without a shipper wallet should fail
+            # csv_file_data_without_shipper_wallet = copy.deepcopy(csv_file_data)
+            # csv_file_data_without_shipper_wallet.pop('shipper_wallet_id')
+            #
+            # response = self.client.post(url, csv_file_data_without_shipper_wallet, format='json')
+            # self.assertEqual(mock_wallet_validation.call_count, 0)
+            # self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            #
+            # # Trying to upload a document with a wallet / storage not owned by the requester should fail
+            # error_message = 'User does not have access to this wallet in ShipChain Profiles'
+            # mock_wallet_validation.side_effect = ValidationError(error_message)
+            # mock_wallet_validation.return_value = None
+            #
+            # csv_file_data_with_invalid_shipper_wallet = copy.deepcopy(csv_file_data)
+            # csv_file_data_with_invalid_shipper_wallet['shipper_wallet_id'] = 'Non_Accessible_Wallet'
+            #
+            # response = self.client.post(url, csv_file_data_with_invalid_shipper_wallet, format='json')
+            # self.assertEqual(mock_wallet_validation.call_count, 1)
+            # self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            # data = response.json()['errors'][0]
+            # self.assertEqual(data['detail'], error_message)
 

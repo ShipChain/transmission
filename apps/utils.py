@@ -1,12 +1,16 @@
 import decimal
+import importlib
 import json
-
+import mimetypes
 import re
+from enumfields import Enum
+
 from django.db import models
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from enumfields.drf import EnumField
+from inflection import camelize
 
 
 def random_id():
@@ -148,3 +152,59 @@ def send_templated_email(template, subject, context, recipients, sender=None):
     email = EmailMessage(subject, email_body, send_by, recipients)
     email.content_subtype = 'html'
     email.send()
+
+
+class S3PreSignedMixin:
+    def get_content_type(self, extension):
+        extension = extension if extension[0] == '.' else f'.{extension}'
+        try:
+            content_type = mimetypes.types_map[extension]
+        except KeyError as exc:
+            raise exc
+        return content_type
+
+    def get_presigned_s3(self, obj):
+        file_extension = obj.file_type.name.lower()
+
+        content_type = self.get_content_type(file_extension)
+
+        pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
+            Bucket=settings.S3_BUCKET,
+            Key=obj.s3_key,
+            Fields={"acl": "private", "Content-Type": content_type},
+            Conditions=[
+                {"acl": "private"},
+                {"Content-Type": content_type},
+                ["content-length-range", 0, settings.S3_MAX_BYTES]
+            ],
+            ExpiresIn=settings.S3_URL_LIFE
+        )
+
+        return pre_signed_post
+
+
+class UploadStatus(Enum):
+    PENDING = 0
+    COMPLETE = 1
+    FAILED = 2
+
+    class Labels:
+        PENDING = 'PENDING'
+        COMPLETE = 'COMPLETE'
+        FAILED = 'FAILED'
+
+
+def get_class_in_module(module_ref, class_name):
+    return getattr(importlib.import_module(module_ref, __package__), class_name)
+
+
+def generic_filter_enum(queryset, name, value, module_ref='.models'):
+    enum_name = camelize(name)
+    enum_class = getattr(importlib.import_module(module_ref, __package__), enum_name)
+
+    # Use case insensitive search (lenient=True, to_internal_value) to convert input string to enum value
+    file_type_field = EnumField(enum_class, lenient=True, read_only=True, ints_as_names=True)
+    enum_value = file_type_field.to_internal_value(value)
+    queryset = queryset.filter(**{name: enum_value})
+    return queryset
+
