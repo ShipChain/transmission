@@ -99,7 +99,7 @@ loadData:
   description: Smart contract data associated with the shipment
   properties:
     load_data:
-      $ref: '#/loadData'
+      $ref: '#/shipment/loadData'
 
 shipToLocation:
   type: object

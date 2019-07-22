@@ -60,6 +60,12 @@ patch:
         application/vnd.api+json:
           schema:
             $ref: '../errors/schema.yaml#/401'
+    '429':
+      description: "Too Many Requests"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/429'
   requestBody:
     content:
       application/vnd.api+json:
