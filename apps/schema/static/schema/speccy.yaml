@@ -1,5 +1,5 @@
 jsonSchema: true
-quiet: true
+quiet: false
 verbose: 2
 lint:
   # additional rules files can be added here
