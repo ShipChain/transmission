@@ -1,0 +1,11 @@
+jsonSchema: true
+quiet: false
+verbose: 2
+lint:
+  # additional rules files can be added here
+  rules:
+  - strict
+  skip:
+  - info-contact
+resolve:
+  output: swagger.yaml
