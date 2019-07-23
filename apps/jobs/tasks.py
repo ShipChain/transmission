@@ -64,9 +64,8 @@ class AsyncTask:
         if self.async_job.parameters['rpc_method'] == 'create_shipment_transaction':
             contract_version, unsigned_tx = getattr(self.rpc_client, self.async_job.parameters['rpc_method'])(
                 *self.async_job.parameters['rpc_parameters'])
-            for shipment in self.async_job.listeners.filter(Model='shipments.Shipment'):
-                shipment.anonymous_historical_change(filter_dict={'id': shipment.id},
-                                                     contract_version=contract_version)
+            self.async_job.shipment.anonymous_historical_change(filter_dict={'id': self.async_job.shipment.id},
+                                                                contract_version=contract_version)
         else:
             unsigned_tx = getattr(self.rpc_client, self.async_job.parameters['rpc_method'])(
                 *self.async_job.parameters['rpc_parameters'])
@@ -84,11 +83,11 @@ class AsyncTask:
         # Create EthAction so this Job's Listeners can also listen to Events posted for the TransactionHash
         with transaction.atomic():
             eth_action, created = EthAction.objects.get_or_create(transaction_hash=hash_tx, defaults={
-                'async_job': self.async_job
+                'async_job': self.async_job,
+                'shipment_id': self.async_job.shipment.id
             })
             if created:
                 LOG.debug(f'Created new EthAction {eth_action.transaction_hash}')
-                eth_action.shipment = self.async_job.shipment
                 eth_action.transaction = Transaction.from_unsigned_tx(unsigned_tx)
                 eth_action.transaction.hash = hash_tx
                 eth_action.transaction.save()
