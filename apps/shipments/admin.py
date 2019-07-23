@@ -71,8 +71,10 @@ NON_SCHEMA_FIELDS = [
     'created_at',
     'contract_version',
     'updated_by',
-    'asyncjob_set_relation',
-    'ethaction_set_relation',
+    'state',
+    'delayed',
+    'expected_delay_hours',
+    'exception'
 ]
 
 
