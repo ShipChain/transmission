@@ -143,10 +143,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
                 shipment = Shipment.objects.filter(device_id=device.id).first()
-                shipment.anonymous_historical_change(device_id=None)
                 shipment.device_id = None
-                from apps.shipments.signals import shipment_iot_fields_changed
-                shipment_iot_fields_changed(Shipment, shipment, {Shipment.device.field: (device.id, None)})
+                shipment.save()
         self.context['device'] = device
 
         return device_id
@@ -232,10 +230,8 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
                 shipment = Shipment.objects.filter(device_id=device.id).first()
-                shipment.anonymous_historical_change(device_id=None)
                 shipment.device_id = None
-                from apps.shipments.signals import shipment_iot_fields_changed
-                shipment_iot_fields_changed(Shipment, shipment, {Shipment.device.field: (device.id, None)})
+                shipment.save()
         self.context['device'] = device
 
         return device_id
