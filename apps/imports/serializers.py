@@ -1,149 +1,49 @@
-import logging
+"""
+Copyright 2019 ShipChain, Inc.
 
-from botocore.errorfactory import ClientError
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
 from django.conf import settings
 
 from enumfields.drf import EnumSupportSerializerMixin
 from rest_framework_json_api import serializers
 from rest_framework import exceptions, status
-from influxdb_metrics.loader import log_metric
 
-from apps.utils import UpperEnumField, S3PreSignedMixin
-from .models import ShipmentImport, UploadStatus, ProcessingStatus, ShipmentUploadFileType
-
-
-LOG = logging.getLogger('transmission')
+from apps.utils import UpperEnumField, S3PreSignedMixin, UploadStatus
+from .models import ShipmentImport, ProcessingStatus, ShipmentUploadFileType
 
 
-# class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
-#
-#     def get_presigned_s3(self, obj):
-#         if obj.__class__.__name__ == 'Document':
-#             s3_bucket = settings.S3_BUCKET
-#             file_extension = obj.file_type.name.lower()
-#         else:
-#             s3_bucket = settings.CSV_S3_BUCKET
-#             file_extension = obj.csv_file_type.name.lower()
-#
-#         content_type = settings.MIME_TYPE_MAP.get(file_extension)
-#         if not content_type:
-#             raise exceptions.ValidationError(f'Unsupported file type "{file_extension}"')
-#
-#         pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
-#             Bucket=s3_bucket,
-#             Key=obj.s3_key,
-#             Fields={"acl": "private", "Content-Type": content_type},
-#             Conditions=[
-#                 {"acl": "private"},
-#                 {"Content-Type": content_type},
-#                 ["content-length-range", 0, settings.S3_MAX_BYTES]
-#             ],
-#             ExpiresIn=settings.S3_URL_LIFE
-#         )
-#
-#         return pre_signed_post
-#
-#
-# class ShipmentDocumentCreateSerializer(DocumentSerializer):
-#     """
-#     Model serializer for documents validation for s3 signing
-#     """
-#     document_type = UpperEnumField(DocumentType, lenient=True, ints_as_names=True)
-#     file_type = UpperEnumField(FileType, lenient=True, ints_as_names=True)
-#     upload_status = UpperEnumField(UploadStatus, read_only=True, ints_as_names=True)
-#     presigned_s3 = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = Document
-#         if settings.PROFILES_ENABLED:
-#             exclude = ('owner_id', 'shipment',)
-#         else:
-#             exclude = ('shipment',)
-#         meta_fields = ('presigned_s3',)
-#
-#     def create(self, validated_data):
-#         return Document.objects.create(**validated_data, **self.context)
-#
-#
-# class ShipmentDocumentSerializer(DocumentSerializer):
-#     document_type = UpperEnumField(DocumentType, lenient=True, read_only=True, ints_as_names=True)
-#     file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
-#     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
-#     presigned_s3 = serializers.SerializerMethodField()
-#     presigned_s3_thumbnail = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = Document
-#         exclude = ('shipment',)
-#         if settings.PROFILES_ENABLED:
-#             read_only_fields = ('owner_id', 'document_type', 'file_type',)
-#         else:
-#             read_only_fields = ('document_type', 'file_type',)
-#         meta_fields = ('presigned_s3', 'presigned_s3_thumbnail',)
-#
-#     def get_presigned_s3(self, obj):
-#         if obj.upload_status != UploadStatus.COMPLETE:
-#             return super().get_presigned_s3(obj)
-#
-#         try:
-#             settings.S3_CLIENT.head_object(Bucket=settings.S3_BUCKET, Key=obj.s3_key)
-#         except ClientError:
-#             # The document doesn't exist anymore in the bucket. The bucket is going to be repopulated from vault
-#             result = DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, obj.s3_key, obj.shipper_wallet_id,
-#                                                             obj.storage_id, obj.vault_id, obj.filename)
-#             if not result:
-#                 return None
-#
-#         url = settings.S3_CLIENT.generate_presigned_url(
-#             'get_object',
-#             Params={
-#                 'Bucket': f"{settings.S3_BUCKET}",
-#                 'Key': obj.s3_key
-#             },
-#             ExpiresIn=settings.S3_URL_LIFE
-#         )
-#
-#         LOG.debug(f'Generated one time s3 url for: {obj.id}')
-#         log_metric('transmission.info', tags={'method': 'documents.generate_presigned_url', 'module': __name__})
-#
-#         return url
-#
-#     def get_presigned_s3_thumbnail(self, obj):
-#         if obj.upload_status != UploadStatus.COMPLETE:
-#             return None
-#
-#         thumbnail_key = obj.s3_key.rsplit('.', 1)[0] + '-t.png'
-#
-#         url = settings.S3_CLIENT.generate_presigned_url(
-#             'get_object',
-#             Params={
-#                 'Bucket': f"{settings.S3_BUCKET}",
-#                 'Key': thumbnail_key
-#             },
-#             ExpiresIn=settings.S3_URL_LIFE
-#         )
-#
-#         LOG.debug(f'Generated one time s3 url thumbnail for: {obj.id}')
-#         log_metric('transmission.info', tags={'method': 'documents.generate_presigned_s3_thumbnail',
-#                                               'module': __name__})
-#
-#         return url
+class AbstractSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
+    # file_type = UpperEnumField(ShipmentUploadFileType, lenient=True, read_only=True, ints_as_names=True)
+    # upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
+    presigned_s3 = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        super(AbstractSerializer, self).__init__(*args, **kwargs)
+        self._s3_bucket = settings.SHIPMENT_IMPORTS_BUCKET
 
 
-class ShipmentImportSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
+class ShipmentImportSerializer(AbstractSerializer):
     file_type = UpperEnumField(ShipmentUploadFileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
     processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True)
-    presigned_s3 = serializers.SerializerMethodField()
+    # presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
         model = ShipmentImport
-        if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
-        else:
-            fields = '__all__'
-        meta_fields = ('presigned_s3',)
+        fields = '__all__'
+        meta_fields = ('presigned_s3', )
 
     def get_presigned_s3(self, obj):
         if obj.upload_status != UploadStatus.COMPLETE:
@@ -151,20 +51,20 @@ class ShipmentImportSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, ser
         return None
 
 
-class ShipmentImportCreateSerializer(ShipmentImportSerializer):
+class ShipmentImportCreateSerializer(AbstractSerializer):
     file_type = UpperEnumField(ShipmentUploadFileType, lenient=True, ints_as_names=True)
-    upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True, required=False)
-    processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True, read_only=True,
-                                       required=False)
-    presigned_s3 = serializers.SerializerMethodField()
+    # upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True, required=False)
+    # processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True, read_only=True,
+    #                                    required=False)
+    # presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
         model = ShipmentImport
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'updated_by', )
+            exclude = ('user_id', )
         else:
             fields = '__all__'
-
+        read_only_fields = ('upload_status', 'processing_status', )
         meta_fields = ('presigned_s3', )
 
     def validate_shipper_wallet_id(self, shipper_wallet_id):
@@ -188,14 +88,3 @@ class ShipmentImportCreateSerializer(ShipmentImportSerializer):
                     'User does not have access to this storage credential in ShipChain Profiles')
 
         return storage_credentials_id
-
-
-class CsvDocumentCreateResponseSerializer(ShipmentImportSerializer):
-    class Meta:
-        model = ShipmentImport
-        if settings.PROFILES_ENABLED:
-            exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
-        else:
-            fields = '__all__'
-
-        meta_fields = ('presigned_s3', )
