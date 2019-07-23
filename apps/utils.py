@@ -4,13 +4,13 @@ import json
 import mimetypes
 import re
 from enumfields import Enum
+from enumfields.drf import EnumField
 
 from django.db import models
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from rest_framework import exceptions
-from enumfields.drf import EnumField
 from inflection import camelize
 
 
@@ -204,4 +204,3 @@ def generic_filter_enum(queryset, name, value, module_ref='.models'):
     enum_value = file_type_field.to_internal_value(value)
     queryset = queryset.filter(**{name: enum_value})
     return queryset
-

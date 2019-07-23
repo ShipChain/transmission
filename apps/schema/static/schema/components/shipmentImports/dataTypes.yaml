@@ -20,14 +20,14 @@ description:
   properties:
     description:
       title: description
-      description: Longer description for the CsvDocument
+      description: Longer description for the `ShipmentImport`
       type: string
       example: 'Shipments imported from external source'
 
 fileType:
   properties:
-    csv_file_type:
-      title: csv_file_type
+    file_type:
+      title: file_type
       description: File MIME type to upload
       type: string
       enum: [CSV, XLS, XLSX]

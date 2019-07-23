@@ -79,11 +79,11 @@ paths:
   /api/v1/devices/status/:
     $ref: components/devices/deviceStatus.yaml
 
-  /api/v1/documents/csv/:
-    $ref: components/csvDocuments/documents.yaml
+  /api/v1/imports/shipments/:
+    $ref: components/shipmentImports/shipmentImports.yaml
 
-  /api/v1/documents/csv/{document_id}/:
-    $ref: components/csvDocuments/documentId.yaml
+  /api/v1/imports/shipments/{shipment_import_id}/:
+    $ref: components/shipmentImports/shipmentImportsId.yaml
 
 components:
   securitySchemes:

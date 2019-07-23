@@ -1488,11 +1488,11 @@
             ]
           },
           {
-            "name": "Csv Documents",
+            "name": "Shipment Imports",
             "description": null,
             "item": [
               {
-                "name": "Create Csv Document",
+                "name": "Create ShipmentImport",
                 "request": {
                   "method": "POST",
                   "header": [
@@ -1511,7 +1511,7 @@
                         "disabled": false
                       },
                       {
-                        "key": "csv_file_type",
+                        "key": "file_type",
                         "value": "xls",
                         "type": "text",
                         "disabled": false
@@ -1543,15 +1543,15 @@
                     ]
                   },
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/documents/csv/",
+                    "raw": "{{transmission_url}}/api/v1/imports/shipments/",
                     "host": [
                       "{{transmission_url}}"
                     ],
                     "path": [
                       "api",
                       "v1",
-                      "documents",
-                      "csv",
+                      "imports",
+                      "shipments",
                       ""
                     ]
                   }
@@ -1559,7 +1559,7 @@
                 "response": []
               },
               {
-                "name": "Update Csv Document",
+                "name": "Update ShipmentImport",
                 "request": {
                   "method": "PATCH",
                   "header": [
@@ -1598,16 +1598,16 @@
                     ]
                   },
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/documents/csv/{{document_id}}/",
+                    "raw": "{{transmission_url}}/api/v1/imports/shipments/{{shipment_import_id}}/",
                     "host": [
                       "{{transmission_url}}"
                     ],
                     "path": [
                       "api",
                       "v1",
-                      "documents",
-                      "csv",
-                      "{{document_id}}",
+                      "imports",
+                      "shipments",
+                      "{{shipment_import_id}}",
                       ""
                     ]
                   }
@@ -1615,7 +1615,7 @@
                 "response": []
               },
               {
-                "name": "List Csv Documents",
+                "name": "List ShipmentImport",
                 "request": {
                   "method": "GET",
                   "header": [
@@ -1626,15 +1626,15 @@
                   ],
                   "body": {},
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/documents/csv/",
+                    "raw": "{{transmission_url}}/api/v1/imports/shipments/",
                     "host": [
                       "{{transmission_url}}"
                     ],
                     "path": [
                       "api",
                       "v1",
-                      "documents",
-                      "csv",
+                      "imports",
+                      "shipments",
                       ""
                     ]
                   }
@@ -1642,7 +1642,7 @@
                 "response": []
               },
               {
-                "name": "Get Csv Document",
+                "name": "Get ShipmentImport",
                 "request": {
                   "method": "GET",
                   "header": [
@@ -1653,16 +1653,16 @@
                   ],
                   "body": {},
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/documents/csv/{{document_id}}/",
+                    "raw": "{{transmission_url}}/api/v1/imports/shipments/{{shipment_import_id}}/",
                     "host": [
                       "{{transmission_url}}"
                     ],
                     "path": [
                       "api",
                       "v1",
-                      "documents",
-                      "csv",
-                      "{{document_id}}",
+                      "imports",
+                      "shipments",
+                      "{{shipment_import_id}}",
                       ""
                     ]
                   }

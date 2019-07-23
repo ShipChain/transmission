@@ -1,12 +1,12 @@
 get:
-  summary: Get a csv document details
+  summary: Get a shipment imports details
   description: |
-    Get additional info about a `CsvDocument`.
+    Get additional info about a `ShipmentImport`.
 
   parameters:
     - $ref: './parameters.yaml#/path'
   tags:
-    - Documents
+    - Imports
   responses:
     '200':
       description: "Created"
@@ -22,11 +22,11 @@ get:
             $ref: '../errors/schema.yaml#/401'
 
 patch:
-  summary: Update a csv document
+  summary: Update a shipment imports
   description: >
-    Update a `CsvDocument` object with the provided parameters.
+    Update a `ShipmentImport` object with the provided parameters.
   tags:
-    - Documents
+    - Imports
   responses:
     '202':
       description: "Created"

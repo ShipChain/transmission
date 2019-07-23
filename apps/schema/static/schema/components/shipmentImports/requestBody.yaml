@@ -14,7 +14,7 @@ patchResource:
 
 createAttributes:
   required:
-    - csv_file_type
+    - file_type
     - name
     - storage_credentials_id
     - shipper_wallet_id

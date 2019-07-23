@@ -86,4 +86,3 @@ class Document(models.Model):
     @property
     def vault_id(self):
         return f"{self.shipment.vault_id}"
-

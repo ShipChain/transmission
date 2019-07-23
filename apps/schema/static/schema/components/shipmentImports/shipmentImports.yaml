@@ -1,7 +1,7 @@
 get:
-  summary: Get csv documents
+  summary: Get list of shipment imports
   description: >
-    Get all user `CsvDocument` objects.
+    Get all Organization `ShipmentImport` objects.
   parameters:
     - $ref: '../core/parameters.yaml#/page'
     - $ref: '../core/parameters.yaml#/page_size'
@@ -9,7 +9,7 @@ get:
     - $ref: 'parameters.yaml#/uploadStatus'
     - $ref: 'parameters.yaml#/processingStatus'
   tags:
-  - Documents
+  - Imports
   responses:
     '200':
       description: "Success"
@@ -25,14 +25,14 @@ get:
             $ref: '../errors/schema.yaml#/401'
 
 post:
-  summary: Create csv document
+  summary: Create shipment imports
   description: |
-    Create a new `CsvDocument` owned by the current user.
+    Create a new `ShipmentImport`.
 
     A presigned S3 request will be generated with credentials to POST a new file of the specified type to S3.
 
   tags:
-    - Documents
+    - Imports
   responses:
     '201':
       description: "Created"

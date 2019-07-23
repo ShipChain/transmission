@@ -9,7 +9,7 @@ path:
 fileType:
   required: false
   in: query
-  name: csv_file_type
+  name: file_type
   description: Type of file extension to filter by
   schema:
     type: string

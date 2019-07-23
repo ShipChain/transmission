@@ -1,7 +1,7 @@
 resource:
   properties:
     type:
-      example: CsvDocument
+      example: ShipmentImport
 
 attributes:
   allOf:
@@ -10,6 +10,9 @@ attributes:
     - $ref: '#/document/fileType'
     - $ref: '#/document/uploadStatus'
     - $ref: '#/document/processingStatus'
+    - $ref: '#/document/storageCredentialsId'
+    - $ref: '#/document/shipperWalletId'
+    - $ref: '#/document/carrierWalletId'
     - $ref: '#/dataTypes/createdAt'
     - $ref: '#/dataTypes/updatedAt'
 

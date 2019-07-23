@@ -19,10 +19,11 @@ from functools import partial
 from django_filters import CharFilter
 from django_filters import rest_framework as filters
 
-from .models import Document
 from apps.utils import generic_filter_enum
+from .models import Document
 
 
+# pylint:disable=invalid-name
 filter_enum = partial(generic_filter_enum, module_ref='apps.documents.models')
 
 
