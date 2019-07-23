@@ -1998,6 +1998,13 @@ class ShipmentWithIoTAPITests(APITestCase):
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
 
+            # Set shipment IN_TRANSIT
+            shipment_obj = Shipment.objects.filter(id=shipment_obj.id).first()
+            shipment_obj.pick_up()
+            shipment_obj.save()
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+
             # Create second shipment, (will fail since the device is already in use)
             response = self.create_shipment()
             assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -2010,10 +2017,6 @@ class ShipmentWithIoTAPITests(APITestCase):
 
             # Devices can be reused after deliveries are complete and should be removed from old shipment
             shipment_obj = Shipment.objects.filter(id=shipment_obj.id).first()
-            shipment_obj.pick_up()
-            shipment_obj.save()
-            mocked_call_count += 1
-            assert mocked.call_count == mocked_call_count
             shipment_obj.arrival()
             shipment_obj.save()
             mocked_call_count += 1
@@ -2034,14 +2037,24 @@ class ShipmentWithIoTAPITests(APITestCase):
             response_json = response.json()
             shipment = Shipment.objects.get(pk=response_json['data']['id'])
             assert shipment.device_id == DEVICE_ID
+            shipment.pick_up()
+            shipment.save()
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
 
             # Device ID updates for Shipments should fail if the device is already in use
-            response = self.set_device_id(shipment.id, DEVICE_ID, CERTIFICATE_ID)
+            response = self.set_device_id(shipment_obj.id, DEVICE_ID, CERTIFICATE_ID)
             assert response.status_code == status.HTTP_400_BAD_REQUEST
 
             # Test Shipment null Device ID updates shadow
-            shipment.delivery_act = datetime.now()
+            shipment.arrival()
             shipment.save()
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+            shipment.drop_off()
+            shipment.save()
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
 
             response = self.set_device_id(shipment.id, None, None)
             shipment.refresh_from_db(fields=('device',))
