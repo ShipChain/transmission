@@ -4,10 +4,8 @@ import json
 from pathlib import Path
 from unittest import mock
 
-import copy
 import os
 import requests
-import pyexcel
 from PIL import Image, ImageDraw, ImageFont
 from django.conf import settings
 from django.db.models import signals
@@ -15,14 +13,13 @@ from fpdf import FPDF
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
-from rest_framework_json_api.serializers import ValidationError
 
 from apps.authentication import passive_credentials_auth
 from apps.documents.models import Document, UploadStatus, DocumentType, FileType
 from apps.documents.rpc import DocumentRPCClient
 from apps.shipments.models import Shipment, LoadShipment
 from apps.shipments.signals import shipment_post_save
-from tests.utils import create_form_content, get_jwt, random_timestamp
+from tests.utils import create_form_content, get_jwt
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'
 FAKE_ID = '00000000-0000-0000-0000-000000000000'

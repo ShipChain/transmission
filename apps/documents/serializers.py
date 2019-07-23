@@ -41,20 +41,6 @@ class AbstractDocumentSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, s
         super(AbstractDocumentSerializer, self).__init__(*args, **kwargs)
         self._s3_bucket = settings.DOCUMENT_MANAGEMENT_BUCKET
 
-    def get_presigned_s3(self, obj):
-        if obj.__class__.__name__ == 'Document':
-            s3_bucket = settings.S3_BUCKET
-            file_extension = obj.file_type.name.lower()
-        else:
-            s3_bucket = settings.CSV_S3_BUCKET
-            file_extension = obj.csv_file_type.name.lower()
-
-    class Meta:
-        model = Document
-        if settings.PROFILES_ENABLED:
-            exclude = ('owner_id',)
-        read_only_fields = ('shipment',)
-
 
 class ShipmentDocumentCreateSerializer(AbstractDocumentSerializer):
     """
