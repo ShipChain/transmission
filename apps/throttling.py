@@ -25,8 +25,6 @@ class MonthlyRateThrottle(throttling.SimpleRateThrottle):
         return request.user.token.get('organization_id', None)
 
     def allow_request(self, request, view):
-        LOG.debug('Checking request for throttling')
-
         if request.method == 'GET':
             return True
 
