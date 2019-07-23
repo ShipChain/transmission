@@ -10,7 +10,7 @@ from rest_framework import exceptions, status
 from influxdb_metrics.loader import log_metric
 
 from apps.utils import UpperEnumField, S3PreSignedMixin
-from .models import ShipmentImport, UploadStatus, ProcessingStatus
+from .models import ShipmentImport, UploadStatus, ProcessingStatus, ShipmentUploadFileType
 
 
 LOG = logging.getLogger('transmission')
@@ -129,73 +129,73 @@ LOG = logging.getLogger('transmission')
 #                                               'module': __name__})
 #
 #         return url
-#
-#
-# class ShipmentImportSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
-#     file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
-#     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
-#     processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True)
-#     presigned_s3 = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = CsvDocument
-#         if settings.PROFILES_ENABLED:
-#             exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
-#         else:
-#             fields = '__all__'
-#         meta_fields = ('presigned_s3',)
-#
-#     def get_presigned_s3(self, obj):
-#         if obj.upload_status != UploadStatus.COMPLETE:
-#             return super(CsvDocumentSerializer, self).get_presigned_s3(obj)
-#         return None
-#
-#
-# class CsvDocumentCreateSerializer(DocumentSerializer):
-#     csv_file_type = UpperEnumField(CsvFileType, lenient=True, ints_as_names=True)
-#     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True, required=False)
-#     processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True, read_only=True,
-#                                        required=False)
-#     presigned_s3 = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = CsvDocument
-#         if settings.PROFILES_ENABLED:
-#             exclude = ('owner_id', 'updated_by', )
-#         else:
-#             fields = '__all__'
-#
-#         meta_fields = ('presigned_s3', )
-#
-#     def validate_shipper_wallet_id(self, shipper_wallet_id):
-#         if settings.PROFILES_ENABLED:
-#             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
-#                                                      headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
-#
-#             if response.status_code != status.HTTP_200_OK:
-#                 raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
-#
-#         return shipper_wallet_id
-#
-#     def validate_storage_credentials_id(self, storage_credentials_id):
-#         if settings.PROFILES_ENABLED:
-#             response = settings.REQUESTS_SESSION.get(
-#                 f'{settings.PROFILES_URL}/api/v1/storage_credentials/{storage_credentials_id}/',
-#                 headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
-#
-#             if response.status_code != status.HTTP_200_OK:
-#                 raise serializers.ValidationError(
-#                     'User does not have access to this storage credential in ShipChain Profiles')
-#
-#         return storage_credentials_id
-#
-#
-# class CsvDocumentCreateResponseSerializer(CsvDocumentCreateSerializer):
-#     class Meta:
-#         model = CsvDocument
-#         if settings.PROFILES_ENABLED:
-#             exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
-#         else:
-#             fields = '__all__'
-#
-#         meta_fields = ('presigned_s3', )
+
+
+class ShipmentImportSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
+    file_type = UpperEnumField(ShipmentUploadFileType, lenient=True, read_only=True, ints_as_names=True)
+    upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
+    processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True)
+    presigned_s3 = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ShipmentImport
+        if settings.PROFILES_ENABLED:
+            exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
+        else:
+            fields = '__all__'
+        meta_fields = ('presigned_s3',)
+
+    def get_presigned_s3(self, obj):
+        if obj.upload_status != UploadStatus.COMPLETE:
+            return super(ShipmentImportSerializer, self).get_presigned_s3(obj)
+        return None
+
+
+class ShipmentImportCreateSerializer(ShipmentImportSerializer):
+    file_type = UpperEnumField(ShipmentUploadFileType, lenient=True, ints_as_names=True)
+    upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True, required=False)
+    processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True, read_only=True,
+                                       required=False)
+    presigned_s3 = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ShipmentImport
+        if settings.PROFILES_ENABLED:
+            exclude = ('owner_id', 'updated_by', )
+        else:
+            fields = '__all__'
+
+        meta_fields = ('presigned_s3', )
+
+    def validate_shipper_wallet_id(self, shipper_wallet_id):
+        if settings.PROFILES_ENABLED:
+            response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
+                                                     headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
+
+            if response.status_code != status.HTTP_200_OK:
+                raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
+
+        return shipper_wallet_id
+
+    def validate_storage_credentials_id(self, storage_credentials_id):
+        if settings.PROFILES_ENABLED:
+            response = settings.REQUESTS_SESSION.get(
+                f'{settings.PROFILES_URL}/api/v1/storage_credentials/{storage_credentials_id}/',
+                headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
+
+            if response.status_code != status.HTTP_200_OK:
+                raise serializers.ValidationError(
+                    'User does not have access to this storage credential in ShipChain Profiles')
+
+        return storage_credentials_id
+
+
+class CsvDocumentCreateResponseSerializer(ShipmentImportSerializer):
+    class Meta:
+        model = ShipmentImport
+        if settings.PROFILES_ENABLED:
+            exclude = ('owner_id', 'updated_by', 'storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
+        else:
+            fields = '__all__'
+
+        meta_fields = ('presigned_s3', )

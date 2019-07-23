@@ -42,7 +42,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=get_owner_id(self.request))
+            created = serializer.save(owner_id=get_owner_id(self.request), shipment_id=self.kwargs['shipment_pk'])
         else:
             created = serializer.save()
         return created
@@ -54,12 +54,11 @@ class DocumentViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Creating a document object.')
         log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
 
-        shipment_id = self.kwargs['shipment_pk']
-        serializer = ShipmentDocumentCreateSerializer(data=request.data, context={'shipment_id': shipment_id})
+        serializer = ShipmentDocumentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        doc_obj = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(self.get_serializer(doc_obj).data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
         """
@@ -70,8 +69,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Updating document {instance.id} with new details.')
         log_metric('transmission.info', tags={'method': 'documents.update', 'module': __name__})
 
-        serializer = self.get_serializer_class()(instance, data=request.data, partial=partial,
-                                                 context={'auth': request.auth})
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
 
         self.perform_update(serializer)

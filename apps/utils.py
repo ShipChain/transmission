@@ -169,7 +169,7 @@ class S3PreSignedMixin:
         content_type = self.get_content_type(file_extension)
 
         pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
-            Bucket=settings.S3_BUCKET,
+            Bucket=self._s3_bucket,
             Key=obj.s3_key,
             Fields={"acl": "private", "Content-Type": content_type},
             Conditions=[
@@ -192,10 +192,6 @@ class UploadStatus(Enum):
         PENDING = 'PENDING'
         COMPLETE = 'COMPLETE'
         FAILED = 'FAILED'
-
-
-def get_class_in_module(module_ref, class_name):
-    return getattr(importlib.import_module(module_ref, __package__), class_name)
 
 
 def generic_filter_enum(queryset, name, value, module_ref='.models'):

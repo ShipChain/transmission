@@ -1,5 +1,3 @@
-import logging
-
 from django.conf import settings
 from django.db import models
 from enumfields import Enum
@@ -7,8 +5,6 @@ from enumfields import EnumIntegerField
 
 from apps.shipments.models import Shipment
 from apps.utils import UploadStatus, random_id
-
-LOG = logging.getLogger('transmission')
 
 
 class DocumentType(Enum):
@@ -57,7 +53,7 @@ class Document(models.Model):
 
     @property
     def s3_path(self):
-        return f"s3://{settings.S3_BUCKET}/{self.s3_key}"
+        return f"s3://{settings.DOCUMENT_MANAGEMENT_BUCKET}/{self.s3_key}"
 
     @property
     def filename(self):

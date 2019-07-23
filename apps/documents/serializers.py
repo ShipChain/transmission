@@ -15,17 +15,15 @@ from .rpc import DocumentRPCClient
 LOG = logging.getLogger('transmission')
 
 
-class DocumentSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
+class AbstractDocumentSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
     document_type = UpperEnumField(DocumentType, lenient=True, read_only=True, ints_as_names=True)
     file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
     presigned_s3 = serializers.SerializerMethodField()
 
-    class Meta:
-        model = Document
-        if settings.PROFILES_ENABLED:
-            exclude = ('owner_id',)
-        read_only_fields = ('shipment',)
+    def __init__(self, *args, **kwargs):
+        super(AbstractDocumentSerializer, self).__init__(*args, **kwargs)
+        self._s3_bucket = settings.DOCUMENT_MANAGEMENT_BUCKET
 
     def get_presigned_s3(self, obj):
         if obj.__class__.__name__ == 'Document':
@@ -42,7 +40,7 @@ class DocumentSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serialize
         read_only_fields = ('shipment',)
 
 
-class ShipmentDocumentCreateSerializer(DocumentSerializer):
+class ShipmentDocumentCreateSerializer(AbstractDocumentSerializer):
     """
     Model serializer for documents validation for s3 signing
     """
@@ -53,15 +51,11 @@ class ShipmentDocumentCreateSerializer(DocumentSerializer):
     class Meta:
         model = Document
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id',)
-        read_only_fields = ('shipment',)
-        meta_fields = ('presigned_s3',)
-
-    def create(self, validated_data):
-        return Document.objects.create(**validated_data, **self.context)
+            exclude = ('owner_id', 'shipment', )
+        meta_fields = ('presigned_s3', )
 
 
-class ShipmentDocumentSerializer(DocumentSerializer):
+class ShipmentDocumentSerializer(AbstractDocumentSerializer):
     presigned_s3_thumbnail = serializers.SerializerMethodField()
 
     class Meta:
@@ -78,10 +72,10 @@ class ShipmentDocumentSerializer(DocumentSerializer):
             return super().get_presigned_s3(obj)
 
         try:
-            settings.S3_CLIENT.head_object(Bucket=settings.S3_BUCKET, Key=obj.s3_key)
+            settings.S3_CLIENT.head_object(Bucket=self._s3_bucket, Key=obj.s3_key)
         except ClientError:
             # The document doesn't exist anymore in the bucket. The bucket is going to be repopulated from vault
-            result = DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, obj.s3_key, obj.shipper_wallet_id,
+            result = DocumentRPCClient().put_document_in_s3(self._s3_bucket, obj.s3_key, obj.shipper_wallet_id,
                                                             obj.storage_id, obj.vault_id, obj.filename)
             if not result:
                 return None
@@ -89,7 +83,7 @@ class ShipmentDocumentSerializer(DocumentSerializer):
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
             Params={
-                'Bucket': f"{settings.S3_BUCKET}",
+                'Bucket': f"{self._s3_bucket}",
                 'Key': obj.s3_key
             },
             ExpiresIn=settings.S3_URL_LIFE
@@ -109,7 +103,7 @@ class ShipmentDocumentSerializer(DocumentSerializer):
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
             Params={
-                'Bucket': f"{settings.S3_BUCKET}",
+                'Bucket': f"{self._s3_bucket}",
                 'Key': thumbnail_key
             },
             ExpiresIn=settings.S3_URL_LIFE
