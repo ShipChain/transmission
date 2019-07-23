@@ -9,6 +9,7 @@ from django.db import models
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
+from rest_framework import exceptions
 from enumfields.drf import EnumField
 from inflection import camelize
 
@@ -156,17 +157,18 @@ def send_templated_email(template, subject, context, recipients, sender=None):
 
 class S3PreSignedMixin:
     def get_content_type(self, extension):
+        mimetypes.add_type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.xlsx')
+        mime_types = mimetypes.types_map
         extension = extension if extension[0] == '.' else f'.{extension}'
+
         try:
-            content_type = mimetypes.types_map[extension]
-        except KeyError as exc:
-            raise exc
+            content_type = mime_types[extension]
+        except KeyError:
+            raise exceptions.ValidationError(f'Unrecognized file type: {extension}')
         return content_type
 
     def get_presigned_s3(self, obj):
-        file_extension = obj.file_type.name.lower()
-
-        content_type = self.get_content_type(file_extension)
+        content_type = self.get_content_type(obj.file_type.name.lower())
 
         pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
             Bucket=self._s3_bucket,
@@ -179,7 +181,6 @@ class S3PreSignedMixin:
             ],
             ExpiresIn=settings.S3_URL_LIFE
         )
-
         return pre_signed_post
 
 

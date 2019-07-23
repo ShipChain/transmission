@@ -18,15 +18,13 @@ from django.conf import settings
 
 from enumfields.drf import EnumSupportSerializerMixin
 from rest_framework_json_api import serializers
-from rest_framework import exceptions, status
+from rest_framework import status
 
 from apps.utils import UpperEnumField, S3PreSignedMixin, UploadStatus
 from .models import ShipmentImport, ProcessingStatus, ShipmentUploadFileType
 
 
 class AbstractSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
-    # file_type = UpperEnumField(ShipmentUploadFileType, lenient=True, read_only=True, ints_as_names=True)
-    # upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
     presigned_s3 = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
@@ -38,11 +36,11 @@ class ShipmentImportSerializer(AbstractSerializer):
     file_type = UpperEnumField(ShipmentUploadFileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
     processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True)
-    # presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
         model = ShipmentImport
-        fields = '__all__'
+        exclude = ('owner_id', 'masquerade_id', )
+        read_only_fields = ('storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
         meta_fields = ('presigned_s3', )
 
     def get_presigned_s3(self, obj):
@@ -53,15 +51,11 @@ class ShipmentImportSerializer(AbstractSerializer):
 
 class ShipmentImportCreateSerializer(AbstractSerializer):
     file_type = UpperEnumField(ShipmentUploadFileType, lenient=True, ints_as_names=True)
-    # upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True, required=False)
-    # processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True, read_only=True,
-    #                                    required=False)
-    # presigned_s3 = serializers.SerializerMethodField()
 
     class Meta:
         model = ShipmentImport
         if settings.PROFILES_ENABLED:
-            exclude = ('user_id', )
+            exclude = ('owner_id', 'masquerade_id', )
         else:
             fields = '__all__'
         read_only_fields = ('upload_status', 'processing_status', )
