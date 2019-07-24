@@ -125,6 +125,29 @@ final_destination_location__country:
   schema:
     type: string
 
+state:
+  name: state
+  in: query
+  description: Returns shipments with the provided transit state.
+  schema:
+    type: string
+    enum: [AWAITING_PICKUP, IN_TRANSIT, AWAITING_DELIVERY, DELIVERED]
+
+exception:
+  name: exception
+  in: query
+  description: Returns shipments with the provided exception state.
+  schema:
+    type: string
+    enum: [NONE, CUSTOMS_HOLD, DOCUMENTATION_ERROR]
+
+delayed:
+  name: delayed
+  in: query
+  description: Returns shipments that are delayed, based on boolean value.
+  schema:
+    type: boolean
+
 permissionLinkId:
   name: permission_link
   in: query
