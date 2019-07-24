@@ -31,18 +31,15 @@ from .rpc import DocumentRPCClient
 LOG = logging.getLogger('transmission')
 
 
-class AbstractDocumentSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
+class BaseDocumentSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
     document_type = UpperEnumField(DocumentType, lenient=True, read_only=True, ints_as_names=True)
     file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
     presigned_s3 = serializers.SerializerMethodField()
-
-    def __init__(self, *args, **kwargs):
-        super(AbstractDocumentSerializer, self).__init__(*args, **kwargs)
-        self._s3_bucket = settings.DOCUMENT_MANAGEMENT_BUCKET
+    _s3_bucket = settings.DOCUMENT_MANAGEMENT_BUCKET
 
 
-class ShipmentDocumentCreateSerializer(AbstractDocumentSerializer):
+class DocumentCreateSerializer(BaseDocumentSerializer):
     """
     Model serializer for documents validation for s3 signing
     """
@@ -57,7 +54,7 @@ class ShipmentDocumentCreateSerializer(AbstractDocumentSerializer):
         meta_fields = ('presigned_s3', )
 
 
-class ShipmentDocumentSerializer(AbstractDocumentSerializer):
+class DocumentSerializer(BaseDocumentSerializer):
     presigned_s3_thumbnail = serializers.SerializerMethodField()
 
     class Meta:

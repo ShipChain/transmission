@@ -23,7 +23,7 @@ from django.db import models
 from apps.utils import UploadStatus, random_id
 
 
-class ShipmentUploadFileType(Enum):
+class ShipmentImportFileType(Enum):
     CSV = 0
     XLS = 1
     XLSX = 2
@@ -56,7 +56,7 @@ class ShipmentImport(models.Model):
     owner_id = models.CharField(null=False, max_length=36)
     masquerade_id = models.CharField(null=False, max_length=36)
     description = models.CharField(max_length=250, null=True, blank=True)
-    file_type = EnumIntegerField(enum=ShipmentUploadFileType, default=ShipmentUploadFileType.CSV)
+    file_type = EnumIntegerField(enum=ShipmentImportFileType, default=ShipmentImportFileType.CSV)
     upload_status = EnumIntegerField(enum=UploadStatus, default=UploadStatus.PENDING)
     processing_status = EnumIntegerField(enum=ProcessingStatus, default=ProcessingStatus.PENDING)
     report = JSONField(blank=True, null=True)

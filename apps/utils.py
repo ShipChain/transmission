@@ -1,7 +1,5 @@
 import decimal
-import importlib
 import json
-import mimetypes
 import re
 from enumfields import Enum
 from enumfields.drf import EnumField
@@ -11,7 +9,6 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from rest_framework import exceptions
-from inflection import camelize
 
 
 def random_id():
@@ -157,13 +154,9 @@ def send_templated_email(template, subject, context, recipients, sender=None):
 
 class S3PreSignedMixin:
     def get_content_type(self, extension):
-        mimetypes.add_type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.xlsx')
-        mime_types = mimetypes.types_map
-        extension = extension if extension[0] == '.' else f'.{extension}'
-
-        try:
-            content_type = mime_types[extension]
-        except KeyError:
+        extension = extension if extension.startswith('.') else f'.{extension}'
+        content_type = settings.MIME_TYPE_MAP.get(extension)
+        if not content_type:
             raise exceptions.ValidationError(f'Unrecognized file type: {extension}')
         return content_type
 
@@ -193,14 +186,3 @@ class UploadStatus(Enum):
         PENDING = 'PENDING'
         COMPLETE = 'COMPLETE'
         FAILED = 'FAILED'
-
-
-def generic_filter_enum(queryset, name, value, module_ref='.models'):
-    enum_name = camelize(name)
-    enum_class = getattr(importlib.import_module(module_ref, __package__), enum_name)
-
-    # Use case insensitive search (lenient=True, to_internal_value) to convert input string to enum value
-    file_type_field = EnumField(enum_class, lenient=True, read_only=True, ints_as_names=True)
-    enum_value = file_type_field.to_internal_value(value)
-    queryset = queryset.filter(**{name: enum_value})
-    return queryset

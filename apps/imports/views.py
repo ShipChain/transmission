@@ -39,7 +39,8 @@ class ShipmentImportsViewSet(mixins.CreateModelMixin,
 
     queryset = ShipmentImport.objects.all()
     serializer_class = ShipmentImportSerializer
-    permission_classes = (permissions.IsAuthenticated, IsOwner, )
+    permission_classes = ((permissions.IsAuthenticated, IsOwner, ) if settings.PROFILES_ENABLED
+                          else (permissions.AllowAny, ))
     filter_backends = (filters.DjangoFilterBackend, )
     filter_class = ShipmentImportFilterSet
 

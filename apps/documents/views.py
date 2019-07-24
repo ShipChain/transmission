@@ -33,7 +33,7 @@ from .filters import DocumentFilterSet
 from .models import Document
 from .permissions import UserHasPermission
 from .rpc import DocumentRPCClient
-from .serializers import ShipmentDocumentSerializer, ShipmentDocumentCreateSerializer
+from .serializers import DocumentSerializer, DocumentCreateSerializer
 
 LOG = logging.getLogger('transmission')
 
@@ -44,7 +44,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
                       mixins.ListModelMixin,
                       viewsets.GenericViewSet):
     queryset = Document.objects.all()
-    serializer_class = ShipmentDocumentSerializer
+    serializer_class = DocumentSerializer
     permission_classes = (permissions.IsAuthenticated, UserHasPermission,)
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet
@@ -70,7 +70,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Creating a document object.')
         log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
 
-        serializer = ShipmentDocumentCreateSerializer(data=request.data)
+        serializer = DocumentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         doc_obj = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)

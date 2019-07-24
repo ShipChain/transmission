@@ -21,21 +21,15 @@ from rest_framework_json_api import serializers
 from rest_framework import status
 
 from apps.utils import UpperEnumField, S3PreSignedMixin, UploadStatus
-from .models import ShipmentImport, ProcessingStatus, ShipmentUploadFileType
+from .models import ShipmentImport, ProcessingStatus, ShipmentImportFileType
 
 
-class AbstractSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
-    presigned_s3 = serializers.SerializerMethodField()
-
-    def __init__(self, *args, **kwargs):
-        super(AbstractSerializer, self).__init__(*args, **kwargs)
-        self._s3_bucket = settings.SHIPMENT_IMPORTS_BUCKET
-
-
-class ShipmentImportSerializer(AbstractSerializer):
-    file_type = UpperEnumField(ShipmentUploadFileType, lenient=True, read_only=True, ints_as_names=True)
+class ShipmentImportSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
+    file_type = UpperEnumField(ShipmentImportFileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
     processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True)
+    presigned_s3 = serializers.SerializerMethodField()
+    _s3_bucket = settings.SHIPMENT_IMPORTS_BUCKET
 
     class Meta:
         model = ShipmentImport
@@ -49,8 +43,10 @@ class ShipmentImportSerializer(AbstractSerializer):
         return None
 
 
-class ShipmentImportCreateSerializer(AbstractSerializer):
-    file_type = UpperEnumField(ShipmentUploadFileType, lenient=True, ints_as_names=True)
+class ShipmentImportCreateSerializer(ShipmentImportSerializer):
+    file_type = UpperEnumField(ShipmentImportFileType, lenient=True, ints_as_names=True)
+    upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True)
+    processing_status = UpperEnumField(ProcessingStatus, lenient=True, ints_as_names=True, read_only=True)
 
     class Meta:
         model = ShipmentImport

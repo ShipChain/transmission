@@ -14,17 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from functools import partial
+import importlib
 
 from django_filters import CharFilter
 from django_filters import rest_framework as filters
+from enumfields.drf import EnumField
+from inflection import camelize
 
-from apps.utils import generic_filter_enum
 from .models import ShipmentImport
 
 
-# pylint:disable=invalid-name
-filter_enum = partial(generic_filter_enum, module_ref='apps.imports.models')
+def filter_enum(queryset, name, value):
+    enum_name = camelize(name)
+    enum_class = getattr(importlib.import_module('.models', __package__), enum_name)
+
+    # Use case insensitive search (lenient=True, to_internal_value) to convert input string to enum value
+    file_type_field = EnumField(enum_class, lenient=True, read_only=True, ints_as_names=True)
+    enum_value = file_type_field.to_internal_value(value)
+    queryset = queryset.filter(**{name: enum_value})
+    return queryset
 
 
 class ShipmentImportFilterSet(filters.FilterSet):
