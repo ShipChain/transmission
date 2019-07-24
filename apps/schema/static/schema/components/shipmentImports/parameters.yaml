@@ -1,8 +1,8 @@
 path:
   required: true
-  name: document_id
+  name: shipment_import_id
   in: path
-  description: ID of the Document
+  description: ID of the ShipmentImport
   schema:
     $ref: '#/dataTypes/uuid'
 
@@ -32,6 +32,16 @@ processingStatus:
   schema:
     type: string
     enum: [PENDING, RUNNING, COMPLETE, FAILED]
+
+nameContains:
+  required: false
+  in: query
+  name: name__contains
+  description: Case insensitive portion of import name to look for
+  schema:
+    type: string
+    example:
+      Xls
 
 dataTypes:
   $ref: ../core/dataTypes.yaml

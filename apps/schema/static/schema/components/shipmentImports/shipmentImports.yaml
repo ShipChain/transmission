@@ -1,5 +1,5 @@
 get:
-  summary: Get list of shipment imports
+  summary: List imports
   description: >
     Get all Organization `ShipmentImport` objects.
   parameters:
@@ -8,6 +8,7 @@ get:
     - $ref: 'parameters.yaml#/fileType'
     - $ref: 'parameters.yaml#/uploadStatus'
     - $ref: 'parameters.yaml#/processingStatus'
+    - $ref: 'parameters.yaml#/nameContains'
   tags:
   - Imports
   responses:

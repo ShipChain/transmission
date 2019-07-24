@@ -302,7 +302,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
 
             # user_1 only has one shipment import with name: 'Test xlsx file'
             shipment_import_name = 'Test xlsx file'
-            response = self.client.get(f'{url}/?name={shipment_import_name}')
+            response = self.client.get(f'{url}/?name__contains=XLsx')
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
             self.assertEqual(len(data), 1)

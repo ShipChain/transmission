@@ -1,5 +1,5 @@
 get:
-  summary: Get a shipment imports details
+  summary: Get import details
   description: |
     Get additional info about a `ShipmentImport`.
 
@@ -22,7 +22,7 @@ get:
             $ref: '../errors/schema.yaml#/401'
 
 patch:
-  summary: Update a shipment imports
+  summary: Update an import
   description: >
     Update a `ShipmentImport` object with the provided parameters.
   tags:

@@ -28,7 +28,7 @@ fileType:
   properties:
     file_type:
       title: file_type
-      description: File MIME type to upload
+      description: File type extension to upload
       type: string
       enum: [CSV, XLS, XLSX]
       example: 'CSV'

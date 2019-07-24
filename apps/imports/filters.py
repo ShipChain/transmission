@@ -39,7 +39,8 @@ class ShipmentImportFilterSet(filters.FilterSet):
     file_type = CharFilter(method=filter_enum)
     upload_status = CharFilter(method=filter_enum)
     processing_status = CharFilter(method=filter_enum)
+    name__contains = CharFilter(field_name='name', lookup_expr='icontains')
 
     class Meta:
         model = ShipmentImport
-        fields = ('name', 'upload_status', 'file_type', 'processing_status', )
+        fields = ('upload_status', 'file_type', 'processing_status', )
