@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('owner_id', models.CharField(max_length=36)),
                 ('masquerade_id', models.CharField(max_length=36)),
                 ('description', models.CharField(blank=True, max_length=250, null=True)),
-                ('file_type', enumfields.fields.EnumIntegerField(default=0, enum=apps.imports.models.ShipmentImportFileType)),
+                ('file_type', enumfields.fields.EnumIntegerField(default=0, enum=apps.imports.models.FileType)),
                 ('upload_status', enumfields.fields.EnumIntegerField(default=0, enum=apps.utils.UploadStatus)),
                 ('processing_status', enumfields.fields.EnumIntegerField(default=0, enum=apps.imports.models.ProcessingStatus)),
                 ('report', django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True)),

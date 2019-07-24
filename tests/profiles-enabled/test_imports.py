@@ -28,7 +28,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework_json_api.serializers import ValidationError
 
 from apps.authentication import passive_credentials_auth
-from apps.imports.models import ShipmentImport
+from apps.imports.models import ShipmentImport, FileType, UploadStatus, ProcessingStatus
 
 from tests.utils import get_jwt, random_timestamp
 
@@ -281,5 +281,40 @@ class ShipmentImportsViewSetAPITests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             data = response.json()['errors'][0]
             self.assertEqual(data['detail'], error_message)
+
+            # ------------------ filtering test -----------------------#
+            self.set_user(self.user_1)
+            # User_1 owns 3 ShipmentImport objects respectively of one file type
+
+            response = self.client.get(f'{url}/?file_type=XLS')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0]['attributes']['file_type'], FileType.XLS.name)
+
+            # User_1 only has the CSV file with upload status complete
+            response = self.client.get(f'{url}/?upload_status=Complete')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0]['attributes']['file_type'], FileType.CSV.name)
+            self.assertEqual(data[0]['attributes']['upload_status'], UploadStatus.COMPLETE.name)
+
+            # user_1 only has one shipment import with name: 'Test xlsx file'
+            shipment_import_name = 'Test xlsx file'
+            response = self.client.get(f'{url}/?name={shipment_import_name}')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0]['attributes']['file_type'], FileType.XLSX.name)
+            self.assertEqual(data[0]['attributes']['name'], shipment_import_name)
+
+            # User_1 only has the CSV file with processing status complete
+            response = self.client.get(f'{url}/?processing_status=COMPLETE')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0]['attributes']['file_type'], FileType.CSV.name)
+            self.assertEqual(data[0]['attributes']['processing_status'], ProcessingStatus.COMPLETE.name)
 
 
