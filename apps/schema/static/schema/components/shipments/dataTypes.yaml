@@ -501,6 +501,41 @@ isHazmat:
       type: boolean
       example: false
 
+state:
+  properties:
+    state:
+      title: state
+      description: Transit state for the Shipment
+      type: string
+      enum: [AWAITING_PICKUP, IN_TRANSIT, AWAITING_DELIVERY, DELIVERED]
+      example: IN_TRANSIT
+
+delayed:
+  properties:
+    delayed:
+      title: delayed
+      description: Boolean describing whether or not the Shipment is currently delayed
+      type: boolean
+      example: false
+
+expectedDelayHours:
+  properties:
+    expected_delay_hours:
+      title: expected_delay_hours
+      description: Expected delay behind delivery_est (hours)
+      type: integer
+      format: int32
+      example: 0
+
+exception:
+  properties:
+    exception:
+      title: exception
+      description: Current exception state of the Shipment
+      type: string
+      enum: [NONE, CUSTOMS_HOLD, DOCUMENTATION_ERROR]
+      example: NONE
+
 locationData:
   properties:
     data:

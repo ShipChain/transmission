@@ -93,7 +93,7 @@ class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin):
+class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
     """
     Serializer for a shipment object
     """
@@ -104,8 +104,8 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
-    state = UpperEnumField(TransitState, ints_as_names=True, required=False)
-    exception = UpperEnumField(ExceptionType, ints_as_names=True, required=False)
+    state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
+    exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
 
     class Meta:
         model = Shipment

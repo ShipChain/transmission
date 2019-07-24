@@ -80,6 +80,7 @@ createAttributes:
   - $ref: '#/shipment/isMasterBOL'
   - $ref: '#/shipment/nmfcClass'
   - $ref: '#/shipment/isHazmat'
+  - $ref: '#/shipment/exception'
 
 patchAttributes:
   allOf:
@@ -139,6 +140,7 @@ patchAttributes:
     - $ref: '#/shipment/isMasterBOL'
     - $ref: '#/shipment/isHazmat'
     - $ref: '#/shipment/nmfcClass'
+    - $ref: '#/shipment/exception'
     - $ref: '#/shipment/customerFields'
 
 createRequest:
@@ -154,6 +156,17 @@ patchRequest:
     - properties:
         data:
           $ref: '#/patchResource'
+
+actionRequest:
+  type: object
+  description: Action to perform on the shipment
+  properties:
+    action_type:
+      title: action_type
+      description: Which action to perform on a shipment
+      type: string
+      enum: [PICK_UP, ARRIVAL, DROP_OFF]
+      example: PICK_UP
 
 tracking:
   payload:
