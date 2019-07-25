@@ -872,6 +872,12 @@
                         "disabled": true
                       },
                       {
+                        "key": "exception",
+                        "value": "NONE",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
                         "key": "bill_to_location.name",
                         "value": "85b",
                         "type": "text",
@@ -889,6 +895,43 @@
                       "v1",
                       "shipments",
                       "{{shipment_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Shipment Action",
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    },
+                    {
+                      "key": "Content-Type",
+                      "name": "Content-Type",
+                      "value": "application/json",
+                      "type": "text"
+                    }
+                  ],
+                  "body": {
+                    "mode": "raw",
+                    "raw": "{\n\t\"action_type\": \"PICK_UP\"\n}"
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/actions/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "shipments",
+                      "{{shipment_id}}",
+                      "actions",
                       ""
                     ]
                   }
