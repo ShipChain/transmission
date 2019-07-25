@@ -3,6 +3,7 @@ BIN="$( cd "$( dirname "${BASH_SOURCE[0]}"  )" && pwd  )"
 PROJECT_DIR="$( cd $BIN/.. && pwd  )"
 
 # Install git hooks
+mkdir -p $PROJECT_DIR/.git/hooks
 cp $PROJECT_DIR/.githooks/* $PROJECT_DIR/.git/hooks/
 
 [[ -f ../.envrc ]] && source ../.envrc
