@@ -70,7 +70,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Creating a document object.')
         log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
 
-        serializer = DocumentCreateSerializer(data=request.data)
+        serializer = DocumentCreateSerializer(data=request.data, context={'shipment_id': self.kwargs['shipment_pk']})
         serializer.is_valid(raise_exception=True)
         doc_obj = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
