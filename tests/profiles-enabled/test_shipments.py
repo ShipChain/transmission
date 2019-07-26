@@ -451,8 +451,7 @@ class ShipmentAPITests(APITestCase):
             iot.update_certificate(certificateId=certificate_id, newStatus='ACTIVE')
 
             # Device not assigned to shipment
-            self.shipments[0].device = None
-            self.shipments[0].save()
+            Shipment.objects.filter(id=self.shipments[0].id).update(device_id=None)
             response = self.client.post(url, {'payload': signed_data}, format='json')
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -722,7 +721,7 @@ class ShipmentAPITests(APITestCase):
             self.assertTrue(len(fields) > 0)
             changed_fields = self.get_changed_fields(fields, 'field')
             self.assertTrue('package_qty' in changed_fields)
-            self.assertTrue('pickup_act' in changed_fields)
+            self.assertFalse('pickup_act' in changed_fields)  # pickup_act should not be editable
 
             # ----------------------- Shipment update with a location field --------------------------#
             # Equivalently valid for any location field
@@ -818,29 +817,8 @@ class ShipmentAPITests(APITestCase):
                 self.assertIn('updated_by', changed_fields)
                 self.assertNotEqual(history_data[0]['author'], history_data[1]['author'])
 
-            # ------------------------------------ Shipment Signal update ---------------------------------------#
-            self.set_user(self.user_1)
-
-            shipment_update_delivery_act, content_type = create_form_content({
-                'delivery_act': datetime.utcnow().isoformat() + 'Z',
-            })
-
-            response = self.client.patch(url_patch, shipment_update_delivery_act, content_type=content_type)
-            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-
-            # The most recent change should be from the post save action with a null author
-            response = self.client.get(history_url)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            history_data = response.json()['data']
-            self.assertIsNone(history_data[0]['author'])
-            # device should be in the most recent changed fields
-            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
-            self.assertIn('device', changed_fields)
-            # delivery_act should be in the second most recent changed fields
-            changed_fields = self.get_changed_fields(history_data[1]['fields'], 'field')
-            self.assertIn('delivery_act', changed_fields)
-
             # ------------------------------- datetime filtering test -------------------------------#
+            self.set_user(self.user_1)
             initial_datetime = datetime.now()
             one_day_later = datetime.now() + timedelta(days=1)
             two_day_later = datetime.now() + timedelta(days=2)
@@ -1954,7 +1932,7 @@ class ShipmentWithIoTAPITests(APITestCase):
         )
 
         with mock.patch('apps.iot_client.requests.Session.put') as mocked:
-            mocked_call_count = 0
+            mocked_call_count = mocked.call_count
             mocked.return_value = mocked_rpc_response({'data': {
                 'shipmentId': 'dunno yet'
             }})
@@ -2020,6 +1998,13 @@ class ShipmentWithIoTAPITests(APITestCase):
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count
 
+            # Set shipment IN_TRANSIT
+            shipment_obj = Shipment.objects.filter(id=shipment_obj.id).first()
+            shipment_obj.pick_up()
+            shipment_obj.save()
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+
             # Create second shipment, (will fail since the device is already in use)
             response = self.create_shipment()
             assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -2031,30 +2016,48 @@ class ShipmentWithIoTAPITests(APITestCase):
             assert mocked.call_count == mocked_call_count
 
             # Devices can be reused after deliveries are complete and should be removed from old shipment
-            shipment_obj.refresh_from_db()
-            shipment_obj.delivery_act = datetime.now()
+            shipment_obj = Shipment.objects.filter(id=shipment_obj.id).first()
+            shipment_obj.arrival()
             shipment_obj.save()
-            shipment_obj.refresh_from_db()
-
-            self.assertIsNone(shipment_obj.device)
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+            shipment_obj.drop_off()
+            shipment_obj.save()
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+            shipment_obj = Shipment.objects.filter(id=shipment_obj.id).first()
+            assert shipment_obj.device_id == DEVICE_ID  # Dropoff does not clear shipment anymore
             response = self.create_shipment()
             assert response.status_code == status.HTTP_202_ACCEPTED
-            mocked_call_count += 4
+            mocked_call_count += 2  # Reassignment should be possible after dropoff (two IoT shadow updates)
             assert mocked.call_count == mocked_call_count
+            shipment_obj = Shipment.objects.filter(id=shipment_obj.id).first()
+            assert not shipment_obj.device_id
 
             response_json = response.json()
             shipment = Shipment.objects.get(pk=response_json['data']['id'])
+            assert shipment.device_id == DEVICE_ID
+            shipment.pick_up()
+            shipment.save()
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
 
             # Device ID updates for Shipments should fail if the device is already in use
-            response = self.set_device_id(shipment.id, DEVICE_ID, CERTIFICATE_ID)
+            response = self.set_device_id(shipment_obj.id, DEVICE_ID, CERTIFICATE_ID)
             assert response.status_code == status.HTTP_400_BAD_REQUEST
 
             # Test Shipment null Device ID updates shadow
-            shipment.delivery_act = datetime.now()
+            shipment.arrival()
             shipment.save()
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
+            shipment.drop_off()
+            shipment.save()
+            mocked_call_count += 1
+            assert mocked.call_count == mocked_call_count
 
             response = self.set_device_id(shipment.id, None, None)
-            shipment.refresh_from_db()
+            shipment.refresh_from_db(fields=('device',))
             assert response.status_code == status.HTTP_202_ACCEPTED
             mocked_call_count += 1
             assert mocked.call_count == mocked_call_count

@@ -15,7 +15,7 @@ from apps.jobs.models import JobState, MessageType, AsyncJob, AsyncActionType
 from apps.jobs.signals import job_update
 from .events import LoadEventHandler
 from .iot_client import DeviceAWSIoTClient
-from .models import Shipment, LoadShipment, Location, TrackingData
+from .models import Shipment, LoadShipment, Location, TrackingData, TransitState
 from .rpc import RPCClientFactory
 from .serializers import ShipmentVaultSerializer
 
@@ -67,9 +67,12 @@ def shipment_post_save(sender, **kwargs):
                                     funding_type=Shipment.FUNDING_TYPE,
                                     contracted_amount=Shipment.SHIPMENT_AMOUNT)
 
-        instance.anonymous_historical_change(filter_dict={'id': instance.id}, vault_id=vault_id, vault_uri=vault_uri)
+        instance.anonymous_historical_change(vault_id=vault_id, vault_uri=vault_uri)
 
-        shipment_device_id_changed(Shipment, instance, {Shipment.device.field: (None, instance.device_id)})
+        shipment_iot_fields_changed(Shipment, instance, {
+            Shipment.device.field: (None, instance.device_id),
+            Shipment.state.field: (None, instance.state)
+        })
     else:
         # Update Shipment vault data
         rpc_client = RPCClientFactory.get_client()
@@ -119,29 +122,28 @@ def trackingdata_post_save(sender, **kwargs):
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})
 
 
-@receiver(post_save_changed, sender=Shipment, fields=['delivery_act'], dispatch_uid='shipment_delivery_act_post_save')
-def shipment_delivery_act_changed(sender, instance, changed_fields, **kwargs):
-    logging.info(f'Shipment with id {instance.id} ended on {instance.delivery_act}.')
-
-    device_id = instance.device_id
-
-    instance.anonymous_historical_change(filter_dict={'id': instance.id}, device_id=None)
-
-    shipment_device_id_changed(Shipment, instance, {Shipment.device.field: (device_id, None)})
-
-
-@receiver(post_save_changed, sender=Shipment, fields=['device'], dispatch_uid='shipment_device_id_post_save')
-def shipment_device_id_changed(sender, instance, changed_fields, **kwargs):
+@receiver(post_save_changed, sender=Shipment, fields=['device', 'state'], dispatch_uid='shipment_iot_fields_post_save')
+def shipment_iot_fields_changed(sender, instance, changed_fields, **kwargs):
     if settings.IOT_THING_INTEGRATION:
-        old, new = changed_fields[Shipment.device.field]
+        iot_client = DeviceAWSIoTClient()
 
-        logging.info(f'Device ID changed from {old} to {new} for Shipment {instance.id}, updating shadow')
-
-        try:
-            iot_client = DeviceAWSIoTClient()
+        shadow_update = {}
+        if Shipment.device.field in changed_fields:
+            old, new = changed_fields[Shipment.device.field]
+            logging.info(f'Device ID changed from {old} to {new} for Shipment {instance.id}, updating shadow')
             if old:
-                iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': ''})
+                iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': '', 'shipmentState': ''})
             if new:
-                iot_client.update_shadow(new, {'deviceId': new, 'shipmentId': instance.id})
-        except AWSIoTError as exc:
-            logging.error(f'Error communicating with AWS IoT during Device shadow shipmentId update: {exc}')
+                shadow_update['deviceId'] = new
+                shadow_update['shipmentId'] = instance.id
+
+        if Shipment.state.field in changed_fields:
+            old, new = changed_fields[Shipment.state.field]
+            logging.info(f'Shipment state changed from {old} to {new} for Shipment {instance.id}, updating shadow')
+            shadow_update['shipmentState'] = TransitState(instance.state).name
+
+        if instance.device_id:
+            try:
+                iot_client.update_shadow(instance.device_id, shadow_update)
+            except AWSIoTError as exc:
+                logging.error(f'Error communicating with AWS IoT during Device shadow update: {exc}')

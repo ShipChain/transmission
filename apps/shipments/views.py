@@ -27,7 +27,8 @@ from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
 from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
     TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer, DevicesQueryParamsSerializer
+    PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer, DevicesQueryParamsSerializer, \
+    ShipmentActionRequestSerializer
 from .tasks import tracking_data_update
 
 
@@ -252,6 +253,22 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
             return paginator.get_paginated_response(page)
 
         return Response(serializer.data)
+
+
+class ShipmentActionsView(APIView):
+    resource_name = 'Shipment'
+    permission_classes = ((IsShipmentOwner,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
+
+    def post(self, request, *args, **kwargs):
+        shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
+        serializer = ShipmentActionRequestSerializer(data=request.data, context={'shipment': shipment})
+        serializer.is_valid(raise_exception=True)
+
+        method = serializer.validated_data.pop('action_type')
+        method.value(shipment, **serializer.validated_data)
+        shipment.save()
+
+        return Response(ShipmentSerializer(shipment).data)
 
 
 class ListDevicesStatus(APIView):

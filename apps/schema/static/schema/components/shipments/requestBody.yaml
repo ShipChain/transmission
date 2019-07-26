@@ -48,16 +48,13 @@ createAttributes:
   - $ref: '#/shipment/docsApprovedAct'
   - $ref: '#/shipment/pickupAppt'
   - $ref: '#/shipment/pickupEst'
-  - $ref: '#/shipment/pickupAct'
   - $ref: '#/shipment/loadingEst'
   - $ref: '#/shipment/loadingAct'
   - $ref: '#/shipment/departureEst'
   - $ref: '#/shipment/departureAct'
   - $ref: '#/shipment/deliveryApptAct'
   - $ref: '#/shipment/portArrivalEst'
-  - $ref: '#/shipment/portArrivalAct'
   - $ref: '#/shipment/deliveryEst'
-  - $ref: '#/shipment/deliveryAct'
   - $ref: '#/shipment/deliveryAttempt'
   - $ref: '#/shipment/cancelRequestedDateAct'
   - $ref: '#/shipment/cancelConfirmedDateAct'
@@ -80,6 +77,7 @@ createAttributes:
   - $ref: '#/shipment/isMasterBOL'
   - $ref: '#/shipment/nmfcClass'
   - $ref: '#/shipment/isHazmat'
+  - $ref: '#/shipment/exception'
 
 patchAttributes:
   allOf:
@@ -109,16 +107,13 @@ patchAttributes:
     - $ref: '#/shipment/docsApprovedAct'
     - $ref: '#/shipment/pickupAppt'
     - $ref: '#/shipment/pickupEst'
-    - $ref: '#/shipment/pickupAct'
     - $ref: '#/shipment/loadingEst'
     - $ref: '#/shipment/loadingAct'
     - $ref: '#/shipment/departureEst'
     - $ref: '#/shipment/departureAct'
     - $ref: '#/shipment/deliveryApptAct'
     - $ref: '#/shipment/portArrivalEst'
-    - $ref: '#/shipment/portArrivalAct'
     - $ref: '#/shipment/deliveryEst'
-    - $ref: '#/shipment/deliveryAct'
     - $ref: '#/shipment/deliveryAttempt'
     - $ref: '#/shipment/cancelRequestedDateAct'
     - $ref: '#/shipment/cancelConfirmedDateAct'
@@ -139,6 +134,7 @@ patchAttributes:
     - $ref: '#/shipment/isMasterBOL'
     - $ref: '#/shipment/isHazmat'
     - $ref: '#/shipment/nmfcClass'
+    - $ref: '#/shipment/exception'
     - $ref: '#/shipment/customerFields'
 
 createRequest:
@@ -154,6 +150,17 @@ patchRequest:
     - properties:
         data:
           $ref: '#/patchResource'
+
+actionRequest:
+  type: object
+  description: Action to perform on the shipment
+  properties:
+    action_type:
+      title: action_type
+      description: Which action to perform on a shipment
+      type: string
+      enum: [PICK_UP, ARRIVAL, DROP_OFF]
+      example: PICK_UP
 
 tracking:
   payload:

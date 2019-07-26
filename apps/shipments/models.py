@@ -1,14 +1,14 @@
 import logging
 from datetime import datetime, timedelta, timezone
-import pytz
-import geojson
-
-import geocoder
-from geocoder.keys import mapbox_access_token
 
 import boto3
 from botocore.exceptions import ClientError
 
+import geocoder
+from geocoder.keys import mapbox_access_token
+
+import geojson
+import pytz
 from django.conf import settings
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Point
@@ -16,6 +16,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.validators import RegexValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.functional import cached_property
+from django_fsm import FSMIntegerField, transition
 from enumfields import Enum
 from enumfields import EnumField
 from rest_framework.exceptions import Throttled, PermissionDenied, APIException
@@ -24,8 +25,8 @@ from influxdb_metrics.loader import log_metric
 
 from apps.eth.fields import AddressField, HashField
 from apps.jobs.models import AsyncJob, JobState
-from apps.utils import random_id, AliasField
 from apps.simple_history import TxmHistoricalRecords, AnonymousHistoricalMixin
+from apps.utils import random_id, AliasField
 from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')
@@ -185,6 +186,23 @@ class EscrowState(Enum):
     WITHDRAWN = 5
 
 
+class TransitState(Enum):
+    AWAITING_PICKUP = 10
+    IN_TRANSIT = 20
+    AWAITING_DELIVERY = 30
+    DELIVERED = 40
+
+    @classmethod
+    def choices(cls):
+        return tuple((m.value, m.name) for m in cls)
+
+
+class ExceptionType(Enum):
+    NONE = 0
+    CUSTOMS_HOLD = 1
+    DOCUMENTATION_ERROR = 2
+
+
 class Shipment(AnonymousHistoricalMixin, models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     owner_id = models.CharField(null=False, max_length=36)
@@ -205,6 +223,12 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
     class Meta:
         ordering = ('created_at',)
+
+    # Protected Fields
+    state = FSMIntegerField(default=TransitState.AWAITING_PICKUP.value, protected=True)
+    delayed = models.BooleanField(default=False, editable=False)
+    expected_delay_hours = models.IntegerField(default=0, editable=False)
+    exception = EnumField(enum=ExceptionType, default=ExceptionType.NONE)
 
     # Shipment Schema fields
     carriers_scac = models.CharField(max_length=255, blank=True, null=True)
@@ -245,16 +269,16 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     docs_approved_act = models.DateTimeField(blank=True, null=True)
     pickup_appt = models.DateTimeField(blank=True, null=True)
     pickup_est = models.DateTimeField(blank=True, null=True)
-    pickup_act = models.DateTimeField(blank=True, null=True)
+    pickup_act = models.DateTimeField(blank=True, null=True, editable=False)
     loading_est = models.DateTimeField(blank=True, null=True)
     loading_act = models.DateTimeField(blank=True, null=True)
     departure_est = models.DateTimeField(blank=True, null=True)
     departure_act = models.DateTimeField(blank=True, null=True)
     delivery_appt_act = models.DateTimeField(blank=True, null=True)
     port_arrival_est = models.DateTimeField(blank=True, null=True)
-    port_arrival_act = models.DateTimeField(blank=True, null=True)
+    port_arrival_act = models.DateTimeField(blank=True, null=True, editable=False)
     delivery_est = models.DateTimeField(blank=True, null=True)
-    delivery_act = models.DateTimeField(blank=True, null=True)
+    delivery_act = models.DateTimeField(blank=True, null=True, editable=False)
     delivery_attempt = models.DateTimeField(blank=True, null=True)
     cancel_requested_date_act = models.DateTimeField(blank=True, null=True)
     cancel_confirmed_date_act = models.DateTimeField(blank=True, null=True)
@@ -413,6 +437,28 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
             log_metric('transmission.error', tags={'method': 'shipment.set_vault_hash', 'code': 'call_too_early',
                                                    'module': __name__})
         return async_job
+
+    # State transitions
+    @transition(field=state, source=TransitState.AWAITING_PICKUP.value, target=TransitState.IN_TRANSIT.value)
+    def pick_up(self, document_id=None, **kwargs):
+        if document_id:
+            # TODO: Validate that ID is a BOL Document?
+            pass
+        self.pickup_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
+
+    @transition(field=state, source=TransitState.IN_TRANSIT.value, target=TransitState.AWAITING_DELIVERY.value)
+    def arrival(self, tracking_data=None, **kwargs):
+        if tracking_data:
+            # TODO: Validate that tracking update is within bbox around delivery location?
+            pass
+        self.port_arrival_act = datetime.now(timezone.utc)
+
+    @transition(field=state, source=TransitState.AWAITING_DELIVERY.value, target=TransitState.DELIVERED.value)
+    def drop_off(self, document_id=None, **kwargs):
+        if document_id:
+            # TODO: Validate that ID is a BOL Document?
+            pass
+        self.delivery_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
 
     # Defaults
     FUNDING_TYPE = FundingType.NO_FUNDING.value

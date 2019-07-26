@@ -70,6 +70,10 @@ attributes:
   - $ref: '#/shipment/isMasterBOL'
   - $ref: '#/shipment/nmfcClass'
   - $ref: '#/shipment/isHazmat'
+  - $ref: '#/shipment/state'
+  - $ref: '#/shipment/delayed'
+  - $ref: '#/shipment/expectedDelayHours'
+  - $ref: '#/shipment/exception'
 
 meta:
   allOf:
@@ -210,6 +214,7 @@ createAttributes:
   - $ref: '#/shipment/isMasterBOL'
   - $ref: '#/shipment/nmfcClass'
   - $ref: '#/shipment/isHazmat'
+  - $ref: '#/shipment/exception'
 
 createResource:
   allOf:

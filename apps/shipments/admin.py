@@ -71,8 +71,10 @@ NON_SCHEMA_FIELDS = [
     'created_at',
     'contract_version',
     'updated_by',
-    'asyncjob_set_relation',
-    'ethaction_set_relation',
+    'state',
+    'delayed',
+    'expected_delay_hours',
+    'exception'
 ]
 
 
@@ -88,6 +90,7 @@ class ShipmentAdmin(admin.ModelAdmin):
                 ('owner_id', 'updated_by',),
                 ('shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id',),
                 ('storage_credentials_id', 'vault_id',),
+                'state',
                 'vault_uri',
                 'device',
                 'contract_version',

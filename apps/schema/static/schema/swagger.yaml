@@ -37,6 +37,9 @@ paths:
   /api/v1/shipments/{shipment_id}/:
     $ref: components/shipments/shipmentId.yaml
 
+  /api/v1/shipments/{shipment_id}/actions/:
+    $ref: components/shipments/actions.yaml
+
   /api/v1/shipments/{shipment_id}/documents/:
     $ref: components/documents/documents.yaml
 

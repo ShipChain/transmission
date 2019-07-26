@@ -2,6 +2,7 @@ import json
 import logging
 from collections import OrderedDict
 from datetime import datetime, timezone, timedelta
+from functools import partial
 
 import boto3
 from botocore.exceptions import ClientError, BotoCoreError
@@ -11,6 +12,8 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from dateutil.parser import parse
 from django.conf import settings
 from django.db import transaction
+from django_fsm import can_proceed
+from enumfields import Enum
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
 from rest_framework import exceptions, status, serializers as rest_serializers
@@ -19,7 +22,7 @@ from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
-    TrackingData, PermissionLink
+    TrackingData, PermissionLink, ExceptionType, TransitState
 from apps.utils import UpperEnumField
 
 
@@ -90,7 +93,7 @@ class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin):
+class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
     """
     Serializer for a shipment object
     """
@@ -100,6 +103,9 @@ class ShipmentSerializer(serializers.ModelSerializer, EnumSupportSerializerMixin
     bill_to_location = LocationSerializer(required=False)
     final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
+
+    state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
+    exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
 
     class Meta:
         model = Shipment
@@ -133,11 +139,12 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
         device = Device.get_or_create_with_permission(auth, device_id)
         if hasattr(device, 'shipment'):
-            if not device.shipment.delivery_act:
+            if TransitState(device.shipment.state) == TransitState.IN_TRANSIT:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
                 shipment = Shipment.objects.filter(device_id=device.id).first()
-                shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
+                shipment.device_id = None
+                shipment.save()
         self.context['device'] = device
 
         return device_id
@@ -172,7 +179,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         model = Shipment
         exclude = ('owner_id', 'version') if settings.PROFILES_ENABLED else ('version',)
         read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
-                            'storage_credentials_id', 'contract_version')
+                            'storage_credentials_id', 'contract_version', 'state')
 
     def update(self, instance, validated_data):
         if 'device' in self.context:
@@ -212,18 +219,19 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         if not device_id:
             if not self.instance.device:
                 return None
-            if not self.instance.delivery_act or self.instance.delivery_act >= datetime.now(timezone.utc):
+            if TransitState(self.instance.state) == TransitState.IN_TRANSIT:
                 raise serializers.ValidationError('Cannot remove device from Shipment in progress')
             return None
 
         device = Device.get_or_create_with_permission(auth, device_id)
 
         if hasattr(device, 'shipment'):
-            if not device.shipment.delivery_act:
+            if TransitState(device.shipment.state) == TransitState.IN_TRANSIT:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
             else:
                 shipment = Shipment.objects.filter(device_id=device.id).first()
-                shipment.anonymous_historical_change(filter_dict={'device_id': device.id}, device_id=None)
+                shipment.device_id = None
+                shipment.save()
         self.context['device'] = device
 
         return device_id
@@ -271,6 +279,9 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
+    state = UpperEnumField(TransitState, ints_as_names=True)
+    exception = UpperEnumField(ExceptionType, ints_as_names=True)
+
     class Meta:
         model = Shipment
         exclude = ('version',)
@@ -297,7 +308,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         model = Shipment
         exclude = ('owner_id', 'storage_credentials_id',
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
-                   'contract_version', 'device', 'updated_by')
+                   'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours')
 
 
 class TrackingDataSerializer(serializers.Serializer):
@@ -515,3 +526,24 @@ class DevicesQueryParamsSerializer(serializers.Serializer):
             return ','.join([c.strip() for c in in_bbox.split(',')])
 
         return None
+
+
+class ActionType(Enum):
+    PICK_UP = partial(Shipment.pick_up)
+    ARRIVAL = partial(Shipment.arrival)
+    DROP_OFF = partial(Shipment.drop_off)
+
+
+class ShipmentActionRequestSerializer(serializers.Serializer):
+    action_type = UpperEnumField(ActionType, lenient=True, ints_as_names=True)
+    tracking_data = serializers.CharField(required=False, allow_null=True)
+    document_id = serializers.CharField(required=False, allow_null=True)
+
+    def validate_action_type(self, action_type):
+        shipment = self.context['shipment']
+        action_type.value.func.__self__ = shipment  # Hack for getting dynamic partial funcs to work w/ can_proceed
+        if not can_proceed(action_type.value.func):
+            # Bad state transition
+            raise exceptions.ValidationError(f'Action {action_type.name} not available while Shipment '
+                                             f'is in state {TransitState(shipment.state).name}')
+        return action_type

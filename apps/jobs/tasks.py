@@ -64,8 +64,7 @@ class AsyncTask:
         if self.async_job.parameters['rpc_method'] == 'create_shipment_transaction':
             contract_version, unsigned_tx = getattr(self.rpc_client, self.async_job.parameters['rpc_method'])(
                 *self.async_job.parameters['rpc_parameters'])
-            self.async_job.shipment.anonymous_historical_change(filter_dict={'id': self.async_job.shipment.id},
-                                                                contract_version=contract_version)
+            self.async_job.shipment.anonymous_historical_change(contract_version=contract_version)
         else:
             unsigned_tx = getattr(self.rpc_client, self.async_job.parameters['rpc_method'])(
                 *self.async_job.parameters['rpc_parameters'])
