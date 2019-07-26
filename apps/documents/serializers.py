@@ -46,11 +46,14 @@ class DocumentCreateSerializer(BaseDocumentSerializer):
     document_type = UpperEnumField(DocumentType, lenient=True, ints_as_names=True)
     file_type = UpperEnumField(FileType, lenient=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, read_only=True, ints_as_names=True)
+    shipment_id = serializers.CharField(required=False)
 
     class Meta:
         model = Document
         if settings.PROFILES_ENABLED:
             exclude = ('owner_id', 'shipment', )
+        else:
+            fields = '__all__'
         meta_fields = ('presigned_s3', )
 
 

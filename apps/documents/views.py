@@ -45,7 +45,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
                       viewsets.GenericViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
-    permission_classes = (permissions.IsAuthenticated, UserHasPermission,)
+    permission_classes = ((UserHasPermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet
 
