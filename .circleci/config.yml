@@ -92,7 +92,7 @@ jobs:
       - image: circleci/node:8
     steps:
       - checkout
-      - run: npx speccy lint ./apps/schema/static/schema/swagger.yaml -c ./sspeccy.yaml
+      - run: npx speccy lint ./apps/schema/static/schema/swagger.yaml -c ./apps/schema/static/schema/speccy.yaml
 
   push-to-ecr:
     docker:
