@@ -1,4 +1,6 @@
 #!/bin/bash
 
 echo "Running speccy lint"
-docker run -v  "$(pwd)"/apps/schema/static/schema/:/schema/ wework/speccy lint /schema/swagger.yaml -c /schema/speccy.yaml
+
+docker run -v "$(pwd)"/apps/schema/static/schema/:/schema/ \
+        wework/speccy lint /schema/swagger.yaml -c /schema/speccy.yaml
