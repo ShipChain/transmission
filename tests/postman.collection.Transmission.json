@@ -1488,6 +1488,190 @@
             ]
           },
           {
+            "name": "Shipment Imports",
+            "description": null,
+            "item": [
+              {
+                "name": "Create ShipmentImport",
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "name",
+                        "value": "name",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "file_type",
+                        "value": "xls",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "storage_credentials_id",
+                        "value": "storage_credentials_id",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "shipper_wallet_id",
+                        "value": "shipper_wallet_id",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "carrier_wallet_id",
+                        "value": "carrier_wallet_id",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "description",
+                        "value": "description",
+                        "type": "text",
+                        "disabled": true
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/imports/shipments/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "imports",
+                      "shipments",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Update ShipmentImport",
+                "request": {
+                  "method": "PATCH",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "name",
+                        "value": "name",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "description",
+                        "value": "description",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "upload_status",
+                        "value": "Pending",
+                        "type": "text",
+                        "disabled": true
+                      },
+                      {
+                        "key": "processing_status",
+                        "value": "Running",
+                        "type": "text",
+                        "disabled": true
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/imports/shipments/{{shipment_import_id}}/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "imports",
+                      "shipments",
+                      "{{shipment_import_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "List ShipmentImport",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/imports/shipments/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "imports",
+                      "shipments",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Get ShipmentImport",
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/imports/shipments/{{shipment_import_id}}/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "imports",
+                      "shipments",
+                      "{{shipment_import_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              }
+            ]
+          },
+          {
             "name":  "Devices",
             "description": null,
             "item": [

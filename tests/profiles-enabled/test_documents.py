@@ -67,7 +67,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
             bucket.delete()
 
         try:
-            s3_resource.create_bucket(Bucket=settings.S3_BUCKET)
+            s3_resource.create_bucket(Bucket=settings.DOCUMENT_MANAGEMENT_BUCKET)
         except Exception as exc:
             pass
 
@@ -124,8 +124,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
         # Check s3 path integrity in db
         shipment = document[0].shipment
         doc_id = document[0].id
-        s3_path = f"s3://{settings.S3_BUCKET}/{shipment.storage_credentials_id}/{shipment.shipper_wallet_id}/" \
-            f"{shipment.vault_id}/{doc_id}.pdf"
+        s3_path = f"s3://{settings.DOCUMENT_MANAGEMENT_BUCKET}/{shipment.storage_credentials_id}/" \
+            f"{shipment.shipper_wallet_id}/{shipment.vault_id}/{doc_id}.pdf"
         self.assertEqual(document[0].s3_path, s3_path)
 
         data = response.json()['data']
@@ -139,7 +139,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
             res = requests.post(put_url, data=fields, files={'file': pdf})
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-        s3_resource.Bucket(settings.S3_BUCKET).download_file(fields['key'], './tests/tmp/downloaded.pdf')
+        s3_resource.Bucket(settings.DOCUMENT_MANAGEMENT_BUCKET).download_file(fields['key'],
+                                                                              './tests/tmp/downloaded.pdf')
 
         # We verify the integrity of the uploaded file
         downloaded_file = Path('./tests/tmp/downloaded.pdf')
@@ -465,7 +466,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
             bucket.delete()
 
         try:
-            self.s3_resource.create_bucket(Bucket=settings.S3_BUCKET)
+            self.s3_resource.create_bucket(Bucket=settings.DOCUMENT_MANAGEMENT_BUCKET)
         except Exception as exc:
             pass
 
@@ -623,10 +624,13 @@ class ImageDocumentViewSetAPITests(APITestCase):
         mock_document_rpc_client.put_document_in_s3.assert_not_called()
 
         doc = Document.objects.all().first()
-        self.s3_resource.Object(settings.S3_BUCKET, doc.s3_key).delete()
+        self.s3_resource.Object(settings.DOCUMENT_MANAGEMENT_BUCKET, doc.s3_key).delete()
 
         # The file has been deleted from the bucket.
-        self.assertEqual(len(list(self.s3_resource.Bucket(settings.S3_BUCKET).objects.filter(Prefix=doc.s3_key))), 0)
+        self.assertEqual(
+            len(list(self.s3_resource.Bucket(settings.DOCUMENT_MANAGEMENT_BUCKET).objects.filter(Prefix=doc.s3_key))),
+            0
+        )
 
         # The file object status is COMPLETE but the file is no longueur in the bucket.
         # the rpc_client.put_document_in_s3 should be invoked
@@ -666,5 +670,3 @@ class ImageDocumentViewSetAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertIsNone(data['meta']['presigned_s3'])
-
-

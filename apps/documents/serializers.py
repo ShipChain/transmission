@@ -1,3 +1,19 @@
+"""
+Copyright 2019 ShipChain, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 import logging
 
 from botocore.errorfactory import ClientError
@@ -8,49 +24,23 @@ from enumfields.drf import EnumSupportSerializerMixin
 from rest_framework_json_api import serializers
 from influxdb_metrics.loader import log_metric
 
-from apps.utils import UpperEnumField
-from .models import Document, DocumentType, FileType, UploadStatus, IMAGE_TYPES
+from apps.utils import UpperEnumField, S3PreSignedMixin
+from apps.shipments.models import Shipment
+from .models import Document, DocumentType, FileType, UploadStatus
 from .rpc import DocumentRPCClient
 
 LOG = logging.getLogger('transmission')
 
 
-class DocumentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
+class BaseDocumentSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
     document_type = UpperEnumField(DocumentType, lenient=True, read_only=True, ints_as_names=True)
     file_type = UpperEnumField(FileType, lenient=True, read_only=True, ints_as_names=True)
     upload_status = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True)
     presigned_s3 = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Document
-        if settings.PROFILES_ENABLED:
-            exclude = ('owner_id',)
-        read_only_fields = ('shipment',)
-
-    def get_presigned_s3(self, obj):
-        file_extension = obj.file_type.name.lower()
-
-        if file_extension in IMAGE_TYPES:
-            content_type = f"image/{file_extension}"
-        else:
-            content_type = f"application/{file_extension}"
-
-        pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
-            Bucket=settings.S3_BUCKET,
-            Key=obj.s3_key,
-            Fields={"acl": "private", "Content-Type": content_type},
-            Conditions=[
-                {"acl": "private"},
-                {"Content-Type": content_type},
-                ["content-length-range", 0, settings.S3_MAX_BYTES]
-            ],
-            ExpiresIn=settings.S3_URL_LIFE
-        )
-
-        return pre_signed_post
+    _s3_bucket = settings.DOCUMENT_MANAGEMENT_BUCKET
 
 
-class DocumentCreateSerializer(DocumentSerializer):
+class DocumentCreateSerializer(BaseDocumentSerializer):
     """
     Model serializer for documents validation for s3 signing
     """
@@ -61,15 +51,24 @@ class DocumentCreateSerializer(DocumentSerializer):
     class Meta:
         model = Document
         if settings.PROFILES_ENABLED:
-            exclude = ('owner_id',)
-        read_only_fields = ('shipment',)
-        meta_fields = ('presigned_s3',)
+            exclude = ('owner_id', 'shipment', )
+        else:
+            exclude = ('shipment', )
+        meta_fields = ('presigned_s3', )
 
     def create(self, validated_data):
-        return Document.objects.create(**validated_data, **self.context)
+        if not settings.PROFILES_ENABLED:
+            # Check specific to profiles disabled
+            try:
+                Shipment.objects.get(id=self.context['shipment_id'])
+            except Shipment.DoesNotExist:
+                raise serializers.ValidationError('Invalid shipment provided')
+            return Document.objects.create(**validated_data, **self.context)
+
+        return Document.objects.create(**validated_data)
 
 
-class DocumentRetrieveSerializer(DocumentSerializer):
+class DocumentSerializer(BaseDocumentSerializer):
     presigned_s3_thumbnail = serializers.SerializerMethodField()
 
     class Meta:
@@ -86,10 +85,10 @@ class DocumentRetrieveSerializer(DocumentSerializer):
             return super().get_presigned_s3(obj)
 
         try:
-            settings.S3_CLIENT.head_object(Bucket=settings.S3_BUCKET, Key=obj.s3_key)
+            settings.S3_CLIENT.head_object(Bucket=self._s3_bucket, Key=obj.s3_key)
         except ClientError:
             # The document doesn't exist anymore in the bucket. The bucket is going to be repopulated from vault
-            result = DocumentRPCClient().put_document_in_s3(settings.S3_BUCKET, obj.s3_key, obj.shipper_wallet_id,
+            result = DocumentRPCClient().put_document_in_s3(self._s3_bucket, obj.s3_key, obj.shipper_wallet_id,
                                                             obj.storage_id, obj.vault_id, obj.filename)
             if not result:
                 return None
@@ -97,7 +96,7 @@ class DocumentRetrieveSerializer(DocumentSerializer):
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
             Params={
-                'Bucket': f"{settings.S3_BUCKET}",
+                'Bucket': f"{self._s3_bucket}",
                 'Key': obj.s3_key
             },
             ExpiresIn=settings.S3_URL_LIFE
@@ -117,7 +116,7 @@ class DocumentRetrieveSerializer(DocumentSerializer):
         url = settings.S3_CLIENT.generate_presigned_url(
             'get_object',
             Params={
-                'Bucket': f"{settings.S3_BUCKET}",
+                'Bucket': f"{self._s3_bucket}",
                 'Key': thumbnail_key
             },
             ExpiresIn=settings.S3_URL_LIFE

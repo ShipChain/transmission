@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     'apps.shipments',
     'apps.schema',
     'apps.documents',
+    'apps.imports',
     'channels',
     'simple_history',
 ]

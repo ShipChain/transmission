@@ -1,4 +1,18 @@
-import logging
+"""
+Copyright 2019 ShipChain, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
 from django.conf import settings
 from django.db import models
@@ -6,9 +20,7 @@ from enumfields import Enum
 from enumfields import EnumIntegerField
 
 from apps.shipments.models import Shipment
-from apps.utils import random_id
-
-LOG = logging.getLogger('transmission')
+from apps.utils import UploadStatus, random_id
 
 
 class DocumentType(Enum):
@@ -36,20 +48,6 @@ class FileType(Enum):
         PNG = 'PNG'
 
 
-IMAGE_TYPES = (FileType.JPEG.name.lower(), FileType.PNG.name.lower())
-
-
-class UploadStatus(Enum):
-    PENDING = 0
-    COMPLETE = 1
-    FAILED = 2
-
-    class Labels:
-        PENDING = 'PENDING'
-        COMPLETE = 'COMPLETE'
-        FAILED = 'FAILED'
-
-
 class Document(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     name = models.CharField(max_length=36, null=False, blank=False)
@@ -68,7 +66,7 @@ class Document(models.Model):
 
     @property
     def s3_path(self):
-        return f"s3://{settings.S3_BUCKET}/{self.s3_key}"
+        return f"s3://{settings.DOCUMENT_MANAGEMENT_BUCKET}/{self.s3_key}"
 
     @property
     def filename(self):

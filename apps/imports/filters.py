@@ -21,7 +21,7 @@ from django_filters import rest_framework as filters
 from enumfields.drf import EnumField
 from inflection import camelize
 
-from .models import Document
+from .models import ShipmentImport
 
 
 def filter_enum(queryset, name, value):
@@ -35,11 +35,12 @@ def filter_enum(queryset, name, value):
     return queryset
 
 
-class DocumentFilterSet(filters.FilterSet):
+class ShipmentImportFilterSet(filters.FilterSet):
     file_type = CharFilter(method=filter_enum)
-    document_type = CharFilter(method=filter_enum)
     upload_status = CharFilter(method=filter_enum)
+    processing_status = CharFilter(method=filter_enum)
+    name__contains = CharFilter(field_name='name', lookup_expr='icontains')
 
     class Meta:
-        model = Document
-        fields = ('document_type', 'upload_status', 'file_type',)
+        model = ShipmentImport
+        fields = ('upload_status', 'file_type', 'processing_status', )

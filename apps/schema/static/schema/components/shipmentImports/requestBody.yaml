@@ -1,0 +1,56 @@
+createResource:
+  allOf:
+    - $ref: 'schema.yaml#/resource'
+    - properties:
+        attributes:
+          $ref: '#/createAttributes'
+
+patchResource:
+  allOf:
+    - $ref: 'schema.yaml#/resource'
+    - properties:
+        attributes:
+          $ref: '#/patchAttributes'
+
+createAttributes:
+  required:
+    - file_type
+    - name
+    - storage_credentials_id
+    - shipper_wallet_id
+    - carrier_wallet_id
+  allOf:
+    - $ref: '#/document/name'
+    - $ref: '#/document/description'
+    - $ref: '#/document/fileType'
+    - $ref: '#/document/storageCredentialsId'
+    - $ref: '#/document/shipperWalletId'
+    - $ref: '#/document/carrierWalletId'
+
+patchAttributes:
+  allOf:
+    - $ref: '#/document/name'
+    - $ref: '#/document/description'
+    - $ref: '#/document/uploadStatus'
+    - $ref: '#/document/processingStatus'
+
+
+createRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/createResource'
+
+patchRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/patchResource'
+
+document:
+  $ref: ./dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/requestBody.yaml

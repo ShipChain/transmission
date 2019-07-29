@@ -1,12 +1,14 @@
 import decimal
 import json
-
 import re
+from enumfields import Enum
+from enumfields.drf import EnumField
+
 from django.db import models
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
-from enumfields.drf import EnumField
+from rest_framework import exceptions
 
 
 def random_id():
@@ -148,3 +150,39 @@ def send_templated_email(template, subject, context, recipients, sender=None):
     email = EmailMessage(subject, email_body, send_by, recipients)
     email.content_subtype = 'html'
     email.send()
+
+
+class S3PreSignedMixin:
+    def get_content_type(self, extension):
+        extension = extension if extension.startswith('.') else f'.{extension}'
+        content_type = settings.MIME_TYPE_MAP.get(extension)
+        if not content_type:
+            raise exceptions.ValidationError(f'Unrecognized file type: {extension}')
+        return content_type
+
+    def get_presigned_s3(self, obj):
+        content_type = self.get_content_type(obj.file_type.name.lower())
+
+        pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
+            Bucket=self._s3_bucket,
+            Key=obj.s3_key,
+            Fields={"acl": "private", "Content-Type": content_type},
+            Conditions=[
+                {"acl": "private"},
+                {"Content-Type": content_type},
+                ["content-length-range", 0, settings.S3_MAX_BYTES]
+            ],
+            ExpiresIn=settings.S3_URL_LIFE
+        )
+        return pre_signed_post
+
+
+class UploadStatus(Enum):
+    PENDING = 0
+    COMPLETE = 1
+    FAILED = 2
+
+    class Labels:
+        PENDING = 'PENDING'
+        COMPLETE = 'COMPLETE'
+        FAILED = 'FAILED'

@@ -1,3 +1,19 @@
+"""
+Copyright 2019 ShipChain, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 import logging
 from urllib.parse import unquote_plus
 
@@ -12,14 +28,12 @@ from influxdb_metrics.loader import log_metric
 from apps.authentication import DocsLambdaRequest
 from apps.jobs.models import AsyncActionType
 from apps.permissions import get_owner_id
+from apps.utils import UploadStatus
 from .filters import DocumentFilterSet
 from .models import Document
-from .models import UploadStatus
 from .permissions import UserHasPermission
 from .rpc import DocumentRPCClient
-from .serializers import (DocumentSerializer,
-                          DocumentCreateSerializer,
-                          DocumentRetrieveSerializer, )
+from .serializers import DocumentSerializer, DocumentCreateSerializer
 
 LOG = logging.getLogger('transmission')
 
@@ -31,7 +45,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
                       viewsets.GenericViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
-    permission_classes = (permissions.IsAuthenticated, UserHasPermission,)
+    permission_classes = ((UserHasPermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet
 
@@ -44,7 +58,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=get_owner_id(self.request))
+            created = serializer.save(owner_id=get_owner_id(self.request), shipment_id=self.kwargs['shipment_pk'])
         else:
             created = serializer.save()
         return created
@@ -56,12 +70,11 @@ class DocumentViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Creating a document object.')
         log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
 
-        shipment_id = self.kwargs['shipment_pk']
-        serializer = DocumentCreateSerializer(data=request.data, context={'shipment_id': shipment_id})
+        serializer = DocumentCreateSerializer(data=request.data, context={'shipment_id': self.kwargs['shipment_pk']})
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        doc_obj = self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(self.get_serializer(doc_obj).data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
         """
@@ -72,31 +85,12 @@ class DocumentViewSet(mixins.CreateModelMixin,
         LOG.debug(f'Updating document {instance.id} with new details.')
         log_metric('transmission.info', tags={'method': 'documents.update', 'module': __name__})
 
-        serializer = DocumentRetrieveSerializer(instance, data=request.data, partial=partial,
-                                                context={'auth': request.auth})
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
 
         self.perform_update(serializer)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = DocumentRetrieveSerializer(instance)
-        return Response(serializer.data)
-
-    def list(self, request, *args, **kwargs):
-
-        queryset = self.filter_queryset(self.get_queryset().order_by('updated_at'))
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = DocumentRetrieveSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = DocumentRetrieveSerializer(queryset, many=True)
-
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
 class S3Events(APIView):
