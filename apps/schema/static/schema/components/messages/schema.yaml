@@ -38,6 +38,11 @@ body:
       - $ref: '#/message/transactionIndex'
       - $ref: '#/message/cumulativeGasUsed'
 
+includedResource:
+  allOf:
+  - $ref: '#/dataTypes/resourceId'
+  - $ref: '#/getResource'
+
 getResource:
   allOf:
   - $ref: '#/resource'
@@ -51,6 +56,12 @@ getResponse:
   - properties:
       data:
         $ref: '#/getResource'
+
+messageSet:
+  type: object
+  allOf:
+    - $ref: '#/resource'
+    - $ref: '../core/dataTypes.yaml#/resourcePk'
 
 jsonApi:
   $ref: ../jsonApi/schema.yaml

@@ -2,6 +2,7 @@ get:
   summary: List jobs
   description: >
     Retrieve an array of `AsyncJob` actions initiated by the user ordered by the `AsyncJob.created_at` date.
+    The `parameters` field of the object's response will defer depending on which rpc call was made.
   parameters:
     - $ref: '../core/parameters.yaml#/page'
     - $ref: '../core/parameters.yaml#/page_size'

@@ -27,6 +27,11 @@ attributes:
   - $ref: '#/dataTypes/updatedAt'
   - $ref: '#/geometry'
 
+includedResource:
+  allOf:
+  - $ref: '#/dataTypes/resourceId'
+  - $ref: '#/getResource'
+
 getResource:
   allOf:
   - $ref: '#/resource'

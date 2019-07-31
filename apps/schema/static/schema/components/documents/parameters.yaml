@@ -14,6 +14,7 @@ fileType:
   schema:
     type: string
     enum: [PDF, JPEG, PNG]
+    example: PDF
 
 documentType:
   required: false
@@ -23,6 +24,7 @@ documentType:
   schema:
     type: string
     enum: [BOL, IMAGE, OTHER]
+    example: BOL
 
 uploadStatus:
   required: false
@@ -32,6 +34,7 @@ uploadStatus:
   schema:
     type: string
     enum: [PENDING, COMPLETE, FAILED]
+    example: PENDING
 
 dataTypes:
   $ref: ../core/dataTypes.yaml

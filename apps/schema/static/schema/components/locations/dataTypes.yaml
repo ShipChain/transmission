@@ -1,3 +1,13 @@
+uuid: &uuid
+  $ref: '../core/dataTypes.yaml#/uuid'
+
+locationPk:
+  properties:
+    id:
+      <<: *uuid
+      title: id
+      description: UUID of the associated location
+
 name:
   properties:
     name:

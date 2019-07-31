@@ -62,3 +62,10 @@ updatedAt:
       type: string
       format: date-time
       example: '2018-06-18T14:54:56.652732Z'
+
+resourcePk:
+  properties:
+    id:
+      <<: *uuid
+      title: id
+      description: UUID of the associated resource

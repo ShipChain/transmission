@@ -4,31 +4,38 @@ resource:
         example: LoadShipment
 
 attributes:
+  type: object
   allOf:
-  - $ref: '#/loadShipment/shipmentStatus'
-  - $ref: '#/loadShipment/escrowStatus'
+  - $ref: '#/loadShipment/shipmentState'
+  - $ref: '#/loadShipment/escrowState'
   - $ref: '#/loadShipment/fundingType'
-  - $ref: '#/loadShipment/shipmentId'
-  - $ref: '#/loadShipment/shipmentAmount'
-  - $ref: '#/loadShipment/paidAmount'
-  - $ref: '#/loadShipment/paidTokens'
-  - $ref: '#/shipment/shipperWalletId'
-  - $ref: '#/shipment/carrierWalletId'
-  - $ref: '#/ethereum/moderator'
-  - $ref: '#/loadShipment/contractFunded'
-  - $ref: '#/loadShipment/shipmentCreated'
-  - $ref: '#/loadShipment/validUntil'
-  - $ref: '#/loadShipment/startBlock'
-  - $ref: '#/loadShipment/endBlock'
-  - $ref: '#/loadShipment/escrowFunded'
-  - $ref: '#/loadShipment/shipmentCommittedByCarrier'
-  - $ref: '#/loadShipment/commitmentConfirmedDate'
-  - $ref: '#/loadShipment/shipmentCompletedByCarrier'
-  - $ref: '#/loadShipment/shipmentAcceptedByShipper'
-  - $ref: '#/loadShipment/shipmentCanceledByShipper'
-  - $ref: '#/loadShipment/escrowPaid'
-  - $ref: '#/dataTypes/createdAt'
-  - $ref: '#/dataTypes/updatedAt'
+  - $ref: '#/loadShipment/contractedAmount'
+  - $ref: '#/loadShipment/fundedAmount'
+  - $ref: '#/loadShipment/createdAt'
+  - $ref: '#/loadShipment/shipper'
+  - $ref: '#/loadShipment/carrier'
+  - $ref: '#/loadShipment/moderator'
+  - $ref: '#/loadShipment/refundAddress'
+  - $ref: '#/loadShipment/vaultHash'
+  - $ref: '#/loadShipment/vaultUri'
+
+relationships:
+  type: object
+  description: Shipment Relation for this resource
+  properties:
+    shipment:
+      type: object
+      description: Shipment associated with this Load Shipment
+      properties:
+        data:
+          allOf:
+            - $ref: '../shipments/schema.yaml#/resource'
+            - $ref: '../core/dataTypes.yaml#/resourcePk'
+
+includedResource:
+  allOf:
+  - $ref: '#/dataTypes/resourceId'
+  - $ref: '#/getResource'
 
 getResource:
   allOf:
@@ -36,6 +43,8 @@ getResource:
   - properties:
       attributes:
         $ref: '#/attributes'
+      relationships:
+        $ref: '#/relationships'
 
 getResponse:
   allOf:

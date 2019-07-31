@@ -26,6 +26,7 @@ has_ship_from_location:
   description: Returns shipments with associated ship_from_location objects.
   schema:
     type: boolean
+    example: true
 
 has_ship_to_location:
   name: has_ship_to_location
@@ -33,20 +34,24 @@ has_ship_to_location:
   description: Returns shipments with associated ship_to_location objects.
   schema:
     type: boolean
+    example: true
 
 has_final_destination_location:
   name: has_final_destination_location
   in: query
   description: Returns shipments with associated final_destination_location objects.
   schema:
-    type: string
+    type: boolean
+    example: true
+
 
 ship_to_location__city:
   name: ship_to_location__city
   in: query
   description: Returns shipments with associated ship_to_location city.
   schema:
-    type: boolean
+    type: string
+    example: Greenville
 
 ship_to_location__state:
   name: ship_to_location__state
@@ -54,6 +59,7 @@ ship_to_location__state:
   description: Returns shipments with associated ship_to_location state.
   schema:
     type: string
+    example: South Carolina
 
 ship_to_location__postal_code:
   name: ship_to_location__postal_code
@@ -61,13 +67,15 @@ ship_to_location__postal_code:
   description: Returns shipments with associated ship_to_location postal code.
   schema:
     type: string
+    example: 29601
 
 ship_to_location__country:
-  name: ship_to_location__state
+  name: ship_to_location__country
   in: query
-  description: Returns shipments with associated ship_to_location state.
+  description: Returns shipments with associated ship_to_location country.
   schema:
     type: string
+    example: USA
 
 ship_from_location__city:
   name: ship_from_location__city
@@ -75,6 +83,7 @@ ship_from_location__city:
   description: Returns shipments with associated ship_from_location city.
   schema:
     type: string
+    example: Greenville
 
 ship_from_location__state:
   name: ship_from_location__state
@@ -82,6 +91,7 @@ ship_from_location__state:
   description: Returns shipments with associated ship_from_location state.
   schema:
     type: string
+    example: South Carolina
 
 ship_from_location__postal_code:
   name: ship_from_location__postal_code
@@ -89,13 +99,15 @@ ship_from_location__postal_code:
   description: Returns shipments with associated ship_from_location postal code.
   schema:
     type: string
+    example: 29601
 
 ship_from_location__country:
-  name: ship_from_location__state
+  name: ship_from_location__country
   in: query
-  description: Returns shipments with associated ship_from_location state.
+  description: Returns shipments with associated ship_from_location country.
   schema:
     type: string
+    example: USA
 
 final_destination_location__city:
   name: final_destination_location__city
@@ -103,6 +115,7 @@ final_destination_location__city:
   description: Returns shipments with associated final_destination_location city.
   schema:
     type: string
+    example: Greenville
 
 final_destination_location__state:
   name: final_destination_location__state
@@ -110,6 +123,7 @@ final_destination_location__state:
   description: Returns shipments with associated final_destination_location state.
   schema:
     type: string
+    example: South Carolina
 
 final_destination_location__postal_code:
   name: final_destination_location__postal_code
@@ -117,13 +131,15 @@ final_destination_location__postal_code:
   description: Returns shipments with associated final_destination_location postal code.
   schema:
     type: string
+    example: 29601
 
 final_destination_location__country:
-  name: final_destination_location__state
+  name: final_destination_location__country
   in: query
-  description: Returns shipments with associated final_destination_location state.
+  description: Returns shipments with associated final_destination_location country.
   schema:
     type: string
+    example: USA
 
 state:
   name: state
@@ -132,6 +148,7 @@ state:
   schema:
     type: string
     enum: [AWAITING_PICKUP, IN_TRANSIT, AWAITING_DELIVERY, DELIVERED]
+    example: AWAITING_PICKUP
 
 exception:
   name: exception
@@ -140,6 +157,7 @@ exception:
   schema:
     type: string
     enum: [NONE, CUSTOMS_HOLD, DOCUMENTATION_ERROR]
+    example: CUSTOMS_HOLD
 
 delayed:
   name: delayed
@@ -147,6 +165,7 @@ delayed:
   description: Returns shipments that are delayed, based on boolean value.
   schema:
     type: boolean
+    example: true
 
 permissionLinkId:
   name: permission_link
