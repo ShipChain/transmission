@@ -453,7 +453,7 @@ description = "A high-level Python Web framework that encourages rapid developme
 name = "django"
 optional = false
 python-versions = ">=3.5"
-version = "2.1.7"
+version = "2.1.11"
 
 [package.dependencies]
 pytz = "*"
@@ -1956,7 +1956,7 @@ version = "4.6.0"
 setuptools = "*"
 
 [metadata]
-content-hash = "8e47cecae114d896fecef7c44d267ad4cedc95cd1830fbf3d1bbd24b343871e5"
+content-hash = "33201569eb8c0fc1e67a5978388cd74ff6a3b6f590d8ea7fe0482f4e372ba7ca"
 python-versions = "==3.6.8"
 
 [metadata.hashes]
@@ -2000,7 +2000,7 @@ curtsies = ["89c802ec051d01dec6fc983e9856a3706e4ea8265d2940b1f6d504a9e26ed3a9"]
 daphne = ["07810599fb7df656192cf3deaaada078d876626e0d7243b7b80eca051921c1fc", "728dc952f8ddd65bab70a4f424a437233c70ddf3593acee833ed5e430196dca8"]
 datetime = ["371dba07417b929a4fa685c2f7a3eaa6a62d60c02947831f97d4df9a9e70dfd0", "5cef605bab8259ff61281762cdf3290e459fbf0b4719951d5fab967d5f2ea0ea"]
 decorator = ["86156361c50488b84a3f148056ea716ca587df2f0de1d34750d35c21312725de", "f069f3a01830ca754ba5258fde2278454a0b5b79e0d7f5c13b3b97e57d4acff6"]
-django = ["275bec66fd2588dd517ada59b8bfb23d4a9abc5a362349139ddda3c7ff6f5ade", "939652e9d34d7d53d74d5d8ef82a19e5f8bb2de75618f7e5360691b6e9667963"]
+django = ["1a41831eace203fd1939edf899e07d7abd12ce9bafc3d9a5a63a24a8d1d12bd5", "305b6c4fce9e03bb746e35780c2c4d52f29ea1669f15633cfd41bc8821c74c76"]
 django-cors-headers = ["0e9532628b3aa8806442d4d0b15e56112e6cfbef3735e13401935c98b842a2b4", "c7ec4816ec49416517b84f317499d1519db62125471922ab78d670474ed9b987"]
 django-dotenv = ["3812bb0f4876cf31f902aad140f0645e120e51ee30eb7c40c22050f58a0e4adb", "a9b1b40a70bd321acd231926acedb9bd2c5e873e33a1873b34a7276d196a765e"]
 django-enumfields = ["fafbf81c1a1707429c3ec5b5c4d4a2ca33bbffb3fa4c777dd35567e164391bf6"]
