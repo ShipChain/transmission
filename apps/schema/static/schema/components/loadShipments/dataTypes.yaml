@@ -58,22 +58,22 @@ createdAt:
 shipper:
   <<: *address
   title: shipper
-  description: Public Key of shipper's wallet
+  description: Address of shipper's wallet
 
 carrier:
   <<: *address
   title: carrier
-  description: Public Key of carrier's wallet
+  description: Address of carrier's wallet
 
 moderator:
   <<: *address
   title: moderator
-  description: Public Key of moderator's wallet
+  description: Address of moderator's wallet
 
 refundAddress:
   <<: *address
   title: refund_address
-  description: Public Key of refund_address's wallet
+  description: Address of wallet to refund to (if applicable)
 
 vaultHash:
   properties:
