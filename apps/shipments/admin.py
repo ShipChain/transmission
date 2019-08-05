@@ -10,7 +10,6 @@ from django.utils.html import format_html
 from django.utils.html import mark_safe
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
-from enumfields.admin import EnumFieldListFilter
 from simple_history.admin import SimpleHistoryAdmin, USER_NATURAL_KEY, SIMPLE_HISTORY_EDIT
 
 from apps.shipments.models import Shipment, Location
@@ -272,4 +271,3 @@ class LocationAdmin(BaseModelHistory):
 admin.site.register(Shipment, HistoricalShipmentAdmin)
 
 admin.site.register(Location, LocationAdmin)
-45
