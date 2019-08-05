@@ -6,6 +6,7 @@ page:
   schema:
     type: integer
     format: int32
+    example: 9
 
 page_size:
   name: page_size
@@ -15,6 +16,7 @@ page_size:
   schema:
     type: integer
     format: int32
+    example: 9
 
 search:
   name: search
@@ -24,6 +26,7 @@ search:
   schema:
     type: string
     format: format
+    example: Shipment Name
 
 ordering:
   name: ordering
@@ -32,7 +35,8 @@ ordering:
   required: false
   schema:
     type: string
-    enum: [created_at, modified_at, -created_at, -modified_at]
+    enum: [created_at, updated_at, -created_at, -updated_at]
+    example: -updated_at
 
 permissionLinks:
   path:

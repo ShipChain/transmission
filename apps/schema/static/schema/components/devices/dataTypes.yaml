@@ -132,10 +132,10 @@ notSet:
       title: notSet
       description: Device's pending configurations. _May be absent from response depending on the device's conditions._
       allOf:
-        - $ref: '#/location'
-        - $ref: '#/ownerId'
-        - $ref: '#/samplingInterval'
-        - $ref: '#/shipmentId'
+      - $ref: '#/location'
+      - $ref: '#/ownerId'
+      - $ref: '#/samplingInterval'
+      - $ref: '#/shipmentId'
 
 
 shadowData:

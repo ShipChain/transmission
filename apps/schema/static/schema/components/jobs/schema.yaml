@@ -9,6 +9,8 @@ attributes:
   - $ref: '#/parameters'
   - $ref: '#/dataTypes/createdAt'
   - $ref: '#/dataTypes/updatedAt'
+  - $ref: '#/job/lastTry'
+  - $ref: '#/job/delay'
 
 message:
   type: object
@@ -16,11 +18,48 @@ message:
     - $ref: '#/job/state'
     - $ref: '#/parameters'
 
+meta:
+  type: object
+  properties:
+    count:
+      type: integer
+      example: 1
+      description: Size of the data array
+
+
 relationships:
-  message_set:
-    type: object
-    properties:
-    - $ref: '#/messageRef/resource'
+  type: object
+  description: Related objects for this resource
+  properties:
+    actions:
+      type: object
+      properties:
+        data:
+          items:
+            type: object
+            $ref: '#/ethAction/actions'
+        meta:
+          $ref: '#/meta'
+
+    message_set:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            $ref: '#/messageRef/messageSet'
+        meta:
+          $ref: '#/meta'
+
+    shipment:
+      type: object
+      description: Shipment associated with this document
+      properties:
+        data:
+          allOf:
+            - $ref: '#/shipments/resource'
+            - $ref: '../shipments/dataTypes.yaml#/resourcePk'
 
 parameters:
   type: object
@@ -29,25 +68,9 @@ parameters:
       type: object
       allOf:
       - $ref: '#/job/rpcClass'
-      - $ref: '#/signed_tx'
       - $ref: '#/job/rpcMethod'
       - $ref: '#/rpcParameters'
       - $ref: '#/job/signingWalletId'
-
-signed_tx:
-  type: object
-  properties:
-    signed_tx:
-      allOf:
-      - $ref: '#/job/r'
-      - $ref: '#/job/s'
-      - $ref: '#/job/v'
-      - $ref: '#/job/to'
-      - $ref: '#/job/data'
-      - $ref: '#/job/nonce'
-      - $ref: '#/job/value'
-      - $ref: '#/job/gasLimit'
-      - $ref: '#/job/gasPrice'
 
 rpcParameters:
   type: object
@@ -65,6 +88,8 @@ getResource:
   - properties:
       attributes:
         $ref: '#/attributes'
+      relationships:
+        $ref: '#/relationships'
 
 getResponse:
   allOf:
@@ -83,9 +108,13 @@ listResponse:
           $ref: '#/getResource'
       included:
         items:
-          $ref: '#/messageRef/getResource'
-      relationships:
-        $ref: '#/relationships'
+          $ref: '#/messageRef/includedResource'
+
+ethAction:
+  $ref: ../ethAction/schema.yaml
+
+shipments:
+  $ref: ../shipments/schema.yaml
 
 job:
   $ref: dataTypes.yaml

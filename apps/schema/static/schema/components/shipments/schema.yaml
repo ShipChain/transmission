@@ -137,15 +137,24 @@ billToLocation:
     bill_to_location:
       $ref: '#/shipment/locationData'
 
+device:
+  type: object
+  title: device
+  description: device associated with the shipment
+  properties:
+    device:
+      $ref: '#/shipment/device'
+
 relationships:
-  type: array
-  items:
-  - allOf:
-    - $ref: '#/loadData'
-    - $ref: '#/shipToLocation'
-    - $ref: '#/shipFromLocation'
-    - $ref: '#/finalDestinationLocation'
-    - $ref: '#/billToLocation'
+  type: object
+  description: Relations for this resource
+  allOf:
+  - $ref: '#/loadData'
+  - $ref: '#/shipToLocation'
+  - $ref: '#/shipFromLocation'
+  - $ref: '#/finalDestinationLocation'
+  - $ref: '#/billToLocation'
+  - $ref: '#/device'
 
 createAttributes:
   allOf:
@@ -239,11 +248,11 @@ createResponse:
 included:
   type: array
   items:
-  - $ref: '#/loadShipment/getResource'
-  - $ref: '#/location/getResource'
-  - $ref: '#/location/getResource'
-  - $ref: '#/location/getResource'
-  - $ref: '#/location/getResource'
+  - $ref: '#/loadShipment/includedResource'
+  - $ref: '#/location/includedResource'
+  - $ref: '#/location/includedResource'
+  - $ref: '#/location/includedResource'
+  - $ref: '#/location/includedResource'
 
 listResponse:
   allOf:

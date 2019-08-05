@@ -60,6 +60,12 @@ listResponse:
         items:
           $ref: '#/included'
 
+actions:
+  type: object
+  allOf:
+    - $ref: '#/resource'
+    - $ref: '../core/dataTypes.yaml#/resourcePk'
+
 dataTypes:
   $ref: ../core/dataTypes.yaml
 

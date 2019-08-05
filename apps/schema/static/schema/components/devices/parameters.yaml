@@ -9,6 +9,7 @@ active:
   schema:
     type: boolean
     enum: [true, false]
+    example: true
 
 inBbox:
   name: in_bbox

@@ -1,6 +1,9 @@
 uuid: &uuid
   $ref: '../core/dataTypes.yaml#/uuid'
 
+resourcePk:
+  $ref: '../core/dataTypes.yaml#/resourcePk'
+
 storageCredentialsId:
   properties:
     storage_credentials_id:
@@ -536,34 +539,31 @@ exception:
       enum: [NONE, CUSTOMS_HOLD, DOCUMENTATION_ERROR]
       example: NONE
 
+device:
+  properties:
+    data:
+      title: data
+      type: object
+      allOf:
+        - $ref: '../devices/schema.yaml#/deviceResource'
+        - $ref: '#/resourcePk'
+
+
 locationData:
   properties:
     data:
       title: data
       type: object
-      properties:
-        type:
-          type: string
-          description: Name of model
-          title: type
-          example: 'Location'
-        id:
-          <<: *uuid
-          title: id
-          description: Location UUID associated with the shipment
+      allOf:
+        - $ref: '../locations/schema.yaml#/resource'
+        - $ref: '#/resourcePk'
 
 loadData:
   properties:
     data:
       title: data
       type: object
-      properties:
-        type:
-          type: string
-          description: Name of model
-          title: type
-          example: 'LoadShipment'
-        id:
-          <<: *uuid
-          title: id
-          description: LoadShipment UUID associated with the shipment
+      allOf:
+        - $ref: '../loadShipments/schema.yaml#/resource'
+        - $ref: '#/resourcePk'
+

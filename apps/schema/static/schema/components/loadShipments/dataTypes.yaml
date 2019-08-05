@@ -1,20 +1,23 @@
-shipmentStatus:
-  properties:
-    shipment_status:
-      title: shipment_status
-      description: Status of the shipment
-      type: string
-      enum: [PENDING, RUNNING, FAILED, COMPLETE]
-      example: 'PENDING'
+address: &address
+  $ref: '../ethereum/dataTypes.yaml#/address'
 
-escrowStatus:
+shipmentState:
   properties:
-    escrow_status:
-      title: escrow_status
-      description: Status of the escrow
+    shipment_state:
+      title: shipment_state
+      description: State of the shipment
       type: string
-      enum: [CONTRACT_INITIATED, CONTRACT_SETUP, CONTRACT_COMMITTED, CONTRACT_COMPLETED, CONTRACT_ACCEPTED, CONTRACT_CANCELED]
-      example: 'CONTRACT_INITIATED'
+      enum: [NOT_CREATED, CREATED, IN_PROGRESS, COMPLETE, CANCELED]
+      example: 'IN_PROGRESS'
+
+escrowState:
+  properties:
+    escrow_state:
+      title: escrow_state
+      description: State of the escrow
+      type: string
+      enum: [NOT_CREATED, CREATED, FUNDED, RELEASED, REFUNDED, WITHDRAWN]
+      example: 'FUNDED'
 
 fundingType:
   properties:
@@ -22,141 +25,68 @@ fundingType:
       title: funding_type
       description: Type of funding for the shipmet
       type: string
-      enum: [ship, cash, eth]
-      example: 'ship'
+      enum: [NO_FUNDING, SHIP, ETHER]
+      example: 'SHIP'
 
-shipmentId:
+contractedAmount:
   properties:
-    shipment_id:
-      title: shipment_id
-      description: Id for the shipment on the engine
+    contracted_amount:
+      title: contracted_amount
+      description: Contracted amount for the shipment
       type: number
       format: int32
-      example: 0
+      example: 1234567890
 
-shipmentAmount:
+fundedAmount:
   properties:
-    shipment_amount:
-      title: shipment_amount
-      description: Amount for the shipment
+    funded_amount:
+      title: funded_amount
+      description: Amount funded for a shipment
       type: number
       format: int32
-      example: 1
+      example: 1234567890
 
-paidAmount:
+createdAt:
   properties:
-    paid_amount:
-      title: paid_amount
-      description: Cost of the shipment transaction
+    created_at:
+      title: created_at
+      description: Unit Epoch time of creation
       type: number
       format: int32
-      example: 1
+      example: 1234567890
 
-paidTokens:
-  properties:
-    paid_tokens:
-      title: paid_tokens
-      description: Amount of tokens paid with
-      type: number
-      format: double
-      example: '0.000000000000000000'
+shipper:
+  <<: *address
+  title: shipper
+  description: Address of shipper's wallet
 
-contractFunded:
-  properties:
-    contract_funded:
-      title: contract_funded
-      description: Whether or not the contract has been funded
-      type: boolean
-      example: true
+carrier:
+  <<: *address
+  title: carrier
+  description: Address of carrier's wallet
 
-shipmentCreated:
-  properties:
-    shipment_created:
-      title: shipment_created
-      description: Whether or not the shipment has been created
-      type: boolean
-      example: true
+moderator:
+  <<: *address
+  title: moderator
+  description: Address of moderator's wallet
 
-validUntil:
-  properties:
-    valid_until:
-      title: valid_until
-      description: How long the hash is valid
-      type: number
-      format: int32
-      example: 24
+refundAddress:
+  <<: *address
+  title: refund_address
+  description: Address of wallet to refund to (if applicable)
 
-startBlock:
+vaultHash:
   properties:
-    start_block:
-      title: start_block
-      description: What block the hash starts at
-      type: number
-      format: int32
-      example: 1
-
-endBlock:
-  properties:
-    end_block:
-      title: end_block
-      description: What block the hash ends at
-      type: number
-      format: int32
-      example: 5
-
-escrowFunded:
-  properties:
-    escrow_funded:
-      title: escrow_funded
-      description: Whether or not the escrow has been funded
-      type: boolean
-      example: true
-
-shipmentCommittedByCarrier:
-  properties:
-    shipment_committed_by_carrier:
-      title: shipment_committed_by_carrier
-      description: Whether or not the shipment has been committed by carrier
-      type: boolean
-      example: true
-
-commitmentConfirmedDate:
-  properties:
-    commitment_confirmed_date:
-      title: commitment_confirmed_date
-      description: Whether or not the shipment has been completed by carrier
+    vault_hash:
+      title: vault_hash
+      description: Hash of the vault
       type: string
-      format: date-time
-      example: '2018-06-18T14:54:56.652732Z'
+      example: '0xe2e24ac68ebaa82e2bd7e545802c5212de39ca68a9f563c001c9ad0d3d49736b'
 
-shipmentCompletedByCarrier:
+vaultUri:
   properties:
-    shipment_completed_by_carrier:
-      title: shipment_completed_by_carrier
-      description: Whether or not the shipment has been completed by carrier
-      type: boolean
-      example: false
-
-shipmentAcceptedByShipper:
-  properties:
-    shipment_accepted_by_shipper:
-      title: shipment_accepted_by_shipper
-      description: Whether or not the shipment has been accepted by carrier
-      type: boolean
-      example: true
-
-shipmentCanceledByShipper:
-  properties:
-    shipment_canceled_by_shipper:
-      title: shipment_canceled_by_shipper
-      description: Whether or not the shipment has been canceled by shipper
-      type: boolean
-      example: false
-
-escrowPaid:
-  properties:
-    escrow_paid:
-      title: escrow_paid
-      description: Whether or not the escrow has been paid
-      type: boolean
-      example: false
+    vault_uri:
+      title: vault_uri
+      description: Uri for the vault
+      type: string
+      example: 'engine://b863255b-c1df-4998-8b4f-36a78cba49d4/83d6d301-443b-4213-9635-46daadd834a9/meta.json'
