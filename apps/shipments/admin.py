@@ -10,6 +10,7 @@ from django.utils.html import format_html
 from django.utils.html import mark_safe
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
+from enumfields.admin import EnumFieldListFilter
 from simple_history.admin import SimpleHistoryAdmin, USER_NATURAL_KEY, SIMPLE_HISTORY_EDIT
 
 from apps.shipments.models import Shipment, Location
@@ -107,7 +108,16 @@ class ShipmentAdmin(admin.ModelAdmin):
         AsyncJobInlineTab,
     ]
 
-    search_fields = ('id', 'shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id', )
+    search_fields = ('id', 'shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id', 'state',
+                     'ship_from_location__name', 'ship_to_location__name', 'final_destination_location__name',
+                     'bill_to_location__name', )
+
+    list_filter = [
+        ('created_at', admin.DateFieldListFilter),
+        ('delayed', admin.BooleanFieldListFilter),
+        ('state', admin.ChoicesFieldListFilter),
+        ('contract_version', admin.ChoicesFieldListFilter),
+    ]
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -243,6 +253,12 @@ class BaseModelHistory(SimpleHistoryAdmin):
 
 class HistoricalShipmentAdmin(BaseModelHistory, ShipmentAdmin):
     readonly_fields = [field.name for field in Shipment._meta.get_fields()]
+    list_filter = [
+        ('created_at', admin.DateFieldListFilter),
+        ('delayed', admin.BooleanFieldListFilter),
+        ('state', admin.ChoicesFieldListFilter),
+        ('contract_version', admin.ChoicesFieldListFilter)
+    ]
 
 
 class LocationAdmin(BaseModelHistory):
@@ -256,3 +272,4 @@ class LocationAdmin(BaseModelHistory):
 admin.site.register(Shipment, HistoricalShipmentAdmin)
 
 admin.site.register(Location, LocationAdmin)
+45
