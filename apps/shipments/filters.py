@@ -1,6 +1,14 @@
+import importlib
+
 from django_filters import rest_framework as filters
 
-from .models import Shipment
+from .models import Shipment, TransitState
+
+
+def filter_state(queryset, _, value):
+    enum_value = TransitState[value.upper()]
+    queryset = queryset.filter(**{'state': enum_value.value})
+    return queryset
 
 
 class ShipmentFilter(filters.filterset.FilterSet):
@@ -8,6 +16,7 @@ class ShipmentFilter(filters.filterset.FilterSet):
     has_ship_to_location = filters.BooleanFilter(field_name='ship_to_location', lookup_expr='isnull', exclude=True)
     has_final_destination_location = filters.BooleanFilter(
         field_name='final_destination_location', lookup_expr='isnull', exclude=True)
+    state = filters.CharFilter(method=filter_state)
 
     class Meta:
         model = Shipment
