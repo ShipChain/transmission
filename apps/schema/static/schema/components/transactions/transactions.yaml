@@ -5,6 +5,7 @@ get:
   parameters:
     - $ref: '../core/parameters.yaml#/page'
     - $ref: '../core/parameters.yaml#/page_size'
+    - $ref: '../core/parameters.yaml#/ordering'
     - $ref: 'parameters.yaml#/wallet_id'
   tags:
   - Transactions
