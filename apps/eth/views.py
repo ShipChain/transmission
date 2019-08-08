@@ -48,7 +48,7 @@ class EventViewSet(mixins.CreateModelMixin,
                 LOG.info(f"Non-EthAction Event processed Tx: {event['transaction_hash']}")
                 log_metric('transmission.info', tags={'method': 'events.create', 'code': 'non_ethaction_event',
                                                       'module': __name__, 'project': project})
-        elif project == 'SHIP' and event['event_name'] == 'Transfer':
+        elif project == 'ShipToken' and event['event_name'] == 'Transfer':
             LOG.info(f"ShipToken Transfer processed Tx: {event['transaction_hash']}")
             log_metric('transmission.info',
                        tags={'method': 'event.transfer', 'module': __name__, 'project': project},

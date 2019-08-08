@@ -104,7 +104,7 @@ class EventTests(APITestCase):
                     ]
                 }
             },
-            'project': 'SHIP'
+            'project': 'ShipToken'
         }
         response = self.client.post(url, data, format='json')
         assert response.status_code == status.HTTP_403_FORBIDDEN
