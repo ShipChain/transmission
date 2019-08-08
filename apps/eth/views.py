@@ -85,7 +85,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
     queryset = EthAction.objects.all()
     serializer_class = EthActionSerializer
     permission_classes = ((IsListenerOwner, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
-    ordering_fields = ('modified_at', 'created_at',)
+    ordering_fields = ('updated', 'created_at',)
 
     def get_queryset(self):
         log_metric('transmission.info', tags={'method': 'transaction.get_queryset', 'module': __name__})
