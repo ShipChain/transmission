@@ -5,6 +5,7 @@ get:
   parameters:
     - $ref: '../core/parameters.yaml#/page'
     - $ref: '../core/parameters.yaml#/page_size'
+    - $ref: '../core/parameters.yaml#/ordering'
     - $ref: 'parameters.yaml#/permissionLinkId'
     - $ref: 'parameters.yaml#/path'
     - $ref: '../transactions/parameters.yaml#/include_async_job_action'
