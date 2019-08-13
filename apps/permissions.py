@@ -24,7 +24,7 @@ from apps.authentication import get_jwt_from_request
 from apps.shipments.models import Shipment, PermissionLink
 
 
-PROFILES_URL = f'{settings.PROFILES_URL}/api/v1/wallet'
+PROFILES_WALLET_URL = f'{settings.PROFILES_URL}/api/v1/wallet'
 
 
 def get_user(request):
@@ -52,7 +52,7 @@ def is_carrier(request, shipment):
     """
     Custom permission for carrier shipment access
     """
-    response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.carrier_wallet_id}/?is_active',
+    response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.carrier_wallet_id}/?is_active',
                                              headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
     return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
@@ -63,7 +63,7 @@ def is_moderator(request, shipment):
     Custom permission for moderator shipment access
     """
     if shipment.moderator_wallet_id:
-        response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.moderator_wallet_id}/?is_active',
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.moderator_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
         return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
@@ -75,7 +75,7 @@ def is_shipper(request, shipment):
     """
     Custom permission for shipper shipment access
     """
-    response = settings.REQUESTS_SESSION.get(f'{PROFILES_URL}/{shipment.shipper_wallet_id}/?is_active',
+    response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.shipper_wallet_id}/?is_active',
                                              headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
     return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
