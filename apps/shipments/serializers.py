@@ -408,20 +408,22 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
 
 class ChangesDiffSerializer:
+    relation_fields = settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys()
+    excluded_fields = ('history_user', 'version', 'customer_fields', )
+
     def __init__(self, queryset, request):
         self.queryset = queryset
         self.request = request
-
-        self.relation_fields = settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys()
-
-        self.excluded_fields = ('history_user', )
 
     def diff_object_fields(self, old, new):
         changes = new.diff(old)
 
         flat_changes = self.build_list_changes(changes)
-
         relation_changes = self.relation_changes(new)
+        json_field_changes = self.json_field_changes(new, old)
+
+        for json_field, json_changes in json_field_changes.items():
+            flat_changes.extend(json_changes)
 
         return {
             'history_date': new.history_date,
@@ -445,15 +447,16 @@ class ChangesDiffSerializer:
 
             if change.field in self.relation_fields:
                 if change.old is None:
+                    # The relationship field is initialized
                     field['new'] = Location.history.filter(pk=change.new).first().instance.id
                 if change.old and change.new:
+                    # The relationship field is modified no need to include it in flat changes
                     continue
 
             field_list.append(field)
         return field_list
 
     def relation_changes(self, new_historical):
-
         relations_map = {}
         for relation in self.relation_fields:
             historical_relation = getattr(new_historical, relation, None)
@@ -469,6 +472,18 @@ class ChangesDiffSerializer:
                 relations_map[relation] = self.build_list_changes(changes)
 
         return relations_map
+
+    def json_field_changes(self, new_obj, old_obj):
+        changes_map = {}
+        json_fields_changes = new_obj.diff(old_obj, json_fields_only=True)
+        if json_fields_changes:
+            for field_name, changes in json_fields_changes.items():
+                related_changes = self.build_list_changes(changes)
+                if related_changes:
+                    for change in related_changes:
+                        change['field'] = f'{field_name}.{change["field"]}'
+                    changes_map[field_name] = related_changes
+        return changes_map
 
     @property
     def data(self):
