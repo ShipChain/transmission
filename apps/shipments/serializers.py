@@ -409,7 +409,7 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
 class ChangesDiffSerializer:
     relation_fields = settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys()
-    excluded_fields = ('history_user', 'version', 'customer_fields', )
+    excluded_fields = ('history_user', 'version', 'customer_fields', 'geometry', )
 
     # Enum field serializers
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, read_only=True)
@@ -431,7 +431,7 @@ class ChangesDiffSerializer:
         relation_changes = self.relation_changes(new)
         json_field_changes = self.json_field_changes(new, old)
 
-        for json_field, json_changes in json_field_changes.items():
+        for _, json_changes in json_field_changes.items():
             flat_changes.extend(json_changes)
 
         return {

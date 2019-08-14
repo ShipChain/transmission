@@ -37,12 +37,8 @@ def get_user(request=None, **kwargs):
 class HistoricalChangesMixin:
 
     def diff(self, old_history, json_fields_only=False):
-        if self is not None and old_history is not None:
-            if not isinstance(old_history, type(self)):
-                raise TypeError(
-                    f"unsupported type(s) for diffing: '{type(self)}' and '{type(old_history)}'")
-
-        json_fields_changes_map = {}
+        changes_map = {}
+        current_values = None
         if json_fields_only and hasattr(self, 'instance'):
             for field_name in self.json_fields:
                 current_values = getattr(self, field_name, None)
@@ -53,21 +49,20 @@ class HistoricalChangesMixin:
                     current_values = {f: None for f in old_values.keys()}
                 elif not old_values and not current_values:
                     continue
-                json_fields_changes_map[field_name] = self.build_changes(current_values, old_values, old_history,
-                                                                         from_json_field=True)
-            return json_fields_changes_map
-
+                changes_map[field_name] = self.build_changes(current_values, old_values, old_history,
+                                                             from_json_field=True)
         elif hasattr(self, 'instance'):
             current_values = _model_to_dict(self.instance)
         else:
             current_values = _model_to_dict(self)
 
-        if not old_history:
+        if not old_history and not json_fields_only:
             old_values = {f: None for f in current_values.keys()}
-        else:
+        elif old_history:
             old_values = _model_to_dict(old_history.instance)
 
-        return self.build_changes(current_values, old_values, old_history)
+        to_return = changes_map if json_fields_only else self.build_changes(current_values, old_values, old_history)
+        return to_return
 
     def build_changes(self, new_obj_dict, old_obj_dict, old_historical_obj, from_json_field=False):
         changes = []
