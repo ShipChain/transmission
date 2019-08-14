@@ -411,9 +411,18 @@ class ChangesDiffSerializer:
     relation_fields = settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys()
     excluded_fields = ('history_user', 'version', 'customer_fields', )
 
+    # Enum field serializers
+    state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, read_only=True)
+    exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, read_only=True)
+
     def __init__(self, queryset, request):
         self.queryset = queryset
         self.request = request
+
+        self.enum_map = {
+            'state': self.state,
+            'exception': self.exception
+        }
 
     def diff_object_fields(self, old, new):
         changes = new.diff(old)
@@ -432,6 +441,17 @@ class ChangesDiffSerializer:
             'author': new.history_user,
         }
 
+    def get_enum_representation(self, field_name, field_value):
+        representation = field_value
+        # The initial enum values are None
+        if field_name in self.enum_map and field_value is not None:
+            # We wrap this in a try to avoid fields like Location.state
+            try:
+                representation = self.enum_map[field_name].to_representation(field_value)
+            except ValueError:
+                pass
+        return representation
+
     def build_list_changes(self, changes):
         field_list = []
         if changes is None:
@@ -441,8 +461,8 @@ class ChangesDiffSerializer:
         for change in changes_list:
             field = {
                 'field': change.field,
-                'old': change.old,
-                'new': change.new
+                'old': self.get_enum_representation(change.field, change.old),
+                'new': self.get_enum_representation(change.field, change.new)
             }
 
             if change.field in self.relation_fields:
