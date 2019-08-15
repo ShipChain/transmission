@@ -66,11 +66,15 @@ parameters:
   properties:
     parameters:
       type: object
-      allOf:
-      - $ref: '#/job/rpcClass'
-      - $ref: '#/job/rpcMethod'
-      - $ref: '#/rpcParameters'
-      - $ref: '#/job/signingWalletId'
+      properties:
+        rpcClass:
+          $ref: '#/job/rpcClass/properties/rpcClass'
+        rpc_method:
+          $ref: '#/job/rpcMethod/properties/rpc_method'
+        rpcParameters:
+          $ref: '#/rpcParameters/properties/rpcParameters'
+        signing_wallet_id:
+          $ref: '#/job/signingWalletId/properties/signing_wallet_id'
 
 rpcParameters:
   type: object
@@ -78,7 +82,7 @@ rpcParameters:
     rpcParameters:
       type: array
       items:
-      - anyOf:
+        anyOf:
         - type: string
         - type: number
 
@@ -90,6 +94,14 @@ getResource:
         $ref: '#/attributes'
       relationships:
         $ref: '#/relationships'
+
+includedResource:
+  title: Async Job
+  description: Async Job associated with the resource
+  type: object
+  allOf:
+    - $ref: '#/dataTypes/resourceId'
+    - $ref: '#/getResource'
 
 getResponse:
   allOf:
@@ -108,6 +120,7 @@ listResponse:
           $ref: '#/getResource'
       included:
         items:
+          type: object
           $ref: '#/messageRef/includedResource'
 
 ethAction:

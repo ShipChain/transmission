@@ -16,11 +16,18 @@ attributes:
 
 getResource:
   allOf:
-  - $ref: '#/ethereum/resourceId'
   - $ref: '#/resource'
   - properties:
       attributes:
         $ref: '#/attributes'
+
+includedResource:
+  title: Transaction
+  description: Transaction details associated with the resource
+  type: object
+  allOf:
+    - $ref: '#/ethereum/resourceId'
+    - $ref: '#/getResource'
 
 ethereum:
   $ref: ../ethereum/dataTypes.yaml

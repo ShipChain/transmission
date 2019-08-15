@@ -9,7 +9,7 @@ logs:
     logs:
       type: array
       items:
-      - anyOf:
+        anyOf:
         - type: string
         - type: number
 

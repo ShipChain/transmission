@@ -67,23 +67,19 @@ location:
         - $ref: '#/tracking/pointFeature'
 
 activated:
-  properties:
-    activated:
-      title: activated
-      description: Indicates whether the device is activated or not
-      type: boolean
-      example: true
+  title: activated
+  description: Indicates whether the device is activated or not
+  type: boolean
+  example: true
 
 connected:
-  properties:
-    connected:
-      title: connected
-      description: Indicates whether the device is currently online or not
-      type: boolean
-      example: true
+  title: connected
+  description: Indicates whether the device is currently online or not
+  type: boolean
+  example: true
 
 ownerId:
-  - $ref: '#/owner'
+  $ref: '#/owner/properties/owner'
 
 samplingInterval:
   properties:
@@ -111,32 +107,38 @@ deviceGroups:
       example: ["fb2024be-5518-4b85-9564-ec24144f2b81"]
 
 reported:
+  type: object
+  title: reported
+  description: Device's current configurations. _May be absent from the response depending on the device's conditions._
   properties:
-    reported:
-      type: object
-      title: reported
-      description: Device's current configurations. _May be absent from the response depending on the device's conditions._
-      allOf:
-        - $ref: '#/activated'
-        - $ref: '#/connected'
-        - $ref: '#/devicePk'
-        - $ref: '#/location'
-        - $ref: '#/ownerId'
-        - $ref: '#/samplingInterval'
-        - $ref: '#/shipmentId'
+    activated:
+      $ref: '#/activated'
+    connected:
+      $ref: '#/connected'
+    devicePk:
+      $ref: '#/devicePk'
+    location:
+      $ref: '#/location'
+    ownerId:
+      $ref: '#/ownerId'
+    samplingInterval:
+      $ref: '#/samplingInterval'
+    shipmentId:
+      $ref: '#/shipmentId/properties/shipmentId'
 
 notSet:
+  type: object
+  title: notSet
+  description: Device's pending configurations. _May be absent from response depending on the device's conditions._
   properties:
-    notSet:
-      type: object
-      title: notSet
-      description: Device's pending configurations. _May be absent from response depending on the device's conditions._
-      allOf:
-      - $ref: '#/location'
-      - $ref: '#/ownerId'
-      - $ref: '#/samplingInterval'
-      - $ref: '#/shipmentId'
-
+    location:
+      $ref: '#/location'
+    ownerId:
+      $ref: '#/ownerId'
+    samplingInterval:
+      $ref: '#/samplingInterval'
+    shipmentId:
+      $ref: '#/shipmentId/properties/shipmentId'
 
 shadowData:
   properties:
@@ -144,9 +146,11 @@ shadowData:
       type: object
       title: shadowData
       description: Device's shadow
-      allOf:
-        - $ref: '#/reported'
-        - $ref: '#/notSet'
+      properties:
+        reported:
+          $ref: '#/reported'
+        notSet:
+          $ref: '#/notSet'
 
 tracking:
   $ref: ../tracking/schema.yaml

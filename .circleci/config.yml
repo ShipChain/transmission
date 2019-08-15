@@ -79,6 +79,14 @@ jobs:
           root: docker-cache
           paths:
             - built-image.tar
+
+  openapi-validation:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run: npx swagger-cli validate ./apps/schema/static/schema/swagger.yaml
+
   push-to-ecr:
     docker:
       - image: docker:stable-git
@@ -122,6 +130,7 @@ workflows:
   build-and-deploy:
     jobs:
       - build
+      - openapi-validation
       - push-to-ecr:
           filters:
             branches:

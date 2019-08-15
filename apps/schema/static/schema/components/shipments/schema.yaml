@@ -248,11 +248,9 @@ createResponse:
 included:
   type: array
   items:
-  - $ref: '#/loadShipment/includedResource'
-  - $ref: '#/location/includedResource'
-  - $ref: '#/location/includedResource'
-  - $ref: '#/location/includedResource'
-  - $ref: '#/location/includedResource'
+    anyOf:
+    - $ref: '#/loadShipment/includedResource'
+    - $ref: '#/location/includedResource'
 
 listResponse:
   allOf:
@@ -263,8 +261,7 @@ listResponse:
         items:
           $ref: '#/getResource'
       included:
-        items:
-          $ref: '#/included'
+        $ref: '#/included'
 
 shipment:
   $ref: dataTypes.yaml

@@ -33,6 +33,9 @@ relationships:
             - $ref: '../core/dataTypes.yaml#/resourcePk'
 
 includedResource:
+  title: Load Shipment
+  description: Load Shipment associated with the resource
+  type: object
   allOf:
   - $ref: '#/dataTypes/resourceId'
   - $ref: '#/getResource'
