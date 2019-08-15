@@ -52,3 +52,8 @@ class ShipmentImportsViewSetAPITests(APITestCase):
         self.assertEqual(data['attributes']['upload_status'], 'PENDING')
         self.assertTrue(isinstance(data['meta']['presigned_s3']['fields'], dict))
 
+        # Ensure the shipment import comes
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()['data']
+        self.assertEqual(len(data), 1)

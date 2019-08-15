@@ -45,7 +45,9 @@ class ShipmentImportsViewSet(mixins.CreateModelMixin,
     filter_class = ShipmentImportFilterSet
 
     def get_queryset(self):
-        return self.queryset.filter(owner_access_filter(self.request))
+        if settings.PROFILES_ENABLED:
+            return self.queryset.filter(owner_access_filter(self.request))
+        return self.queryset
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:

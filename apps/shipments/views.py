@@ -194,10 +194,7 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
     resource_name = 'PermissionLink'
 
     def get_queryset(self):
-        queryset = self.queryset
-        if settings.PROFILES_ENABLED:
-            queryset = queryset.filter(shipment_id=self.kwargs['shipment_pk'])
-        return queryset
+        return self.queryset.filter(shipment_id=self.kwargs['shipment_pk'])
 
     def create(self, request, *args, **kwargs):
         """

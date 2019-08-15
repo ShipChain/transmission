@@ -36,6 +36,8 @@ def get_jwt_from_request(request):
     """
     This is for retrieving the decoded JWT from the a request via the simplejwt authenticator.
     """
+    if not settings.PROFILES_ENABLED:
+        return None
     return (request.authenticators[-1].get_raw_token(request.authenticators[-1].get_header(request)).decode()
             if request.authenticators else None)
 
