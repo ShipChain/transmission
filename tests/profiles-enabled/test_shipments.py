@@ -840,7 +840,8 @@ class ShipmentAPITests(APITestCase):
 
             response = self.client.patch(url_patch, shipment_update_customer_fields, format='json')
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-            self.assertEqual(response.json()['data']['attributes']['customer_fields'], shipment_update_customer_fields['customer_fields'])
+            self.assertEqual(response.json()['data']['attributes']['customer_fields'],
+                             shipment_update_customer_fields['customer_fields'])
 
             response = self.client.get(history_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -848,6 +849,21 @@ class ShipmentAPITests(APITestCase):
             changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
             self.assertTrue('customer_fields.custom_field_1' in changed_fields)
             self.assertTrue('customer_fields.custom_field_2' in changed_fields)
+
+            # Ensure that a modified customer_fields is reflected in historical diff changes
+            shipment_update_customer_fields['customer_fields']['custom_field_1'] = 'value one modified'
+
+            response = self.client.patch(url_patch, shipment_update_customer_fields, format='json')
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+            self.assertEqual(response.json()['data']['attributes']['customer_fields'],
+                             shipment_update_customer_fields['customer_fields'])
+
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertTrue('customer_fields.custom_field_1' in changed_fields)
+            self.assertTrue('customer_fields.custom_field_2' not in changed_fields)    # Only custom_field_1 has changed
 
             # Enum representation test
             shipment_action_url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment_id})
