@@ -412,27 +412,19 @@ class ChangesDiffSerializer:
     excluded_fields = ('history_user', 'version', 'customer_fields', 'geometry', )
 
     # Enum field serializers
-    state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, read_only=True)
-    exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, read_only=True)
+    stateEnumSerializer = UpperEnumField(TransitState, lenient=True, ints_as_names=True, read_only=True)
+    exceptionEnumSerializer = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, read_only=True)
 
     def __init__(self, queryset, request):
         self.queryset = queryset
         self.request = request
-
-        self.enum_map = {
-            'state': self.state,
-            'exception': self.exception
-        }
 
     def diff_object_fields(self, old, new):
         changes = new.diff(old)
 
         flat_changes = self.build_list_changes(changes)
         relation_changes = self.relation_changes(new)
-        json_field_changes = self.json_field_changes(new, old)
-
-        for _, json_changes in json_field_changes.items():
-            flat_changes.extend(json_changes)
+        flat_changes.extend(self.json_field_changes(new, old))
 
         return {
             'history_date': new.history_date,
@@ -444,15 +436,15 @@ class ChangesDiffSerializer:
     def get_enum_representation(self, field_name, field_value):
         representation = field_value
         # The initial enum values are None
-        if field_name in self.enum_map and field_value is not None:
-            # We wrap this in a try to avoid fields like Location.state
+        if field_value is not None:
+            # We wrap this in a try:except to avoid fields like Location.state
             try:
-                representation = self.enum_map[field_name].to_representation(field_value)
-            except ValueError:
+                representation = getattr(self, f'{field_name}EnumSerializer').to_representation(field_value)
+            except (AttributeError, ValueError):
                 pass
         return representation
 
-    def build_list_changes(self, changes):
+    def build_list_changes(self, changes, json_field=False, base_field=None):
         field_list = []
         if changes is None:
             return field_list
@@ -460,17 +452,17 @@ class ChangesDiffSerializer:
         changes_list = [change for change in changes.changes if change.field not in self.excluded_fields]
         for change in changes_list:
             field = {
-                'field': change.field,
+                'field': change.field if not json_field else f'{base_field}.{change.field}',
                 'old': self.get_enum_representation(change.field, change.old),
                 'new': self.get_enum_representation(change.field, change.new)
             }
 
             if change.field in self.relation_fields:
                 if change.old is None:
-                    # The relationship field is initialized
+                    # The relationship field is created
                     field['new'] = Location.history.filter(pk=change.new).first().instance.id
                 if change.old and change.new:
-                    # The relationship field is modified no need to include it in flat changes
+                    # The relationship field has been modified no need to include it in flat changes
                     continue
 
             field_list.append(field)
@@ -494,16 +486,15 @@ class ChangesDiffSerializer:
         return relations_map
 
     def json_field_changes(self, new_obj, old_obj):
-        changes_map = {}
+        changes_list = []
+        # JsonFields changes between the two historical objects
         json_fields_changes = new_obj.diff(old_obj, json_fields_only=True)
         if json_fields_changes:
             for field_name, changes in json_fields_changes.items():
-                related_changes = self.build_list_changes(changes)
+                related_changes = self.build_list_changes(changes, json_field=True, base_field=field_name)
                 if related_changes:
-                    for change in related_changes:
-                        change['field'] = f'{field_name}.{change["field"]}'
-                    changes_map[field_name] = related_changes
-        return changes_map
+                    changes_list.extend(related_changes)
+        return changes_list
 
     @property
     def data(self):

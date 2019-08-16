@@ -15,6 +15,7 @@ limitations under the License.
 """
 import copy
 import logging
+from functools import lru_cache
 
 from django.conf import settings
 from django.db import models
@@ -75,14 +76,14 @@ class HistoricalChangesMixin:
                     changes.append(change)
                     changed_fields.append(field)
             elif from_json_field:
-                old_value = None
-                change = ModelChange(field, old_value, new_value)
+                change = ModelChange(field, None, new_value)
                 changes.append(change)
                 changed_fields.append(field)
 
         return ModelDelta(changes, changed_fields, old_historical_obj, self)
 
     @property
+    @lru_cache()
     def json_fields(self):
         list_json_fields = []
         for field in self.instance._meta.get_fields():
