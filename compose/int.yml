@@ -1,0 +1,177 @@
+version: '3.4'
+services:
+  newman:
+    image: postman/newman
+    command: sh -c 'while sleep 3600; do :; done'
+    entrypoint: ""
+
+  minio:
+    image: minio/minio
+    ports:
+    - "9090:9000"
+    expose:
+      - '9000'
+    environment:
+    - MINIO_ACCESS_KEY=TEST-DEV-KEY
+    - MINIO_SECRET_KEY=NON-TRIVIAL-SECRETKEY
+    - MINIO_DOMAIN=minio
+    command: server /data --address minio:9000
+
+  smtp:
+    image: elsdoerfer/exim-sender
+    environment:
+      - PRIMARY_HOST=smtp.shipchain.io.local
+      - ALLOWED_HOSTS=*
+    expose:
+      - "25"
+
+  sftp:
+    image: atmoz/sftp
+    command: shipchain_user:shipchain_password:::upload
+    expose:
+      - 22
+
+  geth-poa:
+    image: shipchain/geth-poa
+    expose:
+      - 8545
+    environment:
+      GETH_VERBOSITY: 1
+
+  profiles_psql:
+    image: sameersbn/postgresql:9.6-2
+    expose:
+      - '5432'
+    networks:
+      - portal
+    environment:
+      DB_NAME: profiles
+      DB_PASS: profiles
+      DB_USER: profiles
+
+  engine_psql:
+    image: sameersbn/postgresql:9.6-2
+    expose:
+      - 5432
+    networks:
+      - portal
+    environment:
+      DB_NAME: engine
+      DB_PASS: engine
+      DB_USER: engine
+      DB_EXTENSION: '"uuid-ossp"'
+
+  transmission_psql:
+    ports:
+      - "5432"
+    image: circleci/postgres:9.6-alpine-postgis
+    networks:
+      - portal
+    environment:
+      - POSTGRES_USER=transmission
+      - POSTGRES_PASS=transmission
+      - POSTGRES_HOST=psql
+      - POSTGRES_DB=transmission
+      - ALLOW_IP_RANGE=0.0.0.0/0
+
+  redis_db:
+    image: redis
+    expose:
+      - '6379'
+#    networks:
+#      - portal
+    command: >
+      --requirepass redis_pass --appendonly yes
+
+  transmission:
+    image: transmission-django
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    networks:
+      default:
+        aliases:
+          - transmission-django
+      portal:
+        aliases:
+          - transmission-django
+    links:
+      - transmission_psql
+      - redis_db
+      - minio
+      - smtp
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - ENV=INT
+      - SECRET_KEY
+      - SERVICE=runserver
+      - REDIS_URL=redis://:redis_pass@redis_db:6379/1
+      - ENGINE_RPC_URL=http://engine-rpc:2000
+      - INTERNAL_URL=http://transmission-django:8000
+      - PROFILES_URL=http://profiles-django:8000
+      - ELASTICSEARCH_URL
+      - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
+      - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
+      - LOG_LEVEL
+      - FORCE_DEBUG
+      - DATABASE_URL=postgis://transmission:transmission@transmission_psql:5432/transmission
+
+  profiles:
+    image: 489745816517.dkr.ecr.us-east-1.amazonaws.com/profiles-django:dev
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "9000:8000"
+    networks:
+      default:
+        aliases:
+          - profiles-django
+      portal:
+        aliases:
+          - profiles-django
+    links:
+      - redis_db
+      - profiles_psql
+      - newman
+    environment:
+      - ENV=INT
+      - SECRET_KEY
+      - SERVICE=circleci
+      - REDIS_URL=redis://:redis_pass@redis_db:6379/1
+      - PSQL_NAME=profiles_psql
+      - DATABASE_URL=psql://profiles:profiles@profiles_psql:5432/profiles
+      - INFLUXDB_DISABLED=True
+      - ENGINE_RPC_URL=http://engine-rpc:2000
+
+  engine-rpc:
+    image: 489745816517.dkr.ecr.us-east-1.amazonaws.com/engine-node:dev
+    ports:
+      - 2000:2000
+    command: yarn forever
+    links:
+      - redis_db
+      - geth-poa
+      - sftp
+      - minio
+      - engine_psql
+      - newman
+    environment:
+      - ENV=
+      - USE_JS_ORM_ENTITIES=true
+      - GETH_NODE=http://geth-poa:8545
+      - REDIS_URL=redis://:redis_pass@redis_db:6379/1
+      - PSQL_NAME=engine_psql
+      - DATABASE_URL=psql://engine:engine@engine_psql:5432/engine
+      - INFLUXDB_DISABLED=True
+      - SERVICE=engine-rpc
+
+    networks:
+      default:
+        aliases:
+          - engine-rpc
+      portal:
+        aliases:
+          - engine-rpc
+
+networks:
+  portal:
+    driver: bridge

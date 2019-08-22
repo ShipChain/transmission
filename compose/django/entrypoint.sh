@@ -27,6 +27,16 @@ then
     deactivate
 
     exec "$@"
+
+elif [[ "$ENV" = "INT" ]];
+
+then
+  /wait-for-it.sh ${REDIS_NAME:-redis_db}:6379
+  /wait-for-it.sh ${PSQL_NAME:-psql}:5432
+
+  python manage.py migrate
+  exec "$@"
+
 else
     echo "Waiting for dependencies to come up in the stack"
     /wait-for-it.sh ${REDIS_NAME:-redis_db}:6379

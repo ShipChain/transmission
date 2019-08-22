@@ -1,0 +1,52 @@
+{
+  "id": "cc1f4d3b-92dd-49bf-90ce-edfaeac30f58",
+  "name": "Profile [User2]-Local",
+  "values": [
+    {
+      "key": "profiles_url",
+      "value": "http://profiles-django:8000",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "jwt_username",
+      "value": "user1@shipchain.io",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "jwt_password",
+      "value": "user1Password",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "token_time",
+      "value": "1",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "oidc_client_id",
+      "value": "892633",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "enabled": true,
+      "type": "text"
+    },
+    {
+      "key": "transmission_url",
+      "value": "http://transmission-django:8000",
+      "description": "",
+      "type": "text",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2018-07-16T17:14:17.154Z",
+  "_postman_exported_using": "Postman/6.1.3"
+}
