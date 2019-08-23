@@ -2,6 +2,7 @@ get:
   summary: List permission links
   description: >
     Get list of `PermissionLink`s associated with the `Shipment`.
+  operationId: listShipmentPermissionLinks
   parameters:
    - $ref: '../core/parameters.yaml#/page'
    - $ref: '../core/parameters.yaml#/page_size'
@@ -28,6 +29,9 @@ post:
     Create a new `PermissionLink` associated with the `Shipment` and e-mail a list of recipients if provited.
 
     This `PermissionLink` provides read-only access to the `Shipment`.
+  operationId: createShipmentPermissionLink
+  parameters:
+   - $ref: '../shipments/parameters.yaml#/path'
   tags:
     - Shipments
   responses:

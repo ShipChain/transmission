@@ -17,6 +17,8 @@ bin/dc exec -T runserver safety check
 
 bin/dc exec -T runserver prospector -o pylint
 
+bin/speccy
+
 bin/dc exec -T runserver bandit -r apps
 
 bin/dc exec -T runserver pytest -p no:cacheprovider --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled

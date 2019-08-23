@@ -3,6 +3,7 @@ get:
   description: >
     Get more details about an `AsyncJob` and its associated `Transaction`s.
     The `parameters` field of the object's response will differ depending on which rpc call was made.
+  operationId: getJob
   parameters:
   - $ref: '../core/parameters.yaml#/job/path'
   tags:

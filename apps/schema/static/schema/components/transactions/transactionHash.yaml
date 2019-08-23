@@ -2,6 +2,7 @@ get:
   summary: Get transaction
   description: >
     Get more details about an `EthAction` (association between an Eth `Transaction` and `TransactionReceipt`) and its state.
+  operationId: getEthAction
   parameters:
   - $ref: 'parameters.yaml#/path'
   tags:

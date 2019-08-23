@@ -24,7 +24,7 @@ relationships:
         data:
           allOf:
             - $ref: '#/shipments/resource'
-            - $ref: '../shipments/dataTypes.yaml#/resourcePk'
+            - $ref: '#/dataTypes/resourceId'
 
 getResource:
   allOf:

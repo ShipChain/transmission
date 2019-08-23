@@ -2,7 +2,7 @@ get:
   summary: Get import details
   description: |
     Get additional info about a `ShipmentImport`.
-
+  operationId: getShipmentImport
   parameters:
     - $ref: './parameters.yaml#/path'
   tags:
@@ -25,6 +25,9 @@ patch:
   summary: Update an import
   description: >
     Update a `ShipmentImport` object with the provided parameters.
+  operationId: updateShipmentImport
+  parameters:
+    - $ref: './parameters.yaml#/path'
   tags:
     - Imports
   responses:

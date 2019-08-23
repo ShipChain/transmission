@@ -87,6 +87,13 @@ jobs:
       - checkout
       - run: npx swagger-cli validate ./apps/schema/static/schema/swagger.yaml
 
+  speccy:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run: npx speccy lint ./apps/schema/static/schema/swagger.yaml -c ./apps/schema/static/schema/speccy.yaml
+
   push-to-ecr:
     docker:
       - image: docker:stable-git
@@ -131,6 +138,7 @@ workflows:
     jobs:
       - build
       - openapi-validation
+      - speccy
       - push-to-ecr:
           filters:
             branches:

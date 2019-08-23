@@ -59,7 +59,7 @@ location:
 job:
   path:
     required: true
-    name: asyncjob_id
+    name: job_id
     in: path
     description: ID of the AsyncJob
     schema:

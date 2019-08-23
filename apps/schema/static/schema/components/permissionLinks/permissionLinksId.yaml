@@ -2,9 +2,10 @@ delete:
   summary: Delete a permission link
   description: >
     Delete the `PermissionLink` object from Transmission.
+  operationId: deleteShipmentPermissionLink
   parameters:
-  - $ref: '../shipments/parameters.yaml#/permissionLinkId'
   - $ref: '../shipments/parameters.yaml#/path'
+  - $ref: '../shipments/parameters.yaml#/permissionLinkPath'
   tags:
   - Shipments
   responses:

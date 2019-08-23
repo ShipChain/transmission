@@ -2,6 +2,7 @@ get:
   summary: List imports
   description: >
     Get all Organization `ShipmentImport` objects.
+  operationId: listShipmentImports
   parameters:
     - $ref: '../core/parameters.yaml#/page'
     - $ref: '../core/parameters.yaml#/page_size'
@@ -31,7 +32,7 @@ post:
     Create a new `ShipmentImport`.
 
     A presigned S3 request will be generated with credentials to POST a new file of the specified type to S3.
-
+  operationId: createShipmentImport
   tags:
     - Imports
   responses:
@@ -40,7 +41,7 @@ post:
       content:
         application/vnd.api+json:
           schema:
-            $ref: './schema.yaml#/createResponse'
+            $ref: 'schema.yaml#/createResponse'
     '401':
       description: "Unauthorized"
       content:

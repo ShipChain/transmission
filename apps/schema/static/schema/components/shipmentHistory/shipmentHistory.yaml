@@ -2,6 +2,7 @@ get:
   summary: List Shipment history
   description: >
     Retrieve a list of historical changes to a `Shipment`.
+  operationId: listShipmentHistory
   parameters:
     - $ref: '../shipments/parameters.yaml#/path'
     - $ref: '../core/parameters.yaml#/page'

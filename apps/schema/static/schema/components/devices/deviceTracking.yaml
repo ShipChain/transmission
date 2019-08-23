@@ -22,6 +22,7 @@ post:
       "device_id": "1243d23b-e2fc-475a-8290-0e4f53479553"
     }
     ```
+  operationId: addTrackingData
   parameters:
   - $ref: 'parameters.yaml#/path'
   tags:
