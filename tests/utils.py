@@ -88,3 +88,9 @@ def datetimeAlmostEqual(dt1, dt2=None):
     if not dt2:
         dt2 = datetime.now().replace(tzinfo=pytz.UTC)
     return dt1.replace(second=0, microsecond=0) == dt2.replace(second=0, microsecond=0)
+
+
+class GeoCoderResponse:
+    def __init__(self, status, point=None):
+        self.ok = status
+        self.xy = point

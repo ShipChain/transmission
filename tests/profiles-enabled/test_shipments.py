@@ -6,11 +6,11 @@ from unittest import mock
 
 import boto3
 import httpretty
+import geocoder
 from datetime import datetime, timezone, timedelta
 from dateutil import parser
 from django.conf import settings as test_settings
 from django.core import mail
-from django.contrib.gis.geos import Point
 from freezegun import freeze_time
 from jose import jws
 from moto import mock_iot
@@ -26,7 +26,7 @@ from apps.shipments.rpc import Load110RPCClient
 from apps.utils import random_id
 from tests.utils import get_jwt
 from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response, random_timestamp, \
-    random_location
+    random_location, GeoCoderResponse
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
 
@@ -634,7 +634,8 @@ class ShipmentAPITests(APITestCase):
         return [item[field_name] for item in changes_list]
 
     @mock_iot
-    def test_shipment_history(self):
+    @mock.patch('apps.shipments.models.mapbox_access_token', return_value='TEST_ACCESS_KEYS')
+    def test_shipment_history(self, mock_mapbox):
         from apps.rpc_client import requests
         from tests.utils import mocked_rpc_response
 
@@ -708,6 +709,10 @@ class ShipmentAPITests(APITestCase):
             # On shipment creation, the most recent change is from a background task. Should have a null author.
             self.assertIsNone(history_data[0]['author'])
 
+            # version field shouldn't be in historical changes
+            changed_fields = self.get_changed_fields(history_data[1]['fields'], 'field')
+            self.assertTrue('version' not in changed_fields)
+
             url_patch = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
 
             # Existing shipment updated with new fields values should have history diff
@@ -721,12 +726,12 @@ class ShipmentAPITests(APITestCase):
             self.assertTrue(len(fields) > 0)
             changed_fields = self.get_changed_fields(fields, 'field')
             self.assertTrue('package_qty' in changed_fields)
-            self.assertFalse('pickup_act' in changed_fields)  # pickup_act should not be editable
+            self.assertTrue('pickup_act' not in changed_fields)  # pickup_act should not be editable
 
             # ----------------------- Shipment update with a location field --------------------------#
             # Equivalently valid for any location field
-            with mock.patch('apps.shipments.models.Location.get_lat_long_from_address') as mock_geocoder:
-                mock_geocoder.return_value = Point((53.1, -35.87))
+            with mock.patch.object(geocoder, 'mapbox') as mock_geocoder:
+                mock_geocoder.return_value = GeoCoderResponse(status=True, point=(53.1, -35.87))
 
                 shipment_creation_with_location, content_type = create_form_content({
                     'vault_id': VAULT_ID,
@@ -747,7 +752,10 @@ class ShipmentAPITests(APITestCase):
                 # Creating a shipment with a location should be reflected in the initial diff history
                 response = self.client.post(url, shipment_creation_with_location, content_type=content_type)
                 self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-                shipment2_id = response.json()['data']['id']
+                shipment2 = response.json()
+                # The created shipment has the geometry field populated
+                self.assertTrue(isinstance(shipment2['included'][1]['attributes']['geometry'], dict))
+                shipment2_id = shipment2['data']['id']
 
                 shipment2_history_url = reverse('shipment-history-list', kwargs={'version': 'v1', 'shipment_pk': shipment2_id})
 
@@ -757,6 +765,9 @@ class ShipmentAPITests(APITestCase):
                 changed_fields = self.get_changed_fields(history_data['fields'], 'field')
                 self.assertTrue('ship_from_location' in changed_fields)
                 self.assertTrue('ship_from_location' in history_data['relationships'].keys())
+                # The shipment location geometry field should not be part of the historical changes
+                location_fields = self.get_changed_fields(history_data['relationships']['ship_from_location'], 'field')
+                self.assertTrue('geometry' not in location_fields)
 
                 # Updating a shipment with a location object, should be reflected in both fields
                 # and relationships fields in response data
@@ -816,6 +827,66 @@ class ShipmentAPITests(APITestCase):
                 self.assertIn('device', changed_fields)
                 self.assertIn('updated_by', changed_fields)
                 self.assertNotEqual(history_data[0]['author'], history_data[1]['author'])
+
+            # ------------------------------- customer_fields test ----------------------------------#
+            self.set_user(self.user_1)
+
+            shipment_update_customer_fields = {
+                'customer_fields': {
+                    'custom_field_1': 'value one',
+                    'custom_field_2': 'value two'
+                }
+            }
+
+            response = self.client.patch(url_patch, shipment_update_customer_fields, format='json')
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+            self.assertEqual(response.json()['data']['attributes']['customer_fields'],
+                             shipment_update_customer_fields['customer_fields'])
+
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertTrue('customer_fields.custom_field_1' in changed_fields)
+            self.assertTrue('customer_fields.custom_field_2' in changed_fields)
+
+            # Ensure that a modified customer_fields is reflected in historical diff changes
+            shipment_update_customer_fields['customer_fields']['custom_field_1'] = 'value one modified'
+
+            response = self.client.patch(url_patch, shipment_update_customer_fields, format='json')
+            self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+            self.assertEqual(response.json()['data']['attributes']['customer_fields'],
+                             shipment_update_customer_fields['customer_fields'])
+
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertTrue('customer_fields.custom_field_1' in changed_fields)
+            self.assertTrue('customer_fields.custom_field_2' not in changed_fields)    # Only custom_field_1 has changed
+
+            # Enum representation test
+            shipment_action_url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment_id})
+
+            shipment_action = {
+                'action_type': 'Pick_up'
+            }
+
+            response = self.client.post(shipment_action_url, shipment_action, format='json')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(data['attributes']['state'], 'IN_TRANSIT')
+
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
+            self.assertTrue('state' in changed_fields)
+            self.assertTrue('pickup_act' in changed_fields)
+            for change in history_data[0]['fields']:
+                if change['field'] == 'state':
+                    # Enum field value should be in their character representation
+                    assert change['new'] == 'IN_TRANSIT'
 
             # ------------------------------- datetime filtering test -------------------------------#
             self.set_user(self.user_1)

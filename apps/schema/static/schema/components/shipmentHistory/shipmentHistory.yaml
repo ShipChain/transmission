@@ -17,7 +17,7 @@ get:
       content:
         application/vnd.api+json:
           schema:
-            $ref: '../shipments/schema.yaml#/listResponse'
+            $ref: 'schema.yaml#/listResponse'
     '401':
       description: "Unauthorized"
       content:
