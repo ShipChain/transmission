@@ -7,10 +7,12 @@ geometry:
   properties:
     geometry:
       type: object
-      name: geometry
-      allOf:
-      - $ref: '#/location/type'
-      - $ref: '#/location/coordinates'
+      title: geometry
+      properties:
+        type:
+          $ref: '#/location/type/properties/type'
+        coordinates:
+          $ref: '#/location/coordinates/properties/coordinates'
 
 attributes:
   allOf:
@@ -28,6 +30,9 @@ attributes:
   - $ref: '#/geometry'
 
 includedResource:
+  title: Location
+  description: Location associated with the resource
+  type: object
   allOf:
   - $ref: '#/dataTypes/resourceId'
   - $ref: '#/getResource'

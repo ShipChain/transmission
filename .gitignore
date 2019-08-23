@@ -114,3 +114,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 docker-compose.yml
+
+# Swagger PostProcessing files
+apps/schema/static/schema/postman.json
+apps/schema/static/schema/bundledswagger.yaml

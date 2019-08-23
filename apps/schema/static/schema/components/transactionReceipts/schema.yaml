@@ -19,6 +19,9 @@ attributes:
   - $ref: '#/transactionReceipt/status'
 
 getResource:
+  title: Transaction Receipt
+  description: Transaction Receipt details associated with the resource
+  type: object
   allOf:
   - $ref: '#/ethereum/resourceId'
   - $ref: '#/resource'

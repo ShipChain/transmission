@@ -12,22 +12,44 @@ attributes:
 relationships:
   type: array
   items:
-  - allOf:
+    type: object
+    anyOf:
+    - $ref: '#/transactionSchemaRelation'
+    - $ref: '#/transactionReceiptRelation'
+    - $ref: '#/asyncJobRelation'
+
+transactionSchemaRelation:
+  title: Transaction
+  description: Transaction related to this resource
+  type: object
+  allOf:
     - $ref: '#/ethereum/resourceId'
     - $ref: '#/transactionSchema/resource'
-  - allOf:
+
+transactionReceiptRelation:
+  title: Transaction Receipt
+  description: Transaction Receipt related to this resource
+  type: object
+  allOf:
     - $ref: '#/ethereum/resourceId'
     - $ref: '#/transactionReceipt/resource'
-  - allOf:
+
+asyncJobRelation:
+  title: Async Job
+  description: Async Job related to this resource
+  type: object
+  allOf:
     - $ref: '#/dataTypes/resourceId'
     - $ref: '#/job/resource'
 
 included:
   type: array
   items:
-  - $ref: '#/job/getResource'
-  - $ref: '#/transactionSchema/getResource'
-  - $ref: '#/transactionReceipt/getResource'
+    type: object
+    anyOf:
+    - $ref: '#/job/includedResource'
+    - $ref: '#/transactionSchema/includedResource'
+    - $ref: '#/transactionReceipt/getResource'
 
 getResource:
   allOf:
@@ -57,8 +79,7 @@ listResponse:
         items:
           $ref: '#/getResource'
       included:
-        items:
-          $ref: '#/included'
+        $ref: '#/included'
 
 actions:
   type: object

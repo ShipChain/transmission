@@ -453,7 +453,7 @@ customerFields:
     customer_fields:
       title: customer_fields
       description: Customer fields for shipment
-      type: JSON object
+      type: object
       example: {}
 
 specialInstructions:
