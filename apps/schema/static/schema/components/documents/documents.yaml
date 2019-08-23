@@ -2,14 +2,15 @@ get:
   summary: Get shipment documents
   description: >
     Get all `Document`s associated with a `Shipment`.
+  operationId: listShipmentDocuments
   parameters:
     - $ref: '../core/parameters.yaml#/page'
     - $ref: '../core/parameters.yaml#/page_size'
+    - $ref: '../shipments/parameters.yaml#/path'
     - $ref: 'parameters.yaml#/fileType'
     - $ref: 'parameters.yaml#/documentType'
     - $ref: 'parameters.yaml#/uploadStatus'
   tags:
-  - Shipments
   - Documents
   responses:
     '200':
@@ -35,6 +36,9 @@ post:
 
     Note: `Document.upload_status` will need to be updated to `COMPLETE` in order for the document to be retrieved
     from S3.
+  operationId: createShipmentDocument
+  parameters:
+    - $ref: '../shipments/parameters.yaml#/path'
   tags:
     - Documents
   responses:

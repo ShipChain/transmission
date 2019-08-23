@@ -2,6 +2,7 @@ post:
   summary: Perform action on a shipment
   description: >
     Perform an action on a Shipment, triggering a state change.
+  operationId: shipmentAction
   parameters:
     - $ref: 'parameters.yaml#/path'
   tags:

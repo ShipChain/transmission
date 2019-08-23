@@ -5,6 +5,7 @@ get:
 
     If `Document.upload_status` is `COMPLETE`, a presigned S3 URL for downloading the file will be included in the
     `meta` payload.
+  operationId: getShipmentDocument
   parameters:
     - $ref: 'parameters.yaml#/path'
     - $ref: '../shipments/parameters.yaml#/path'
@@ -28,6 +29,10 @@ patch:
   summary: Update a document
   description: >
     Update a `Document` object with the provided parameters.
+  operationId: updateShipmentDocument
+  parameters:
+    - $ref: 'parameters.yaml#/path'
+    - $ref: '../shipments/parameters.yaml#/path'
   tags:
     - Documents
   responses:

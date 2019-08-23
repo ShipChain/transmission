@@ -2,6 +2,7 @@ get:
   summary: List device statuses
   description: >
     List all current `Device` statuses/configurations for an organization
+  operationId: listDeviceStatuses
   parameters:
     - $ref: 'parameters.yaml#/active'
     - $ref: 'parameters.yaml#/inBbox'

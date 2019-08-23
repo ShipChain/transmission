@@ -2,6 +2,7 @@ get:
   summary: List shipments
   description: >
     Retrieve an array of `Shipment` objects associated with the current user ordered by the `Shipment.created_at` date.
+  operationId: listShipments
   parameters:
   - $ref: '../core/parameters.yaml#/page'
   - $ref: '../core/parameters.yaml#/page_size'
@@ -45,6 +46,7 @@ post:
   summary: Create shipment
   description: >
     Create a new `Shipment` owned by the current user.
+  operationId: createShipment
   tags:
   - Shipments
   responses:

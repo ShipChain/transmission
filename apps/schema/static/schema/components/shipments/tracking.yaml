@@ -2,6 +2,7 @@ get:
   summary: Get tracking data
   description: >
     Retrieve GPS tracking data associated with a `Shipment` as a GeoJSON FeatureCollection of points (content returned in 'data' attribute conforms to the [GeoJSON](https://tools.ietf.org/html/rfc7946) spec).
+  operationId: listShipmentTracking
   parameters:
   - $ref: 'parameters.yaml#/path'
   tags:

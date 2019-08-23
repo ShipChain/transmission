@@ -32,7 +32,7 @@ getResponse:
 
 createResponse:
   allOf:
-    - $ref: '../jsonApi/schema.yaml#/data'
+    - $ref: '#/jsonApi/data'
     - properties:
         data:
           $ref: '#/getResource'
