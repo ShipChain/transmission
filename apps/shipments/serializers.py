@@ -208,7 +208,14 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             if attr in info.relations and info.relations[attr].to_many:
                 field = getattr(instance, attr)
                 field.set(value)
+            elif attr not in ('customer_fields', ):
+                setattr(instance, attr, value)
             else:
+                previous_customer_fields_value = getattr(instance, attr)
+                if previous_customer_fields_value and value is None:
+                    value = {key: None for key in previous_customer_fields_value.keys()}
+                elif previous_customer_fields_value and value:
+                    value = {**previous_customer_fields_value, **value}
                 setattr(instance, attr, value)
 
         instance.save()
