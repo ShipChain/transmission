@@ -481,6 +481,49 @@ class ShipmentAPITests(APITestCase):
         response = self.client.patch(url, datetime_aware_delivery_act, content_type=content_type)
         assert response.status_code == status.HTTP_200_OK
 
+    def test_shipment_customer_fields_update(self):
+        from apps.rpc_client import requests
+        with mock.patch.object(requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_id": "TEST_VAULT_ID"
+                }
+            })
+            self.create_shipment()
+        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
+
+        shipment_customer_fields_1 = {
+            'customer_fields': {
+                'field_1': 'value_1',
+                'field_2': 'value_2',
+            }
+        }
+
+        shipment_customer_fields_2 = {
+            'customer_fields': {
+                'field_1': 'value_1 updated',
+                'field_3': 'value_3'
+            }
+        }
+
+        self.set_user(self.user_1)
+
+        response = self.client.patch(url, shipment_customer_fields_1, format='json')
+        self.assertTrue(response.status_code == status.HTTP_202_ACCEPTED)
+        customer_fields = response.json()['data']['attributes']['customer_fields']
+        self.assertEqual(customer_fields, shipment_customer_fields_1['customer_fields'])
+
+        # An additionally added key to customer_field should be present in the customer_fields
+        # and the response should preserve the previously added fields
+        response = self.client.patch(url, shipment_customer_fields_2, format='json')
+        self.assertTrue(response.status_code == status.HTTP_202_ACCEPTED)
+        customer_fields = response.json()['data']['attributes']['customer_fields']
+        self.assertEqual(customer_fields['field_1'], shipment_customer_fields_2['customer_fields']['field_1'])
+        self.assertEqual(customer_fields['field_2'], shipment_customer_fields_1['customer_fields']['field_2'])
+        self.assertEqual(customer_fields['field_3'], shipment_customer_fields_2['customer_fields']['field_3'])
+
     def test_update_shipment_device_certificate(self):
         """
         The shipment's device certificate has been updated but the the old certificate is still attached to the device.
