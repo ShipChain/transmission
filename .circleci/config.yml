@@ -54,7 +54,7 @@ jobs:
       - run:
           name: Merge junit results
           command: |
-            pip install junitparser
+            pip install junitparser==1.3.2
             junitparser merge test-results/pytest/results-pe.xml test-results/pytest/results-pd.xml test-results/pytest/results.xml
             rm test-results/pytest/results-*.xml
       - store_test_results:
