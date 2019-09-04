@@ -181,7 +181,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                             'storage_credentials_id', 'contract_version', 'state')
 
-    def update(self, instance, validated_data):
+    def update(self, instance, validated_data):     # noqa: MC0001
         if 'device' in self.context:
             if validated_data['device_id']:
                 instance.device = self.context['device']
@@ -208,8 +208,11 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             if attr in info.relations and info.relations[attr].to_many:
                 field = getattr(instance, attr)
                 field.set(value)
-            else:
-                setattr(instance, attr, value)
+            elif attr in ('customer_fields', ):
+                previous_value = getattr(instance, attr)
+                if previous_value and value:
+                    value = {**previous_value, **value}
+            setattr(instance, attr, value)
 
         instance.save()
         return instance
