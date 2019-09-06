@@ -64,7 +64,7 @@ class ShipmentImport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ('updated_at',)
+        ordering = ('-created_at',)
 
     @property
     def s3_key(self):
