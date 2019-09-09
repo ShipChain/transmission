@@ -51,6 +51,75 @@ processingStatus:
       enum: [PENDING, RUNNING, COMPLETE, FAILED]
       example: 'PENDING'
 
+report:
+  properties:
+    report:
+      title: report
+      description: Report of the shipment import processing results
+      properties:
+        failed:
+          $ref: '#/reportFailedNumber'
+        success:
+          $ref: '#/reportSuccessNumber'
+        failed_row:
+          type: array
+          description: List of errors inherent to failed shipments creation
+          items:
+            type: object
+            properties:
+              row:
+                $ref: '#/fileRowNumber'
+              errors:
+                type: array
+                title: errors
+                description: List of errors for the specific shipment creation
+                items:
+                  $ref: '#/errorDetails'
+
+errorDetails:
+  properties:
+    details:
+      type: string
+      title: detail
+      description: Description of the field error
+      example: "A valid integer is required."
+    source:
+      $ref: '#/errorSource'
+    status:
+      type: string
+      title: status
+      description: Error status code
+      example: "400"
+
+
+
+reportFailedNumber:
+  type: integer
+  title: failed
+  description: The number of shipments unsuccessfully created
+  example: 3
+
+reportSuccessNumber:
+  type: integer
+  title: success
+  description: The number of shipments successfully created
+  example: 10
+
+fileRowNumber:
+  type: integer
+  title: row
+  description: File row number related to the failed shipment creation
+  example: 2
+
+errorSource:
+  title: source
+  properties:
+    pointer:
+      type: string
+      title: pointer
+      description: Shipment error field
+      example: "/data/attributes/package_qty"
+
 acl:
   properties:
     acl:
