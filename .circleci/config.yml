@@ -94,6 +94,23 @@ jobs:
       - checkout
       - run: npx speccy lint ./apps/schema/static/schema/swagger.yaml -c ./apps/schema/static/schema/speccy.yaml
 
+  spellchecker:
+    docker:
+      - image: circleci/node:10
+        user: root
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Swagger spell check
+          command: |
+            [ "$(docker ps -q -f name=spellcheck)" ] && docker kill spellcheck && docker rm -v spellcheck
+            docker run --name spellcheck -d --entrypoint '' shipchain/openapi-spellcheck sh -c 'while sleep 3600; do :; done'
+            docker cp $(pwd)/apps/schema/static/schema spellcheck:/schema
+            docker exec spellcheck ./spellchecker_entrypoint.sh schema/swagger.yaml schema/dictionary.txt
+
   push-to-ecr:
     docker:
       - image: docker:stable-git
@@ -139,6 +156,7 @@ workflows:
       - build
       - openapi-validation
       - speccy
+      - spellchecker
       - push-to-ecr:
           filters:
             branches:
