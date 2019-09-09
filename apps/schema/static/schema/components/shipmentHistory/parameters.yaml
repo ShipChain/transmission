@@ -13,7 +13,7 @@ historyDateGreaterThan:
   required: false
   in: query
   name: history_date__gte
-  description: Query for changes with Date time grester than the provided value
+  description: Query for changes with Date time greater than the provided value
   allowReserved: true
   schema:
     type: string

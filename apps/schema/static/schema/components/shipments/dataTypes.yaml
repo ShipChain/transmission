@@ -244,7 +244,7 @@ pickupAct:
   properties:
     pickup_act:
       title: pickup_act
-      description: Actual timestamp pickup occured at point of origin
+      description: Actual timestamp pickup occurred at point of origin
       type: string
       example: '2018-08-22T17:44:39.874352'
 
