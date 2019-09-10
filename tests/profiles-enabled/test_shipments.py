@@ -670,8 +670,13 @@ class ShipmentAPITests(APITestCase):
                 # The new certificate should be attached to the shipment's device
                 device.refresh_from_db()
                 self.assertEqual(device.certificate_id, new_active_certificate)
-                data = response.json()['data']
-                self.assertEqual(device.shipment.id, data['id'])
+                response_data = response.json()
+                included_object = response_data['included']
+                self.assertEqual(device.shipment.id, response_data['data']['id'])
+                for included in included_object:
+                    if included['type'] == 'Device':
+                        assert 'certificate_id' not in included['attributes']
+                        break
 
     def get_changed_fields(self, changes_list, field_name):
         return [item[field_name] for item in changes_list]
