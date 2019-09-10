@@ -1,7 +1,6 @@
 acl
 amz
 appt
-Async
 async
 AsyncActions
 AsyncJob
@@ -32,7 +31,6 @@ iso
 JWS
 
 gasUsed
-GeoJSON
 GeoJson
 Geolocation
 
