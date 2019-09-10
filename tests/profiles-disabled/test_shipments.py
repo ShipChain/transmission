@@ -1,6 +1,6 @@
 from unittest import mock
-from conf import test_settings_profiles_disabled
 
+from django.conf import settings as test_settings
 from django.core import mail
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -45,7 +45,8 @@ class ShipmentAPITests(APITestCase):
                                                           shipper_wallet_id=SHIPPER_WALLET_ID,
                                                           storage_credentials_id=STORAGE_CRED_ID,
                                                           pickup_est="2018-11-10T17:57:05.070419Z",
-                                                          owner_id=OWNER_ID))
+                                                          owner_id=OWNER_ID,
+                                                          hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT))
 
     def test_shipment_create(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})
@@ -100,6 +101,7 @@ class ShipmentAPITests(APITestCase):
         })
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
+        print(response.content)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
     def test_shipment_create_with_location(self):

@@ -1,16 +1,16 @@
-from rest_framework.test import APITestCase
-from apps.eth.models import TransactionReceipt, EthAction
-from apps.jobs.models import AsyncJob
-from django.db import models
+import json
+from unittest import mock
+
+from django.conf import settings as test_settings
 from rest_framework import status
 from rest_framework.reverse import reverse
-from apps.shipments.models import Shipment
-from unittest import mock
-from apps.shipments.rpc import Load110RPCClient
-from apps.eth.rpc import EventRPCClient
-import json
-from conf import test_settings
+from rest_framework.test import APITestCase
 
+from apps.eth.models import TransactionReceipt, EthAction
+from apps.eth.rpc import EventRPCClient
+from apps.jobs.models import AsyncJob
+from apps.shipments.models import Shipment
+from apps.shipments.rpc import Load110RPCClient
 
 BLOCK_HASH = "0x38823cb26b528867c8dbea4146292908f55e1ee7f293685db1df0851d1b93b24"
 BLOCK_NUMBER = 14
@@ -92,7 +92,8 @@ class TransactionReceiptTestCase(APITestCase):
 
         listener = Shipment.objects.create(owner_id=USER_ID, carrier_wallet_id=WALLET_ID,
                                            shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
-                                           storage_credentials_id=WALLET_ID)
+                                           storage_credentials_id=WALLET_ID,
+                                           hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT)
 
         self.createAsyncJobs(listener)
         self.createEthAction(listener)
@@ -113,7 +114,8 @@ class TransactionReceiptTestCase(APITestCase):
             storage_credentials_id='FAKE_STORAGE_CREDENTIALS_ID',
             shipper_wallet_id='FAKE_SHIPPER_WALLET_ID',
             carrier_wallet_id='FAKE_CARRIER_WALLET_ID',
-            contract_version='1.0.0'
+            contract_version='1.0.0',
+            hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT
         )
 
         self.createAsyncJobs(listener)

@@ -67,9 +67,11 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=get_owner_id(self.request), updated_by=self.request.user.id)
+            hash_rate_limit = self.request.user.token.get('hash_rate_limit', settings.TRACKING_VAULT_HASH_RATE_LIMIT)
+            created = serializer.save(owner_id=get_owner_id(self.request), updated_by=self.request.user.id,
+                                      hash_rate_limit=hash_rate_limit)
         else:
-            created = serializer.save()
+            created = serializer.save(hash_rate_limit=settings.TRACKING_VAULT_HASH_RATE_LIMIT)
         return created
 
     def perform_update(self, serializer):

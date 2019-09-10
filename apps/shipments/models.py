@@ -218,6 +218,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     contract_version = models.CharField(null=False, max_length=36)
+    hash_rate_limit = models.IntegerField(validators=[MinValueValidator(0)])
 
     updated_by = models.CharField(null=True, max_length=36)
 

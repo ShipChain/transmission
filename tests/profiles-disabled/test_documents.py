@@ -16,6 +16,7 @@ limitations under the License.
 
 from unittest import mock
 
+from django.conf import settings as test_settings
 from django.db.models import signals
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -47,7 +48,8 @@ class DocumentViewSetAPITests(APITestCase):
             carrier_wallet_id=CARRIER_WALLET_ID,
             shipper_wallet_id=SHIPPER_WALLET_ID,
             storage_credentials_id=STORAGE_CRED_ID,
-            owner_id=OWNER_ID
+            owner_id=OWNER_ID,
+            hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT
         )
 
         # Re-enable Shipment post save signal

@@ -12,11 +12,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from datetime import datetime
+
+import pytest
+import pytz
 from dateutil.parser import parse as dt_parse
 from dateutil.relativedelta import relativedelta
-
-import pytz
-import pytest
+from django.conf import settings as test_settings
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
@@ -91,7 +92,8 @@ def shipment(mocked_engine_rpc, mocked_iot_api):
                                    carrier_wallet_id=random_id(),
                                    shipper_wallet_id=random_id(),
                                    storage_credentials_id=random_id(),
-                                   owner_id=USER_ID)
+                                   owner_id=USER_ID,
+                                   hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT)
 
 
 @pytest.fixture
