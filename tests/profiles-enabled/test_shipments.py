@@ -2214,9 +2214,11 @@ class DevicesLocationsAPITests(APITestCase):
         device_template = {
             "deviceId": "",
             "deviceType": "AXLE_GATEWAY",
+            "certificateId": 'Dummy-certificate-1',
             "attributes": {
                 "creationDate": "2019-04-01T00:56:24.037787",
                 "environment": "test",
+                "certificate_id": 'Dummy-certificate-2',
                 "version": "v.1.1",
                 "registration": "",
                 "owner": owner_id
@@ -2305,8 +2307,13 @@ class DevicesLocationsAPITests(APITestCase):
 
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            data = response.json()
-            self.assertEqual(len(data['data']), 5)
+            data = response.json()['data']
+            self.assertEqual(len(data), 5)
+            for device in data:
+                # The certificate Id should not be present in the device's info
+                self.assertTrue('certificate_id' not in device['attributes'])
+                self.assertTrue('certificateId' not in device)
+
             # Only one Api call is made to IOT_AWS_HOST
             mock_get.assert_called_once()
 

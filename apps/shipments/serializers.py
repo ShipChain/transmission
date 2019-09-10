@@ -57,7 +57,6 @@ class NullableFieldsMixin:
 class DeviceSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Device
-        # fields = '__all__'
         exclude = ('certificate_id', )
 
 

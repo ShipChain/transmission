@@ -186,3 +186,20 @@ class UploadStatus(Enum):
         PENDING = 'PENDING'
         COMPLETE = 'COMPLETE'
         FAILED = 'FAILED'
+
+
+def remove_dict_key_recursively(dict_obj, key_to_remove):
+    """
+    :param dict_obj: Dictionary object from which we want to remove a particular key
+    :param key_to_remove: Dictionary key to remove recursively
+    :return: The input dict_obj without the key_to_remove key if found
+    """
+    to_return = {}
+    for key, value in dict_obj.items():
+        if key.lower() != key_to_remove.lower():
+            if isinstance(value, dict):
+                to_return[key] = remove_dict_key_recursively(value, key_to_remove)
+            else:
+                to_return[key] = value
+
+    return to_return
