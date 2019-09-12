@@ -108,6 +108,7 @@ jobs:
           command: |
             docker run --name spellcheck -d --entrypoint '' shipchain/openapi-spellcheck sh -c 'while sleep 3600; do :; done'
             docker cp $(pwd)/apps/schema/static/schema spellcheck:/schema
+            docker cp $(pwd)/tests/openapi_words/dictionary.txt spellcheck:/schema/dictionary.txt
             docker exec spellcheck ./spellchecker_entrypoint.sh schema/swagger.yaml schema/dictionary.txt
 
   push-to-ecr:

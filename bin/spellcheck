@@ -3,4 +3,6 @@
 echo "--------------------------------  Running Swagger spellchecker  --------------------------------"
 
 docker run --rm \
-  -v $(pwd)/apps/schema/static/schema:/schema shipchain/openapi-spellcheck schema/swagger.yaml schema/dictionary.txt
+  -v $(pwd)/apps/schema/static/schema:/schema \
+  -v $(pwd)/tests/openapi_words/dictionary.txt:/schema/dictionary.txt \
+  shipchain/openapi-spellcheck schema/swagger.yaml schema/dictionary.txt
