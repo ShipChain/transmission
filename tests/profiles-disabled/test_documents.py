@@ -22,10 +22,10 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 
 from apps.documents.models import Document
-from apps.documents.rpc import DocumentRPCClient
+from apps.rpc_client import requests as rpc_requests
 from apps.shipments.models import Shipment
 from apps.shipments.signals import shipment_post_save
-
+from tests.utils import mocked_rpc_response
 
 OWNER_ID = '5e8f1d76-162d-4f21-9b71-2ca97306ef7c'
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
@@ -54,9 +54,6 @@ class DocumentViewSetAPITests(APITestCase):
         signals.post_save.connect(shipment_post_save, sender=Shipment, dispatch_uid='shipment_post_save')
 
     def test_create_document(self):
-        mock_document_rpc_client = DocumentRPCClient
-        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=True)
-
         url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipment.id})
 
         file_data = {
@@ -66,17 +63,21 @@ class DocumentViewSetAPITests(APITestCase):
             'document_type': 'Bol',
             'file_type': 'Pdf'
         }
+        with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "success": True
+            })
 
-        response = self.client.post(url, file_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        data = response.json()['data']
-        self.assertTrue(isinstance(data['meta']['presigned_s3']['fields'], dict))
-        document = Document.objects.all()
-        self.assertEqual(document.count(), 1)
-        self.assertEqual(self.shipment.id, document[0].shipment_id)
+            response = self.client.post(url, file_data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            data = response.json()['data']
+            self.assertTrue(isinstance(data['meta']['presigned_s3']['fields'], dict))
+            document = Document.objects.all()
+            self.assertEqual(document.count(), 1)
+            self.assertEqual(self.shipment.id, document[0].shipment_id)
 
-        # A request with an invalid shipment_id should fail
-        bad_shipment_id = 'non-existing-shipment-in-db'
-        bad_shipment_in_url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': bad_shipment_id})
-        response = self.client.post(bad_shipment_in_url, file_data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            # A request with an invalid shipment_id should fail
+            bad_shipment_id = 'non-existing-shipment-in-db'
+            bad_shipment_in_url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': bad_shipment_id})
+            response = self.client.post(bad_shipment_in_url, file_data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

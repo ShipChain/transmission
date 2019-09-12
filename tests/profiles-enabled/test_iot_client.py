@@ -46,16 +46,17 @@ class AWSTestWithMocked(APITestCase):
         settings.IOT_AWS_HOST = 'not-really-aws.com'
         settings.IOT_GATEWAY_STAGE = 'test'
 
-    @httpretty.activate
     def test_get(self):
         aws_iot_client = AWSIoTClient()
 
         # Call without connection return the 503 Error
-        try:
-            aws_iot_client._get('test_method')
-            self.fail("Should have thrown AWS Error")
-        except AWSIoTError as aws_error:
-            self.assertEqual(aws_error.status_code, 503)
+        with mock.patch.object(requests.Session, 'get') as mock_get:
+            mock_get.side_effect = requests.exceptions.ConnectionError(mock.Mock(status=503), 'not found')
+            try:
+                aws_iot_client._get('test_method')
+                self.fail("Should have thrown AWS Error")
+            except AWSIoTError as aws_error:
+                self.assertEqual(aws_error.status_code, 503)
 
         with mock.patch.object(requests.Session, 'get') as mock_get:
             mock_get.return_value = mocked_rpc_response({
@@ -94,11 +95,14 @@ class AWSTestWithMocked(APITestCase):
         aws_iot_client = AWSIoTClient()
 
         # Call without connection return the 503 Error
-        try:
-            aws_iot_client._call('post', 'test_method')
-            self.fail("Should have thrown AWS Error")
-        except AWSIoTError as aws_error:
-            self.assertEqual(aws_error.status_code, 503)
+        with mock.patch.object(requests.Session, 'post') as mock_get:
+            mock_get.side_effect = requests.exceptions.ConnectionError(mock.Mock(status=503), 'not found')
+
+            try:
+                aws_iot_client._call('post', 'test_method')
+                self.fail("Should have thrown AWS Error")
+            except AWSIoTError as aws_error:
+                self.assertEqual(aws_error.status_code, 503)
 
         with mock.patch.object(requests.Session, 'post') as mock_post:
             mock_post.return_value = mocked_rpc_response({
