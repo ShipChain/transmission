@@ -23,7 +23,7 @@ fundingType:
   properties:
     funding_type:
       title: funding_type
-      description: Type of funding for the shipmet
+      description: Type of funding for the shipment
       type: string
       enum: [NO_FUNDING, SHIP, ETHER]
       example: 'SHIP'

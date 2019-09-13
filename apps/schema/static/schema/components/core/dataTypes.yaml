@@ -6,7 +6,7 @@ uuid: &uuid
 
 email:
   title: email
-  description: Recepient email address
+  description: Recipient email address
   type: string
   format: email
   example: user@email.com

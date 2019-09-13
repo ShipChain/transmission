@@ -26,7 +26,7 @@ get:
 post:
   summary: Create permission link
   description: |
-    Create a new `PermissionLink` associated with the `Shipment` and e-mail a list of recipients if provited.
+    Create a new `PermissionLink` associated with the `Shipment` and e-mail a list of recipients if provided.
 
     This `PermissionLink` provides read-only access to the `Shipment`.
   operationId: createShipmentPermissionLink

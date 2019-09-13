@@ -51,7 +51,7 @@ blockNumber:
   properties:
     blockNumber:
       title: blockNumber
-      description: Block number of the trasaction
+      description: Block number of the transaction
       type: number
       format: int32
       example: 32
