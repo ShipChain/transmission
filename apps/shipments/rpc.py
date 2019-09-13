@@ -145,7 +145,7 @@ class Load110RPCClient(ShipmentRPCClient):
         })
 
         if 'success' in result and result['success']:
-            if 'transaction' in result:
+            if 'transaction' in result and result['transaction']:
                 LOG.debug('Successful update of vault hash transaction.')
                 return result['transaction']
 
@@ -167,7 +167,7 @@ class Load110RPCClient(ShipmentRPCClient):
         })
 
         if 'success' in result and result['success']:
-            if 'transaction' in result:
+            if 'transaction' in result and result['transaction']:
                 LOG.debug('Successful update of vault uri transaction.')
                 return result['transaction']
 
@@ -189,7 +189,7 @@ class Load110RPCClient(ShipmentRPCClient):
         })
 
         if 'success' in result and result['success']:
-            if 'transaction' in result:
+            if 'transaction' in result and result['transaction']:
                 LOG.debug('Successful update of carrier wallet transaction.')
                 return result['transaction']
 
@@ -211,7 +211,7 @@ class Load110RPCClient(ShipmentRPCClient):
         })
 
         if 'success' in result and result['success']:
-            if 'transaction' in result:
+            if 'transaction' in result and result['transaction']:
                 LOG.debug('Successful update of moderator wallet transaction.')
                 return result['transaction']
 

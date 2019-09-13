@@ -16,10 +16,10 @@ from rest_framework.test import APITestCase, APIClient
 
 from apps.authentication import passive_credentials_auth
 from apps.documents.models import Document, UploadStatus, DocumentType, FileType
-from apps.documents.rpc import DocumentRPCClient
+from apps.rpc_client import requests as rpc_requests
 from apps.shipments.models import Shipment, LoadShipment
 from apps.shipments.signals import shipment_post_save
-from tests.utils import create_form_content, get_jwt
+from tests.utils import create_form_content, get_jwt, mocked_rpc_response
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'
 FAKE_ID = '00000000-0000-0000-0000-000000000000'
@@ -35,6 +35,7 @@ STORAGE_CRED_ID = '77b72202-5bcd-49f4-9860-bc4ec4fee07b'
 DEVICE_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
 DATE = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 SHIPMENT_ID = SHIPMENT_ID.format(DATE[:10])
+VAULT_HASH = '0xe9f28cb025350ef700158eed9a5b617a4f4185b31de06864fd02d67c839df583'
 
 
 class PdfDocumentViewSetAPITests(APITestCase):
@@ -89,13 +90,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         pdf.cell(40, 60, f"{DATE}")
         pdf.output(file_path, 'F')
 
-    @mock.patch('apps.permissions.is_shipper', mock.MagicMock(return_value=False))
-    @mock.patch('apps.permissions.is_carrier', mock.MagicMock(return_value=False))
-    @mock.patch('apps.permissions.is_moderator', mock.MagicMock(return_value=False))
     def test_sign_to_s3(self):
-        mock_document_rpc_client = DocumentRPCClient
-        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=True)
-
         url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipment.id})
 
         f_path = './tests/tmp/test_upload.pdf'
@@ -112,126 +107,137 @@ class PdfDocumentViewSetAPITests(APITestCase):
         response = self.client.post(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # Authenticated request should succeed
-        self.set_user(self.user_1)
-        response = self.client.post(url, file_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                },
+                "id": 0
+            })
 
-        document = Document.objects.all()
-        self.assertEqual(document.count(), 1)
-        self.assertEqual(self.shipment.id, document[0].shipment_id)
+            # Authenticated request should succeed
+            self.set_user(self.user_1)
+            response = self.client.post(url, file_data, content_type=content_type)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        # Check s3 path integrity in db
-        shipment = document[0].shipment
-        doc_id = document[0].id
-        s3_path = f"s3://{settings.DOCUMENT_MANAGEMENT_BUCKET}/{shipment.storage_credentials_id}/" \
-            f"{shipment.shipper_wallet_id}/{shipment.vault_id}/{doc_id}.pdf"
-        self.assertEqual(document[0].s3_path, s3_path)
+            document = Document.objects.all()
+            self.assertEqual(document.count(), 1)
+            self.assertEqual(self.shipment.id, document[0].shipment_id)
 
-        data = response.json()['data']
-        fields = data['meta']['presigned_s3']['fields']
+            # Check s3 path integrity in db
+            shipment = document[0].shipment
+            doc_id = document[0].id
+            s3_path = f"s3://{settings.DOCUMENT_MANAGEMENT_BUCKET}/{shipment.storage_credentials_id}/" \
+                f"{shipment.shipper_wallet_id}/{shipment.vault_id}/{doc_id}.pdf"
+            self.assertEqual(document[0].s3_path, s3_path)
 
-        s3_resource = settings.S3_RESOURCE
+            data = response.json()['data']
+            fields = data['meta']['presigned_s3']['fields']
 
-        # File upload
-        put_url = data['meta']['presigned_s3']['url']
-        with open(f_path, 'rb') as pdf:
-            res = requests.post(put_url, data=fields, files={'file': pdf})
+            s3_resource = settings.S3_RESOURCE
 
-        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-        s3_resource.Bucket(settings.DOCUMENT_MANAGEMENT_BUCKET).download_file(fields['key'],
-                                                                              './tests/tmp/downloaded.pdf')
+            # File upload
+            put_url = data['meta']['presigned_s3']['url']
+            with open(f_path, 'rb') as pdf:
+                res = requests.post(put_url, data=fields, files={'file': pdf})
 
-        # We verify the integrity of the uploaded file
-        downloaded_file = Path('./tests/tmp/downloaded.pdf')
-        self.assertTrue(downloaded_file.exists())
+            self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+            s3_resource.Bucket(settings.DOCUMENT_MANAGEMENT_BUCKET).download_file(fields['key'],
+                                                                                  './tests/tmp/downloaded.pdf')
 
-        # Update document object upon upload completion
-        url_patch = url + f'{document[0].id}/'
-        file_data, content_type = create_form_content({
-            'upload_status': 'COMPLETE',
-        })
-        response = self.client.patch(url_patch, file_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
+            # We verify the integrity of the uploaded file
+            downloaded_file = Path('./tests/tmp/downloaded.pdf')
+            self.assertTrue(downloaded_file.exists())
 
-        # Tentative to update a fields other than upload_status should fail
-        file_data, content_type = create_form_content({
-            'document_type': DocumentType.IMAGE,
-        })
-        response = self.client.patch(url_patch, file_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertNotEqual(document[0].document_type, DocumentType.IMAGE)
+            # Update document object upon upload completion
+            url_patch = url + f'{document[0].id}/'
+            file_data, content_type = create_form_content({
+                'upload_status': 'COMPLETE',
+            })
+            response = self.client.patch(url_patch, file_data, content_type=content_type)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
 
-        # Get a document
-        url_get = url + f'{document[0].id}/'
-        response = self.client.get(url_get)
-        data = response.json()['data']
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Tentative to update a fields other than upload_status should fail
+            file_data, content_type = create_form_content({
+                'document_type': DocumentType.IMAGE,
+            })
+            response = self.client.patch(url_patch, file_data, content_type=content_type)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertNotEqual(document[0].document_type, DocumentType.IMAGE)
 
-        # Download document from pre-signed s3 generated url
-        s3_url = data['meta']['presigned_s3']
-        res = requests.get(s3_url)
-        with open('./tests/tmp/from_presigned_s3_url.pdf', 'wb') as f:
-            f.write(res.content)
+            # Get a document
+            url_get = url + f'{document[0].id}/'
+            response = self.client.get(url_get)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Second pdf document
-        f_path = './tests/tmp/second_test_upload.pdf'
-        message = "Second upload pdf test. This should be larger in size!"
-        self.make_pdf_file(f_path, message=message)
-        file_data, content_type = create_form_content({
-            'name': os.path.basename(f_path),
-            'document_type': 'Bol',
-            'file_type': 'Pdf'
-        })
+            # Download document from pre-signed s3 generated url
+            s3_url = data['meta']['presigned_s3']
+            res = requests.get(s3_url)
+            with open('./tests/tmp/from_presigned_s3_url.pdf', 'wb') as f:
+                f.write(res.content)
 
-        response = self.client.post(url, file_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        document = Document.objects.all().order_by('created_at')
-        self.assertEqual(document.count(), 2)
+            # Second pdf document
+            f_path = './tests/tmp/second_test_upload.pdf'
+            message = "Second upload pdf test. This should be larger in size!"
+            self.make_pdf_file(f_path, message=message)
+            file_data, content_type = create_form_content({
+                'name': os.path.basename(f_path),
+                'document_type': 'Bol',
+                'file_type': 'Pdf'
+            })
 
-        # Update second uploaded document status to complete
-        url_patch = url + f'{document[1].id}/'
-        file_data, content_type = create_form_content({
-            'upload_status': 'Complete',
-        })
-        response = self.client.patch(url_patch, file_data, content_type=content_type)
-        data = response.json()['data']
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(document[1].upload_status, UploadStatus.COMPLETE)
-        self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
+            response = self.client.post(url, file_data, content_type=content_type)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            document = Document.objects.all().order_by('created_at')
+            self.assertEqual(document.count(), 2)
 
-        # Get list of documents
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+            # Update second uploaded document status to complete
+            url_patch = url + f'{document[1].id}/'
+            file_data, content_type = create_form_content({
+                'upload_status': 'Complete',
+            })
 
-        # Get list of pdf documents via query params, it should return 2 elements
-        url_pdf = url + '?file_type=Pdf'
-        response = self.client.get(url_pdf)
-        data = response.json()['data']
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(data), 2)
+            response = self.client.patch(url_patch, file_data, content_type=content_type)
+            data = response.json()['data']
 
-        # Querying for png files should return an empty list at this stage
-        url_png = url + '?file_type=Png'
-        response = self.client.get(url_png)
-        data = response.json()['data']
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(data), 0)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(document[1].upload_status, UploadStatus.COMPLETE)
+            self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
 
-        # Get list of BOL documents via query params, it should return 2 elements
-        url_bol = url + '?document_type=Bol'
-        response = self.client.get(url_bol)
-        data = response.json()['data']
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(data), 2)
+            # Get list of documents
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Querying for file objects with upload_status FAILED, should return an empty list at this stage
-        url_failed_satus = url + '?upload_status=FAIled'
-        response = self.client.get(url_failed_satus)
-        data = response.json()['data']
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(data), 0)
+            # Get list of pdf documents via query params, it should return 2 elements
+            url_pdf = url + '?file_type=Pdf'
+            response = self.client.get(url_pdf)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 2)
+
+            # Querying for png files should return an empty list at this stage
+            url_png = url + '?file_type=Png'
+            response = self.client.get(url_png)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 0)
+
+            # Get list of BOL documents via query params, it should return 2 elements
+            url_bol = url + '?document_type=Bol'
+            response = self.client.get(url_bol)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 2)
+
+            # Querying for file objects with upload_status FAILED, should return an empty list at this stage
+            url_failed_satus = url + '?upload_status=FAIled'
+            response = self.client.get(url_failed_satus)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 0)
 
 
 class DocumentAPITests(APITestCase):
@@ -301,9 +307,6 @@ class DocumentAPITests(APITestCase):
         self.assertEqual(Document.objects.all().count(), 5)
 
     def test_s3_notification(self):
-        mock_shipment_rpc_client = DocumentRPCClient
-        mock_shipment_rpc_client.add_document_from_s3 = mock.Mock(return_value={'hash': 'hash'})
-
         url = reverse('document-events', kwargs={'version': 'v1'})
 
         self.set_user(None)
@@ -317,31 +320,43 @@ class DocumentAPITests(APITestCase):
         response = self.client.post(url, json.dumps(s3_event), content_type="application/json")
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-        # Test improper key formatting
-        response = self.client.post(url, json.dumps(s3_event), content_type="application/json",
-                                    X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
-                                    X_SSL_CLIENT_DN='/CN=document-management-s3-hook.test-internal')
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_signed": {
+                        'hash': VAULT_HASH
+                    }
+                },
+                "id": 0
+            })
 
-        # Test 'good' key with no document
-        "sc_uuid/wallet_uuid/vault_uuid/document_uuid.ext"
-        s3_event["Records"][0]["s3"]["object"]["key"] = f"{FAKE_ID}/{FAKE_ID}/{FAKE_ID}/{FAKE_ID}.png"
-        response = self.client.post(url, json.dumps(s3_event), content_type="application/json",
-                                    X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
-                                    X_SSL_CLIENT_DN='/CN=document-management-s3-hook.test-internal')
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+            # Test improper key formatting
+            response = self.client.post(url, json.dumps(s3_event), content_type="application/json",
+                                        X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                        X_SSL_CLIENT_DN='/CN=document-management-s3-hook.test-internal')
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-        # Test that a real document has its upload status updated
-        doc = Document.objects.create(**self.data[0])
-        assert doc.upload_status == UploadStatus.PENDING
-        s3_event["Records"][0]["s3"]["object"]["key"] = f"{FAKE_ID}/{FAKE_ID}/{FAKE_ID}/{doc.id}.png"
-        response = self.client.post(url, json.dumps(s3_event), content_type="application/json",
-                                    X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
-                                    X_SSL_CLIENT_DN='/CN=document-management-s3-hook.test-internal')
-        assert response.status_code == status.HTTP_204_NO_CONTENT
-        doc.refresh_from_db()
-        mock_shipment_rpc_client.add_document_from_s3.assert_called_once()
-        assert doc.upload_status == UploadStatus.COMPLETE
+            # Test 'good' key with no document
+            "sc_uuid/wallet_uuid/vault_uuid/document_uuid.ext"
+            s3_event["Records"][0]["s3"]["object"]["key"] = f"{FAKE_ID}/{FAKE_ID}/{FAKE_ID}/{FAKE_ID}.png"
+            response = self.client.post(url, json.dumps(s3_event), content_type="application/json",
+                                        X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                        X_SSL_CLIENT_DN='/CN=document-management-s3-hook.test-internal')
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+            # Test that a real document has its upload status updated
+            doc = Document.objects.create(**self.data[0])
+            assert doc.upload_status == UploadStatus.PENDING
+            s3_event["Records"][0]["s3"]["object"]["key"] = f"{FAKE_ID}/{FAKE_ID}/{FAKE_ID}/{doc.id}.png"
+            response = self.client.post(url, json.dumps(s3_event), content_type="application/json",
+                                        X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                        X_SSL_CLIENT_DN='/CN=document-management-s3-hook.test-internal')
+            assert response.status_code == status.HTTP_204_NO_CONTENT
+            doc.refresh_from_db()
+            assert mock_method.call_count == 1
+            assert doc.upload_status == UploadStatus.COMPLETE
 
     def test_document_permission(self):
 
@@ -357,15 +372,25 @@ class DocumentAPITests(APITestCase):
 
         self.set_user(self.user_1)
 
-        # user_1 is the shipment owner, he should have access to all 4 documents
-        response = self.client.get(url)
-        data = response.json()['data']
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(data), 4)
-
         with mock.patch('apps.permissions.is_shipper') as mock_is_shipper, \
-            mock.patch('apps.permissions.is_carrier') as mock_is_carrier, \
-            mock.patch('apps.permissions.is_moderator') as mock_is_moderator:
+                mock.patch('apps.permissions.is_carrier') as mock_is_carrier, \
+                mock.patch('apps.permissions.is_moderator') as mock_is_moderator, \
+                mock.patch.object(rpc_requests.Session, 'post') as mock_rpc_call:
+
+            mock_rpc_call.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                },
+                "id": 0
+            })
+
+            # user_1 is the shipment owner, he should have access to all 4 documents
+            response = self.client.get(url)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 4)
+
             mock_is_shipper.return_value = True
             mock_is_carrier.return_value = False
             mock_is_moderator.return_value = False
@@ -489,9 +514,6 @@ class ImageDocumentViewSetAPITests(APITestCase):
         draw.text((160, 150), DATE, font=font2, fill='white')
         img.save(file_path)
 
-    @mock.patch('apps.permissions.is_shipper', mock.MagicMock(return_value=False))
-    @mock.patch('apps.permissions.is_carrier', mock.MagicMock(return_value=False))
-    @mock.patch('apps.permissions.is_moderator', mock.MagicMock(return_value=False))
     def test_image_creation(self):
         img_path = ['./tests/tmp/jpeg_img.jpg', './tests/tmp/png_img.png']
 
@@ -540,43 +562,47 @@ class ImageDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'upload_status': 'complete',
         })
-        response = self.client.patch(url_patch, file_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.json()['data']
-        self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
-        self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
+        with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                },
+                "id": 0
+            })
+            response = self.client.patch(url_patch, file_data, content_type=content_type)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(document[0].upload_status, UploadStatus.COMPLETE)
+            self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
 
-        # Get a document
-        # url = reverse('document-detail', kwargs={'version': 'v1', 'pk': document[0].id})
-        url_get = url + f'{document[0].id}/'
-        response = self.client.get(url_get)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.json()['data']
-        self.assertTrue(data['meta']['presigned_s3'])
+            # Get a document
+            url_get = url + f'{document[0].id}/'
+            response = self.client.get(url_get)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertTrue(data['meta']['presigned_s3'])
 
-        # Download document from pre-signed s3 generated url
-        s3_url = data['meta']['presigned_s3']
-        res = requests.get(s3_url)
-        with open('./tests/tmp/png_img_from_presigned_s3_url.png', 'wb') as f:
-            f.write(res.content)
+            # Download document from pre-signed s3 generated url
+            s3_url = data['meta']['presigned_s3']
+            res = requests.get(s3_url)
+            with open('./tests/tmp/png_img_from_presigned_s3_url.png', 'wb') as f:
+                f.write(res.content)
 
-        # Get list of png image via query params, should return one document
-        url_png = url + '?file_type=Png'
-        response = self.client.get(url_png)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.json()['data']
-        self.assertEqual(len(data), 1)
+            # Get list of png image via query params, should return one document
+            url_png = url + '?file_type=Png'
+            response = self.client.get(url_png)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertEqual(len(data), 1)
 
-        # This should return an empty list since there is no pdf in db at this stage
-        url_pdf = url + '?file_type=Pdf'
-        response = self.client.get(url_pdf)
-        data = response.json()['data']
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(data), 0)
+            # This should return an empty list since there is no pdf in db at this stage
+            url_pdf = url + '?file_type=Pdf'
+            response = self.client.get(url_pdf)
+            data = response.json()['data']
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(data), 0)
 
-    @mock.patch('apps.permissions.is_shipper', mock.MagicMock(return_value=False))
-    @mock.patch('apps.permissions.is_carrier', mock.MagicMock(return_value=False))
-    @mock.patch('apps.permissions.is_moderator', mock.MagicMock(return_value=False))
     def test_get_document_from_vault(self):
         img_path = './tests/tmp/png_img.png'
 
@@ -591,82 +617,94 @@ class ImageDocumentViewSetAPITests(APITestCase):
             'file_type': 'Png'
         })
 
-        mock_document_rpc_client = DocumentRPCClient
-        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=True)
+        with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_signed": {
+                        'hash': VAULT_HASH
+                    }
+                },
+                "id": 0
+            })
 
-        self.set_user(self.user_1)
-        # png image object creation
-        response = self.client.post(url, file_data, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.set_user(self.user_1)
+            # png image object creation
+            response = self.client.post(url, file_data, content_type=content_type)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        # The document status is pending, we won't try to retrieved from vault
-        data = response.json()['data']
-        self.assertEqual(data['attributes']['upload_status'], 'PENDING')
-        # The rpc_client.put_document_in_s3 is not csalled
-        mock_document_rpc_client.put_document_in_s3.assert_not_called()
+            # The document status is pending, we won't try to retrieved from vault
+            data = response.json()['data']
+            self.assertEqual(data['attributes']['upload_status'], 'PENDING')
+            # The rpc_client.put_document_in_s3 is not csalled
+            assert mock_method.call_count == 0
 
-        document = Document.objects.get(id=data['id'])
-        document.upload_status = UploadStatus.COMPLETE
-        document.save()
+            document = Document.objects.get(id=data['id'])
+            document.upload_status = UploadStatus.COMPLETE
+            document.save()
 
-        # Document upload
-        put_url = data['meta']['presigned_s3']['url']
-        fields = data['meta']['presigned_s3']['fields']
-        with open(img_path, 'rb') as png:
-            res = requests.post(put_url, data=fields, files={'file': png})
+            # Document upload
+            put_url = data['meta']['presigned_s3']['url']
+            fields = data['meta']['presigned_s3']['fields']
+            with open(img_path, 'rb') as png:
+                res = requests.post(put_url, data=fields, files={'file': png})
 
-        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+            self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
-        # The document has been uploaded and its status is COMPLETE.
-        # the rpc_client.put_document_in_s3 should not be called
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        mock_document_rpc_client.put_document_in_s3.assert_not_called()
+            # The document has been uploaded and its status is COMPLETE.
+            # the rpc_client.put_document_in_s3 should not be called
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            assert mock_method.call_count == 0
 
-        doc = Document.objects.all().first()
-        self.s3_resource.Object(settings.DOCUMENT_MANAGEMENT_BUCKET, doc.s3_key).delete()
+            doc = Document.objects.all().first()
+            self.s3_resource.Object(settings.DOCUMENT_MANAGEMENT_BUCKET, doc.s3_key).delete()
 
-        # The file has been deleted from the bucket.
-        self.assertEqual(
-            len(list(self.s3_resource.Bucket(settings.DOCUMENT_MANAGEMENT_BUCKET).objects.filter(Prefix=doc.s3_key))),
-            0
-        )
+            # The file has been deleted from the bucket.
+            self.assertEqual(
+                len(list(self.s3_resource.Bucket(settings.DOCUMENT_MANAGEMENT_BUCKET).objects.filter(Prefix=doc.s3_key))),
+                0
+            )
 
-        # The file object status is COMPLETE but the file is no longueur in the bucket.
-        # the rpc_client.put_document_in_s3 should be invoked
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        mock_document_rpc_client.put_document_in_s3.assert_called_once()
+            # The file object status is COMPLETE but the file is no longueur in the bucket.
+            # the rpc_client.put_document_in_s3 should be invoked
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            assert mock_method.call_count == 1
 
-        # trying to access a list of documents, the rpc method should be called for each of the COMPLETE objects
-        # with file missing from s3. Here twice exactly
-        file_data = {
-            'name': 'Second file',
-            'document_type': DocumentType.BOL,
-            'file_type': FileType.PDF,
-            'shipment_id': self.shipment.id,
-            'upload_status': UploadStatus.COMPLETE,
-            'owner_id': self.user_1.id
-        }
-        Document.objects.create(**file_data)
+            # trying to access a list of documents, the rpc method should be called for each of the COMPLETE objects
+            # with file missing from s3. Here twice exactly
+            file_data = {
+                'name': 'Second file',
+                'document_type': DocumentType.BOL,
+                'file_type': FileType.PDF,
+                'shipment_id': self.shipment.id,
+                'upload_status': UploadStatus.COMPLETE,
+                'owner_id': self.user_1.id
+            }
+            Document.objects.create(**file_data)
 
-        mock_document_rpc_client.put_document_in_s3.reset_mock()
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(mock_document_rpc_client.put_document_in_s3.call_count, 2)
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            assert mock_method.call_count == 3
 
-        # Trying to access the COMPLETE document detail the rpc method should be called
-        mock_document_rpc_client.put_document_in_s3.reset_mock()
-        # url = reverse('document-detail', kwargs={'version': 'v1', 'pk': doc.id})
-        url_get = url + f'{doc.id}/'
-        response = self.client.patch(url_get, {}, content_type='application/json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        mock_document_rpc_client.put_document_in_s3.assert_called_once()
+            # Trying to access the COMPLETE document detail the rpc method should be called
+            url_get = url + f'{doc.id}/'
+            response = self.client.patch(url_get, {}, content_type='application/json')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            assert mock_method.call_count == 4
 
-        # In case of rpc error, we should have a null presigned_url
-        mock_document_rpc_client.put_document_in_s3 = mock.Mock(return_value=False)
-        # url = reverse('document-detail', kwargs={'version': 'v1', 'pk': doc.id})
-        response = self.client.get(url_get)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.json()['data']
-        self.assertIsNone(data['meta']['presigned_s3'])
+            # In case of rpc error, we should have a null presigned_url
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": False,
+                },
+                "id": 0
+            })
+
+            response = self.client.get(url_get)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+            self.assertIsNone(data['meta']['presigned_s3'])

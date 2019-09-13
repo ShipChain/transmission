@@ -58,14 +58,6 @@ def snake_to_sentence(word):
     return ' '.join(x.capitalize() or '_' for x in word.split('_'))
 
 
-def build_auth_headers_from_request(request):
-    if not request.auth or not isinstance(request.auth, bytes):
-        raise Exception("No auth in request")
-
-    token = request.auth.decode('utf-8')
-    return {'Authorization': f"JWT {token}"}
-
-
 DN_REGEX = re.compile(r'(?:/?)(.+?)(?:=)([^/]+)')
 
 

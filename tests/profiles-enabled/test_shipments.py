@@ -2,7 +2,7 @@ import copy
 import json
 import re
 import random
-from unittest import mock
+from unittest import mock, TestCase
 
 import boto3
 import httpretty
@@ -22,8 +22,9 @@ from apps.authentication import passive_credentials_auth
 from apps.eth.models import EthAction
 from apps.iot_client import BotoAWSRequestsAuth
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
-from apps.shipments.rpc import Load110RPCClient
+from apps.shipments.rpc import Load110RPCClient, ShipmentRPCClient
 from apps.utils import random_id
+from apps.rpc_client import RPCClient, RPCError, requests
 from tests.utils import get_jwt
 from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response, random_timestamp, \
     random_location, GeoCoderResponse
@@ -33,6 +34,7 @@ boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
+MODERATOR_WALLET_ID = '71baef8e-7067-493a-b533-51ed84c0124a'
 STORAGE_CRED_ID = '77b72202-5bcd-49f4-9860-bc4ec4fee07b'
 DEVICE_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
 CERTIFICATE_ID = '230498151c214b788dd97f22b85410a5'
@@ -49,6 +51,8 @@ BAD_COUNTRY_CODE = 'XY'
 LOCATION_NUMBER = '555-555-5555'
 LOCATION_POSTAL_CODE = '29600'
 NEXT_TOKEN = 'DummyIotNextToken'
+SHIPMENT_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
+VAULT_HASH = '0xe9f28cb025350ef700158eed9a5b617a4f4185b31de06864fd02d67c839df583'
 
 mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
 google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
@@ -454,6 +458,14 @@ class ShipmentAPITests(APITestCase):
             Shipment.objects.filter(id=self.shipments[0].id).update(device_id=None)
             response = self.client.post(url, {'payload': signed_data}, format='json')
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+            # Assert that calls other than GET/POST fail
+            response = self.client.put(url, {'payload': signed_data}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+            # Assert that calls other than GET/POST fail
+            response = self.client.put(tracking_get_url, {'payload': signed_data}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_shipment_update(self):
         self.create_shipment()
