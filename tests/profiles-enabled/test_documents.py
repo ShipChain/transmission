@@ -108,9 +108,13 @@ class PdfDocumentViewSetAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
-            # mock_method.return_value = mocked_rpc_response({
-            #     "success": True
-            # })
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                },
+                "id": 0
+            })
 
             # Authenticated request should succeed
             self.set_user(self.user_1)
