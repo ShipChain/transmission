@@ -52,6 +52,7 @@ services:
       - redis_db
       - minio
     environment:
+      - PYTHONDONTWRITEBYTECODE=1
       - ENV
       - SECRET_KEY
       - SERVICE=circleci
