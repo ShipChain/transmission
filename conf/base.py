@@ -306,6 +306,11 @@ LOGGING = {
             'level': 'INFO' if LOG_LEVEL == 'DEBUG' else LOG_LEVEL,
             'propagate': False,
         },
+        'django.utils.autoreload': {
+            'handlers': ['console'],
+            'level': 'INFO' if LOG_LEVEL == 'DEBUG' else LOG_LEVEL,
+            'propagate': False,
+        },
         'django': {
             'handlers': ['console'],
             'level': LOG_LEVEL,
