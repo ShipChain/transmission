@@ -109,7 +109,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     class Meta:
         model = Shipment
-        exclude = ('version', 'hash_rate_limit',)
+        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval')
         read_only_fields = ('owner_id', 'contract_version',) if settings.PROFILES_ENABLED else ('contract_version',)
 
     class JSONAPIMeta:
@@ -177,8 +177,9 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     class Meta:
         model = Shipment
-        exclude = ('owner_id', 'version', 'hash_rate_limit') if settings.PROFILES_ENABLED \
-            else ('version', 'hash_rate_limit',)
+        exclude = (('owner_id', 'version', 'background_data_hash_interval', 'manual_update_hash_interval')
+                   if settings.PROFILES_ENABLED else ('version', 'background_data_hash_interval',
+                                                      'manual_update_hash_interval'))
         read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                             'storage_credentials_id', 'contract_version', 'state')
 
@@ -288,7 +289,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shipment
-        exclude = ('version', 'hash_rate_limit',)
+        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval')
         meta_fields = ('async_job_id',)
         if settings.PROFILES_ENABLED:
             read_only_fields = ('owner_id',)
@@ -413,7 +414,8 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
 class ChangesDiffSerializer:
     relation_fields = settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys()
-    excluded_fields = ('history_user', 'version', 'customer_fields', 'geometry', 'hash_rate_limit', 'hash_rate_limit')
+    excluded_fields = ('history_user', 'version', 'customer_fields', 'geometry',
+                       'background_data_hash_interval', 'manual_update_hash_interval')
 
     # Enum field serializers
     stateEnumSerializer = UpperEnumField(TransitState, lenient=True, ints_as_names=True, read_only=True)

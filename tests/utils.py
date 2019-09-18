@@ -33,7 +33,8 @@ def mocked_rpc_response(json, code=200):
 
 
 def get_jwt(exp=None, sub='00000000-0000-0000-0000-000000000000', username='fake@shipchain.io',
-            organization_id=None, monthly_rate_limit=None, hash_rate_limit=None):
+            organization_id=None, monthly_rate_limit=None, background_data_hash_interval=None,
+            manual_update_hash_interval=None):
     payload = {'email': username, 'username': username, 'sub': sub,
                'aud': '892633'}
 
@@ -43,8 +44,11 @@ def get_jwt(exp=None, sub='00000000-0000-0000-0000-000000000000', username='fake
     if monthly_rate_limit:
         payload['monthly_rate_limit'] = monthly_rate_limit
 
-    if hash_rate_limit:
-        payload['hash_rate_limit'] = hash_rate_limit
+    if background_data_hash_interval:
+        payload['background_data_hash_interval'] = background_data_hash_interval
+
+    if background_data_hash_interval:
+        payload['manual_update_hash_interval'] = manual_update_hash_interval
 
     now = aware_utcnow()
     if exp:

@@ -25,6 +25,6 @@ def tracking_data_update(self, shipment_id, payload):
                                              shipment.vault_id,
                                              payload)
     shipment.set_vault_hash(signature['hash'],
-                            rate_limit=shipment.hash_rate_limit,
+                            rate_limit=shipment.background_data_hash_interval,
                             action_type=AsyncActionType.TRACKING,
                             use_updated_by=False)

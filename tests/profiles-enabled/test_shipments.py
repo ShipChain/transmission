@@ -66,7 +66,8 @@ class ShipmentAPITests(APITestCase):
         self.token2 = get_jwt(username='user2@shipchain.io', sub=OWNER_ID_2)
         self.token3 = get_jwt(username='user3@shipchain.io', sub=OWNER_ID_3, organization_id=ORGANIZATION_ID)
         self.hashed_token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID, organization_id=ORGANIZATION_ID,
-                                    hash_rate_limit=25)
+                                    background_data_hash_interval=25, manual_update_hash_interval=30)
+
         self.user_1 = passive_credentials_auth(self.token)
         self.user_2 = passive_credentials_auth(self.token2)
         self.user_3 = passive_credentials_auth(self.token3)
@@ -82,7 +83,8 @@ class ShipmentAPITests(APITestCase):
                                                       storage_credentials_id=STORAGE_CRED_ID,
                                                       pickup_est="2018-11-10T17:57:05.070419Z",
                                                       owner_id=self.user_1.id,
-                                                      hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT))
+                                                      background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
+                                                      manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT))
         self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
                                                       carrier_wallet_id=CARRIER_WALLET_ID,
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
@@ -90,7 +92,8 @@ class ShipmentAPITests(APITestCase):
                                                       pickup_est="2018-11-05T17:57:05.070419Z",
                                                       mode_of_transport_code='mode',
                                                       owner_id=self.user_1.id,
-                                                      hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT))
+                                                      background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
+                                                      manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT))
         self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
                                                       carrier_wallet_id=CARRIER_WALLET_ID,
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
@@ -98,7 +101,8 @@ class ShipmentAPITests(APITestCase):
                                                       pickup_est="2018-11-05T17:57:05.070419Z",
                                                       mode_of_transport_code='mode',
                                                       owner_id=self.user_2.id,
-                                                      hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT))
+                                                      background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
+                                                      manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT))
 
     def create_location(self, **data):
         return Location.objects.create(**data)
@@ -1096,7 +1100,8 @@ class ShipmentAPITests(APITestCase):
         self.assertIsNotNone(response_data['meta']['async_job_id'])
 
         shipment = Shipment.objects.get(id=response_data['id'])
-        self.assertEqual(shipment.hash_rate_limit, test_settings.TRACKING_VAULT_HASH_RATE_LIMIT)
+        self.assertEqual(shipment.background_data_hash_interval, test_settings.TRACKING_VAULT_HASH_RATE_LIMIT)
+        self.assertEqual(shipment.manual_update_hash_interval, test_settings.DATA_VAULT_HASH_RATE_LIMIT)
 
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
@@ -1129,12 +1134,12 @@ class ShipmentAPITests(APITestCase):
         self.set_user(self.user_1, self.hashed_token)
         force_authenticate(response, user=self.user_1, token=self.hashed_token)
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
-        print(response.content)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         response_data = response.json()['data']
 
         shipment = Shipment.objects.get(id=response_data['id'])
-        self.assertEqual(shipment.hash_rate_limit, 25)
+        self.assertEqual(shipment.background_data_hash_interval, 25)
+        self.assertEqual(shipment.manual_update_hash_interval, 30)
 
     @httpretty.activate
     def test_organization_sharing(self):
@@ -1414,7 +1419,8 @@ class ShipmentAPITests(APITestCase):
         _shipment_id = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
         _vault_id = '01fc36c4-63e5-4c02-943a-b52cd25b235b'
         shipment = Shipment.objects.create(id=_shipment_id, vault_id=_vault_id,
-                                           hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT)
+                                           background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
+                                           manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT)
 
         profiles_url = shipment.get_device_request_url()
 
@@ -1937,7 +1943,8 @@ class TrackingDataAPITests(APITestCase):
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
                                                       owner_id=self.user_1.id,
-                                                      hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT))
+                                                      background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
+                                                      manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT))
 
     def create_tracking_data(self):
         self.create_shipment()

@@ -218,7 +218,8 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     contract_version = models.CharField(null=False, max_length=36)
-    hash_rate_limit = models.IntegerField(validators=[MinValueValidator(0)])
+    background_data_hash_interval = models.IntegerField(validators=[MinValueValidator(0)])
+    manual_update_hash_interval = models.IntegerField(validators=[MinValueValidator(0)])
 
     updated_by = models.CharField(null=True, max_length=36)
 
@@ -374,7 +375,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                                    'module': __name__})
         return async_job
 
-    def set_vault_hash(self, vault_hash, action_type, rate_limit=settings.DATA_VAULT_HASH_RATE_LIMIT,
+    def set_vault_hash(self, vault_hash, action_type, rate_limit=-1,
                        use_updated_by=True):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
@@ -406,10 +407,10 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                         # If this is not a delayed job, or this job is after its fire time
                         LOG.warning(f'Pending AsyncJob {async_job.id} is past its scheduled fire time, requeuing')
                         async_job.fire()
-            elif rate_limit:
+            elif rate_limit == -1:
                 LOG.debug(f'Shipment {self.id} requested a rate-limited vault hash update')
                 LOG.debug(f'No pending vault hash updates for {self.id}, '
-                          f'sending one in {rate_limit} minutes')
+                          f'sending one in {self.manual_update_hash_interval} minutes')
                 async_job = AsyncJob.rpc_job_for_listener(
                     rpc_method=rpc_client.set_vault_hash_tx,
                     rpc_parameters=[self.shipper_wallet_id,
@@ -417,7 +418,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
                     shipment=self,
-                    delay=rate_limit)
+                    delay=self.manual_update_hash_interval)
                 async_job.actions.create(action_type=action_type,
                                          vault_hash=vault_hash,
                                          user_id=self.updated_by if use_updated_by else None)

@@ -67,11 +67,16 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            hash_rate_limit = self.request.user.token.get('hash_rate_limit', settings.TRACKING_VAULT_HASH_RATE_LIMIT)
+            background_data_hash_interval = self.request.user.token.get('background_data_hash_interval',
+                                                                        settings.TRACKING_VAULT_HASH_RATE_LIMIT)
+            manual_update_hash_interval = self.request.user.token.get('manual_update_hash_interval',
+                                                                      settings.DATA_VAULT_HASH_RATE_LIMIT)
             created = serializer.save(owner_id=get_owner_id(self.request), updated_by=self.request.user.id,
-                                      hash_rate_limit=hash_rate_limit)
+                                      background_data_hash_interval=background_data_hash_interval,
+                                      manual_update_hash_interval=manual_update_hash_interval)
         else:
-            created = serializer.save(hash_rate_limit=settings.TRACKING_VAULT_HASH_RATE_LIMIT)
+            created = serializer.save(background_data_hash_interval=settings.TRACKING_VAULT_HASH_RATE_LIMIT,
+                                      manual_update_hash_interval=settings.DATA_VAULT_HASH_RATE_LIMIT)
         return created
 
     def perform_update(self, serializer):

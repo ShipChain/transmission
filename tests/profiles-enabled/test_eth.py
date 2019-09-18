@@ -106,7 +106,8 @@ class TransactionReceiptTestCase(APITestCase):
         listener = Shipment.objects.create(owner_id=USER_ID, carrier_wallet_id=WALLET_ID,
                                            shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
                                            storage_credentials_id=WALLET_ID,
-                                           hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT)
+                                           background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
+                                           manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT)
 
         self.createAsyncJobs(listener)
         self.createEthAction(listener)
@@ -150,7 +151,8 @@ class TransactionReceiptTestCase(APITestCase):
         listener = Shipment.objects.create(owner_id=USER_ID, carrier_wallet_id=WALLET_ID,
                                            shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
                                            storage_credentials_id=WALLET_ID,
-                                           hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT)
+                                           background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
+                                           manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT)
 
         valid_permission_link = PermissionLink.objects.create(
             expiration_date=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1),

@@ -46,7 +46,8 @@ class ShipmentAPITests(APITestCase):
                                                           storage_credentials_id=STORAGE_CRED_ID,
                                                           pickup_est="2018-11-10T17:57:05.070419Z",
                                                           owner_id=OWNER_ID,
-                                                          hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT))
+                                                          background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
+                                                          manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT))
 
     def test_shipment_create(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})

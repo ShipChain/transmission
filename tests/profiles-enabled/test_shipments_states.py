@@ -93,7 +93,8 @@ def shipment(mocked_engine_rpc, mocked_iot_api):
                                    shipper_wallet_id=random_id(),
                                    storage_credentials_id=random_id(),
                                    owner_id=USER_ID,
-                                   hash_rate_limit=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT)
+                                   background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
+                                   manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT)
 
 
 @pytest.fixture
