@@ -682,8 +682,13 @@ class ShipmentAPITests(APITestCase):
                 # The new certificate should be attached to the shipment's device
                 device.refresh_from_db()
                 self.assertEqual(device.certificate_id, new_active_certificate)
-                data = response.json()['data']
-                self.assertEqual(device.shipment.id, data['id'])
+                response_data = response.json()
+                included_object = response_data['included']
+                self.assertEqual(device.shipment.id, response_data['data']['id'])
+                for included in included_object:
+                    if included['type'] == 'Device':
+                        assert 'certificate_id' not in included['attributes']
+                        break
 
     def get_changed_fields(self, changes_list, field_name):
         return [item[field_name] for item in changes_list]
@@ -2221,9 +2226,11 @@ class DevicesLocationsAPITests(APITestCase):
         device_template = {
             "deviceId": "",
             "deviceType": "AXLE_GATEWAY",
+            "certificateId": 'Dummy-certificate-1',
             "attributes": {
                 "creationDate": "2019-04-01T00:56:24.037787",
                 "environment": "test",
+                "certificate_id": 'Dummy-certificate-2',
                 "version": "v.1.1",
                 "registration": "",
                 "owner": owner_id
@@ -2312,8 +2319,13 @@ class DevicesLocationsAPITests(APITestCase):
 
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            data = response.json()
-            self.assertEqual(len(data['data']), 5)
+            data = response.json()['data']
+            self.assertEqual(len(data), 5)
+            for device in data:
+                # The certificate Id should not be present in the device's info
+                self.assertTrue('certificate_id' not in device['attributes'])
+                self.assertTrue('certificateId' not in device)
+
             # Only one Api call is made to IOT_AWS_HOST
             mock_get.assert_called_once()
 

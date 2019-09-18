@@ -20,6 +20,7 @@ from django.conf import settings
 from influxdb_metrics.loader import log_metric
 
 from apps.iot_client import AWSIoTClient, AWSIoTError
+from apps.utils import remove_dict_key_recursively
 
 
 LOG = logging.getLogger('transmission')
@@ -68,10 +69,12 @@ class DeviceAWSIoTClient(AWSIoTClient):
                           f' params: {params_dict}. Error message: {list_devices["error"]}')
                 raise AWSIoTError(f'Error in AWS IoT response: {list_devices["error"]}')
 
-            new_devices = list_devices['data'].get('devices', None)
+            new_devices = list_devices['data'].get('devices')
             if new_devices:
-                results.extend(new_devices)
+                for device in new_devices:
+                    device = remove_dict_key_recursively(device, ['certificate_id', 'certificateId'])
+                    results.append(device)
 
-            next_token = list_devices['data'].get('nextToken', None)
+            next_token = list_devices['data'].get('nextToken')
 
         return results
