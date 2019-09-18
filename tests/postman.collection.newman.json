@@ -6,222 +6,223 @@
 	},
 	"item": [
           {
-              "name": "Import Wallet",
-              "event": [
-                  {
-                      "listen": "prerequest",
-                      "script": {
-                          "id": "080baecd-7ac4-4fde-b52b-c6b702a975c6",
-                          "exec": [
-                              ""
-                          ],
-                          "type": "text/javascript"
-                      }
-                  },
-                  {
-                      "listen": "test",
-                      "script": {
-                          "id": "0db9232c-ac94-4ffc-a72e-ff7c992823fb",
-                          "exec": [
-                              "var data = pm.response.json();",
-                              "pm.environment.set(\"wallet_id\", data.data.id);",
-                              "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(201);\n})\n"
-                          ],
-                          "type": "text/javascript"
-                      }
-                  }
-              ],
-              "request": {
-                  "method": "POST",
-                  "header": [
-                      {
-                          "key": "Authorization",
-                          "value": "JWT {{token}}"
-                      }
-                  ],
-                  "body": {
-                      "mode": "formdata",
-                      "formdata": [
-                          {
-                              "key": "private",
-                              "value": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                              "type": "text"
-                          }
-                      ]
-                  },
-                  "url": {
-                      "raw": "{{profiles_url}}/api/v1/wallet/",
-                      "host": [
-                          "{{profiles_url}}"
-                      ],
-                      "path": [
-                          "api",
-                          "v1",
-                          "wallet",
-                          ""
-                      ]
-                  }
-              },
-              "response": []
+            "name": "Import Wallet",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "id": "080baecd-7ac4-4fde-b52b-c6b702a975c6",
+                        "exec": [
+                            ""
+                        ],
+                        "type": "text/javascript"
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "id": "0db9232c-ac94-4ffc-a72e-ff7c992823fb",
+                        "exec": [
+                            "var data = pm.response.json();",
+                            "console.log(pm.response.json());",
+                            "pm.environment.set(\"wallet_id\", data.data.id);",
+                            "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(201);\n})\n"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "JWT {{token}}"
+                    }
+                ],
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "private",
+                            "value": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                            "type": "text"
+                        }
+                    ]
+                },
+                "url": {
+                    "raw": "{{profiles_url}}/api/v1/wallet/",
+                    "host": [
+                        "{{profiles_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "wallet",
+                        ""
+                    ]
+                }
             },
+            "response": []
+          },
 	      {
-					"name": "Generate Device",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "9ab0844e-ccba-4cf8-8979-93a074bbb7c0",
-								"exec": [
-									"var data = pm.response.json();",
-									"pm.environment.set(\"device_id\", data.data.id);",
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"})",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "JWT {{token}}"
-							}
-						],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "nickname",
-									"value": "Device #1",
-									"type": "text"
-								},
-								{
-									"key": "device_type",
-									"value": "AXLE_GATEWAY",
-									"type": "text"
-								}
-							]
-						},
-						"url": {
-							"raw": "{{profiles_url}}/api/v1/device/",
-							"host": [
-								"{{profiles_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"device",
-								""
-							]
-						}
-					},
-					"response": []
-				},
+            "name": "Generate Device",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "id": "9ab0844e-ccba-4cf8-8979-93a074bbb7c0",
+                        "exec": [
+                            "var data = pm.response.json();",
+                            "pm.environment.set(\"device_id\", data.data.id);",
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "})",
+                            ""
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "JWT {{token}}"
+                    }
+                ],
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "nickname",
+                            "value": "Device #1",
+                            "type": "text"
+                        },
+                        {
+                            "key": "device_type",
+                            "value": "AXLE_GATEWAY",
+                            "type": "text"
+                        }
+                    ]
+                },
+                "url": {
+                    "raw": "{{profiles_url}}/api/v1/device/",
+                    "host": [
+                        "{{profiles_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "device",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
 	      {
-					"name": "Create Storage Credentials",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "f6d573ba-adc4-4883-b415-5734e8c9f683",
-								"exec": [
-									"var data = pm.response.json();",
-									"pm.environment.set(\"storage_credentials_id\", data.data.id);",
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"})"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "JWT {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"title\": \"Newman Storage Credentials\",\n\t\"driver_type\": \"local\",\n\t\"options\": {\n\t}\n}"
-						},
-						"url": {
-							"raw": "{{profiles_url}}/api/v1/storage_credentials/",
-							"host": [
-								"{{profiles_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"storage_credentials",
-								""
-							]
-						}
-					},
-					"response": []
-				},
+            "name": "Create Storage Credentials",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "id": "f6d573ba-adc4-4883-b415-5734e8c9f683",
+                        "exec": [
+                            "var data = pm.response.json();",
+                            "pm.environment.set(\"storage_credentials_id\", data.data.id);",
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "})"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "JWT {{token}}"
+                    },
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n\t\"title\": \"Newman Storage Credentials\",\n\t\"driver_type\": \"local\",\n\t\"options\": {\n\t}\n}"
+                },
+                "url": {
+                    "raw": "{{profiles_url}}/api/v1/storage_credentials/",
+                    "host": [
+                        "{{profiles_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "storage_credentials",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+          },
           {
-					"name": "Create Organization",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"id": "1849864a-5f5a-4fce-97a5-2fb78f1aaf47",
-								"exec": [
-									"var data = pm.response.json();",
-									"pm.environment.set(\"organization_id\", data.data.id);",
-									"pm.test(\"Status code is 201\", function () {",
-									"    pm.response.to.have.status(201);",
-									"})",
-									""
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "JWT {{token}}"
-							}
-						],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "name",
-									"value": "Newman Test Name",
-									"type": "text"
-								}
-							]
-						},
-						"url": {
-							"raw": "{{profiles_url}}/api/v1/organization/",
-							"host": [
-								"{{profiles_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"organization",
-								""
-							]
-						}
-					},
-					"response": []
-				},
+            "name": "Create Organization",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "id": "1849864a-5f5a-4fce-97a5-2fb78f1aaf47",
+                        "exec": [
+                            "var data = pm.response.json();",
+                            "pm.environment.set(\"organization_id\", data.data.id);",
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "})",
+                            ""
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Authorization",
+                        "value": "JWT {{token}}"
+                    }
+                ],
+                "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                        {
+                            "key": "name",
+                            "value": "Newman Test Name",
+                            "type": "text"
+                        }
+                    ]
+                },
+                "url": {
+                    "raw": "{{profiles_url}}/api/v1/organization/",
+                    "host": [
+                        "{{profiles_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "organization",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+          },
           {
             "name": "Shipments",
             "description": null,

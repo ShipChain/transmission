@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd "${0%/*}/.."
+
+docker build --target deploy --tag transmission-django .
+
+export ROLE=int
+
+bin/dc build
+
+bin/dc up -d
+
+bin/dc exec profiles-django /wait-for-it.sh localhost:8000 -t 120
+
+bin/dc exec profiles-django python manage.py loaddata oidc_clients.json new_users.json
+
+docker cp tests $(bin/dc ps -q newman):/etc/newman/tests
+
+bin/dc exec newman newman run tests/postman.collection.newman.json -e tests/postman.environment.newmanUser.json
+
+bin/dc down

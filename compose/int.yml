@@ -4,26 +4,16 @@ services:
     image: postman/newman
     command: sh -c 'while sleep 3600; do :; done'
     entrypoint: ""
+    links:
+      - transmission-django
 
   minio:
     image: minio/minio
     ports:
-    - "9090:9000"
-    expose:
-      - '9000'
+      - 9099:9000
     environment:
     - MINIO_ACCESS_KEY=TEST-DEV-KEY
     - MINIO_SECRET_KEY=NON-TRIVIAL-SECRETKEY
-    - MINIO_DOMAIN=minio
-    command: server /data --address minio:9000
-
-  smtp:
-    image: elsdoerfer/exim-sender
-    environment:
-      - PRIMARY_HOST=smtp.shipchain.io.local
-      - ALLOWED_HOSTS=*
-    expose:
-      - "25"
 
   sftp:
     image: atmoz/sftp
@@ -42,8 +32,6 @@ services:
     image: sameersbn/postgresql:9.6-2
     expose:
       - '5432'
-    networks:
-      - portal
     environment:
       DB_NAME: profiles
       DB_PASS: profiles
@@ -53,8 +41,6 @@ services:
     image: sameersbn/postgresql:9.6-2
     expose:
       - 5432
-    networks:
-      - portal
     environment:
       DB_NAME: engine
       DB_PASS: engine
@@ -65,8 +51,6 @@ services:
     ports:
       - "5432"
     image: circleci/postgres:9.6-alpine-postgis
-    networks:
-      - portal
     environment:
       - POSTGRES_USER=transmission
       - POSTGRES_PASS=transmission
@@ -78,28 +62,18 @@ services:
     image: redis
     expose:
       - '6379'
-#    networks:
-#      - portal
     command: >
       --requirepass redis_pass --appendonly yes
 
-  transmission:
+  transmission-django:
     image: transmission-django
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
-    networks:
-      default:
-        aliases:
-          - transmission-django
-      portal:
-        aliases:
-          - transmission-django
     links:
       - transmission_psql
       - redis_db
       - minio
-      - smtp
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - ENV=INT
@@ -116,23 +90,18 @@ services:
       - FORCE_DEBUG
       - DATABASE_URL=postgis://transmission:transmission@transmission_psql:5432/transmission
 
-  profiles:
+  profiles-django:
     image: 489745816517.dkr.ecr.us-east-1.amazonaws.com/profiles-django:dev
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "9000:8000"
-    networks:
-      default:
-        aliases:
-          - profiles-django
-      portal:
-        aliases:
-          - profiles-django
     links:
       - redis_db
       - profiles_psql
-      - newman
+      - engine-rpc
+      - minio
     environment:
+      - PYTHONDONTWRITEBYTECODE=1
       - ENV=INT
       - SECRET_KEY
       - SERVICE=circleci
@@ -153,7 +122,6 @@ services:
       - sftp
       - minio
       - engine_psql
-      - newman
     environment:
       - ENV=
       - USE_JS_ORM_ENTITIES=true
@@ -163,15 +131,3 @@ services:
       - DATABASE_URL=psql://engine:engine@engine_psql:5432/engine
       - INFLUXDB_DISABLED=True
       - SERVICE=engine-rpc
-
-    networks:
-      default:
-        aliases:
-          - engine-rpc
-      portal:
-        aliases:
-          - engine-rpc
-
-networks:
-  portal:
-    driver: bridge

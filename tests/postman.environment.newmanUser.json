@@ -41,7 +41,6 @@
     {
       "key": "transmission_url",
       "value": "http://transmission-django:8000",
-      "description": "",
       "type": "text",
       "enabled": true
     }
