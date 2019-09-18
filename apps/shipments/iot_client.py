@@ -72,8 +72,7 @@ class DeviceAWSIoTClient(AWSIoTClient):
             new_devices = list_devices['data'].get('devices')
             if new_devices:
                 for device in new_devices:
-                    for cert_key_name in ('certificate_id', 'certificateId', ):
-                        device = remove_dict_key_recursively(device, cert_key_name)
+                    device = remove_dict_key_recursively(device, ['certificate_id', 'certificateId'])
                     results.append(device)
 
             next_token = list_devices['data'].get('nextToken')
