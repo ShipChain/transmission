@@ -20,7 +20,8 @@ from rest_framework.test import APITestCase, force_authenticate, APIClient
 
 from apps.authentication import passive_credentials_auth
 from apps.eth.models import EthAction
-from apps.iot_client import BotoAWSRequestsAuth
+from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
+# from apps.iot_client import BotoAWSRequestsAuth
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
 from apps.shipments.rpc import Load110RPCClient, ShipmentRPCClient
 from apps.utils import random_id

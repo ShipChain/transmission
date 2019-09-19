@@ -6,7 +6,8 @@ from rest_framework.test import APITestCase
 from django.conf import settings
 from rest_framework import status
 
-from apps.iot_client import AWSIoTClient, AWSIoTError
+from apps.exceptions import AWSIoTError
+from apps.iot_client import AWSIoTClient
 from tests.utils import mocked_rpc_response
 
 

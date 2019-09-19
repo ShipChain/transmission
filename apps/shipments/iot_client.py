@@ -19,7 +19,8 @@ import logging
 from django.conf import settings
 from influxdb_metrics.loader import log_metric
 
-from apps.iot_client import AWSIoTClient, AWSIoTError
+from apps.exceptions import AWSIoTError
+from apps.iot_client import AWSIoTClient
 from apps.utils import remove_dict_key_recursively
 
 
