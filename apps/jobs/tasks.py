@@ -104,7 +104,13 @@ class AsyncTask:
         LOG.debug(f'Sending transaction for job {self.async_job.id}, hash {eth_action.transaction_hash}')
         log_metric('transmission.info', tags={'method': 'async_task._send_transaction', 'module': __name__})
 
-        receipt = getattr(self.rpc_client, 'send_transaction')(signed_tx, self.async_job.get_callback_url())
+        try:
+            receipt = getattr(self.rpc_client, 'send_transaction')(signed_tx, self.async_job.get_callback_url())
+        except RPCError as exc:
+            # If Transaction submission fails, we want _sign_transaction to succeed next time
+            eth_action.delete()
+            raise exc
+
         with transaction.atomic():
             eth_action.transactionreceipt = TransactionReceipt.from_eth_receipt(receipt)
             eth_action.transactionreceipt.save()
