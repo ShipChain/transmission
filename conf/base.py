@@ -120,7 +120,6 @@ INSTALLED_APPS = [
     'rest_framework_gis',
     'influxdb_metrics',
     'corsheaders',
-    'gm2m',
     'apps.jobs',
     'apps.eth',
     'apps.shipments',
