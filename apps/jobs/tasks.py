@@ -45,8 +45,7 @@ class AsyncTask:
                 try:
                     LOG.debug(f'Lock on {wallet_id} acquired, attempting to send transaction')
                     self.async_job.wallet_lock_token = wallet_lock.local.token.decode()
-                    with transaction.atomic():
-                        self._send_transaction(*self._sign_transaction(self._get_transaction()))
+                    self._send_transaction(*self._sign_transaction(self._get_transaction()))
                 except Exception as exc:
                     # If there was an exception, release the lock and re-raise
                     wallet_lock.release()
