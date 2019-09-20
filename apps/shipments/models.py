@@ -125,7 +125,7 @@ class Device(models.Model):
 
         device, created = Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})
 
-        if settings.ENVIRONMENT != 'LOCAL':
+        if settings.ENVIRONMENT not in ('LOCAL', 'INT'):
             # We update the related device with this certificate in case it exists
             if not created:
                 device.certificate_id = Device.get_valid_certificate(device_id)

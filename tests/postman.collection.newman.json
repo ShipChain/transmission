@@ -24,7 +24,6 @@
                         "id": "0db9232c-ac94-4ffc-a72e-ff7c992823fb",
                         "exec": [
                             "var data = pm.response.json();",
-                            "console.log(pm.response.json());",
                             "pm.environment.set(\"wallet_id\", data.data.id);",
                             "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(201);\n})\n"
                         ],
@@ -246,7 +245,6 @@
                             "id": "d211e775-ae8b-4731-ba57-c87c0d8126e5",
                             "exec": [
                                 "var data = pm.response.json();",
-                                "console.log(data);",
                                 "pm.environment.set(\"shipment_id\", data.data.id);",
                                 "pm.test(\"Status code is 202\", function () {\n    pm.response.to.have.status(202);\n})\n"
                             ],
@@ -595,7 +593,7 @@
                             "id": "b0879be8-8f75-415f-9096-b231afdd6f38",
                             "exec": [
                                 "var data = pm.response.json();",
-                                "pm.test(\"Status code is 204\", function () {\n    pm.response.to.have.status(204);\n})\n"
+                                "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n})\n"
                             ],
                             "type": "text/javascript"
                         }
@@ -636,6 +634,7 @@
                             "id": "134259db-9b73-4da7-bc7f-6028d7a9b495",
                             "exec": [
                                 "var data = pm.response.json();",
+                                "console.log(data);",
                                 "pm.environment.set(\"permission_link_id\", data.data.id);",
                                 "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n})\n"
                             ],
@@ -658,7 +657,6 @@
                   "body": {
                     "mode": "raw",
                     "raw": "{\n\t\"name\": \"Permission link name\",\n\t\"expiration_date\": \"2118-08-22T17:44:39.874352\",\n\t\"emails\":[\"user1@shipchain.io\", \"user2@shipchain.io\"]\n}"
-
                   },
                   "url": {
                     "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/permission_links/",
@@ -807,7 +805,7 @@
                             "exec": [
                                 "var data = pm.response.json();",
                                 "console.log(data);",
-                                "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n})\n"
+                                "pm.test(\"Status code is 501\", function () {\n    pm.response.to.have.status(501);\n})\n"
                             ],
                             "type": "text/javascript"
                         }
@@ -989,7 +987,6 @@
                             "id": "06fe8554-3044-4119-8086-ad2684904a68",
                             "exec": [
                                 "var data = pm.response.json();",
-                                "pm.environment.set(\"transaction_hash\", data.data[0].id);",
                                 "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n})\n"
                             ],
                             "type": "text/javascript"
@@ -1193,6 +1190,7 @@
                             "id": "b196aeef-1f7b-4c68-a406-d1d40f445ded",
                             "exec": [
                                 "var data = pm.response.json();",
+                                "console.log(data);",
                                 "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n})\n"
                             ],
                             "type": "text/javascript"

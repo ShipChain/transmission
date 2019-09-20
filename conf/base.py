@@ -261,6 +261,9 @@ DEFAULT_FROM_EMAIL = os.environ.get('FROM_EMAIL', 'noreply@smtp.shipchain.io.loc
 EMAIL_CONFIG = ENV.email_url('EMAIL_URL', default='smtp://:@smtp:25')
 vars().update(EMAIL_CONFIG)
 
+if ENVIRONMENT == 'INT':
+    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 

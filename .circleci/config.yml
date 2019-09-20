@@ -111,6 +111,52 @@ jobs:
             docker cp $(pwd)/tests/openapi_words/dictionary.txt spellcheck:/schema/dictionary.txt
             docker exec spellcheck ./spellchecker_entrypoint.sh schema/swagger.yaml schema/dictionary.txt
 
+  integration-testing:
+    docker:
+      - image: circleci/python:3.6.8-node
+        user: root
+    environment:
+      ROLE: int
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - attach_workspace:
+          at: docker-cache
+      - run:
+          name: Load docker image
+          command: |
+            docker load < /root/repo/docker-cache/built-image.tar
+      - run:
+          name: Install dependencies
+          command: |
+            pip install awscli
+      - run:
+          name: Authenticate Docker with ECR
+          command: |
+            $(aws ecr get-login --no-include-email)
+      - run:
+          name: Start compose services
+          command: |
+            bin/dc up -d
+      - run:
+          name: Wait for Migrations
+          command: |
+            bin/dc exec engine-rpc /wait-for-it.sh localhost:2000 -t 120
+      - run:
+          name: Load profiles fixtures
+          command: |
+            bin/dc exec profiles-django python manage.py loaddata oidc_clients.json new_users.json
+      - run:
+          name: Copy the test folders and into newman container
+          command: |
+            docker cp tests $(bin/dc ps -q newman):/etc/newman/tests
+      - run:
+          name: Run integration tests
+          command: |
+            bin/dc exec newman newman run tests/postman.collection.newman.json -e tests/postman.environment.newmanUser.json
+
   push-to-ecr:
     docker:
       - image: docker:stable-git
@@ -157,12 +203,15 @@ workflows:
       - openapi-validation
       - speccy
       - spellchecker
+      - integration-testing:
+          requires:
+            - build
       - push-to-ecr:
           filters:
             branches:
               only: master
           requires:
-            - build
+            - integration-testing
       - deploy-to-dev:
           filters:
             branches:

@@ -111,7 +111,7 @@ def is_internal_call(request):
 
 class InternalRequest(BasePermission):
     def has_permission(self, request, view):
-        if settings.ENVIRONMENT in ('LOCAL',):
+        if settings.ENVIRONMENT in ('LOCAL', 'INT'):
             return True
         if is_internal_call(request):
             certificate_cn = parse_dn(request.META['X_SSL_CLIENT_DN'])['CN']
