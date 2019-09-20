@@ -41,9 +41,6 @@ class DeviceAWSIoTClient(AWSIoTClient):
         return iot_shadow['data']
 
     def get_list_owner_devices(self, owner_id, active=None, in_bbox=None):
-        LOG.debug(f'Getting devices for: {owner_id} from AWS IoT')
-        log_metric('transmission.info', tags={'method': 'DeviceAWSIoTClient.get_list_owner_devices'})
-
         next_token = True
         results = []
         while next_token:
