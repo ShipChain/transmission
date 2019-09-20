@@ -20,6 +20,7 @@ from apps.jobs.models import JobState
 from apps.pagination import CustomResponsePagination
 from apps.permissions import owner_access_filter, get_owner_id
 from apps.utils import send_templated_email
+from apps.rpc_client import RPCError
 from .filters import ShipmentFilter, HistoricalShipmentFilter
 from .geojson import render_point_features
 from .iot_client import DeviceAWSIoTClient
@@ -154,7 +155,8 @@ class DeviceViewSet(viewsets.ViewSet):
             raise PermissionDenied('No shipment found associated to device.')
 
         data = request.data
-        serializer = UnvalidatedTrackingDataSerializer if settings.ENVIRONMENT == 'LOCAL' else TrackingDataSerializer
+        serializer = (UnvalidatedTrackingDataSerializer if settings.ENVIRONMENT in ('LOCAL', 'INT')
+                      else TrackingDataSerializer)
 
         if not isinstance(data, list):
             LOG.debug(f'Adding tracking data for device: {pk} for shipment: {shipment.id}')
@@ -239,6 +241,9 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
     renderer_classes = (renderers.JSONRenderer, )
 
     def list(self, request, *args, **kwargs):
+        LOG.debug(f'Listing shipment history for shipment with id: {kwargs["shipment_pk"]}.')
+        log_metric('transmission.info', tags={'method': 'shipment.history', 'module': __name__})
+
         shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
         queryset = shipment.history.all()
         queryset = self.filter_queryset(queryset)
@@ -257,6 +262,9 @@ class ShipmentActionsView(APIView):
     permission_classes = ((IsShipmentOwner,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
 
     def post(self, request, *args, **kwargs):
+        LOG.debug(f'Performing action on shipment with id: {kwargs["shipment_pk"]}.')
+        log_metric('transmission.info', tags={'method': 'shipment.action', 'module': __name__})
+
         shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
         serializer = ShipmentActionRequestSerializer(data=request.data, context={'shipment': shipment})
         serializer.is_valid(raise_exception=True)
@@ -276,6 +284,14 @@ class ListDevicesStatus(APIView):
 
     def get(self, request, *args, **kwargs):
         owner_id = get_owner_id(request)
+
+        LOG.debug(f'Listing devices for owner with id: {owner_id}.')
+        log_metric('transmission.info', tags={'method': 'devices.list', 'module': __name__})
+
+        if not settings.IOT_THING_INTEGRATION:
+            raise RPCError('IoT Integration is not set up in this environment.',
+                           status_code=status.HTTP_501_NOT_IMPLEMENTED)
+
         iot_client = DeviceAWSIoTClient()
 
         serializer = DevicesQueryParamsSerializer(data=request.query_params)

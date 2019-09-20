@@ -34,7 +34,7 @@ services:
       - POSTGRES_USER=transmission
       - POSTGRES_PASS=transmission
       - POSTGRES_HOST=psql
-      - POSTGRES_DBNAME=transmission
+      - POSTGRES_DB=transmission
       - ALLOW_IP_RANGE=0.0.0.0/0
 
   runserver:
