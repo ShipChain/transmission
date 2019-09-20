@@ -15,25 +15,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='historicalshipment',
             name='background_data_hash_interval',
-            field=models.IntegerField(default=settings.TRACKING_VAULT_HASH_RATE_LIMIT, validators=[django.core.validators.MinValueValidator(0)]),
-            preserve_default=False,
+            field=models.IntegerField(default=settings.DEFAULT_BACKGROUND_DATA_HASH_INTERVAL, validators=[django.core.validators.MinValueValidator(0)])
         ),
         migrations.AddField(
             model_name='historicalshipment',
             name='manual_update_hash_interval',
-            field=models.IntegerField(default=settings.DATA_VAULT_HASH_RATE_LIMIT, validators=[django.core.validators.MinValueValidator(0)]),
-            preserve_default=False,
+            field=models.IntegerField(default=settings.DEFAULT_MANUAL_UPDATE_HASH_INTERVAL, validators=[django.core.validators.MinValueValidator(0)])
         ),
         migrations.AddField(
             model_name='shipment',
             name='background_data_hash_interval',
-            field=models.IntegerField(default=settings.TRACKING_VAULT_HASH_RATE_LIMIT, validators=[django.core.validators.MinValueValidator(0)]),
-            preserve_default=False,
+            field=models.IntegerField(default=settings.DEFAULT_BACKGROUND_DATA_HASH_INTERVAL, validators=[django.core.validators.MinValueValidator(0)]),
         ),
         migrations.AddField(
             model_name='shipment',
             name='manual_update_hash_interval',
-            field=models.IntegerField(default=settings.DATA_VAULT_HASH_RATE_LIMIT, validators=[django.core.validators.MinValueValidator(0)]),
-            preserve_default=False,
+            field=models.IntegerField(default=settings.DEFAULT_MANUAL_UPDATE_HASH_INTERVAL, validators=[django.core.validators.MinValueValidator(0)])
         ),
     ]

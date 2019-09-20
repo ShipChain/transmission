@@ -218,8 +218,10 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     contract_version = models.CharField(null=False, max_length=36)
-    background_data_hash_interval = models.IntegerField(validators=[MinValueValidator(0)])
-    manual_update_hash_interval = models.IntegerField(validators=[MinValueValidator(0)])
+    background_data_hash_interval = models.IntegerField(validators=[MinValueValidator(0)],
+                                                        default=settings.DEFAULT_BACKGROUND_DATA_HASH_INTERVAL)
+    manual_update_hash_interval = models.IntegerField(validators=[MinValueValidator(0)],
+                                                      default=settings.DEFAULT_MANUAL_UPDATE_HASH_INTERVAL)
 
     updated_by = models.CharField(null=True, max_length=36)
 
@@ -375,11 +377,13 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                                    'module': __name__})
         return async_job
 
-    def set_vault_hash(self, vault_hash, action_type, rate_limit=-1,
-                       use_updated_by=True):
+    def set_vault_hash(self, vault_hash, action_type, rate_limit=None, use_updated_by=True):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.loadshipment and self.loadshipment.shipment_state is not ShipmentState.NOT_CREATED:
+            if rate_limit is None:
+                rate_limit = self.manual_update_hash_interval
+
             rpc_client = RPCClientFactory.get_client(self.contract_version)
             job_queryset = AsyncJob.objects.filter(
                 shipment__id=self.id,
@@ -407,10 +411,10 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                         # If this is not a delayed job, or this job is after its fire time
                         LOG.warning(f'Pending AsyncJob {async_job.id} is past its scheduled fire time, requeuing')
                         async_job.fire()
-            elif rate_limit == -1:
+            elif rate_limit:
                 LOG.debug(f'Shipment {self.id} requested a rate-limited vault hash update')
                 LOG.debug(f'No pending vault hash updates for {self.id}, '
-                          f'sending one in {self.manual_update_hash_interval} minutes')
+                          f'sending one in {rate_limit} minutes')
                 async_job = AsyncJob.rpc_job_for_listener(
                     rpc_method=rpc_client.set_vault_hash_tx,
                     rpc_parameters=[self.shipper_wallet_id,
@@ -418,7 +422,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                     vault_hash],
                     signing_wallet_id=self.shipper_wallet_id,
                     shipment=self,
-                    delay=self.manual_update_hash_interval)
+                    delay=rate_limit)
                 async_job.actions.create(action_type=action_type,
                                          vault_hash=vault_hash,
                                          user_id=self.updated_by if use_updated_by else None)

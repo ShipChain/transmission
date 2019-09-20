@@ -45,9 +45,7 @@ class ShipmentAPITests(APITestCase):
                                                           shipper_wallet_id=SHIPPER_WALLET_ID,
                                                           storage_credentials_id=STORAGE_CRED_ID,
                                                           pickup_est="2018-11-10T17:57:05.070419Z",
-                                                          owner_id=OWNER_ID,
-                                                          background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
-                                                          manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT))
+                                                          owner_id=OWNER_ID))
 
     def test_shipment_create(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})
@@ -102,7 +100,6 @@ class ShipmentAPITests(APITestCase):
         })
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
-        print(response.content)
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
     def test_shipment_create_with_location(self):

@@ -82,27 +82,21 @@ class ShipmentAPITests(APITestCase):
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
                                                       pickup_est="2018-11-10T17:57:05.070419Z",
-                                                      owner_id=self.user_1.id,
-                                                      background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
-                                                      manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT))
+                                                      owner_id=self.user_1.id))
         self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
                                                       carrier_wallet_id=CARRIER_WALLET_ID,
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
                                                       pickup_est="2018-11-05T17:57:05.070419Z",
                                                       mode_of_transport_code='mode',
-                                                      owner_id=self.user_1.id,
-                                                      background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
-                                                      manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT))
+                                                      owner_id=self.user_1.id))
         self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
                                                       carrier_wallet_id=CARRIER_WALLET_ID,
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
                                                       pickup_est="2018-11-05T17:57:05.070419Z",
                                                       mode_of_transport_code='mode',
-                                                      owner_id=self.user_2.id,
-                                                      background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
-                                                      manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT))
+                                                      owner_id=self.user_2.id))
 
     def create_location(self, **data):
         return Location.objects.create(**data)
@@ -1100,8 +1094,8 @@ class ShipmentAPITests(APITestCase):
         self.assertIsNotNone(response_data['meta']['async_job_id'])
 
         shipment = Shipment.objects.get(id=response_data['id'])
-        self.assertEqual(shipment.background_data_hash_interval, test_settings.TRACKING_VAULT_HASH_RATE_LIMIT)
-        self.assertEqual(shipment.manual_update_hash_interval, test_settings.DATA_VAULT_HASH_RATE_LIMIT)
+        self.assertEqual(shipment.background_data_hash_interval, test_settings.DEFAULT_BACKGROUND_DATA_HASH_INTERVAL)
+        self.assertEqual(shipment.manual_update_hash_interval, test_settings.DEFAULT_MANUAL_UPDATE_HASH_INTERVAL)
 
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
@@ -1418,9 +1412,7 @@ class ShipmentAPITests(APITestCase):
 
         _shipment_id = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
         _vault_id = '01fc36c4-63e5-4c02-943a-b52cd25b235b'
-        shipment = Shipment.objects.create(id=_shipment_id, vault_id=_vault_id,
-                                           background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
-                                           manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT)
+        shipment = Shipment.objects.create(id=_shipment_id, vault_id=_vault_id)
 
         profiles_url = shipment.get_device_request_url()
 
@@ -1942,9 +1934,7 @@ class TrackingDataAPITests(APITestCase):
                                                       carrier_wallet_id=CARRIER_WALLET_ID,
                                                       shipper_wallet_id=SHIPPER_WALLET_ID,
                                                       storage_credentials_id=STORAGE_CRED_ID,
-                                                      owner_id=self.user_1.id,
-                                                      background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
-                                                      manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT))
+                                                      owner_id=self.user_1.id))
 
     def create_tracking_data(self):
         self.create_shipment()

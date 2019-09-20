@@ -55,9 +55,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
             carrier_wallet_id=CARRIER_WALLET_ID,
             shipper_wallet_id=SHIPPER_WALLET_ID,
             storage_credentials_id=STORAGE_CRED_ID,
-            owner_id=OWNER_ID,
-            background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
-            manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT
+            owner_id=OWNER_ID
         )
 
         # Re-enable Shipment post save signal
@@ -261,9 +259,7 @@ class DocumentAPITests(APITestCase):
             carrier_wallet_id=CARRIER_WALLET_ID,
             shipper_wallet_id=SHIPPER_WALLET_ID,
             storage_credentials_id=STORAGE_CRED_ID,
-            owner_id=FAKE_ID,
-            background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
-            manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT
+            owner_id=FAKE_ID
         )
 
         shipment_2 = Shipment.objects.create(
@@ -271,9 +267,7 @@ class DocumentAPITests(APITestCase):
             carrier_wallet_id=CARRIER_WALLET_ID,
             shipper_wallet_id=SHIPPER_WALLET_ID,
             storage_credentials_id=STORAGE_CRED_ID,
-            owner_id=FAKE_ID,
-            background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
-            manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT
+            owner_id=FAKE_ID
         )
 
         LoadShipment.objects.create(shipment=shipment,
@@ -482,9 +476,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
             carrier_wallet_id=CARRIER_WALLET_ID,
             shipper_wallet_id=SHIPPER_WALLET_ID,
             storage_credentials_id=STORAGE_CRED_ID,
-            owner_id=OWNER_ID,
-            background_data_hash_interval=test_settings.TRACKING_VAULT_HASH_RATE_LIMIT,
-            manual_update_hash_interval=test_settings.DATA_VAULT_HASH_RATE_LIMIT
+            owner_id=OWNER_ID
         )
 
         # Re-enable Shipment post save signal
