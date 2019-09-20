@@ -1,13 +1,14 @@
+import pytest
 from unittest import mock
 import httpretty
 import requests
 from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
 from rest_framework.test import APITestCase
+from django.test import override_settings
 from django.conf import settings
-from rest_framework import status
 
-from apps.exceptions import AWSIoTError
-from apps.iot_client import AWSIoTClient
+from shipchain_common.exceptions import AWSIoTError
+from shipchain_common.iot import AWSIoTClient
 from tests.utils import mocked_rpc_response
 
 
@@ -17,6 +18,14 @@ class FakeBotoAWSRequestsAuth(BotoAWSRequestsAuth):
 
     def get_aws_request_headers_handler(self, r):
         return {}
+
+
+@pytest.fixture()
+@override_settings()
+def iot_settings():
+    settings.IOT_THING_INTEGRATION = True
+    settings.IOT_AWS_HOST = 'not-really-aws.com'
+    settings.IOT_GATEWAY_STAGE = 'iot_test'
 
 
 class AWSSetUpCase(APITestCase):
@@ -40,7 +49,7 @@ class AWSSetUpCase(APITestCase):
         self.assertEqual(aws_iot_client.session.headers['content-type'], 'application/json')
 
 
-@mock.patch('apps.iot_client.BotoAWSRequestsAuth', FakeBotoAWSRequestsAuth)
+@mock.patch('shipchain_common.iot.BotoAWSRequestsAuth', FakeBotoAWSRequestsAuth)
 class AWSTestWithMocked(APITestCase):
     def setUp(self):
         settings.IOT_THING_INTEGRATION = True

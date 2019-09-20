@@ -80,10 +80,8 @@ def mocked_engine_rpc(mocker):
 
 @pytest.fixture
 def mocked_iot_api(mocker):
-    return mocker.patch('apps.iot_client.requests.Session.put', return_value=mocked_rpc_response({'data': {
-        'shipmentId': 'dunno yet',
-        'shipmentState': 'dunno yet'
-    }}))
+    return mocker.patch('apps.shipments.iot_client.DeviceAWSIoTClient.update_shadow', return_value=mocked_rpc_response(
+        {'data': {'shipmentId': 'dunno yet', 'shipmentState': 'dunno yet'}}))
 
 
 @pytest.fixture
