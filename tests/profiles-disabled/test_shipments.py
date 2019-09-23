@@ -1,6 +1,6 @@
 from unittest import mock
-from conf import test_settings_profiles_disabled
 
+from django.conf import settings as test_settings
 from django.core import mail
 from rest_framework import status
 from rest_framework.reverse import reverse

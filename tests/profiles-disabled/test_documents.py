@@ -16,6 +16,7 @@ limitations under the License.
 
 from unittest import mock
 
+from django.conf import settings as test_settings
 from django.db.models import signals
 from rest_framework import status
 from rest_framework.reverse import reverse

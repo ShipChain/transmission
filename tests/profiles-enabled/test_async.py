@@ -16,6 +16,7 @@ limitations under the License.
 import datetime
 import json
 
+from django.conf import settings as test_settings
 import pytest
 from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator

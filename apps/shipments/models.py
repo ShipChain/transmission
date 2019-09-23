@@ -218,6 +218,10 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     contract_version = models.CharField(null=False, max_length=36)
+    background_data_hash_interval = models.IntegerField(validators=[MinValueValidator(0)],
+                                                        default=settings.DEFAULT_BACKGROUND_DATA_HASH_INTERVAL)
+    manual_update_hash_interval = models.IntegerField(validators=[MinValueValidator(0)],
+                                                      default=settings.DEFAULT_MANUAL_UPDATE_HASH_INTERVAL)
 
     updated_by = models.CharField(null=True, max_length=36)
 
@@ -373,11 +377,13 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                                    'module': __name__})
         return async_job
 
-    def set_vault_hash(self, vault_hash, action_type, rate_limit=settings.DATA_VAULT_HASH_RATE_LIMIT,
-                       use_updated_by=True):
+    def set_vault_hash(self, vault_hash, action_type, rate_limit=None, use_updated_by=True):
         LOG.debug(f'Updating vault hash {vault_hash}')
         async_job = None
         if self.loadshipment and self.loadshipment.shipment_state is not ShipmentState.NOT_CREATED:
+            if rate_limit is None:
+                rate_limit = self.manual_update_hash_interval
+
             rpc_client = RPCClientFactory.get_client(self.contract_version)
             job_queryset = AsyncJob.objects.filter(
                 shipment__id=self.id,

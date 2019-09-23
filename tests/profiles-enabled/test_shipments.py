@@ -65,6 +65,9 @@ class ShipmentAPITests(APITestCase):
         self.token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID, organization_id=ORGANIZATION_ID)
         self.token2 = get_jwt(username='user2@shipchain.io', sub=OWNER_ID_2)
         self.token3 = get_jwt(username='user3@shipchain.io', sub=OWNER_ID_3, organization_id=ORGANIZATION_ID)
+        self.hashed_token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID, organization_id=ORGANIZATION_ID,
+                                    background_data_hash_interval=25, manual_update_hash_interval=30)
+
         self.user_1 = passive_credentials_auth(self.token)
         self.user_2 = passive_credentials_auth(self.token2)
         self.user_3 = passive_credentials_auth(self.token3)
@@ -1077,7 +1080,6 @@ class ShipmentAPITests(APITestCase):
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
-
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
@@ -1091,6 +1093,10 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
         self.assertIsNotNone(response_data['meta']['async_job_id'])
 
+        shipment = Shipment.objects.get(id=response_data['id'])
+        self.assertEqual(shipment.background_data_hash_interval, test_settings.DEFAULT_BACKGROUND_DATA_HASH_INTERVAL)
+        self.assertEqual(shipment.manual_update_hash_interval, test_settings.DEFAULT_MANUAL_UPDATE_HASH_INTERVAL)
+
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
@@ -1110,6 +1116,24 @@ class ShipmentAPITests(APITestCase):
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+
+        self.user_1 = passive_credentials_auth(self.hashed_token)
+        self.set_user(self.user_1, self.hashed_token)
+        force_authenticate(response, user=self.user_1, token=self.hashed_token)
+        response = self.client.post(url, post_data, content_type='application/vnd.api+json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        response_data = response.json()['data']
+
+        shipment = Shipment.objects.get(id=response_data['id'])
+        self.assertEqual(shipment.background_data_hash_interval, 25)
+        self.assertEqual(shipment.manual_update_hash_interval, 30)
 
     @httpretty.activate
     def test_organization_sharing(self):

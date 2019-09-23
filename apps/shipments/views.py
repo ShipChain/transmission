@@ -67,9 +67,16 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(owner_id=get_owner_id(self.request), updated_by=self.request.user.id)
+            background_data_hash_interval = self.request.user.token.get('background_data_hash_interval',
+                                                                        settings.DEFAULT_BACKGROUND_DATA_HASH_INTERVAL)
+            manual_update_hash_interval = self.request.user.token.get('manual_update_hash_interval',
+                                                                      settings.DEFAULT_MANUAL_UPDATE_HASH_INTERVAL)
+            created = serializer.save(owner_id=get_owner_id(self.request), updated_by=self.request.user.id,
+                                      background_data_hash_interval=background_data_hash_interval,
+                                      manual_update_hash_interval=manual_update_hash_interval)
         else:
-            created = serializer.save()
+            created = serializer.save(background_data_hash_interval=settings.DEFAULT_BACKGROUND_DATA_HASH_INTERVAL,
+                                      manual_update_hash_interval=settings.DEFAULT_MANUAL_UPDATE_HASH_INTERVAL)
         return created
 
     def perform_update(self, serializer):

@@ -1,6 +1,7 @@
 import json
 from unittest import mock
 
+from django.conf import settings as test_settings
 from moto import mock_iot
 from rest_framework import status
 from rest_framework.reverse import reverse

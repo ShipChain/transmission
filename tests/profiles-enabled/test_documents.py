@@ -8,6 +8,7 @@ import os
 import requests
 from PIL import Image, ImageDraw, ImageFont
 from django.conf import settings
+from django.conf import settings as test_settings
 from django.db.models import signals
 from fpdf import FPDF
 from rest_framework import status

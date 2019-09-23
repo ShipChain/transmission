@@ -12,11 +12,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from datetime import datetime
+
+import pytest
+import pytz
 from dateutil.parser import parse as dt_parse
 from dateutil.relativedelta import relativedelta
-
-import pytz
-import pytest
+from django.conf import settings as test_settings
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
