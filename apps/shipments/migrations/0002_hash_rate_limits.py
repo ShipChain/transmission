@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0039_shipment_state_data_migration'),
+        ('shipments', '0001_squashed_091919'),
     ]
 
     operations = [
