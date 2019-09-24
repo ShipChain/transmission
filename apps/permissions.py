@@ -19,8 +19,8 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import permissions, status
+from shipchain_common.authentication import get_jwt_from_request
 
-from apps.authentication import get_jwt_from_request
 from apps.shipments.models import Shipment, PermissionLink
 
 

@@ -16,8 +16,8 @@ from rest_framework.exceptions import NotFound, PermissionDenied
 from influxdb_metrics.loader import log_metric
 from shipchain_common.exceptions import RPCError
 from shipchain_common.utils import send_templated_email
+from shipchain_common.authentication import get_jwt_from_request
 
-from apps.authentication import get_jwt_from_request
 from apps.jobs.models import JobState
 from apps.pagination import CustomResponsePagination
 from apps.permissions import owner_access_filter, get_owner_id

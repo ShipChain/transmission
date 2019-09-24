@@ -21,8 +21,8 @@ from django_filters import rest_framework as filters
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
+from shipchain_common.authentication import get_jwt_from_request
 
-from apps.authentication import get_jwt_from_request
 from apps.permissions import IsOwner, get_owner_id, owner_access_filter
 from .filters import ShipmentImportFilterSet
 from .models import ShipmentImport
