@@ -4,6 +4,7 @@ import re
 import random
 from unittest import mock, TestCase
 
+import requests
 import boto3
 import httpretty
 import geocoder
@@ -23,13 +24,14 @@ from apps.eth.models import EthAction
 from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
 
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
-from apps.shipments.rpc import Load110RPCClient, ShipmentRPCClient
+from apps.shipments.rpc import Load110RPCClient
 from apps.shipments.iot_client import DeviceAWSIoTClient
 from apps.utils import random_id
-from apps.rpc_client import RPCClient, RPCError, requests
 from tests.utils import get_jwt
-from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response, random_timestamp, \
-    random_location, GeoCoderResponse
+from shipchain_common.test_utils import (replace_variables_in_string,
+                                    create_form_content, mocked_rpc_response,
+                                    random_timestamp, random_location,
+                                    GeoCoderResponse, )
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
 
@@ -291,8 +293,6 @@ class ShipmentAPITests(APITestCase):
 
     @mock_iot
     def test_add_tracking_data(self):
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
 
         device_id = 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'
 
@@ -547,7 +547,6 @@ class ShipmentAPITests(APITestCase):
         assert response.status_code == status.HTTP_200_OK
 
     def test_shipment_customer_fields_update(self):
-        from apps.rpc_client import requests
         with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
@@ -595,8 +594,6 @@ class ShipmentAPITests(APITestCase):
         when we post new tracking data, we should be able to track and retrieve the new certificate in aws IoT and
         attach it to the device
         """
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
 
         with mock_iot():
             iot = boto3.client('iot', region_name='us-east-1')
@@ -749,8 +746,6 @@ class ShipmentAPITests(APITestCase):
     @mock_iot
     @mock.patch('apps.shipments.models.mapbox_access_token', return_value='TEST_ACCESS_KEYS')
     def test_shipment_history(self, mock_mapbox):
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
 
         history = Shipment.history.all()
         history.delete()
@@ -1874,8 +1869,6 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_permission_link_email(self):
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
         with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
@@ -2002,8 +1995,6 @@ class TrackingDataAPITests(APITestCase):
 
     @mock_iot
     def test_set_device_id(self):
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
 
         self.create_tracking_data()
         self.assertEqual(TrackingData.objects.all().count(), 1)

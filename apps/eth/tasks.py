@@ -5,12 +5,14 @@ from celery_once import QueueOnce
 from django.conf import settings
 from influxdb_metrics.loader import log_metric
 from rest_framework.exceptions import APIException
+from shipchain_common.exceptions import RPCError
+
+from apps.eth.rpc import EventRPCClient
 
 LOG = logging.getLogger('transmission')
 
 
 def engine_subscribe_generic(project, version, events=None):
-    from apps.eth.rpc import EventRPCClient, RPCError
     log_metric('transmission.info', tags={'method': f'eth.engine_subscribe_{project.lower()}',
                                           'module': __name__})
     try:

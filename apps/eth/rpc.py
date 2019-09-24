@@ -1,9 +1,11 @@
 import logging
 
 from influxdb_metrics.loader import log_metric
+from shipchain_common.exceptions import RPCError
+from shipchain_common.rpc import RPCClient
 
 from apps.eth.models import Event
-from apps.rpc_client import RPCClient, RPCError
+
 
 LOG = logging.getLogger('transmission')
 

@@ -3,9 +3,9 @@ import logging
 
 from celery import shared_task
 from influxdb_metrics.loader import log_metric
+from shipchain_common.exceptions import RPCError
 
 from apps.jobs.models import AsyncActionType
-from apps.rpc_client import RPCError
 from .rpc import RPCClientFactory
 from .models import Shipment
 

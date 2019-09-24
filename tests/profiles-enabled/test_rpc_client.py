@@ -1,8 +1,11 @@
+import requests
 from unittest import TestCase, mock
 
 from django.conf import settings
+from shipchain_common.exceptions import RPCError
+from shipchain_common.rpc import RPCClient
 
-from apps.rpc_client import RPCClient, RPCError, requests
+# from apps.rpc_client import RPCClient, RPCError, requests
 from apps.documents.rpc import DocumentRPCClient
 from apps.shipments.rpc import ShipmentRPCClient, Load110RPCClient
 from tests.utils import mocked_rpc_response

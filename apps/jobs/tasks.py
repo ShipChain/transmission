@@ -11,8 +11,8 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from influxdb_metrics.loader import log_metric
+from shipchain_common.exceptions import RPCError
 
-from apps.rpc_client import RPCError
 from .exceptions import WalletInUseException, TransactionCollisionException
 
 LOG = logging.getLogger('transmission')

@@ -17,8 +17,8 @@ limitations under the License.
 import logging
 
 from influxdb_metrics.loader import log_metric
-
-from apps.rpc_client import RPCClient, RPCError
+from shipchain_common.exceptions import RPCError
+from shipchain_common.rpc import RPCClient
 
 LOG = logging.getLogger('transmission')
 

@@ -17,7 +17,6 @@ from rest_framework.test import APITestCase, APIClient
 
 from apps.authentication import passive_credentials_auth
 from apps.documents.models import Document, UploadStatus, DocumentType, FileType
-from apps.rpc_client import requests as rpc_requests
 from apps.shipments.models import Shipment, LoadShipment
 from apps.shipments.signals import shipment_post_save
 from tests.utils import create_form_content, get_jwt, mocked_rpc_response
@@ -108,7 +107,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
         response = self.client.post(url, file_data, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
+        with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
                 "result": {
@@ -326,7 +325,7 @@ class DocumentAPITests(APITestCase):
         response = self.client.post(url, json.dumps(s3_event), content_type="application/json")
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-        with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
+        with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
                 "result": {
@@ -381,7 +380,7 @@ class DocumentAPITests(APITestCase):
         with mock.patch('apps.permissions.is_shipper') as mock_is_shipper, \
                 mock.patch('apps.permissions.is_carrier') as mock_is_carrier, \
                 mock.patch('apps.permissions.is_moderator') as mock_is_moderator, \
-                mock.patch.object(rpc_requests.Session, 'post') as mock_rpc_call:
+                mock.patch.object(requests.Session, 'post') as mock_rpc_call:
 
             mock_rpc_call.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
@@ -568,7 +567,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         file_data, content_type = create_form_content({
             'upload_status': 'complete',
         })
-        with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
+        with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
                 "result": {
@@ -623,7 +622,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
             'file_type': 'Png'
         })
 
-        with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
+        with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
                 "result": {

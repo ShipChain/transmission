@@ -7,12 +7,12 @@ from influxdb_metrics.loader import log_metric
 from rest_framework import mixins, viewsets, parsers, status, renderers, permissions
 from rest_framework.response import Response
 from rest_framework_json_api import renderers as jsapi_renderers, serializers
+from shipchain_common.exceptions import RPCError
 
 from apps.authentication import EngineRequest, get_jwt_from_request
 from apps.eth.models import EthAction, Event
 from apps.eth.serializers import EventSerializer, EthActionSerializer
 from apps.permissions import get_owner_id
-from apps.rpc_client import RPCError
 from apps.shipments.permissions import IsListenerOwner
 
 LOG = logging.getLogger('transmission')
