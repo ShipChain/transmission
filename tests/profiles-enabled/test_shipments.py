@@ -2,7 +2,7 @@ import copy
 import json
 import re
 import random
-from unittest import mock, TestCase
+from unittest import mock
 
 import requests
 import boto3

@@ -17,16 +17,16 @@ limitations under the License.
 from unittest import mock
 
 from django.conf import settings as test_settings
+import requests
 from django.db.models import signals
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 
 from apps.documents.models import Document
-from apps.rpc_client import requests as rpc_requests
 from apps.shipments.models import Shipment
 from apps.shipments.signals import shipment_post_save
-from tests.utils import mocked_rpc_response
+from shipchain_common.test_utils import mocked_rpc_response
 
 OWNER_ID = '5e8f1d76-162d-4f21-9b71-2ca97306ef7c'
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
@@ -64,7 +64,7 @@ class DocumentViewSetAPITests(APITestCase):
             'document_type': 'Bol',
             'file_type': 'Pdf'
         }
-        with mock.patch.object(rpc_requests.Session, 'post') as mock_method:
+        with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "success": True
             })

@@ -1,16 +1,16 @@
 from unittest import mock
 
+import requests
 from django.conf import settings as test_settings
 from django.core import mail
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
+from shipchain_common.test_utils import create_form_content, mocked_rpc_response
 
 from apps.shipments.rpc import ShipmentRPCClient
 from apps.shipments.models import Location, Shipment
-from tests.utils import create_form_content
-from apps.rpc_client import requests
-from tests.utils import mocked_rpc_response
+
 
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
