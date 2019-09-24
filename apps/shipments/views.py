@@ -21,7 +21,7 @@ from apps.pagination import CustomResponsePagination
 from apps.permissions import owner_access_filter, get_owner_id
 from apps.utils import send_templated_email
 from apps.rpc_client import RPCError
-from .filters import ShipmentFilter, HistoricalShipmentFilter
+from .filters import ShipmentFilter, HistoricalShipmentFilter, SHIPMENT_SEARCH
 from .geojson import render_point_features
 from .iot_client import DeviceAWSIoTClient
 from .models import Shipment, TrackingData, PermissionLink
@@ -43,7 +43,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                           else (permissions.AllowAny,))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     filterset_class = ShipmentFilter
-    search_fields = ('shippers_reference', 'forwarders_reference')
+    search_fields = SHIPMENT_SEARCH
     ordering_fields = ('updated_at', 'created_at', 'pickup_est', 'delivery_est')
     http_method_names = ['get', 'post', 'delete', 'patch']
 

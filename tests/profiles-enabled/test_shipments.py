@@ -167,6 +167,12 @@ class ShipmentAPITests(APITestCase):
         setattr(self.shipments[1], 'ship_to_location', Location.objects.create(name="locat"))
         self.shipments[1].save()
 
+        # Filtering for shipment's with fields should return only those with it
+        response = self.client.get(f'{url}?has_ship_to_location=True')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(response_data['data'][0]['id'], self.shipments[1].id)
+
     def test_ordering(self):
         """
         Test filtering for objects
@@ -191,6 +197,48 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
         self.assertEqual(response_data['data'][0]['id'], self.shipments[0].id)
+
+    def test_search(self):
+        """
+        Test searching for objects
+        """
+        self.create_shipment()
+
+        # Unauthenticated request should fail with 403
+        url = reverse('shipment-list', kwargs={'version': 'v1'})
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Authenticated request should succeed
+        self.set_user(self.user_1)
+
+        # Searching for data that no shipment has should return none
+        response = self.client.get(f'{url}?search=Location Name')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 0)
+
+        setattr(self.shipments[1], 'ship_from_location', Location.objects.create(name="locat"))
+        self.shipments[1].save()
+
+        # Searching for location data should work
+        response = self.client.get(f'{url}?search=locat')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 1)
+        self.assertEqual(response_data['data'][0]['id'], self.shipments[1].id)
+
+        setattr(self.shipments[0], 'shippers_reference', "Shipper Reference")
+        self.shipments[0].save()
+
+        # Searching for shippers_reference should work
+        response = self.client.get(f'{url}?search=Shipper Reference')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 1)
+        self.assertEqual(response_data['data'][0]['id'], self.shipments[0].id)
+
 
     @httpretty.activate
     def test_carrier_shipment_access(self):
