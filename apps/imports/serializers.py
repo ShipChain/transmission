@@ -19,8 +19,9 @@ from django.conf import settings
 from enumfields.drf import EnumSupportSerializerMixin
 from rest_framework_json_api import serializers
 from rest_framework import status
+from shipchain_common.utils import UpperEnumField
 
-from apps.utils import UpperEnumField, S3PreSignedMixin, UploadStatus
+from apps.utils import S3PreSignedMixin, UploadStatus
 from .models import ShipmentImport, ProcessingStatus, FileType
 
 

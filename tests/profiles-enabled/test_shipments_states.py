@@ -21,11 +21,11 @@ from django.conf import settings as test_settings
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
+from shipchain_common.utils import random_id
 
 from apps.authentication import passive_credentials_auth
 from apps.shipments.models import Shipment, TransitState, Device
 from apps.shipments.serializers import ActionType
-from apps.utils import random_id
 from tests.utils import get_jwt, datetimeAlmostEqual, mocked_rpc_response
 
 USER_ID = random_id()

@@ -20,9 +20,7 @@ from django.conf import settings
 from influxdb_metrics.loader import log_metric
 from shipchain_common.exceptions import AWSIoTError
 from shipchain_common.iot import AWSIoTClient
-
-from apps.utils import remove_dict_key_recursively
-
+from shipchain_common.utils import remove_dict_key_recursively
 
 LOG = logging.getLogger('transmission')
 

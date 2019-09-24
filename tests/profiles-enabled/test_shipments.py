@@ -22,16 +22,14 @@ from rest_framework.test import APITestCase, force_authenticate, APIClient
 from apps.authentication import passive_credentials_auth
 from apps.eth.models import EthAction
 from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
+from shipchain_common.test_utils import replace_variables_in_string, create_form_content, mocked_rpc_response, \
+    random_timestamp, random_location, GeoCoderResponse
+from shipchain_common.utils import random_id
 
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
 from apps.shipments.rpc import Load110RPCClient
 from apps.shipments.iot_client import DeviceAWSIoTClient
-from apps.utils import random_id
 from tests.utils import get_jwt
-from shipchain_common.test_utils import (replace_variables_in_string,
-                                    create_form_content, mocked_rpc_response,
-                                    random_timestamp, random_location,
-                                    GeoCoderResponse, )
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
 

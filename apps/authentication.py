@@ -20,8 +20,8 @@ from jwt.exceptions import InvalidTokenError
 from rest_framework.exceptions import APIException, AuthenticationFailed
 from rest_framework.permissions import BasePermission
 from rest_framework_simplejwt.authentication import JWTTokenUserAuthentication
+from shipchain_common.utils import parse_dn
 
-from .utils import parse_dn
 
 PASSIVE_JWT_AUTHENTICATION = JWTTokenUserAuthentication()
 

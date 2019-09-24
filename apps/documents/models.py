@@ -18,9 +18,10 @@ from django.conf import settings
 from django.db import models
 from enumfields import Enum
 from enumfields import EnumIntegerField
+from shipchain_common.utils import random_id
 
 from apps.shipments.models import Shipment
-from apps.utils import UploadStatus, random_id
+from apps.utils import UploadStatus
 
 
 class DocumentType(Enum):

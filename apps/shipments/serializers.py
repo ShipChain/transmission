@@ -20,11 +20,10 @@ from rest_framework import exceptions, status, serializers as rest_serializers
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
+from shipchain_common.utils import UpperEnumField
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData, PermissionLink, ExceptionType, TransitState
-from apps.utils import UpperEnumField
-
 
 LOG = logging.getLogger('transmission')
 

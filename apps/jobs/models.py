@@ -4,11 +4,10 @@ from django.conf import settings
 from django.urls import reverse
 # TODO: Should this be a Postgres field?
 from django.contrib.postgres.fields import JSONField
-
 from enumfields import Enum, EnumIntegerField
+from shipchain_common.utils import random_id
 
 from apps.eth.fields import HashField
-from apps.utils import random_id
 
 
 class JobState(Enum):

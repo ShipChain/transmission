@@ -3,7 +3,6 @@
 import apps.eth.fields
 import apps.shipments.models
 import apps.simple_history
-import apps.utils
 import django.contrib.gis.db.models.fields
 import django.contrib.postgres.fields.jsonb
 import django.core.validators
@@ -13,6 +12,7 @@ import django_fsm
 import enumfields.fields
 import simple_history.models
 import uuid
+from shipchain_common.utils import random_id
 
 
 class Migration(migrations.Migration):
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Location',
             fields=[
-                ('id', models.CharField(default=apps.utils.random_id, max_length=36, primary_key=True, serialize=False)),
+                ('id', models.CharField(default=random_id, max_length=36, primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=255)),
                 ('address_1', models.CharField(blank=True, max_length=255, null=True)),
                 ('address_2', models.CharField(blank=True, max_length=255, null=True)),
@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='LoadShipment',
             fields=[
-                ('id', models.CharField(default=apps.utils.random_id, max_length=36, primary_key=True, serialize=False)),
+                ('id', models.CharField(default=random_id, max_length=36, primary_key=True, serialize=False)),
                 ('shipment_id', models.IntegerField(blank=True, null=True)),
                 ('shipment_amount', models.IntegerField()),
                 ('paid_amount', models.IntegerField(default=0)),
@@ -83,7 +83,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Shipment',
             fields=[
-                ('id', models.CharField(default=apps.utils.random_id, max_length=36, primary_key=True, serialize=False)),
+                ('id', models.CharField(default=random_id, max_length=36, primary_key=True, serialize=False)),
                 ('owner_id', models.CharField(max_length=36)),
                 ('carrier_scac', models.CharField(blank=True, max_length=255, null=True)),
                 ('forwarder_scac', models.CharField(blank=True, max_length=255, null=True)),
@@ -548,7 +548,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='TrackingData',
             fields=[
-                ('id', models.CharField(default=apps.utils.random_id, max_length=36, primary_key=True, serialize=False)),
+                ('id', models.CharField(default=random_id, max_length=36, primary_key=True, serialize=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('latitude', models.FloatField(max_length=36)),
                 ('longitude', models.FloatField(max_length=36)),
@@ -574,7 +574,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PermissionLink',
             fields=[
-                ('id', models.CharField(default=apps.utils.random_id, max_length=36, primary_key=True, serialize=False)),
+                ('id', models.CharField(default=random_id, max_length=36, primary_key=True, serialize=False)),
                 ('expiration_date', models.DateTimeField(blank=True, null=True)),
                 ('name', models.CharField(max_length=255)),
                 ('shipment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shipments.Shipment')),
@@ -667,7 +667,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='HistoricalLocation',
             fields=[
-                ('id', models.CharField(db_index=True, default=apps.utils.random_id, max_length=36)),
+                ('id', models.CharField(db_index=True, default=random_id, max_length=36)),
                 ('name', models.CharField(max_length=255)),
                 ('address_1', models.CharField(blank=True, max_length=255, null=True)),
                 ('address_2', models.CharField(blank=True, max_length=255, null=True)),
@@ -696,7 +696,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='HistoricalShipment',
             fields=[
-                ('id', models.CharField(db_index=True, default=apps.utils.random_id, max_length=36)),
+                ('id', models.CharField(db_index=True, default=random_id, max_length=36)),
                 ('owner_id', models.CharField(max_length=36)),
                 ('storage_credentials_id', models.CharField(max_length=36)),
                 ('vault_id', models.CharField(max_length=36, null=True)),

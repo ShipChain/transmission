@@ -2,10 +2,10 @@ from django.conf import settings
 from django.db import models
 from django_extensions.db.fields.json import JSONField
 from rest_framework.reverse import reverse
+from shipchain_common.utils import random_id
 
 from apps.jobs.models import AsyncJob
 from apps.shipments.models import Shipment
-from apps.utils import random_id
 from .fields import AddressField, HashField
 
 
