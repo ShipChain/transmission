@@ -7,8 +7,8 @@ from unittest import mock
 import os
 import requests
 from PIL import Image, ImageDraw, ImageFont
+from dateutil.parser import parse
 from django.conf import settings
-from django.conf import settings as test_settings
 from django.db.models import signals
 from fpdf import FPDF
 from rest_framework import status
@@ -211,11 +211,16 @@ class PdfDocumentViewSetAPITests(APITestCase):
             # Get list of documents
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
+            data = response.json()['data']
+
+            # Assert that the list documents are in descending order
+            creation_object1_date = parse(data[0]['attributes']['created_at'])
+            creation_object2_date = parse(data[1]['attributes']['created_at'])
+            self.assertTrue(creation_object2_date < creation_object1_date)
 
             # Get list of pdf documents via query params, it should return 2 elements
             url_pdf = url + '?file_type=Pdf'
             response = self.client.get(url_pdf)
-            data = response.json()['data']
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertEqual(len(data), 2)
 
