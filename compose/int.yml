@@ -139,16 +139,15 @@ services:
 
   engine-rpc:
     image: 489745816517.dkr.ecr.us-east-1.amazonaws.com/engine-node:dev
-    ports:
-      - 2000:2000
-    command: yarn forever
+    expose:
+      - 2000
+    command: yarn start
     links:
       - redis_db
-      - geth-poa
-      - sftp
       - minio
+      - sftp
+      - geth-poa
       - engine_psql
-      - transmission-django
     environment:
       - ENV=
       - USE_JS_ORM_ENTITIES=true

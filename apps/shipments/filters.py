@@ -28,7 +28,7 @@ class ShipmentFilter(filters.filterset.FilterSet):
                   'final_destination_location', 'ship_from_location__state', 'state', 'exception', 'delayed']
 
 
-SHIPMENT_SEARCH = (
+SHIPMENT_SEARCH_FIELDS = (
     'shippers_reference', 'forwarders_reference',
     'ship_from_location__name', 'ship_from_location__city', 'ship_from_location__address_1',
     'ship_from_location__postal_code', 'ship_from_location__country', 'ship_from_location__state',
