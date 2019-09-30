@@ -14,9 +14,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound, PermissionDenied
 from influxdb_metrics.loader import log_metric
+from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import CustomResponsePagination, send_templated_email
 from shipchain_common.exceptions import RPCError
-from shipchain_common.authentication import get_jwt_from_request
 
 from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id
