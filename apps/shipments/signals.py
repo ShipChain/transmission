@@ -30,10 +30,14 @@ def shipment_job_update(sender, message, shipment, **kwargs):
 
     if message.type == MessageType.ETH_TRANSACTION:
         LOG.debug(f'Message type is {message.type}.')
-        lookup_id = message.body['ethTxHash'] if 'ethTxHash' in message.body else message.body['transactionHash']
-        TransactionReceipt.objects.filter(eth_action_id=lookup_id
-                                          ).update(**TransactionReceipt.convert_receipt(message.body))
-
+        if 'ethTxHash' in message.body or 'transactionHash' in message.body:
+            lookup_id = message.body['ethTxHash'] if 'ethTxHash' in message.body else message.body['transactionHash']
+            TransactionReceipt.objects.filter(eth_action_id=lookup_id
+                                              ).update(**TransactionReceipt.convert_receipt(message.body))
+        else:
+            lookup_id = message.body['hash']
+            TransactionReceipt.objects.filter(eth_action_id=lookup_id
+                                              ).update(**TransactionReceipt.from_transaction_receipt(message.body))
         message.async_job.state = JobState.COMPLETE
         message.async_job.save()
 

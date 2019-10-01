@@ -119,6 +119,15 @@ class TransactionReceipt(models.Model):
         }
 
     @staticmethod
+    def from_transaction_receipt(receipt):
+        return {
+            'to_address': receipt['to'] if 'to' in receipt else None,
+            'from_address': "0x0" if 'from' not in receipt else receipt['from'],
+            'eth_action_id': receipt['hash'],
+        }
+
+
+    @staticmethod
     def from_eth_receipt(receipt):
         return TransactionReceipt(
             block_hash=receipt['blockHash'],
