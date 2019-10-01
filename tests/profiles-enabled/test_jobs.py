@@ -39,6 +39,21 @@ TRANSACTION_BODY = {
     "transactionIndex": 0
 }
 
+NEW_TRANSACTION_BODY = {
+    'nonce': 21,
+    "from": "0x13b1eebb31a1aa2ecaa2ad9e7455df2f717f2143",
+    'gasPrice': '18000000000',
+    'gasLimit': '131720',
+    "status": True,
+    'chainId': 1337,
+    'v': 2710,
+    'r': '0x5b5a59856e48451999db25e62888938c0b44357992e6b80796bab82227770ec0',
+    's': '0x10e4fb22c52ef664746b8c1c681436297cadc2a9230c413d552fe91c4b54957b',
+    'data': '0x0',
+    "to": "0x25ff5dc79a7c4e34254ff0f4a19d69e491201dd3",
+    "hash": 'TxHashTwo',
+}
+
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
@@ -123,6 +138,12 @@ class JobsAPITests(APITestCase):
 
             self.load_shipments.append(self.shipments[0].loadshipment)
 
+            self.shipments.append(Shipment.objects.create(vault_id=VAULT_ID,
+                                                          owner_id=self.user_1.id,
+                                                          carrier_wallet_id=CARRIER_WALLET_ID,
+                                                          shipper_wallet_id=SHIPPER_WALLET_ID,
+                                                          storage_credentials_id=STORAGE_CRED_ID))
+
     def test_jobs_populated(self):
         """
         Test listing jobs responds with correct amount
@@ -184,6 +205,17 @@ class JobsAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         async_job = AsyncJob.objects.get(pk=async_job.id)
         self.assertEqual(async_job.state, JobState.COMPLETE)
+
+        transaction_success_message = {"type": "ETH_TRANSACTION", "body": NEW_TRANSACTION_BODY}
+
+        async_job = self.shipments[1].asyncjob_set.all()[:1].get()
+        url = reverse('job-message', kwargs={'version': 'v1', 'pk': async_job.id})
+
+        response = self.client.post(url, json.dumps(transaction_success_message), content_type="application/json", X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        async_job = AsyncJob.objects.get(pk=async_job.id)
+        self.assertEqual(async_job.state, JobState.COMPLETE)
+
 
     @mock_iot
     def test_add_jobs_message_idempotency(self):
