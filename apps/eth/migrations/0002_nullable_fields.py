@@ -43,4 +43,9 @@ class Migration(migrations.Migration):
             name='status',
             field=models.BooleanField(null=True),
         ),
+        migrations.RemoveField(
+            model_name='transactionreceipt',
+            name='loom_tx_hash',
+        ),
+
     ]

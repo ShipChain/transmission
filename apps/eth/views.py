@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework_json_api import renderers as jsapi_renderers, serializers
 
 from apps.authentication import EngineRequest, get_jwt_from_request
-from apps.eth.models import EthAction, Event, TransactionReceipt
+from apps.eth.models import EthAction, Event
 from apps.eth.serializers import EventSerializer, EthActionSerializer
 from apps.permissions import get_owner_id
 from apps.rpc_client import RPCError
@@ -33,11 +33,7 @@ class EventViewSet(mixins.CreateModelMixin,
     def _process_event(event, project):
         if project == 'LOAD':
             try:
-                try:
-                    action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
-                except ObjectDoesNotExist:
-                    receipt = TransactionReceipt.objects.get(loom_tx_hash=event['transaction_hash'])
-                    action = receipt.eth_action
+                action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
                 Event.objects.get_or_create(**event, eth_action=action)
             except RPCError as exc:
                 LOG.info(f"Engine RPC error processing event {event['transaction_hash']}: {exc}")

@@ -95,17 +95,12 @@ class TransactionReceipt(models.Model):
     logs_bloom = models.CharField(max_length=514, null=True)
     status = models.BooleanField(null=True)
     to_address = AddressField(null=True)
-    loom_tx_hash = HashField(null=True, db_index=True)
     eth_action = models.OneToOneField(EthAction, db_column="transaction_hash",
                                       primary_key=True, on_delete=models.CASCADE)
     transaction_index = models.IntegerField(null=True)
 
     @staticmethod
     def convert_receipt(receipt):
-        if 'ethTxHash' in receipt or 'transactionHash' in receipt:
-            eth_action_id = receipt['ethTxHash'] if 'ethTxHash' in receipt else receipt['transactionHash']
-        else:
-            eth_action_id = receipt['hash']
         return {
             'block_hash': receipt['blockHash'] if 'blockHash' in receipt else None,
             'block_number': receipt['blockNumber'] if 'blockNumber' in receipt else None,
@@ -117,27 +112,25 @@ class TransactionReceipt(models.Model):
             'logs_bloom': receipt['logsBloom'] if 'logsBloom' in receipt else None,
             'status': receipt['status'] if 'status' in receipt else None,
             'to_address': receipt['to'] if 'to' in receipt else None,
-            'loom_tx_hash': receipt['transactionHash'] if 'ethTxHash' in receipt else None,
-            'eth_action_id': eth_action_id,
+            'eth_action_id': receipt['transactionHash'] if 'transactionHash' in receipt else receipt['hash'],
             'transaction_index': receipt['transactionIndex'] if 'transactionIndex' in receipt else None,
         }
 
     @staticmethod
     def from_eth_receipt(receipt):
         return TransactionReceipt(
-            block_hash=receipt['blockHash'],
-            block_number=receipt['blockNumber'],
-            contract_address=receipt['contractAddress'],
-            cumulative_gas_used=receipt['cumulativeGasUsed'],
+            block_hash=receipt['blockHash'] if 'blockHash' in receipt else None,
+            block_number=receipt['blockNumber'] if 'blockNumber' in receipt else None,
+            contract_address=receipt['contractAddress'] if 'contractAddress' in receipt else None,
+            cumulative_gas_used=receipt['cumulativeGasUsed'] if 'cumulativeGasUsed' in receipt else None,
             from_address="0x0" if 'from' not in receipt else receipt['from'],
-            gas_used=receipt['gasUsed'],
-            logs=receipt['logs'],
+            gas_used=receipt['gasUsed'] if 'gasUsed' in receipt else None,
+            logs=receipt['logs'] if 'logs' in receipt else None,
             logs_bloom=receipt['logsBloom'] if 'logsBloom' in receipt else None,
-            status=receipt['status'],
+            status=receipt['status'] if 'status' in receipt else None,
             to_address=receipt['to'] if 'to' in receipt else None,
-            loom_tx_hash=receipt['transactionHash'] if 'ethTxHash' in receipt else None,
-            eth_action_id=receipt['transactionHash'] if 'ethTxHash' not in receipt else receipt['ethTxHash'],
-            transaction_index=receipt['transactionIndex'],
+            eth_action_id=receipt['transactionHash'] if 'transactionHash' in receipt else receipt['hash'],
+            transaction_index=receipt['transactionIndex'] if 'transactionIndex' in receipt else None,
         )
 
 
