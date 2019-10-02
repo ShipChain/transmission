@@ -2895,7 +2895,7 @@ type = "legacy"
 url = "https://pypi.org/simple"
 
 [metadata]
-content-hash = "4237dd549c4904d8b501bdbcd04795092cca34536ed87d5421be327ab125586f"
+content-hash = "546cb098f680c20ced0d96f0e83b3aa3ad1a778e78a45550c176ce60223102a9"
 python-versions = "==3.6.8"
 
 [metadata.hashes]
