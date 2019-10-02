@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import NotFound, PermissionDenied
 from influxdb_metrics.loader import log_metric
 from shipchain_common.authentication import get_jwt_from_request
-from shipchain_common.utils import CustomResponsePagination, send_templated_email
+from shipchain_common.utils import get_custom_pagination_class, send_templated_email
 from shipchain_common.exceptions import RPCError
 
 from apps.jobs.models import JobState
@@ -239,9 +239,9 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
 
 
 class ShipmentHistoryListView(viewsets.GenericViewSet):
-    http_method_names = ['get', ]
+    http_method_names = ('get', )
     permission_classes = ((IsOwnerOrShared,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
-    pagination_class = CustomResponsePagination
+    pagination_class = get_custom_pagination_class()
     filter_backends = (DjangoFilterBackend, )
     filterset_class = HistoricalShipmentFilter
     renderer_classes = (renderers.JSONRenderer, )
@@ -285,7 +285,7 @@ class ShipmentActionsView(APIView):
 class ListDevicesStatus(APIView):
     http_method_names = ['get', ]
     permission_classes = (permissions.IsAuthenticated, )
-    pagination_class = CustomResponsePagination
+    pagination_class = get_custom_pagination_class()
     renderer_classes = (renderers.JSONRenderer,)
 
     def get(self, request, *args, **kwargs):
