@@ -184,6 +184,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
+    'custom_logging.middleware.OrganizationIdMiddleware',
 ]
 
 ROOT_URLCONF = 'apps.urls'
@@ -292,18 +293,36 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'celery-style': {
-            'format': "[%(asctime)s: %(levelname)s/%(processName)s %(filename)s:%(lineno)d] %(message)s",
+            'format': "[user:%(user_id)s Org:%(organization_id)s %(asctime)s: %(levelname)s/%(processName)s "
+                      "%(filename)s:%(lineno)d] %(message)s",
         },
         'logstash-style': {
             '()': 'logstash_formatter.LogstashFormatter',
             'fmt': f'{{"extra": {{"environment": "{ENVIRONMENT}", "service": "{SERVICE}"}}}}',
         }
     },
+    'filters': {
+        'organization_id': {
+            '()': 'custom_logging.filter.OrganizationIdFilter',
+        },
+        'user_id': {
+            '()': 'custom_logging.filter.UserIdFilter',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'celery-style'
-        }
+            'formatter': 'celery-style',
+            'filters': ['organization_id', 'user_id']
+        },
+        'organization_id': {
+            'class': 'logging.StreamHandler',
+            'level': LOG_LEVEL,
+        },
+        'user_id': {
+            'class': 'logging.StreamHandler',
+            'level': LOG_LEVEL,
+        },
     },
     'loggers': {
         'django.template': {
@@ -322,8 +341,9 @@ LOGGING = {
             'level': LOG_LEVEL,
         },
         'transmission': {
-            'handlers': ['console'],
+            'handlers': ['console', 'user_id', 'organization_id'],
             'level': LOG_LEVEL,
+            'filters': ['user_id', 'organization_id']
         },
     }
 }
