@@ -301,27 +301,10 @@ LOGGING = {
             'fmt': f'{{"extra": {{"environment": "{ENVIRONMENT}", "service": "{SERVICE}"}}}}',
         }
     },
-    'filters': {
-        'organization_id': {
-            '()': 'custom_logging.filter.OrganizationIdFilter',
-        },
-        'user_id': {
-            '()': 'custom_logging.filter.UserIdFilter',
-        },
-    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'celery-style',
-            'filters': ['organization_id', 'user_id']
-        },
-        'organization_id': {
-            'class': 'logging.StreamHandler',
-            'level': LOG_LEVEL,
-        },
-        'user_id': {
-            'class': 'logging.StreamHandler',
-            'level': LOG_LEVEL,
+            'formatter': 'celery-style'
         },
     },
     'loggers': {
@@ -341,9 +324,8 @@ LOGGING = {
             'level': LOG_LEVEL,
         },
         'transmission': {
-            'handlers': ['console', 'user_id', 'organization_id'],
+            'handlers': ['console'],
             'level': LOG_LEVEL,
-            'filters': ['user_id', 'organization_id']
         },
     }
 }
