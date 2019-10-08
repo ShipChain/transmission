@@ -24,5 +24,3 @@ if PROFILES_ENABLED:
 
     # Loggers config
     LOGGING['loggers']['transmission']['filters'] = ['user_id', 'organization_id']
-
-

@@ -18,17 +18,21 @@ import threading
 
 from django.utils.deprecation import MiddlewareMixin
 
-current_thread = threading.current_thread()
+CURRENT_THREAD = threading.current_thread()
 
 
 class OrganizationIdMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
+        # We put this import here to avoid import error on start up
         from apps.authentication import passive_credentials_auth
 
-        token_user = passive_credentials_auth(request.headers._store['authorization'][-1].split(' ')[-1])
-        org_id = token_user.token.payload.get('organization_id')
-        user_id = getattr(token_user, 'id')
+        user_id, org_id = None, None
+        req_auth = request.headers._store.get('authorization')      # pylint: disable=protected-access
+        if req_auth:
+            token_user = passive_credentials_auth(req_auth[-1].split(' ')[-1])
+            org_id = token_user.token.payload.get('organization_id')
+            user_id = token_user.id
 
-        setattr(current_thread, 'organization_id', org_id if org_id else 'N.A')
-        setattr(current_thread, 'user_id', user_id)
+        setattr(CURRENT_THREAD, 'organization_id', org_id)
+        setattr(CURRENT_THREAD, 'user_id', user_id)
