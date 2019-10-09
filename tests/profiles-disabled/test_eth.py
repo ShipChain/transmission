@@ -148,7 +148,8 @@ class TransactionReceiptTestCase(APITestCase):
             "url": "URL",
             "project": "LOAD",
             "interval": 5000,
-            "eventNames": ["allEvents"]
+            "eventNames": ["allEvents"],
+            "version": "1.1.0"
         }
         full_params = {
             'jsonrpc': '2.0',
@@ -161,7 +162,7 @@ class TransactionReceiptTestCase(APITestCase):
 
             mock_method.return_value = mocked_rpc_response({'result': {'success': True, 'subscription': params}})
 
-            mock_shipment_rpc.subscribe(project="LOAD", url="URL")
+            mock_shipment_rpc.subscribe(parameters=params, url="URL")
 
             mock_method.assert_called_with(test_settings.ENGINE_RPC_URL, data=json.dumps(full_params))
 

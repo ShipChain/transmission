@@ -13,10 +13,13 @@ def engine_subscribe_generic(project, events=None, version=settings.LOAD_VERSION
     from apps.eth.rpc import EventRPCClient, RPCError
     log_metric('transmission.info', tags={'method': f'eth.engine_subscribe_{project.lower()}',
                                           'module': __name__})
-
+    parameters = {
+        'version': version,
+        'project': project
+    }
     try:
         rpc_client = EventRPCClient()
-        rpc_client.subscribe(project=project, events=events, version=version)
+        rpc_client.subscribe(parameters=parameters, events=events)
         LOG.debug(f'Subscribed to {project} events for version {version} successfully with the rpc_client.')
 
     except RPCError as rpc_error:
