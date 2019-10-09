@@ -21,7 +21,7 @@ from django.utils.deprecation import MiddlewareMixin
 CURRENT_THREAD = threading.current_thread()
 
 
-class OrganizationIdMiddleware(MiddlewareMixin):
+class UserOrganizationMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         # We put this import here to avoid import error on start up
