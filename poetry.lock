@@ -288,10 +288,10 @@ description = "The AWS SDK for Python"
 name = "boto3"
 optional = false
 python-versions = "*"
-version = "1.9.246"
+version = "1.9.247"
 
 [package.dependencies]
-botocore = ">=1.12.246,<1.13.0"
+botocore = ">=1.12.247,<1.13.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.2.0,<0.3.0"
 
@@ -306,7 +306,7 @@ description = "Low-level, data-driven core of boto 3."
 name = "botocore"
 optional = false
 python-versions = "*"
-version = "1.12.246"
+version = "1.12.247"
 
 [package.dependencies]
 docutils = ">=0.10,<0.16"
@@ -792,7 +792,7 @@ url = "https://pypi.org/simple"
 [[package]]
 category = "main"
 description = "A reusable Django app that sends metrics about your project to InfluxDB"
-name = "django-influxdb-metrics"
+name = "django-influxdb-tagged-metrics"
 optional = false
 python-versions = "*"
 version = "1.3.3"
@@ -2473,14 +2473,15 @@ description = "A PyPI package containing shared code for ShipChain's Python/Djan
 name = "shipchain-common"
 optional = false
 python-versions = ">=3.6,<4.0"
-version = "0.1.3"
+version = "0.1.4"
 
 [package.dependencies]
 aws-requests-auth = ">=0.4,<0.5"
 boto3 = ">=1.9,<1.10"
 cryptography = ">=2.5,<2.6"
 django = ">=2.2.4,<3.0.0"
-django-enumfields = "0.10.0"
+django-enumfields = ">=0.10.0,<0.11.0"
+django-influxdb-tagged-metrics = "1.3.3"
 djangorestframework = ">=3.9.1,<4.0.0"
 djangorestframework-jsonapi = ">=2.5,<2.6"
 python-dateutil = ">=2.7.5,<2.8.0"
@@ -2897,7 +2898,7 @@ type = "legacy"
 url = "https://pypi.org/simple"
 
 [metadata]
-content-hash = "5c19f2c434a14b3cdfe6be181565b9e2ff84399f3271473c847558f54883eff1"
+content-hash = "b4640b8ec8b56f886855c8044e4b7cead5767ba1d355bf9dcaae3a53000d3cd2"
 python-versions = "==3.6.8"
 
 [metadata.hashes]
@@ -2919,8 +2920,8 @@ bandit = ["6102b5d6afd9d966df5054e0bdfc2e73a24d0fea400ec25f2e54c134412158d7", "9
 billiard = ["42d9a227401ac4fba892918bba0a0c409def5435c4b483267ebfe821afaaba0e"]
 blessings = ["98e5854d805f50a5b58ac2333411b0482516a8210f23f43308baeb58d77c157d", "b1fdd7e7a675295630f9ae71527a8ebc10bfefa236b3d6aa4932ee4462c17ba3", "caad5211e7ba5afe04367cdd4cfc68fa886e2e08f6f35e76b7387d2109ccea6e"]
 boto = ["147758d41ae7240dc989f0039f27da8ca0d53734be0eb869ef16e3adcfa462e8", "ea0d3b40a2d852767be77ca343b58a9e3a4b00d9db440efb8da74b4e58025e5a"]
-boto3 = ["9a84be232ff6432312c16b8e52cc5a01e6ff461cb9b50b3cafee24c6876a5012", "ad269aa51439e0dd5f8245913bd2dd85684e37c237f5635143e96d48ce74f0eb"]
-botocore = ["210d9de193e1a1f8ad22ce57b6c18d48c79ff0c093680ec1a07e83a635fce4c7", "6dcc121be4917cc731577a2ddff67b89cee6a4b0ec30241ce207a80a0d41990a"]
+boto3 = ["13d90ebe4d41e1717d7cc015e983370aadba2995a2af30695f29b69f196e82fc", "e50edae8ccb630dc1950332764c6b462a9550663a3d71c00f898280f1446f107"]
+botocore = ["76ff516cfbe5c9f2ac4eb8bb5d8945bc7354d4898f2609ad32080efc9ecea751", "fa425f3e24bb17a357a297532b253a7353a496f2be7b7a5c3fc1dd7419de259d"]
 bpython = ["6cd1b165888c232f2fcdd4313577b6066155d6c94b3d42c0f11649c000394417", "8907c510bca3c4d9bc0a157279bdc5e3b739cc68c0f247167279b6fe4becb02f"]
 cachecontrol = ["cef77effdf51b43178f6a2d3b787e3734f98ade253fa3187f3bb7315aaa42ff7"]
 celery = ["77dab4677e24dc654d42dfbdfed65fa760455b6bb563a0877ecc35f4cfcfc678", "ad7a7411772b80a4d6c64f2f7f723200e39fb66cf614a7fdfab76d345acc7b13"]
@@ -2951,7 +2952,7 @@ django-fieldsignals = ["6d789f271d655fd8fc33397f91bcc58e796a1f3ac054706dfe1c28ae
 django-filter = ["3dafb7d2810790498895c22a1f31b2375795910680ac9c1432821cbedb1e176d", "a3014de317bef0cd43075a0f08dfa1d319a7ccc5733c3901fb860da70b0dda68"]
 django-fsm = ["96f776736042b8cde03483cb4b27c3a62580da40fc9b942845349718afdf5d0f", "cacd5485c726b411c6728c9ae3120303c9badf8aa0edff2db3aecdbe3a906945"]
 django-fullurl = ["f700aadbd8d4c20df5976c1962a21e7eed3697c05394358e51cd26fb4cefb11d"]
-django-influxdb-metrics = ["cb72f5f386242de6c69472098e886e67851447531c57b6cbf7280ca0e42d1d02"]
+django-influxdb-tagged-metrics = ["f2a7c8dee5b32835b450474cc898e9842a4b9bfe10d8ba9f3f51eba9e45eaa5f"]
 django-mock-queries = ["d5b6991d1b65c54b272c89f17296a034f7fffd0f4ea78e39104b8c9f0796b4d4"]
 django-redis = ["af0b393864e91228dd30d8c85b5c44d670b5524cb161b7f9e41acc98b6e5ace7", "f46115577063d00a890867c6964ba096057f07cb756e78e0503b89cd18e4e083"]
 django-simple-history = ["7273add61d3f89453c475531627f8c69cbfc41d6fb99d45278dddc3bafe39284", "7f3044439e401fb02b12231b675590865a27a149f6bd99587e429cbe6a9dd6a6"]
@@ -3057,7 +3058,7 @@ rsa = ["14ba45700ff1ec9eeb206a2ce76b32814958a98e372006c8fb76ba820211be66", "1a83
 s3transfer = ["6efc926738a3cd576c2a79725fed9afde92378aa5c6a957e3af010cb019fac9d", "b780f2411b824cb541dbcd2c713d0cb61c7d1bcadae204cdddda2b35cef493ba"]
 safety = ["0a3a8a178a9c96242b224f033ee8d1d130c0448b0e6622d12deaf37f6c3b4e59", "5059f3ffab3648330548ea9c7403405bbfaf085b11235770825d14c58f24cb78"]
 setoptconf = ["5b0b5d8e0077713f5d5152d4f63be6f048d9a1bb66be15d089a11c898c3cf49c"]
-shipchain-common = ["b6fe999b4b6a50f2bf317129019e8351833d1fff96d6d54cc1e1d449f872072b", "f5bf3a9c1acea9fe06c8cd83eae401ddd5be39c64a24e82479384863487d1f30"]
+shipchain-common = ["955543887f12e03a3e92d3912bf69f14762c7b20a9744585ee7e82f815646982", "bc1ae5c58145123dd78d5606694c565c437a919175851c7820ffcf6ae3595d8c"]
 six = ["3350809f0555b11f552448330d0b52d5f24c91a322ea4a15ef22629740f3761c", "d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73"]
 smmap2 = ["0555a7bf4df71d1ef4218e4807bbf9b201f910174e6e08af2e138d4e517b4dde", "29a9ffa0497e7f2be94ca0ed1ca1aa3cd4cf25a1f6b4f5f87f74b46ed91d609a"]
 snowballstemmer = ["209f257d7533fdb3cb73bdbd24f436239ca3b2fa67d56f6ff88e86be08cc5ef0", "df3bac3df4c2c01363f3dd2cfa78cce2840a79b9f1c2d2de9ce8d31683992f52"]
