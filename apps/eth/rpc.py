@@ -10,7 +10,8 @@ LOG = logging.getLogger('transmission')
 
 class EventRPCClient(RPCClient):
 
-    def subscribe(self, project, url=Event.get_event_subscription_url(), interval=5000, events=None):
+    # pylint:disable=too-many-arguments
+    def subscribe(self, project, version, url=Event.get_event_subscription_url(), interval=5000, events=None):
         LOG.debug(f'Event subscription with url {url}.')
         log_metric('transmission.info', tags={'method': 'event_rpcclient.subscribe',
                                               'module': __name__})
@@ -20,6 +21,7 @@ class EventRPCClient(RPCClient):
             "project": project,
             "interval": interval,
             "eventNames": events or ["allEvents"],
+            "version": version
         })
 
         if 'success' in result and result['success']:
