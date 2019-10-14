@@ -23,8 +23,8 @@ ENV = environ.Env()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Versions for engine subscription
-LOAD_VERSION = os.environ.get('LOAD_VERSION', '1.1.0')
-SHIPTOKEN_VERSION = os.environ.get('SHIPTOKEN_VERSION', '1.0.0')
+LOAD_VERSION = '1.1.0'
+SHIPTOKEN_VERSION = '1.0.0'
 
 ENGINE_RPC_URL = os.environ.get('ENGINE_RPC_URL', "http://engine-rpc:2000/")
 INTERNAL_URL = os.environ.get('INTERNAL_URL', 'http://transmission-runserver:8000')
