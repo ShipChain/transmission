@@ -288,60 +288,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'celery-style': {
-            'format': "[user:%(user_id)s Org:%(organization_id)s %(asctime)s: %(levelname)s/%(processName)s "
-                      "%(filename)s:%(lineno)d] %(message)s",
-        },
-        'logstash-style': {
-            '()': 'logstash_formatter.LogstashFormatter',
-            'fmt': f'{{"extra": {{"environment": "{ENVIRONMENT}", "service": "{SERVICE}"}}}}',
-        }
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'celery-style'
-        },
-    },
-    'loggers': {
-        'django.template': {
-            # Get rid of noisy debug messages
-            'handlers': ['console'],
-            'level': 'INFO' if LOG_LEVEL == 'DEBUG' else LOG_LEVEL,
-            'propagate': False,
-        },
-        'django.utils.autoreload': {
-            'handlers': ['console'],
-            'level': 'INFO' if LOG_LEVEL == 'DEBUG' else LOG_LEVEL,
-            'propagate': False,
-        },
-        'django': {
-            'handlers': ['console'],
-            'level': LOG_LEVEL,
-        },
-        'transmission': {
-            'handlers': ['console'],
-            'level': LOG_LEVEL,
-        },
-    }
-}
-
-if BOTO3_SESSION:
-    LOGGING['handlers']['cloudwatch'] = {
-        'class': 'watchtower.CloudWatchLogHandler',
-        'boto3_session': BOTO3_SESSION,
-        'log_group': f'transmission-django-{ENVIRONMENT}',
-        'create_log_group': True,
-        'stream_name': 'logs-' + SERVICE + '-{strftime:%Y-%m-%d}',
-        'formatter': 'logstash-style',
-        'use_queues': False,
-    }
-    LOGGING['loggers']['django']['handlers'].append('cloudwatch')
-    LOGGING['loggers']['transmission']['handlers'].append('cloudwatch')
 
 INFLUXDB_DISABLED = True
 INFLUXDB_URL = os.environ.get('INFLUXDB_URL')
