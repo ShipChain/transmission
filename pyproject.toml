@@ -58,7 +58,7 @@ python-jose = "~3.0"
 pyyaml = ">=4.2b4"
 redis = "~3.2"
 requests = "~2.21"
-shipchain-common = "^0.1.5"
+shipchain-common = "^1.0.0"
 uwsgi = "~2.0.17"
 watchdog = "~0.9"
 whitenoise = "~4.1"
@@ -89,11 +89,3 @@ pytest-mock = "^1.10"
 responses = "==0.9.0"
 safety = "^1.8"
 websocket-client = "==0.53.0"
-
-[[tool.poetry.source]]
-name = "pypi_"
-url = "https://pypi.org/simple/"
-
-[[tool.poetry.source]]
-name = "test-pypi"
-url = "https://test.pypi.org/simple"
