@@ -9,10 +9,10 @@ from freezegun import freeze_time
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
+from shipchain_common.test_utils import get_jwt, replace_variables_in_string
 
 from apps.authentication import passive_credentials_auth
 from apps.shipments.rpc import Load110RPCClient
-from tests.utils import get_jwt, replace_variables_in_string
 
 OWNER_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
 OWNER_ID_2 = '48381c16-432b-493f-9f8b-54e88a84ec0a'

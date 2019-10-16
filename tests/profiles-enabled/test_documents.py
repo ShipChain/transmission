@@ -14,12 +14,12 @@ from fpdf import FPDF
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
+from shipchain_common.test_utils import create_form_content, get_jwt, mocked_rpc_response
 
 from apps.authentication import passive_credentials_auth
 from apps.documents.models import Document, UploadStatus, DocumentType, FileType
 from apps.shipments.models import Shipment, LoadShipment
 from apps.shipments.signals import shipment_post_save
-from tests.utils import create_form_content, get_jwt, mocked_rpc_response
 
 SHIPMENT_ID = 'Shipment-Custom-Id-{}'
 FAKE_ID = '00000000-0000-0000-0000-000000000000'

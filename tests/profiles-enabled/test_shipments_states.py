@@ -17,16 +17,15 @@ import pytest
 import pytz
 from dateutil.parser import parse as dt_parse
 from dateutil.relativedelta import relativedelta
-from django.conf import settings as test_settings
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 from shipchain_common.utils import random_id
+from shipchain_common.test_utils import get_jwt, datetimeAlmostEqual, mocked_rpc_response
 
 from apps.authentication import passive_credentials_auth
 from apps.shipments.models import Shipment, TransitState, Device
 from apps.shipments.serializers import ActionType
-from tests.utils import get_jwt, datetimeAlmostEqual, mocked_rpc_response
 
 USER_ID = random_id()
 ORGANIZATION_ID = random_id()

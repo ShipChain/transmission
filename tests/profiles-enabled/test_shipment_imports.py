@@ -18,19 +18,18 @@ import glob
 from unittest import mock
 import copy
 import os
+
 import requests
 import pyexcel
-
 from django.conf import settings
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework_json_api.serializers import ValidationError
+from shipchain_common.test_utils import get_jwt, random_timestamp
 
 from apps.authentication import passive_credentials_auth
 from apps.imports.models import ShipmentImport, FileType, UploadStatus, ProcessingStatus
-
-from tests.utils import get_jwt, random_timestamp
 
 
 OWNER_ID = '5e8f1d76-162d-4f21-9b71-2ca97306ef7c'

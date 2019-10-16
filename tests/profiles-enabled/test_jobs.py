@@ -1,18 +1,17 @@
 import json
 from unittest import mock
 
-from django.conf import settings as test_settings
 import requests
 from moto import mock_iot
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
+from shipchain_common.test_utils import get_jwt, mocked_rpc_response
 
 from apps.authentication import passive_credentials_auth
 from apps.jobs.models import AsyncJob, Message, MessageType, JobState
 from apps.shipments.models import Shipment
 from apps.shipments.rpc import Load110RPCClient
-from tests.utils import get_jwt
 
 MESSAGE = [
     {'type': 'message'}
@@ -112,9 +111,6 @@ class JobsAPITests(APITestCase):
                                                        shipment=shipment))
 
     def create_shipment(self):
-        # from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
-
         mock_shipment_rpc = Load110RPCClient
 
         mock_shipment_rpc.create_vault = mock.Mock(return_value=(VAULT_ID, 's3://bucket/' + VAULT_ID))

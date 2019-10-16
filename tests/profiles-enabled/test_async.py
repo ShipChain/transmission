@@ -16,11 +16,11 @@ limitations under the License.
 import datetime
 import json
 
-from django.conf import settings as test_settings
 import pytest
 from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.db import models
+from shipchain_common.test_utils import get_jwt
 
 from apps.consumers import EventTypes
 from apps.jobs.models import AsyncJob, MessageType
@@ -28,7 +28,6 @@ from apps.jobs.signals import job_update
 from apps.routing import application
 from apps.shipments.models import Shipment, Device, TrackingData
 from apps.shipments.signals import shipment_post_save, shipment_job_update
-from tests.utils import get_jwt
 
 USER_ID = '00000000-0000-0000-0000-000000000009'
 

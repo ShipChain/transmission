@@ -2,10 +2,10 @@ import requests
 from unittest import TestCase, mock
 
 from shipchain_common.exceptions import RPCError
+from shipchain_common.test_utils import mocked_rpc_response
 
 from apps.documents.rpc import DocumentRPCClient
 from apps.shipments.rpc import ShipmentRPCClient, Load110RPCClient
-from tests.utils import mocked_rpc_response
 
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
