@@ -25,7 +25,8 @@ class ShipmentFilter(filters.filterset.FilterSet):
                   'final_destination_location__name', 'final_destination_location__city', 'ship_from_location',
                   'final_destination_location__state', 'final_destination_location__address_1', 'ship_to_location',
                   'final_destination_location__postal_code', 'final_destination_location__country',
-                  'final_destination_location', 'ship_from_location__state', 'state', 'exception', 'delayed']
+                  'final_destination_location', 'ship_from_location__state', 'state', 'exception', 'delayed',
+                  'asset_physical_id', 'asset_custodian_id']
 
 
 SHIPMENT_SEARCH_FIELDS = (

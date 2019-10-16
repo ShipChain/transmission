@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta, timezone
+import hashlib
 
 import boto3
 from botocore.exceptions import ClientError
@@ -311,6 +312,9 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
     is_hazmat = models.NullBooleanField()
 
+    asset_physical_id = models.CharField(null=True, max_length=255)
+    asset_custodian_id = models.CharField(null=True, max_length=36)
+
     customer_fields = JSONField(blank=True, null=True)
 
     # Model's history tracking definition
@@ -460,10 +464,18 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
         self.port_arrival_act = datetime.now(timezone.utc)
 
     @transition(field=state, source=TransitState.AWAITING_DELIVERY.value, target=TransitState.DELIVERED.value)
-    def drop_off(self, document_id=None, **kwargs):
+    def drop_off(self, document_id=None, raw_asset_physical_id=None, **kwargs):
         if document_id:
             # TODO: Validate that ID is a BOL Document?
             pass
+
+        if self.asset_physical_id:
+            # Validate opaque physical ID (SHA256)
+            if not raw_asset_physical_id or (self.asset_physical_id !=
+                                             hashlib.sha256(raw_asset_physical_id.encode()).hexdigest()):
+                raise PermissionDenied(f"Hash of asset tag does not match value "
+                                       f"specified in Shipment.asset_physical_id")
+
         self.delivery_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
 
     # Defaults
