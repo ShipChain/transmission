@@ -32,10 +32,10 @@ LOGGING = {
     },
     'filters': {
         'organization_id': {
-            '()': 'custom_logging.filter.OrganizationIdFilter',
+            '()': 'shipchain_common.custom_logging.filter.OrganizationIdFilter',
         },
         'user_id': {
-            '()': 'custom_logging.filter.UserIdFilter',
+            '()': 'shipchain_common.custom_logging.filter.UserIdFilter',
         },
     },
 

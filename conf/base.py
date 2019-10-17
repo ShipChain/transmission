@@ -184,7 +184,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
-    'custom_logging.middleware.UserOrganizationMiddleware',
+    'shipchain_common.custom_logging.middleware.UserOrganizationMiddleware',
 ]
 
 ROOT_URLCONF = 'apps.urls'
