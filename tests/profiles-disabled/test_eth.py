@@ -164,6 +164,7 @@ class TransactionReceiptTestCase(APITestCase):
 
             mock_shipment_rpc.subscribe(project="LOAD", version=test_settings.LOAD_VERSION, url="URL")
 
-            mock_method.assert_called_with(test_settings.ENGINE_RPC_URL, data=json.dumps(full_params))
+            # The timeout parameter derives from shipchain_common.rpc.RPCClient
+            mock_method.assert_called_with(test_settings.ENGINE_RPC_URL, data=json.dumps(full_params), timeout=270)
 
 
