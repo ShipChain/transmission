@@ -22,11 +22,11 @@ from enumfields import EnumField
 from rest_framework.exceptions import Throttled, PermissionDenied, APIException
 from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
+from shipchain_common.utils import AliasField, random_id
 
 from apps.eth.fields import AddressField, HashField
 from apps.jobs.models import AsyncJob, JobState
 from apps.simple_history import TxmHistoricalRecords, AnonymousHistoricalMixin
-from apps.utils import random_id, AliasField
 from .rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')

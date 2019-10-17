@@ -19,8 +19,9 @@ from enumfields import EnumIntegerField
 
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from shipchain_common.utils import random_id
 
-from apps.utils import UploadStatus, random_id
+from apps.utils import UploadStatus
 
 
 class FileType(Enum):

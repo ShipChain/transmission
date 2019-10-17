@@ -19,6 +19,9 @@ IOT_AWS_HOST = 'not-really-aws.com'
 IOT_GATEWAY_STAGE = 'test'
 IOT_DEVICES_PAGE_SIZE = 5
 
+# datetimeAlmostEqual threshold configuration parameter
+MILLISECONDS_THRESHOLD = 500
+
 SUBSCRIBE_EVENTS = False
 
 for name, logger in LOGGING['loggers'].items():

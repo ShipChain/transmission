@@ -7,13 +7,13 @@ from django.conf import settings as test_settings
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient, force_authenticate
+from shipchain_common.test_utils import get_jwt
 
 from apps.authentication import passive_credentials_auth
 from apps.eth.models import TransactionReceipt, EthAction
 from apps.jobs.models import AsyncJob
 from apps.shipments.models import Shipment, PermissionLink
 from apps.shipments.rpc import Load110RPCClient
-from tests.utils import get_jwt
 
 BLOCK_HASH = "0x38823cb26b528867c8dbea4146292908f55e1ee7f293685db1df0851d1b93b24"
 BLOCK_NUMBER = 14

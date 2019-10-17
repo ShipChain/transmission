@@ -6,8 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_json_api import parsers as jsapi_parsers
 from influxdb_metrics.loader import log_metric
+from shipchain_common.authentication import EngineRequest
 
-from apps.authentication import EngineRequest
 from apps.permissions import get_owner_id
 from apps.shipments.permissions import IsListenerOwner
 from .models import AsyncJob, Message

@@ -2,8 +2,9 @@ import copy
 import json
 import re
 import random
-from unittest import mock, TestCase
+from unittest import mock
 
+import requests
 import boto3
 import httpretty
 import geocoder
@@ -20,14 +21,14 @@ from rest_framework.test import APITestCase, force_authenticate, APIClient
 
 from apps.authentication import passive_credentials_auth
 from apps.eth.models import EthAction
-from apps.iot_client import BotoAWSRequestsAuth
+from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
+from shipchain_common.test_utils import replace_variables_in_string, create_form_content, mocked_rpc_response, \
+    random_timestamp, random_location, get_jwt, GeoCoderResponse
+from shipchain_common.utils import random_id
+
 from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
-from apps.shipments.rpc import Load110RPCClient, ShipmentRPCClient
-from apps.utils import random_id
-from apps.rpc_client import RPCClient, RPCError, requests
-from tests.utils import get_jwt
-from tests.utils import replace_variables_in_string, create_form_content, mocked_rpc_response, random_timestamp, \
-    random_location, GeoCoderResponse
+from apps.shipments.rpc import Load110RPCClient
+from apps.shipments.iot_client import DeviceAWSIoTClient
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
 
@@ -271,6 +272,7 @@ class ShipmentAPITests(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+
         # Authenticated request to update by shipment's carrier should succeed
         shipment_update, content_type = create_form_content({"carrier_scac": "carrier_scac"})
         response = self.client.patch(url, shipment_update, content_type=content_type)
@@ -284,13 +286,10 @@ class ShipmentAPITests(APITestCase):
         # Authenticated request by owner of a shipment to delete should succeed
         self.set_user(self.user_1)
         response = self.client.delete(url)
-
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     @mock_iot
     def test_add_tracking_data(self):
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
 
         device_id = 'adfc1e4c-7e61-4aee-b6f5-4d8b95a7ec75'
 
@@ -545,7 +544,6 @@ class ShipmentAPITests(APITestCase):
         assert response.status_code == status.HTTP_200_OK
 
     def test_shipment_customer_fields_update(self):
-        from apps.rpc_client import requests
         with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
@@ -593,8 +591,6 @@ class ShipmentAPITests(APITestCase):
         when we post new tracking data, we should be able to track and retrieve the new certificate in aws IoT and
         attach it to the device
         """
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
 
         with mock_iot():
             iot = boto3.client('iot', region_name='us-east-1')
@@ -645,7 +641,7 @@ class ShipmentAPITests(APITestCase):
                 }
             })
 
-            with mock.patch('apps.iot_client.requests.Session.put') as mocked:
+            with mock.patch('apps.shipments.iot_client.DeviceAWSIoTClient.update_shadow') as mocked:
                 mocked.return_value = mocked_rpc_response({'data': {
                     'shipmentId': self.shipments[0].id
                 }})
@@ -693,7 +689,7 @@ class ShipmentAPITests(APITestCase):
 
             # Creating a new shipment with a device for which the certificate has expired and a new one has been issued
             self.shipments[0].device = None
-            with mock.patch('apps.iot_client.requests.Session.put') as mocked:
+            with mock.patch('apps.shipments.iot_client.DeviceAWSIoTClient.update_shadow') as mocked:
                 mocked.return_value = mocked_rpc_response({'data': {
                     'shipmentId': None
                 }})
@@ -723,7 +719,7 @@ class ShipmentAPITests(APITestCase):
                 mock_wallet_validation.return_value = SHIPPER_WALLET_ID
                 mock_storage_validation.return_value = STORAGE_CRED_ID
 
-                with mock.patch('apps.iot_client.requests.Session.put') as mocked:
+                with mock.patch('apps.shipments.iot_client.DeviceAWSIoTClient.update_shadow') as mocked:
                     mocked.return_value = mocked_rpc_response({'data': {
                         'shipmentId': 'dunno yet'
                     }})
@@ -747,8 +743,6 @@ class ShipmentAPITests(APITestCase):
     @mock_iot
     @mock.patch('apps.shipments.models.mapbox_access_token', return_value='TEST_ACCESS_KEYS')
     def test_shipment_history(self, mock_mapbox):
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
 
         history = Shipment.history.all()
         history.delete()
@@ -762,7 +756,7 @@ class ShipmentAPITests(APITestCase):
                 mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_storage_credentials_id') as mock_storage_validation, \
                 mock.patch('apps.shipments.models.Device.get_or_create_with_permission') as mock_get_or_create_with_permission, \
                 mock.patch.object(requests.Session, 'post') as mock_rpc, \
-                mock.patch('apps.iot_client.requests.Session.put') as mock_shadow:
+                mock.patch('apps.shipments.iot_client.DeviceAWSIoTClient.update_shadow') as mock_shadow:
 
             mock_wallet_validation.return_value = SHIPPER_WALLET_ID
             mock_storage_validation.return_value = STORAGE_CRED_ID
@@ -1872,8 +1866,6 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_permission_link_email(self):
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
         with mock.patch.object(requests.Session, 'post') as mock_method:
             mock_method.return_value = mocked_rpc_response({
                 "jsonrpc": "2.0",
@@ -2000,8 +1992,6 @@ class TrackingDataAPITests(APITestCase):
 
     @mock_iot
     def test_set_device_id(self):
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
 
         self.create_tracking_data()
         self.assertEqual(TrackingData.objects.all().count(), 1)
@@ -2054,7 +2044,7 @@ class FakeBotoAWSRequestsAuth(BotoAWSRequestsAuth):
         return {}
 
 
-@mock.patch('apps.iot_client.BotoAWSRequestsAuth', FakeBotoAWSRequestsAuth)
+@mock.patch('shipchain_common.iot.BotoAWSRequestsAuth', FakeBotoAWSRequestsAuth)
 class ShipmentWithIoTAPITests(APITestCase):
 
     def setUp(self):
@@ -2134,7 +2124,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             thingName=device_2_id
         )
 
-        with mock.patch('apps.iot_client.requests.Session.put') as mocked:
+        with mock.patch('apps.shipments.iot_client.DeviceAWSIoTClient.update_shadow') as mocked:
             mocked_call_count = mocked.call_count
             mocked.return_value = mocked_rpc_response({'data': {
                 'shipmentId': 'dunno yet'
@@ -2358,14 +2348,14 @@ class DevicesLocationsAPITests(APITestCase):
             'call_type_5': self.query_params_dict(OWNER_ID, box="-82.5,34.5,-82,35"),
         }
 
-    def side_effects(self, iot_url, **kwargs):
-        iot_params = kwargs.get('params')
+    def side_effects(self, iot_endpoint, **kwargs):
+        iot_params = kwargs.get('query_params')
         found_key = None
         for key, params in self.query_params_map.items():
             if params == iot_params:
                 found_key = key
                 break
-        return mocked_rpc_response(self.map_responses[found_key])
+        return self.map_responses[found_key]
 
     def query_params_dict(self, owner_id, next_token='', box='', active=None):
         return {
@@ -2376,7 +2366,6 @@ class DevicesLocationsAPITests(APITestCase):
             'nextToken': next_token
         }
 
-    @mock_iot
     def test_get_devices_locations(self):
 
         self.set_user(self.user_1)
@@ -2386,8 +2375,7 @@ class DevicesLocationsAPITests(APITestCase):
         # The first called url doesn't have the nextToken value
         self.map_responses['call_type_1'] = self.iot_responses(OWNER_ID)
 
-        with mock.patch('apps.iot_client.requests.Session.get') as mock_get:
-            mock_get.side_effect = self.side_effects
+        with mock.patch.object(DeviceAWSIoTClient, '_get', side_effect=self.side_effects) as mock_get:
 
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)

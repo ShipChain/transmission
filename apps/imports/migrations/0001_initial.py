@@ -2,6 +2,7 @@
 
 import apps.imports.models
 import apps.utils
+from shipchain_common.utils import random_id
 import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 import enumfields.fields
@@ -18,7 +19,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ShipmentImport',
             fields=[
-                ('id', models.CharField(default=apps.utils.random_id, max_length=36, primary_key=True, serialize=False)),
+                ('id', models.CharField(default=random_id, max_length=36, primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=36)),
                 ('storage_credentials_id', models.CharField(max_length=36)),
                 ('shipper_wallet_id', models.CharField(max_length=36)),

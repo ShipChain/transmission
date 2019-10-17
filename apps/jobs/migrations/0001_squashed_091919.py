@@ -2,12 +2,12 @@
 
 import apps.eth.fields
 import apps.jobs.models
-import apps.utils
 import django.contrib.postgres.fields.jsonb
 import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
 import enumfields.fields
+from shipchain_common.utils import random_id
 
 
 class Migration(migrations.Migration):
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AsyncJob',
             fields=[
-                ('id', models.CharField(default=apps.utils.random_id, max_length=36, primary_key=True, serialize=False)),
+                ('id', models.CharField(default=random_id, max_length=36, primary_key=True, serialize=False)),
                 ('parameters', django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Message',
             fields=[
-                ('id', models.CharField(default=apps.utils.random_id, max_length=36, primary_key=True, serialize=False)),
+                ('id', models.CharField(default=random_id, max_length=36, primary_key=True, serialize=False)),
                 ('body', django.contrib.postgres.fields.jsonb.JSONField()),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('async_job', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='jobs.AsyncJob')),
@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AsyncAction',
             fields=[
-                ('id', models.CharField(default=apps.utils.random_id, max_length=36, primary_key=True, serialize=False)),
+                ('id', models.CharField(default=random_id, max_length=36, primary_key=True, serialize=False)),
                 ('user_id', models.CharField(blank=True, max_length=36, null=True)),
                 ('action_type', enumfields.fields.EnumIntegerField(default=0, enum=apps.jobs.models.AsyncActionType)),
                 ('vault_hash', apps.eth.fields.HashField(blank=True, default='', max_length=66, validators=[django.core.validators.RegexValidator(message='Invalid hash.', regex='^0x([A-Fa-f0-9]{64})$')])),

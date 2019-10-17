@@ -1,7 +1,8 @@
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-
 from conf import *
+# datetimeAlmostEqual threshold configuration parameter needed here
+from .test_settings import MILLISECONDS_THRESHOLD
 
 ENVIRONMENT = 'TEST'
 INFLUXDB_DISABLED = True

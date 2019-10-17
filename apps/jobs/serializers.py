@@ -1,7 +1,7 @@
 from rest_framework_json_api import serializers
 from enumfields.drf import EnumSupportSerializerMixin
 
-from apps.utils import UpperEnumField, EnumIntegerFieldLabel
+from shipchain_common.utils import UpperEnumField, EnumIntegerFieldLabel
 from .models import AsyncJob, Message, MessageType, JobState, AsyncActionType, AsyncAction
 
 

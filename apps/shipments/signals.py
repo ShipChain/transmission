@@ -7,10 +7,10 @@ from django.contrib.gis.geos import Point
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from fieldsignals import post_save_changed
+from shipchain_common.exceptions import AWSIoTError
 
 from apps.eth.models import TransactionReceipt
 from apps.eth.signals import event_update
-from apps.iot_client import AWSIoTError
 from apps.jobs.models import JobState, MessageType, AsyncJob, AsyncActionType
 from apps.jobs.signals import job_update
 from .events import LoadEventHandler

@@ -1,16 +1,19 @@
 import json
 from unittest import mock
 
-from django.conf import settings as test_settings
+import requests
+from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.test import APITestCase
+from shipchain_common.test_utils import mocked_rpc_response
 
-from apps.eth.models import TransactionReceipt, EthAction
-from apps.eth.rpc import EventRPCClient
-from apps.jobs.models import AsyncJob
-from apps.shipments.models import Shipment
 from apps.shipments.rpc import Load110RPCClient
+from apps.eth.rpc import EventRPCClient
+from apps.shipments.models import Shipment
+from apps.eth.models import TransactionReceipt, EthAction
+from apps.jobs.models import AsyncJob
+
+from conf import test_settings
 
 BLOCK_HASH = "0x38823cb26b528867c8dbea4146292908f55e1ee7f293685db1df0851d1b93b24"
 BLOCK_NUMBER = 14
@@ -139,9 +142,6 @@ class TransactionReceiptTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_engine_subscribe_generic(self):
-        from apps.rpc_client import requests
-        from tests.utils import mocked_rpc_response
-
         mock_shipment_rpc = EventRPCClient()
 
         params = {
@@ -164,6 +164,7 @@ class TransactionReceiptTestCase(APITestCase):
 
             mock_shipment_rpc.subscribe(project="LOAD", version=test_settings.LOAD_VERSION, url="URL")
 
-            mock_method.assert_called_with(test_settings.ENGINE_RPC_URL, data=json.dumps(full_params))
+            # The timeout parameter derives from shipchain_common.rpc.RPCClient
+            mock_method.assert_called_with(test_settings.ENGINE_RPC_URL, data=json.dumps(full_params), timeout=270)
 
 

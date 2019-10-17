@@ -1,11 +1,11 @@
+import requests
 from unittest import TestCase, mock
 
-from django.conf import settings
+from shipchain_common.exceptions import RPCError
+from shipchain_common.test_utils import mocked_rpc_response
 
-from apps.rpc_client import RPCClient, RPCError, requests
 from apps.documents.rpc import DocumentRPCClient
 from apps.shipments.rpc import ShipmentRPCClient, Load110RPCClient
-from tests.utils import mocked_rpc_response
 
 CARRIER_WALLET_ID = '3716ff65-3d03-4b65-9fd5-43d15380cff9'
 SHIPPER_WALLET_ID = '48381c16-432b-493f-9f8b-54e88a84ec0a'
@@ -14,67 +14,6 @@ STORAGE_CRED_ID = '77b72202-5bcd-49f4-9860-bc4ec4fee07b'
 SHIPMENT_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
 VAULT_ID = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
 VAULT_HASH = '0xe9f28cb025350ef700158eed9a5b617a4f4185b31de06864fd02d67c839df583'
-
-
-class RPCClientTest(TestCase):
-
-    def test_rpc_init(self):
-
-        rpc_client = RPCClient()
-        self.assertEqual(rpc_client.url, settings.ENGINE_RPC_URL)
-
-        self.assertIn('jsonrpc', rpc_client.payload)
-        self.assertIn('id', rpc_client.payload)
-        self.assertIn('params', rpc_client.payload)
-        self.assertEqual(rpc_client.url, 'http://INTENTIONALLY_DISCONNECTED:9999')
-        self.assertEqual(rpc_client.payload['id'], 0)
-        self.assertEqual(rpc_client.payload['params'], {})
-
-    def test_call(self):
-        rpc_client = RPCClient()
-
-        # Call without the backend should return the 503 RPCError
-        with mock.patch.object(requests.Session, 'post') as mock_method:
-            mock_method.side_effect = requests.exceptions.ConnectionError(mock.Mock(status=503), 'not found')
-
-            try:
-                rpc_client.call('test_method')
-                self.fail("Should have thrown RPC Error")
-            except RPCError as rpc_error:
-                self.assertEqual(rpc_error.status_code, 503)
-                self.assertEqual(rpc_error.detail, 'Service temporarily unavailable, try again later')
-
-        # Error response from RPC Server should return server detail in exception
-        with mock.patch.object(requests.Session, 'post') as mock_method:
-            mock_method.return_value = mocked_rpc_response({
-                "error": {
-                    "code": 1337,
-                    "message": "Error from RPC Server",
-                },
-            })
-            try:
-                rpc_client.call('test_method')
-                self.fail("Should have thrown RPC Error")
-            except RPCError as rpc_error:
-                self.assertEqual(rpc_error.status_code, 500)
-                self.assertEqual(rpc_error.detail, 'Error from RPC Server')
-
-            # Response object from server should be returned on success
-            mock_method.return_value = mocked_rpc_response({
-                "jsonrpc": "2.0",
-                "result": {
-                    "success": True,
-                    "test_object": {
-                        "id": "d5563423-f040-4e0d-8d87-5e941c748d91",
-                    }
-                },
-                "id": 0
-            })
-
-            response_json = rpc_client.call('test_method')
-            self.assertEqual(response_json['test_object'], {
-                "id": "d5563423-f040-4e0d-8d87-5e941c748d91",
-            })
 
 
 class TestShipmentRPCClient(TestCase):
