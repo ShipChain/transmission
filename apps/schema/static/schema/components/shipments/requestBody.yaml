@@ -78,6 +78,8 @@ createAttributes:
   - $ref: '#/shipment/nmfcClass'
   - $ref: '#/shipment/isHazmat'
   - $ref: '#/shipment/exception'
+  - $ref: '#/shipment/assetPhysicalId'
+  - $ref: '#/shipment/assetCustodianId'
 
 patchAttributes:
   allOf:
@@ -136,6 +138,8 @@ patchAttributes:
     - $ref: '#/shipment/nmfcClass'
     - $ref: '#/shipment/exception'
     - $ref: '#/shipment/customerFields'
+    - $ref: '#/shipment/assetPhysicalId'
+    - $ref: '#/shipment/assetCustodianId'
 
 createRequest:
   allOf:

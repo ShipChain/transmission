@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from datetime import datetime
+import hashlib
 
 import pytest
 import pytz
@@ -248,3 +249,37 @@ def test_shadow_state_updates(api_client, mocked_iot_api, shipment_with_device):
     shipment_with_device.save()
     call_count += 1  # Status should have been updated in the shadow
     assert call_count == mocked_iot_api.call_count
+
+
+@pytest.mark.django_db
+def test_dropoff_gtx(api_client, shipment):
+    assert shipment.delivery_act is None
+
+    # Set NFC/Asset ID
+    super_secret_nfc_id = 'package123'
+    shipment.asset_physical_id = hashlib.sha256(super_secret_nfc_id.encode()).hexdigest()
+    shipment.save()
+
+    shipment.pick_up()
+    shipment.save()
+
+    shipment.arrival()
+    shipment.save()
+
+    url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
+    action = {
+        'action_type': ActionType.DROP_OFF.name
+    }
+
+    response = api_client.post(url, data=action, format='json')
+    assert response.status_code == status.HTTP_403_FORBIDDEN  # No asset ID
+
+    action['raw_asset_physical_id'] = 'package987'
+
+    response = api_client.post(url, data=action, format='json')
+    assert response.status_code == status.HTTP_403_FORBIDDEN  # Invalid asset ID
+
+    action['raw_asset_physical_id'] = super_secret_nfc_id
+
+    response = api_client.post(url, data=action, format='json')
+    assert response.status_code == status.HTTP_200_OK

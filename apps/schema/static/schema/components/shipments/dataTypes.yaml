@@ -539,6 +539,21 @@ exception:
       enum: [NONE, CUSTOMS_HOLD, DOCUMENTATION_ERROR]
       example: NONE
 
+assetPhysicalId:
+  properties:
+    asset_physical_id:
+      title: asset_physical_id
+      description: An opaque identifier for the asset, used in tracking
+      type: string
+      example: c150b0b3f37a4fea11741e0adf253efa8e4870511d283d9a0d034ec0179feaa2
+
+assetCustodianId:
+  properties:
+    asset_custodian_id:
+      <<: *uuid
+      title: asset_custodian_id
+      description: The User ID of the current asset custodian
+
 device:
   properties:
     data:

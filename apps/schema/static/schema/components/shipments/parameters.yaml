@@ -182,5 +182,21 @@ permissionLinkPath:
   schema:
     $ref: '#/dataTypes/uuid'
 
+asset_physical_id:
+  name: asset_physical_id
+  in: query
+  description: Returns shipments with associated asset physical ID.
+  schema:
+    type: string
+    example: c150b0b3f37a4fea11741e0adf253efa8e4870511d283d9a0d034ec0179feaa2
+
+asset_custodian_id:
+  name: asset_custodian_id
+  in: query
+  description: Returns shipments with associated asset custodian ID.
+  schema:
+    type: string
+    example: c150b0b3f37a4fea11741e0adf253efa8e4870511d283d9a0d034ec0179feaa2
+
 dataTypes:
   $ref: ../core/dataTypes.yaml
