@@ -13,3 +13,5 @@ from .s3 import *
 from .iot import *
 
 from .simple_history import *
+
+from .custom_logging import *

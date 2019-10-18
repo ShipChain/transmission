@@ -2,7 +2,7 @@ import os
 
 from celery.signals import setup_logging
 
-from .base import LOGGING
+from .custom_logging import LOGGING
 
 CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', default='redis://:redis_pass@redis_db:6379/1')
 
