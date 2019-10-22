@@ -177,6 +177,11 @@ class Event(models.Model):
     signature = HashField()
     raw = JSONField()
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['eth_action', 'log_index'], name='unique event')
+        ]
+
     @staticmethod
     def get_event_subscription_url():
         return settings.INTERNAL_URL + reverse('event-list', kwargs={'version': 'v1'})
