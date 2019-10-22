@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo "--------------------------------  Running OpenApi spellchecker  --------------------------------"
+
+docker run --rm \
+  -v $(pwd)/apps/schema/static/schema:/schema \
+  -v $(pwd)/tests/accepted_words/openapi_dictionary.txt:/whitelist/dictionary.txt \
+  shipchain/openapi-spellcheck schema/swagger.yaml whitelist/dictionary.txt
