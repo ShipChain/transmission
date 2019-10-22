@@ -106,10 +106,15 @@ jobs:
       - run:
           name: Swagger spell check
           command: |
-            docker run --name spellcheck -d --entrypoint '' shipchain/openapi-spellcheck sh -c 'while sleep 3600; do :; done'
+            docker run --name spellcheck -d --entrypoint '' shipchain/spellcheck sh -c 'while sleep 3600; do :; done'
             docker cp $(pwd)/apps/schema/static/schema spellcheck:/schema
-            docker cp $(pwd)/tests/openapi_words/dictionary.txt spellcheck:/schema/dictionary.txt
-            docker exec spellcheck ./spellchecker_entrypoint.sh schema/swagger.yaml schema/dictionary.txt
+            docker cp $(pwd)/README.md spellcheck:/README.md
+            docker cp $(pwd)/tests/accepted_words/openapi_dictionary.txt spellcheck:/schema/openapi_dictionary.txt
+            docker cp $(pwd)/tests/accepted_words/readme_dictionary.txt spellcheck:/schema/readme_dictionary.txt
+            echo "---------------------------------  Running OpenApi spellchecker  ---------------------------------"
+            docker exec spellcheck ./spellchecker_entrypoint.sh -s schema/swagger.yaml -d schema/openapi_dictionary.txt
+            echo "---------------------------------  Running ReadMe spellchecker  ---------------------------------"
+            docker exec spellcheck ./spellchecker_entrypoint.sh -md /README.md -d schema/readme_dictionary.txt
 
   integration-testing:
     docker:
