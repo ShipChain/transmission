@@ -34,7 +34,7 @@ class EventViewSet(mixins.CreateModelMixin,
         if project == 'LOAD':
             try:
                 action = EthAction.objects.get(transaction_hash=event['transaction_hash'])
-                Event.objects.get_or_create(**event, eth_action=action)
+                Event.objects.get_or_create(defaults=event, eth_action=action, log_index=event['log_index'])
             except RPCError as exc:
                 LOG.info(f"Engine RPC error processing event {event['transaction_hash']}: {exc}")
             except MultipleObjectsReturned as exc:
