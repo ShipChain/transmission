@@ -249,10 +249,12 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(len(response_data['data']), 1)
         self.assertEqual(response_data['data'][0]['id'], self.shipments[0].id)
 
-        setattr(self.shipments[0], 'customer_fields', {'number': 1})
+        cf_time = datetime.now()
+
+        setattr(self.shipments[0], 'customer_fields', {'number': 1, 'boolean': True, 'array': ['A', 'B', 'C']})
         self.shipments[0].save()
 
-        setattr(self.shipments[1], 'customer_fields', {'string': 'string'})
+        setattr(self.shipments[1], 'customer_fields', {'string': 'string', 'datetime': str(cf_time), 'decimal': 12.5})
         self.shipments[1].save()
 
         # Searching for shipment's with customer fields should work regardless of type
@@ -263,6 +265,30 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response_data['data'][0]['id'], self.shipments[0].id)
 
         response = self.client.get(f'{url}?customer_fields__string=string')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 1)
+        self.assertEqual(response_data['data'][0]['id'], self.shipments[1].id)
+
+        response = self.client.get(f'{url}?customer_fields__boolean=true')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 1)
+        self.assertEqual(response_data['data'][0]['id'], self.shipments[0].id)
+
+        response = self.client.get(f'{url}?customer_fields__datetime={cf_time}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 1)
+        self.assertEqual(response_data['data'][0]['id'], self.shipments[1].id)
+
+        response = self.client.get(f'{url}?customer_fields__array=["A", "B", "C"]')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(len(response_data['data']), 1)
+        self.assertEqual(response_data['data'][0]['id'], self.shipments[0].id)
+
+        response = self.client.get(f'{url}?customer_fields__decimal=12.5')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
         self.assertEqual(len(response_data['data']), 1)
