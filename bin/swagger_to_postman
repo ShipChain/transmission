@@ -11,3 +11,7 @@ docker run -v "$(pwd)"/apps/schema/static/schema:/schema --user $(id -u):$(id -g
 
 echo "Modifying postman file"
 bin/dev-tools/postprocess_postman.py "$(pwd)"/apps/schema/static/schema/postman.json "$(pwd)"/tests/postman.collection.Transmission.json
+
+echo "Deleting temporary files"
+rm -rf "$(pwd)"/apps/schema/static/schema/postman.json
+rm -rf "$(pwd)"/apps/schema/static/schema/bundledswagger.yaml

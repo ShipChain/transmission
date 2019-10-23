@@ -1,3 +1,4 @@
+import json
 import logging
 from string import Template
 
@@ -8,16 +9,16 @@ from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
+from influxdb_metrics.loader import log_metric
 from rest_framework import viewsets, permissions, status, filters, mixins, renderers
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.exceptions import NotFound, PermissionDenied
-from influxdb_metrics.loader import log_metric
 from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.exceptions import RPCError
-from shipchain_common.utils import send_templated_email
 from shipchain_common.pagination import CustomResponsePagination
+from shipchain_common.utils import send_templated_email
 
 from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id
@@ -31,7 +32,6 @@ from .serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentU
     PermissionLinkSerializer, PermissionLinkCreateSerializer, ChangesDiffSerializer, DevicesQueryParamsSerializer, \
     ShipmentActionRequestSerializer
 from .tasks import tracking_data_update
-
 
 LOG = logging.getLogger('transmission')
 
@@ -63,6 +63,15 @@ class ShipmentViewSet(viewsets.ModelViewSet):
                 return queryset
             else:
                 queryset = queryset.filter(owner_access_filter(self.request))
+
+        for key, value in self.request.query_params.items():
+            if key.startswith('customer_fields__'):
+                try:
+                    value = json.loads(value)
+                except ValueError:
+                    pass
+                queryset = queryset.filter(**{key: value})
+
         return queryset
 
     def perform_create(self, serializer):
