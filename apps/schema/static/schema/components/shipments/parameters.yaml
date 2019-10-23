@@ -198,5 +198,21 @@ asset_custodian_id:
     type: string
     example: c150b0b3f37a4fea11741e0adf253efa8e4870511d283d9a0d034ec0179feaa2
 
+customer_fields__has_key:
+  name: customer_fields__has_key
+  in: query
+  description: Returns shipments that have specified key in their customer fields attribute
+  schema:
+    type: string
+    example: driverStatus
+
+customer_fields__{key}:
+  name: customer_fields__{key}
+  in: query
+  description: Returns shipments that have specified key and value in their customer fields attribute
+  schema:
+    type: string
+    example: active
+
 dataTypes:
   $ref: ../core/dataTypes.yaml
