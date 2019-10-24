@@ -302,3 +302,5 @@ if INFLUXDB_URL:
     INFLUXDB_TIMEOUT = 1
 
     EMAIL_BACKEND = 'influxdb_metrics.email.InfluxDbEmailBackend'
+
+GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'

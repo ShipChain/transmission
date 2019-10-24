@@ -1,6 +1,7 @@
 ## Base image with python and entrypoint scripts ##
 ## ============================================= ##
-FROM python:3.6.8-alpine3.9 AS base
+FROM osgeo/gdal:alpine-ultrasmall-v2.4.1 as gdal
+FROM python:3.6.8-alpine3.10 AS base
 
 LABEL maintainer="Adam Hodges <ahodges@shipchain.io>"
 
@@ -8,12 +9,17 @@ ENV LANG C.UTF-8
 ENV PYTHONUNBUFFERED 1
 
 # Essential packages for our app environment
-RUN apk add --no-cache bash curl binutils && \
+RUN apk add --no-cache bash curl binutils libwebp && \
+    apk add --no-cache libwebp zstd-libs libjpeg-turbo libpng openjpeg libwebp && \
+    rm -f /usr/lib/libturbojpeg.so* /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so* && \
     apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/main/ libcrypto1.1 && \
-    apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ proj-dev gdal geos && \
+    apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ geos && \
     curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && \
     apk del curl
-RUN ln -s /usr/lib/libgeos_c.so.1 /usr/local/lib/libgeos_c.so && ln -s /usr/lib/libgdal.so.20 /usr/lib/libgdal.so
+COPY --from=gdal /usr/share/gdal /usr/share/gdal
+COPY --from=gdal /usr/lib/libgdal.so* /usr/lib/
+COPY --from=gdal /usr/lib/libproj.so* /usr/lib/
+RUN ln -s /usr/lib/libgeos_c.so.1 /usr/local/lib/libgeos_c.so
 
 # Install and configure virtualenv
 RUN pip install virtualenv==16.3.*
