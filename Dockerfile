@@ -9,8 +9,8 @@ ENV LANG C.UTF-8
 ENV PYTHONUNBUFFERED 1
 
 # Essential packages for our app environment
-RUN apk add --no-cache bash curl binutils libwebp && \
-    apk add --no-cache libwebp zstd-libs libjpeg-turbo libpng openjpeg libwebp && \
+RUN apk add --no-cache bash curl binutils libpq && \
+    apk add --no-cache libcurl libwebp zstd-libs libjpeg-turbo libpng openjpeg libwebp && \
     rm -f /usr/lib/libturbojpeg.so* /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so* && \
     apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/main/ libcrypto1.1 && \
     apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ geos && \
