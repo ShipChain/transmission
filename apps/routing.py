@@ -16,7 +16,6 @@ limitations under the License.
 
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.conf.urls import url
-from rest_framework_nested import routers as drf_nested_routers
 
 from . import consumers
 
@@ -32,9 +31,3 @@ application = ProtocolTypeRouter({
         websocket_urlpatterns,
     ),
 })
-
-
-class OptionalSlashRouter(drf_nested_routers.SimpleRouter):
-    def __init__(self):
-        super(OptionalSlashRouter, self).__init__()
-        self.trailing_slash = '/?'

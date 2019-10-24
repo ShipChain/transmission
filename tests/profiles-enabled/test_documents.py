@@ -151,7 +151,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
             self.assertTrue(downloaded_file.exists())
 
             # Update document object upon upload completion
-            url_patch = url + f'{document[0].id}/'
+            url_patch = url + f'/{document[0].id}/'
             file_data, content_type = create_form_content({
                 'upload_status': 'COMPLETE',
             })
@@ -168,7 +168,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
             self.assertNotEqual(document[0].document_type, DocumentType.IMAGE)
 
             # Get a document
-            url_get = url + f'{document[0].id}/'
+            url_get = url + f'/{document[0].id}/'
             response = self.client.get(url_get)
             data = response.json()['data']
             self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -194,8 +194,8 @@ class PdfDocumentViewSetAPITests(APITestCase):
             document = Document.objects.all().order_by('created_at')
             self.assertEqual(document.count(), 2)
 
-            # Update second uploaded document status to complete
-            url_patch = url + f'{document[1].id}/'
+            # Update second uploaded document status to completegit 
+            url_patch = url + f'/{document[1].id}/'
             file_data, content_type = create_form_content({
                 'upload_status': 'Complete',
             })
@@ -553,7 +553,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
 
         # Failed upload document and Pending should have the presigned post meta object
-        url_patch = url + f'{document[0].id}/'
+        url_patch = url + f'/{document[0].id}/'
         file_data, content_type = create_form_content({
             'upload_status': 'Failed',
         })
@@ -582,7 +582,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
             self.assertTrue(isinstance(data['meta']['presigned_s3'], str))
 
             # Get a document
-            url_get = url + f'{document[0].id}/'
+            url_get = url + f'/{document[0].id}/'
             response = self.client.get(url_get)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
@@ -695,7 +695,7 @@ class ImageDocumentViewSetAPITests(APITestCase):
             assert mock_method.call_count == 3
 
             # Trying to access the COMPLETE document detail the rpc method should be called
-            url_get = url + f'{doc.id}/'
+            url_get = url + f'/{doc.id}/'
             response = self.client.patch(url_get, {}, content_type='application/json')
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             assert mock_method.call_count == 4

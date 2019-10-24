@@ -1895,7 +1895,7 @@ class ShipmentAPITests(APITestCase):
 
         # Assert owner can delete their permission link
         self.set_user(self.user_1)
-        response = self.client.delete(f'{url}{valid_permission_id}/', valid_permission_with_exp,
+        response = self.client.delete(f'{url}/{valid_permission_id}/', valid_permission_with_exp,
                                       content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(PermissionLink.objects.all().count(), 2)
