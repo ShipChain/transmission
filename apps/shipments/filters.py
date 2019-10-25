@@ -5,11 +5,11 @@ from .models import Shipment, TransitState
 
 
 def filter_state(queryset, _, value):
-    # pylint:disable=protected-access
-    if value.upper() not in TransitState._member_names_:
+    try:
+        enum_value = TransitState[value.upper()]
+    except KeyError:
         raise ValidationError('Invalid shipment state supplied.')
 
-    enum_value = TransitState[value.upper()]
     queryset = queryset.filter(**{'state': enum_value.value})
     return queryset
 
