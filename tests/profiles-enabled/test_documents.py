@@ -194,7 +194,7 @@ class PdfDocumentViewSetAPITests(APITestCase):
             document = Document.objects.all().order_by('created_at')
             self.assertEqual(document.count(), 2)
 
-            # Update second uploaded document status to completegit 
+            # Update second uploaded document status to complete
             url_patch = url + f'/{document[1].id}/'
             file_data, content_type = create_form_content({
                 'upload_status': 'Complete',
