@@ -183,6 +183,18 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()
         self.assertEqual(response_data['data'][0]['id'], self.shipments[1].id)
 
+        # Filtering off a shipment state should fail if invalid state supplied
+        response = self.client.get(f'{url}?state=string')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.shipments[1].pick_up()
+        self.shipments[1].save()
+
+        response = self.client.get(f'{url}?state=IN_TRANSIT')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_data = response.json()
+        self.assertEqual(response_data['data'][0]['id'], self.shipments[1].id)
+
     def test_ordering(self):
         """
         Test filtering for objects

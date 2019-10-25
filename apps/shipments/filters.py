@@ -1,10 +1,15 @@
 from django_filters import rest_framework as filters
+from rest_framework_json_api.serializers import ValidationError
 
 from .models import Shipment, TransitState
 
 
 def filter_state(queryset, _, value):
-    enum_value = TransitState[value.upper()]
+    try:
+        enum_value = TransitState[value.upper()]
+    except KeyError:
+        raise ValidationError('Invalid shipment state supplied.')
+
     queryset = queryset.filter(**{'state': enum_value.value})
     return queryset
 
