@@ -17,15 +17,14 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.views.generic import TemplateView
 from rest_framework.urlpatterns import format_suffix_patterns
-from rest_framework_nested import routers as drf_nested_routers
+from shipchain_common.routers import OptionalSlashRouter, OptionalSlashNested
 
 from apps.documents import views as documents
 from apps.eth import views as eth
+from apps.imports import views as imports_app
 from apps.jobs import views as jobs
 from apps.management import views as management
-from apps.routing import OptionalSlashRouter
 from apps.shipments import views as shipments
-from apps.imports import views as imports_app
 
 API_PREFIX = r'^api/(?P<version>(v1|v2))'
 
@@ -42,7 +41,7 @@ router.register(f'{API_PREFIX[1:]}/devices', shipments.DeviceViewSet, base_name=
 router.register(f'{API_PREFIX[1:]}/imports/shipments', imports_app.ShipmentImportsViewSet, base_name='import-shipments')
 
 # Shipment's nested routes definition
-nested_router = drf_nested_routers.NestedSimpleRouter(router, f'{API_PREFIX[1:]}/shipments', lookup='shipment')
+nested_router = OptionalSlashNested(router, f'{API_PREFIX[1:]}/shipments', lookup='shipment')
 nested_router.register(r'documents', documents.DocumentViewSet, base_name='shipment-documents')
 nested_router.register(r'transactions', eth.TransactionViewSet, base_name='shipment-transactions')
 nested_router.register(r'permission_links', shipments.PermissionLinkViewSet, base_name='shipment-permissions')
