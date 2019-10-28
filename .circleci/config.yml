@@ -114,7 +114,7 @@ jobs:
             echo "---------------------------------  Running OpenApi spellchecker  ---------------------------------"
             docker exec spellcheck ./spellchecker_entrypoint.sh -s schema/swagger.yaml -d schema/openapi_dictionary.txt
             echo "---------------------------------  Running ReadMe spellchecker  ---------------------------------"
-            docker exec spellcheck ./spellchecker_entrypoint.sh -md /README.md -d schema/readme_dictionary.txt
+            docker exec spellcheck ./spellchecker_entrypoint.sh -r /README.md -d schema/readme_dictionary.txt
 
   integration-testing:
     docker:
