@@ -1,8 +1,0 @@
-#!/bin/bash
-
-echo "--------------------------------  Running Swagger spellchecker  --------------------------------"
-
-docker run --rm \
-  -v $(pwd)/apps/schema/static/schema:/schema \
-  -v $(pwd)/tests/openapi_words/dictionary.txt:/whitelist/dictionary.txt \
-  shipchain/openapi-spellcheck schema/swagger.yaml whitelist/dictionary.txt

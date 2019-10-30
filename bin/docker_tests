@@ -19,7 +19,9 @@ bin/dc exec -T runserver prospector -o pylint
 
 bin/speccy
 
-bin/spellcheck
+bin/openapi_spellcheck
+
+bin/readme_spellcheck
 
 bin/dc exec -T runserver bandit -r apps
 
