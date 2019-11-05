@@ -1,6 +1,6 @@
 from django import http
 from django.contrib import admin
-from django.contrib.admin import helpers, SimpleListFilter
+from django.contrib.admin import helpers
 from django.contrib.admin.utils import unquote
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404, render
@@ -11,29 +11,42 @@ from django.utils.html import mark_safe
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
 from simple_history.admin import SimpleHistoryAdmin, USER_NATURAL_KEY, SIMPLE_HISTORY_EDIT
-from enumfields.admin import EnumFieldListFilter
 
 from apps.shipments.models import Shipment, Location, TransitState
 from apps.jobs.models import AsyncJob
 
 
-class StateFilter(SimpleListFilter):
-    title = 'State'
+class StateFilter(admin.FieldListFilter):
     parameter_name = 'state'
 
+    def __init__(self, field, request, params, model, model_admin, field_path):
+        super().__init__(field, request, params, model, model_admin, field_path)
+        self.lookup_choices = self.lookups(request, model_admin)
+
+        if self.parameter_name in params:
+            self.used_parameters[self.parameter_name] = params.pop(self.parameter_name)
+
+    def value(self):
+        return self.used_parameters.get(self.parameter_name)
+
     def lookups(self, request, model_admin):
-        return [
-            (10, 'AWAITING_PICKUP'),
-            (20, 'IN_TRANSIT'),
-            (30, 'AWAITING_DELIVERY'),
-            (40, 'DELIVERED')
-        ]
+        return TransitState.choices()
 
-    def queryset(self, request, queryset):
-        return queryset.filter(state=self.value())
+    def expected_parameters(self):
+        return [self.parameter_name]
 
-    # def expected_parameters(self):
-    #     return [self.parameter_name]
+    def choices(self, changelist):
+        yield {
+            'selected': self.value() is None,
+            'query_string': changelist.get_query_string(remove=[self.parameter_name]),
+            'display': _('All'),
+        }
+        for lookup, title in self.lookup_choices:
+            yield {
+                'selected': self.value() == str(lookup),
+                'query_string': changelist.get_query_string({self.parameter_name: lookup}),
+                'display': title,
+            }
 
 
 class AsyncJobInlineTab(admin.TabularInline):
@@ -134,7 +147,7 @@ class ShipmentAdmin(admin.ModelAdmin):
     list_filter = [
         ('created_at', admin.DateFieldListFilter),
         ('delayed', admin.BooleanFieldListFilter),
-        # ('state', StateFilter),
+        ('state', StateFilter),
     ]
 
     def shipment_state(self, obj):
@@ -274,12 +287,6 @@ class BaseModelHistory(SimpleHistoryAdmin):
 
 class HistoricalShipmentAdmin(BaseModelHistory, ShipmentAdmin):
     readonly_fields = [field.name for field in Shipment._meta.get_fields()]
-    # list_filter = [
-    #     ('created_at', admin.DateFieldListFilter),
-    #     ('delayed', admin.BooleanFieldListFilter),
-    #     ('state', StateFilter),
-    #     # ('contract_version', admin.ChoicesFieldListFilter)
-    # ]
 
 
 class LocationAdmin(BaseModelHistory):
