@@ -1,6 +1,6 @@
 from django import http
 from django.contrib import admin
-from django.contrib.admin import helpers
+from django.contrib.admin import helpers, SimpleListFilter
 from django.contrib.admin.utils import unquote
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404, render
@@ -11,9 +11,29 @@ from django.utils.html import mark_safe
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
 from simple_history.admin import SimpleHistoryAdmin, USER_NATURAL_KEY, SIMPLE_HISTORY_EDIT
+from enumfields.admin import EnumFieldListFilter
 
-from apps.shipments.models import Shipment, Location
+from apps.shipments.models import Shipment, Location, TransitState
 from apps.jobs.models import AsyncJob
+
+
+class StateFilter(SimpleListFilter):
+    title = 'State'
+    parameter_name = 'state'
+
+    def lookups(self, request, model_admin):
+        return [
+            (10, 'AWAITING_PICKUP'),
+            (20, 'IN_TRANSIT'),
+            (30, 'AWAITING_DELIVERY'),
+            (40, 'DELIVERED')
+        ]
+
+    def queryset(self, request, queryset):
+        return queryset.filter(state=self.value())
+
+    # def expected_parameters(self):
+    #     return [self.parameter_name]
 
 
 class AsyncJobInlineTab(admin.TabularInline):
@@ -80,10 +100,10 @@ NON_SCHEMA_FIELDS = [
 
 class ShipmentAdmin(admin.ModelAdmin):
     # Read Only admin page until this feature is worked
-
+    list_display = ('id', 'shippers_reference', 'shipment_state', )
     fieldsets = (
         (None, {
-            'classes': ('extrapretty'),
+            'classes': ('extrapretty', ),
             'fields': (
                 'id',
                 ('updated_at', 'created_at',),
@@ -114,9 +134,11 @@ class ShipmentAdmin(admin.ModelAdmin):
     list_filter = [
         ('created_at', admin.DateFieldListFilter),
         ('delayed', admin.BooleanFieldListFilter),
-        ('state', admin.ChoicesFieldListFilter),
-        ('contract_version', admin.ChoicesFieldListFilter),
+        # ('state', StateFilter),
     ]
+
+    def shipment_state(self, obj):
+        return TransitState(obj.state).label.upper()
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -252,12 +274,12 @@ class BaseModelHistory(SimpleHistoryAdmin):
 
 class HistoricalShipmentAdmin(BaseModelHistory, ShipmentAdmin):
     readonly_fields = [field.name for field in Shipment._meta.get_fields()]
-    list_filter = [
-        ('created_at', admin.DateFieldListFilter),
-        ('delayed', admin.BooleanFieldListFilter),
-        ('state', admin.ChoicesFieldListFilter),
-        ('contract_version', admin.ChoicesFieldListFilter)
-    ]
+    # list_filter = [
+    #     ('created_at', admin.DateFieldListFilter),
+    #     ('delayed', admin.BooleanFieldListFilter),
+    #     ('state', StateFilter),
+    #     # ('contract_version', admin.ChoicesFieldListFilter)
+    # ]
 
 
 class LocationAdmin(BaseModelHistory):
