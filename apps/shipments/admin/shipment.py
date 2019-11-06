@@ -118,12 +118,6 @@ class ShipmentAdmin(admin.ModelAdmin):
         ('state', StateFilter),
     ]
 
-    # def get_urls(self):
-    #     urls = super().get_urls()
-    #     for url in urls:
-    #         print(f'>>>>>> Name: {url.name}, url: {url}')
-    #     return urls
-
     def shipment_state(self, obj):
         return TransitState(obj.state).label.upper()
 
