@@ -81,7 +81,7 @@ NON_SCHEMA_FIELDS = [
 
 class ShipmentAdmin(admin.ModelAdmin):
     # Read Only admin page until this feature is worked
-    list_display = ('id', 'owner_id', 'shippers_reference', 'shipment_state', )
+    list_display = ('id', 'owner_id', 'shippers_reference', 'created_at', 'updated_at', 'shipment_state', )
     fieldsets = (
         (None, {
             'classes': ('extrapretty', ),
