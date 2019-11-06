@@ -1,131 +1,14 @@
 from django import http
-from django.contrib import admin
 from django.contrib.admin import helpers
 from django.contrib.admin.utils import unquote
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.encoding import force_text
-from django.utils.html import format_html
 from django.utils.html import mark_safe
 from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
 from simple_history.admin import SimpleHistoryAdmin, USER_NATURAL_KEY, SIMPLE_HISTORY_EDIT
-
-from apps.shipments.models import Shipment, Location
-from apps.jobs.models import AsyncJob
-
-
-class AsyncJobInlineTab(admin.TabularInline):
-    model = AsyncJob
-    fields = (
-        'id',
-        'state',
-        'method',
-        'created_at',
-        'last_try',
-    )
-    readonly_fields = (
-        'id',
-        'state',
-        'method',
-        'created_at',
-        'last_try',
-    )
-
-    def method(self, obj):
-        try:
-            params = obj.parameters
-            return params['rpc_method']
-        except KeyError:
-            pass
-        return "??"
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-NON_SCHEMA_FIELDS = [
-    'asyncjob',
-    'ethaction',
-    'permissionlink',
-    'loadshipment',
-    'trackingdata',
-    'document',
-    'id',
-    'owner_id',
-    'storage_credentials_id',
-    'vault_id',
-    'vault_uri',
-    'device',
-    'shipper_wallet_id',
-    'carrier_wallet_id',
-    'moderator_wallet_id',
-    'updated_at',
-    'created_at',
-    'contract_version',
-    'updated_by',
-    'state',
-    'delayed',
-    'expected_delay_hours',
-    'exception'
-]
-
-
-class ShipmentAdmin(admin.ModelAdmin):
-    # Read Only admin page until this feature is worked
-
-    fieldsets = (
-        (None, {
-            'classes': ('extrapretty'),
-            'fields': (
-                'id',
-                ('updated_at', 'created_at',),
-                ('owner_id', 'updated_by',),
-                ('shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id',),
-                ('storage_credentials_id', 'vault_id',),
-                'state',
-                'vault_uri',
-                'device',
-                'contract_version',
-            )
-        }),
-        ('Shipment Schema Fields', {
-            'classes': ('collapse',),
-            'description': f'Fields in the {format_html("<a href={}>Schema</a>", "http://schema.shipchain.io")}',
-            'fields': [field.name for field in Shipment._meta.get_fields() if field.name not in NON_SCHEMA_FIELDS]
-        })
-    )
-
-    inlines = [
-        AsyncJobInlineTab,
-    ]
-
-    search_fields = ('id', 'shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id', 'state',
-                     'ship_from_location__name', 'ship_to_location__name', 'final_destination_location__name',
-                     'bill_to_location__name', )
-
-    list_filter = [
-        ('created_at', admin.DateFieldListFilter),
-        ('delayed', admin.BooleanFieldListFilter),
-        ('state', admin.ChoicesFieldListFilter),
-        ('contract_version', admin.ChoicesFieldListFilter),
-    ]
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
 
 
 class BaseModelHistory(SimpleHistoryAdmin):
@@ -248,26 +131,3 @@ class BaseModelHistory(SimpleHistoryAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
-
-
-class HistoricalShipmentAdmin(BaseModelHistory, ShipmentAdmin):
-    readonly_fields = [field.name for field in Shipment._meta.get_fields()]
-    list_filter = [
-        ('created_at', admin.DateFieldListFilter),
-        ('delayed', admin.BooleanFieldListFilter),
-        ('state', admin.ChoicesFieldListFilter),
-        ('contract_version', admin.ChoicesFieldListFilter)
-    ]
-
-
-class LocationAdmin(BaseModelHistory):
-    fieldsets = [(None, {'fields': [field.name for field in Location._meta.local_fields]})]
-
-    readonly_fields = [field.name for field in Location._meta.get_fields()]
-
-    search_fields = ('id', 'name__contains', )
-
-
-admin.site.register(Shipment, HistoricalShipmentAdmin)
-
-admin.site.register(Location, LocationAdmin)

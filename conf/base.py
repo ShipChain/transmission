@@ -132,6 +132,7 @@ INSTALLED_APPS = [
     'apps.imports',
     'channels',
     'simple_history',
+    'rangefilter',
 ]
 
 REST_FRAMEWORK = {
