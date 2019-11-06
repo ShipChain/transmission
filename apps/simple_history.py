@@ -168,16 +168,11 @@ class TxmHistoricalRecords(HistoricalRecords):
         manager = getattr(instance, self.manager_name)
 
         attrs = {}
-        if instance.__class__.__name__ == 'Shipment':
-            for field in self.fields_included(instance):
-                if field.name in settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys():
-                    related_instance = getattr(instance, field.name, None)
-                    if related_instance:
-                        attrs[field.name] = related_instance.history.first()
-                else:
-                    attrs[field.name] = getattr(instance, field.name)
-        else:
-            for field in self.fields_included(instance):
+        for field in self.fields_included(instance):
+            related_instance = getattr(instance, field.name, None)
+            if related_instance and hasattr(related_instance, 'history'):
+                attrs[field.name] = related_instance.history.first()
+            else:
                 attrs[field.name] = getattr(instance, field.name)
 
         history_instance = manager.model(
