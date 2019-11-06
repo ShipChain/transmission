@@ -7,6 +7,7 @@ from pygments.formatters import HtmlFormatter
 from django.contrib import admin
 from django.utils.html import format_html
 from enumfields.admin import EnumFieldListFilter
+from rangefilter.filter import DateRangeFilter
 
 from apps.admin import admin_change_url
 from .models import AsyncJob, JobState, AsyncAction, Message
@@ -102,8 +103,8 @@ class AsyncJobAdmin(admin.ModelAdmin):
     )
 
     list_filter = [
-        ('last_try', admin.DateFieldListFilter),
-        ('created_at', admin.DateFieldListFilter),
+        ('last_try', DateRangeFilter),
+        ('created_at', DateRangeFilter),
         ('state', EnumFieldListFilter)
     ]
 
