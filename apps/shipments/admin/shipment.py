@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
+from rangefilter.filter import DateRangeFilter
 
 from apps.shipments.models import Shipment, Location, TransitState
 from apps.jobs.models import AsyncJob
@@ -112,8 +113,8 @@ class ShipmentAdmin(admin.ModelAdmin):
                      'bill_to_location__name', )
 
     list_filter = [
-        ('created_at', admin.DateFieldListFilter),
-        ('updated_at', admin.DateFieldListFilter),
+        ('created_at', DateRangeFilter),
+        ('updated_at', DateRangeFilter),
         ('delayed', admin.BooleanFieldListFilter),
         ('state', StateFilter),
     ]
