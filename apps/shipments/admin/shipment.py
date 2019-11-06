@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.urls import reverse
 
 from apps.shipments.models import Shipment, Location, TransitState
 from apps.jobs.models import AsyncJob
@@ -11,14 +12,14 @@ from .historical import BaseModelHistory
 class AsyncJobInlineTab(admin.TabularInline):
     model = AsyncJob
     fields = (
-        'id',
+        'job_id',
         'state',
         'method',
         'created_at',
         'last_try',
     )
     readonly_fields = (
-        'id',
+        'job_id',
         'state',
         'method',
         'created_at',
@@ -32,6 +33,13 @@ class AsyncJobInlineTab(admin.TabularInline):
         except KeyError:
             pass
         return "??"
+
+    def job_id(self, obj):
+        return format_html(
+            '<a href="{}" target="_blank">{}</a>',
+            reverse('admin:jobs_asyncjob_change', kwargs={'object_id': obj.id}),
+            obj.id
+        )
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -72,7 +80,7 @@ NON_SCHEMA_FIELDS = [
 
 class ShipmentAdmin(admin.ModelAdmin):
     # Read Only admin page until this feature is worked
-    list_display = ('id', 'shippers_reference', 'shipment_state', )
+    list_display = ('id', 'owner_id', 'shippers_reference', 'shipment_state', )
     fieldsets = (
         (None, {
             'classes': ('extrapretty', ),
@@ -99,15 +107,22 @@ class ShipmentAdmin(admin.ModelAdmin):
         AsyncJobInlineTab,
     ]
 
-    search_fields = ('id', 'shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id', 'state',
+    search_fields = ('id', 'shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id', 'state', 'owner_id',
                      'ship_from_location__name', 'ship_to_location__name', 'final_destination_location__name',
                      'bill_to_location__name', )
 
     list_filter = [
         ('created_at', admin.DateFieldListFilter),
+        ('updated_at', admin.DateFieldListFilter),
         ('delayed', admin.BooleanFieldListFilter),
         ('state', StateFilter),
     ]
+
+    # def get_urls(self):
+    #     urls = super().get_urls()
+    #     for url in urls:
+    #         print(f'>>>>>> Name: {url.name}, url: {url}')
+    #     return urls
 
     def shipment_state(self, obj):
         return TransitState(obj.state).label.upper()
