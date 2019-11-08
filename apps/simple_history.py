@@ -128,8 +128,8 @@ class TxmHistoricalRecords(HistoricalRecords):
                 finally:
                     old_field.swappable = old_swappable
 
-                if getattr(old_field, "one_to_one", False) or isinstance(old_field, models.OneToOneField) or \
-                        isinstance(old_field, models.ForeignKey):
+                if getattr(old_field, "one_to_one", False) or \
+                        isinstance(old_field, (models.OneToOneField, models.ForeignKey)):
                     field_type = models.ForeignKey
 
                     if old_field.name in settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys():
