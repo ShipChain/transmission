@@ -1,8 +1,18 @@
 uuid: &uuid
-  $ref: '../core/dataTypes.yaml#/uuid'
+  type: string
+  format: uuid
+  example: '1243d23b-e2fc-475a-8290-0e4f53479553'
 
 resourcePk:
   $ref: '../core/dataTypes.yaml#/resourcePk'
+
+contractVersion:
+  properties:
+    contract_version:
+      title: contract_version
+      description: Contract Version of the shipment
+      type: string
+      example: '1.1.0'
 
 storageCredentialsId:
   properties:
@@ -18,12 +28,27 @@ vaultId:
       title: vault_id
       description: Vault UUID associated with the shipment
 
+vaultUri:
+  properties:
+    vault_uri:
+      title: vault_uri
+      description: Uri for the vault
+      type: string
+      example: 'engine://b863255b-c1df-4998-8b4f-36a78cba49d4/83d6d301-443b-4213-9635-46daadd834a9/meta.json'
+
 ownerId:
   properties:
     owner_id:
       <<: *uuid
       title: owner_id
       description: Owner UUID of the shipment
+
+updatedBy:
+  properties:
+    updated_by:
+      <<: *uuid
+      title: updated_by
+      description: UUID of the last user that updated the shipment
 
 deviceId:
   properties:
@@ -35,16 +60,23 @@ deviceId:
 shipperWalletId:
   properties:
     shipper_wallet_id:
-      <<: *uuid
       title: shipper_wallet_id
       description: Shipper's Wallet UUID associated with the shipment
+      <<: *uuid
 
 carrierWalletId:
   properties:
     carrier_wallet_id:
-      <<: *uuid
       title: carrier_wallet_id
       description: Carrier's Wallet UUID associated with the shipment
+      <<: *uuid
+
+moderatorWalletId:
+  properties:
+    moderator_wallet_id:
+      title: moderator_wallet_id
+      description: Moderator's Wallet UUID associated with the shipment
+      <<: *uuid
 
 carriersScac:
   properties:

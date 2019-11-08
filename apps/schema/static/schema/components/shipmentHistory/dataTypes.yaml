@@ -1,5 +1,7 @@
 uuid: &uuid
-  $ref: '../core/dataTypes.yaml#/uuid'
+  type: string
+  format: uuid
+  example: '1243d23b-e2fc-475a-8290-0e4f53479553'
 
 historyDate:
   properties:
