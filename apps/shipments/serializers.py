@@ -556,6 +556,7 @@ class ChangesDiffSerializer:
                 queryset_diff.extend(self.document_actions(new))
                 queryset_diff.append(self.diff_object_fields(old, new))
 
+            # The diff change for the shipment creation object is computed against a None object
             queryset_diff.append(self.diff_object_fields(None, queryset[index]))
 
         return self.apply_filters(queryset_diff)
