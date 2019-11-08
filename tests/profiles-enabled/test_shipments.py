@@ -2,6 +2,7 @@ import copy
 import json
 import re
 import random
+import pytz
 from unittest import mock
 
 import requests
@@ -970,6 +971,30 @@ class ShipmentAPITests(APITestCase):
                 ship_from_location_field_changes = self.get_changed_fields(ship_from_location_changes, 'field')
                 self.assertTrue('phone_number' in ship_from_location_field_changes)
 
+            # ----------------------- Linking a Document to shipment --------------------------#
+            from apps.documents.models import Document
+
+            # A document in upload_status pending shouldn't be present in the shipment diff history
+            document = Document.objects.create(name='Test Historical', owner_id=OWNER_ID, shipment_id=shipment_id)
+
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            history_documents = history_data[0]['relationships'].get('documents')
+            self.assertIsNone(history_documents)
+
+            # A document with upload_status complete should be present in the shipment history
+            document.upload_status = 1
+            document.save()
+
+            response = self.client.get(history_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            history_data = response.json()['data']
+            history_documents = history_data[0]['relationships'].get('documents')
+            self.assertTrue(history_documents)
+            history_document_changes = self.get_changed_fields(history_documents['actions'], 'field')
+            self.assertTrue('upload_status' in history_document_changes)
+
             # ----------------------- Shipment update by someone other than owner --------------------------#
             with mock.patch('apps.permissions.is_shipper') as mock_shipper_permission:
                 mock_shipper_permission.return_value = True
@@ -1084,7 +1109,7 @@ class ShipmentAPITests(APITestCase):
             response = self.client.get(history_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             history_data = response.json()['data']
-            num_changes = len(history_data)
+            total_num_changes = response.json()['meta']['pagination']['count']
             changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
             self.assertIn('package_qty', changed_fields)
 
@@ -1094,7 +1119,7 @@ class ShipmentAPITests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             history_data = response.json()['data']
             # The changes here should be less than the total changes.
-            self.assertTrue(len(history_data) < num_changes)
+            self.assertTrue(response.json()['meta']['pagination']['count'] < total_num_changes)
             # package_qty shouldn't be in the most recent changed fields
             changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
             self.assertTrue('package_qty' not in changed_fields)

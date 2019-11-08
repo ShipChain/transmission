@@ -1,5 +1,6 @@
 import json
 import logging
+import pytz
 from collections import OrderedDict
 from datetime import datetime, timezone, timedelta
 from functools import partial
@@ -524,6 +525,20 @@ class ChangesDiffSerializer:
                 })
         return list_document
 
+    def apply_filters(self, changes_diff):
+        gte_datetime = self.request.query_params.get('history_date__gte')
+        lte_datetime = self.request.query_params.get('history_date__lte')
+
+        if lte_datetime:
+            lte_datetime = parse(lte_datetime).astimezone(pytz.utc)
+            changes_diff = list(filter(lambda change: change['history_date'] <= lte_datetime, changes_diff))
+
+        if gte_datetime:
+            gte_datetime = parse(gte_datetime).astimezone(pytz.utc)
+            changes_diff = list(filter(lambda change: change['history_date'] >= gte_datetime, changes_diff))
+
+        return changes_diff
+
     @property
     def data(self):
         queryset = self.queryset
@@ -541,10 +556,9 @@ class ChangesDiffSerializer:
                 queryset_diff.extend(self.document_actions(new))
                 queryset_diff.append(self.diff_object_fields(old, new))
 
-        if not self.request.query_params.get('history_date__gte'):
             queryset_diff.append(self.diff_object_fields(None, queryset[index]))
 
-        return queryset_diff
+        return self.apply_filters(queryset_diff)
 
 
 class DevicesQueryParamsSerializer(serializers.Serializer):

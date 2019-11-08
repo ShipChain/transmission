@@ -252,7 +252,6 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
     http_method_names = ('get', )
     permission_classes = ((IsOwnerOrShared,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
     pagination_class = CustomResponsePagination
-    filter_backends = (DjangoFilterBackend, )
     filterset_class = HistoricalShipmentFilter
     renderer_classes = (renderers.JSONRenderer, )
 
@@ -262,7 +261,6 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
 
         shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
         queryset = shipment.history.all()
-        queryset = self.filter_queryset(queryset)
         serializer = ChangesDiffSerializer(queryset, request)
 
         paginator = self.pagination_class()
