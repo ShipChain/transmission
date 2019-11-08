@@ -992,7 +992,7 @@ class ShipmentAPITests(APITestCase):
             history_data = response.json()['data']
             history_documents = history_data[0]['relationships'].get('documents')
             self.assertTrue(history_documents)
-            history_document_changes = self.get_changed_fields(history_documents['actions'], 'field')
+            history_document_changes = self.get_changed_fields(history_documents['fields'], 'field')
             self.assertTrue('upload_status' in history_document_changes)
 
             # Any subsequent document object update should be present in the diff change
@@ -1004,7 +1004,7 @@ class ShipmentAPITests(APITestCase):
             history_data = response.json()['data']
             history_documents = history_data[0]['relationships'].get('documents')
             self.assertTrue(history_documents)
-            history_document_changes = self.get_changed_fields(history_documents['actions'], 'field')
+            history_document_changes = self.get_changed_fields(history_documents['fields'], 'field')
             self.assertTrue('description' in history_document_changes)
 
             # ----------------------- Shipment update by someone other than owner --------------------------#

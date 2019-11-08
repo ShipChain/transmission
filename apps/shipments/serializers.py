@@ -1,11 +1,11 @@
 import json
 import logging
-import pytz
 from collections import OrderedDict
 from datetime import datetime, timezone, timedelta
 from functools import partial
 
 import boto3
+import pytz
 from botocore.exceptions import ClientError, BotoCoreError
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -518,7 +518,7 @@ class ChangesDiffSerializer:
                     'relationships': {
                         'documents': {
                             'id': hist_doc.id,
-                            'actions': self.build_list_changes(hist_doc.diff(hist_doc.prev_record))
+                            'fields': self.build_list_changes(hist_doc.diff(hist_doc.prev_record))
                         }
                     },
                     'author': hist_doc.history_user

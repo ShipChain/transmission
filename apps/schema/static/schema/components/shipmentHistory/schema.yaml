@@ -31,6 +31,7 @@ relationships:
       description: Changes of the related objects
       allOf:
         - $ref: '#/relatedObjectChanges'
+        - $ref: '#/documentsActionsChanges'
 
 relatedObjectChanges:
   properties:
@@ -40,6 +41,28 @@ relatedObjectChanges:
       description: Relationship field name
       items:
         $ref: '#/locationFieldChanges'
+
+documentsActionsChanges:
+  properties:
+    documents:
+      type: object
+      title: documents
+      description: Shipment's document changes
+      properties:
+        id:
+          $ref: '../core/dataTypes.yaml#/uuid'
+        fields:
+          type: array
+          items:
+            $ref: '#/documentFieldChanges'
+
+documentFieldChanges:
+  type: object
+  description: Shipment document field changes
+  allOf:
+    - $ref: '#/shipmentHistory/documentField'
+    - $ref: '#/shipmentHistory/documentFieldNew'
+    - $ref: '#/shipmentHistory/documentFieldOld'
 
 listResponse:
   allOf:
