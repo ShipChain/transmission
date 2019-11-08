@@ -1,6 +1,7 @@
 resource:
     properties:
       type:
+        description: LoadShipment
         example: LoadShipment
 
 attributes:

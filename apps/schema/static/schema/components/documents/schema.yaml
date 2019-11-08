@@ -1,6 +1,7 @@
 resource:
   properties:
     type:
+      description: Document
       example: Document
 
 attributes:

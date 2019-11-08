@@ -2,6 +2,7 @@ resource:
   properties:
     type:
       example: PermissionLink
+      description: PermissionLink
 
 attributes:
   allOf:

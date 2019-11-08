@@ -15,7 +15,6 @@ createAttributes:
     - $ref: '#/document/description'
     - $ref: '#/document/documentType'
     - $ref: '#/document/fileType'
-    - $ref: '#/document/uploadStatus'
 
 createRequest:
   allOf:
@@ -23,6 +22,26 @@ createRequest:
     - properties:
         data:
           $ref: '#/createResource'
+
+updateResource:
+  allOf:
+    - $ref: 'schema.yaml#/resource'
+    - properties:
+        attributes:
+          $ref: '#/updateAttributes'
+
+updateAttributes:
+  allOf:
+    - $ref: '#/document/name'
+    - $ref: '#/document/description'
+    - $ref: '#/document/uploadStatus'
+
+updateRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/updateResource'
 
 document:
   $ref: dataTypes.yaml
