@@ -3,8 +3,10 @@ import logging
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Q
+from django_filters.rest_framework import DjangoFilterBackend
 from influxdb_metrics.loader import log_metric
-from rest_framework import mixins, viewsets, parsers, status, renderers, permissions
+from rest_framework import mixins, viewsets, parsers, status, renderers, permissions, filters
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework_json_api import renderers as jsapi_renderers, serializers
 from shipchain_common.authentication import EngineRequest, get_jwt_from_request
@@ -12,7 +14,8 @@ from shipchain_common.exceptions import RPCError
 
 from apps.eth.models import EthAction, Event
 from apps.eth.serializers import EventSerializer, EthActionSerializer
-from apps.permissions import get_owner_id
+from apps.permissions import get_owner_id, shipment_owner_access_filter
+from apps.shipments.models import PermissionLink
 from apps.shipments.permissions import IsListenerOwner
 
 LOG = logging.getLogger('transmission')
@@ -81,7 +84,8 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
     queryset = EthAction.objects.all()
     serializer_class = EthActionSerializer
     permission_classes = ((IsListenerOwner, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
-    ordering_fields = ('updated', 'created_at',)
+    filter_backends = (filters.OrderingFilter, DjangoFilterBackend,)
+    ordering_fields = ('updated_at', 'created_at')
 
     def get_queryset(self):
         log_metric('transmission.info', tags={'method': 'transaction.get_queryset', 'module': __name__})
@@ -97,7 +101,17 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
                                            Q(shipment__carrier_wallet_id=
                                              self.request.query_params.get('wallet_id')))
             else:
-                queryset = queryset.filter(shipment__owner_id=get_owner_id(self.request))
+                permission_link = self.request.query_params.get('permission_link', None)
+                if permission_link:
+                    try:
+                        permission_link_obj = PermissionLink.objects.get(pk=permission_link)
+                    except ObjectDoesNotExist:
+                        LOG.warning(f'User: {self.request.user}, is trying to access a shipment with permission link: '
+                                    f'{permission_link}')
+                        raise PermissionDenied('No permission link found.')
+                    queryset = queryset.filter(
+                        shipment_owner_access_filter(self.request) | Q(shipment__pk=permission_link_obj.shipment.pk)
+                    )
 
         return queryset
 
@@ -109,7 +123,7 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
         if shipment_pk:
             LOG.debug(f'Getting transactions for shipment: {shipment_pk}.')
 
-            queryset = self.queryset.filter(shipment__id=shipment_pk)
+            queryset = queryset.filter(shipment__id=shipment_pk)
         else:
             LOG.debug('Getting tx details filtered by wallet address.')
             if not settings.PROFILES_ENABLED:
