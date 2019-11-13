@@ -1,3 +1,13 @@
+uuid: &uuid
+  $ref: '../core/dataTypes.yaml#/uuid'
+
+ownerId:
+  properties:
+    owner_id:
+      <<: *uuid
+      title: owner_id
+      description: Owner UUID associated with the document
+
 name:
   properties:
     name:
@@ -22,6 +32,7 @@ documentType:
       type: string
       enum: [BOL, IMAGE, OTHER]
       example: 'BOL'
+
 fileType:
   properties:
     file_type:
@@ -129,6 +140,8 @@ bucketUrl:
       example: 'https://s3.amazonaws.com/document-management-s3-prod'
 
 presignedS3Get:
+  title: Accepted
+  description: Presigned S3 data returned after document has been uploaded
   properties:
     presigned_s3:
       type: string
@@ -137,6 +150,8 @@ presignedS3Get:
       example: https://s3.amazonaws.com/document-management-s3-prod/e78ce477-1d8c-4319-b7ef-164cc769c1b5/8bcf2521-8afc-4836-ba2f-be1577e731e6/c55332a6-ca5e-4c83-a1de-ea49fdf82d97/ea6a4729-0039-40bb-8a4b-69476627cdcc.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=TEST-DEV-KEY%2F20181211%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20181211T170636Z&X-Amz-Expires=1800&X-Amz-SignedHeaders=host&X-Amz-Signature=5e95676fda122068fc070efce891d42913c9d17b8d2d98c1bb463ce0bae0fd5c
 
 presignedS3Post:
+  title: Pending
+  description: Presigned S3 data returned before document has been uploaded
   properties:
     presigned_s3:
       allOf:

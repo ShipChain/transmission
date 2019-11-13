@@ -1,5 +1,6 @@
 from django_filters import rest_framework as filters
 from rest_framework_json_api.serializers import ValidationError
+from shipchain_common.filters import filter_enum
 
 from .models import Shipment, TransitState
 
@@ -20,6 +21,7 @@ class ShipmentFilter(filters.filterset.FilterSet):
     has_final_destination_location = filters.BooleanFilter(
         field_name='final_destination_location', lookup_expr='isnull', exclude=True)
     state = filters.CharFilter(method=filter_state)
+    exception = filters.CharFilter(method=filter_enum)
 
     class Meta:
         model = Shipment
@@ -30,7 +32,7 @@ class ShipmentFilter(filters.filterset.FilterSet):
                   'final_destination_location__name', 'final_destination_location__city', 'ship_from_location',
                   'final_destination_location__state', 'final_destination_location__address_1', 'ship_to_location',
                   'final_destination_location__postal_code', 'final_destination_location__country',
-                  'final_destination_location', 'ship_from_location__state', 'state', 'exception', 'delayed',
+                  'final_destination_location', 'ship_from_location__state', 'state', 'delayed',
                   'asset_physical_id', 'asset_custodian_id']
 
 

@@ -2,6 +2,7 @@ resource:
   properties:
     type:
       example: ShipmentImport
+      description: ShipmentImport
 
 attributes:
   allOf:

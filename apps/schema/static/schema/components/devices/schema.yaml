@@ -1,6 +1,7 @@
 deviceResource:
   properties:
     type:
+      description: device
       example: device
 
 attributes:

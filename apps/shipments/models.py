@@ -18,7 +18,7 @@ from django.core.validators import RegexValidator, MaxValueValidator, MinValueVa
 from django.db import models
 from django.utils.functional import cached_property
 from django_fsm import FSMIntegerField, transition
-from enumfields import Enum
+from enumfields import Enum, EnumIntegerField
 from enumfields import EnumField
 from rest_framework.exceptions import Throttled, PermissionDenied, APIException
 from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
@@ -233,7 +233,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     state = FSMIntegerField(default=TransitState.AWAITING_PICKUP.value, protected=True)
     delayed = models.BooleanField(default=False, editable=False)
     expected_delay_hours = models.IntegerField(default=0, editable=False)
-    exception = EnumField(enum=ExceptionType, default=ExceptionType.NONE)
+    exception = EnumIntegerField(enum=ExceptionType, default=ExceptionType.NONE)
 
     # Shipment Schema fields
     carriers_scac = models.CharField(max_length=255, blank=True, null=True)

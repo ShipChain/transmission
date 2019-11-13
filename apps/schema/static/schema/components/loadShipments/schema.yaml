@@ -1,10 +1,12 @@
 resource:
     properties:
       type:
+        description: LoadShipment
         example: LoadShipment
 
 attributes:
   type: object
+  description: LoadShipment Attributes
   allOf:
   - $ref: '#/loadShipment/shipmentState'
   - $ref: '#/loadShipment/escrowState'

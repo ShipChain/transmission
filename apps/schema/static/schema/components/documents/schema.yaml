@@ -1,6 +1,7 @@
 resource:
   properties:
     type:
+      description: Document
       example: Document
 
 attributes:
@@ -8,6 +9,7 @@ attributes:
     - $ref: '#/document/name'
     - $ref: '#/document/description'
     - $ref: '#/document/documentType'
+    - $ref: '#/document/ownerId'
     - $ref: '#/document/fileType'
     - $ref: '#/document/uploadStatus'
     - $ref: '#/dataTypes/createdAt'
@@ -45,7 +47,9 @@ getResponse:
         data:
           properties:
             meta:
-              $ref: '#/document/presignedS3Get'
+              oneOf:
+                - $ref: '#/document/presignedS3Post'
+                - $ref: '#/document/presignedS3Get'
 
 createResponse:
   allOf:
@@ -72,7 +76,9 @@ listResponse:
           items:
             properties:
               meta:
-                $ref: '#/document/presignedS3Get'
+                oneOf:
+                - $ref: '#/document/presignedS3Post'
+                - $ref: '#/document/presignedS3Get'
 
 document:
   $ref: dataTypes.yaml

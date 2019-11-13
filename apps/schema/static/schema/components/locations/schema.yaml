@@ -1,6 +1,7 @@
 resource:
   properties:
     type:
+      description: Location
       example: Location
 
 geometry:

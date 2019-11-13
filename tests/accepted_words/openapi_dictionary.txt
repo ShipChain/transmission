@@ -35,6 +35,7 @@ GeoJson
 Geolocation
 
 linestringTimestamps
+LoadShipment
 locode
 logsBloom
 LTL

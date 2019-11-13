@@ -1,4 +1,6 @@
 payload:
+  title: Single Payload
+  description: Single signed tracking data object
   properties:
     payload:
       title: payload
@@ -10,3 +12,20 @@ payload:
         HRpdHVkZSI6MjcxLjAsImxhdGl0dWRlIjozNC44NTIwNTU1LCJsb25naXR1ZGUiOi04Mi40MDAwOTQ3LCJzb3VyY2UiOiJHUFMiLCJzc
         GVlZCI6MC4wLCJ1bmNlcnRhaW50eSI6OTl9LCJ0aW1lc3RhbXAiOiIyMDE4LTExLTI5VDIwOjI4OjA3WiIsInZlcnNpb24iOiIxLjAuM
         SJ9.jNWQj7kC8iacZwpEYlWexcDsP8ed-wIaebwSwOsrB7nTIoMOmbMWVHL3JC5dMzs8yCA3rReSkqbOu3TG0ACudw
+
+listPayload:
+  title: List Payload
+  description: List of signed tracking data objects
+  properties:
+    payload:
+      title: payload
+      description: Tracking data payload JWS
+      type: array
+      items:
+        type: string
+        example: >-
+          eyJraWQiOiJlNjZhMmFiNjI0OGQxYzZkNTMxNmQ0MTIzNTlmNWU4ZGM1MzY2ZThkMTQ0ZDMwYTRlYzFmNzg3YmNhYjQ0MTQ2IiwiYWxn
+          IjoiRVMyNTYifQ.eyJkZXZpY2VfaWQiOiIzMjFhMWYzYy0zYmVjLTQ1ZDktYTM5OS00ODM5MmUzYTJiMTQiLCJwb3NpdGlvbiI6eyJhb
+          HRpdHVkZSI6MjcxLjAsImxhdGl0dWRlIjozNC44NTIwNTU1LCJsb25naXR1ZGUiOi04Mi40MDAwOTQ3LCJzb3VyY2UiOiJHUFMiLCJzc
+          GVlZCI6MC4wLCJ1bmNlcnRhaW50eSI6OTl9LCJ0aW1lc3RhbXAiOiIyMDE4LTExLTI5VDIwOjI4OjA3WiIsInZlcnNpb24iOiIxLjAuM
+          SJ9.jNWQj7kC8iacZwpEYlWexcDsP8ed-wIaebwSwOsrB7nTIoMOmbMWVHL3JC5dMzs8yCA3rReSkqbOu3TG0ACudw

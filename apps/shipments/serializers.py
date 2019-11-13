@@ -113,7 +113,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
-                              'final_destination_location', 'load_data', 'device']
+                              'final_destination_location', 'load_data']
 
 
 class ShipmentCreateSerializer(ShipmentSerializer):
@@ -295,7 +295,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
-                              'final_destination_location', 'load_data', 'device']
+                              'final_destination_location', 'load_data']
 
 
 class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):

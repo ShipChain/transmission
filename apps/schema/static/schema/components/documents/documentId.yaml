@@ -58,12 +58,12 @@ patch:
     content:
       application/vnd.api+json:
         schema:
-          $ref: 'requestBody.yaml#/createRequest'
+          $ref: 'requestBody.yaml#/updateRequest'
       application/json:
         schema:
           allOf:
-            - $ref: 'requestBody.yaml#/createAttributes'
+            - $ref: 'requestBody.yaml#/updateAttributes'
       multipart/form-data:
         schema:
           allOf:
-            - $ref: 'requestBody.yaml#/createAttributes'
+            - $ref: 'requestBody.yaml#/updateAttributes'

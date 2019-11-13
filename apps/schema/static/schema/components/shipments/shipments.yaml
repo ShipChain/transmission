@@ -54,8 +54,8 @@ post:
   tags:
   - Shipments
   responses:
-    '201':
-      description: "Created"
+    '202':
+      description: "Accepted"
       content:
         application/vnd.api+json:
           schema:

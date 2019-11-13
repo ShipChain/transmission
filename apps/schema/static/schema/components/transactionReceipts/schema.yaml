@@ -2,6 +2,7 @@ resource:
   properties:
     type:
       example: TransactionReceipt
+      description: TransactionReceipt
 
 attributes:
   allOf:

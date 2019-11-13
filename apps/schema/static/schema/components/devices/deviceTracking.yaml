@@ -41,5 +41,6 @@ post:
     content:
       application/json:
         schema:
-          allOf:
-          - $ref: 'requestBody.yaml#/payload'
+           oneOf:
+            - $ref: 'requestBody.yaml#/payload'
+            - $ref: 'requestBody.yaml#/listPayload'

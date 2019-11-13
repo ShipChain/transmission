@@ -1,6 +1,7 @@
 resource:
     properties:
       type:
+        description: EthAction
         example: EthAction
 
 attributes:
@@ -10,13 +11,33 @@ attributes:
   - $ref: '#/dataTypes/updatedAt'
 
 relationships:
-  type: array
-  items:
-    type: object
-    anyOf:
-    - $ref: '#/transactionSchemaRelation'
-    - $ref: '#/transactionReceiptRelation'
-    - $ref: '#/asyncJobRelation'
+  type: object
+  description: Objects related to EthAction
+  properties:
+    transaction_receipt:
+      type: object
+      description: Transaction Receipt Object
+      properties:
+        data:
+          $ref: '#/transactionReceiptRelation'
+    transaction:
+      type: object
+      description: Transaction Object
+      properties:
+        data:
+          $ref: '#/transactionSchemaRelation'
+    async_job:
+      type: object
+      description: AsyncJob Object
+      properties:
+        data:
+          $ref: '#/asyncJobRelation'
+    shipment:
+      type: object
+      description: Shipment Object
+      properties:
+        data:
+          $ref: '#/shipmentRelation'
 
 transactionSchemaRelation:
   title: Transaction
@@ -41,6 +62,14 @@ asyncJobRelation:
   allOf:
     - $ref: '#/dataTypes/resourceId'
     - $ref: '#/job/resource'
+
+shipmentRelation:
+  title: Shipment
+  description: Shipment related to this resource
+  type: object
+  allOf:
+    - $ref: '#/dataTypes/resourceId'
+    - $ref: '#/shipments/resource'
 
 included:
   type: array
@@ -95,6 +124,9 @@ ethereum:
 
 transaction:
   $ref: ../transactions/dataTypes.yaml
+
+shipments:
+  $ref: ../shipments/schema.yaml
 
 transactionSchema:
   $ref: ../transactions/schema.yaml
