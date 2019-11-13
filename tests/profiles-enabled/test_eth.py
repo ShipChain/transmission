@@ -223,7 +223,6 @@ class TransactionReceiptTestCase(APITestCase):
 
         # An anonymous user with a valid permission link should have access to the shipment's transactions
         response = self.client.get(f'{nested_url}?permission_link={valid_permission_link.id}')
-        print(response.content)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()['data']
         self.assertEqual(len(data), 2)

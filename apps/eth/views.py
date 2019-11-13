@@ -106,8 +106,8 @@ class TransactionViewSet(mixins.RetrieveModelMixin,
                     try:
                         permission_link_obj = PermissionLink.objects.get(pk=permission_link)
                     except ObjectDoesNotExist:
-                        LOG.warning(f'User: {self.request.user}, is trying to access a shipment with permission link: '
-                                    f'{permission_link}')
+                        LOG.warning(f'User: {self.request.user}, is trying to access a shipment\'s transactions '
+                                    f'with permission link: {permission_link}')
                         raise PermissionDenied('No permission link found.')
                     queryset = queryset.filter(
                         shipment_owner_access_filter(self.request) | Q(shipment__pk=permission_link_obj.shipment.pk)
