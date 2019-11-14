@@ -508,11 +508,10 @@ class ChangesDiffSerializer:
         return changes_list
 
     def document_actions(self, new_obj):
-        list_document = []
         document_queryset = new_obj.historicaldocument_set.all().filter(upload_status=1)
         if document_queryset.count() > 0:
             for hist_doc in document_queryset:
-                list_document.append({
+                yield {
                     'history_date': hist_doc.history_date,
                     'fields': None,
                     'relationships': {
@@ -522,10 +521,9 @@ class ChangesDiffSerializer:
                         }
                     },
                     'author': hist_doc.history_user
-                })
-        return list_document
+                }
 
-    def apply_filters(self, changes_diff):
+    def datetime_filters(self, changes_diff):
         gte_datetime = self.request.query_params.get('history_date__gte')
         lte_datetime = self.request.query_params.get('history_date__lte')
 
@@ -553,13 +551,13 @@ class ChangesDiffSerializer:
                 new = queryset[index]
                 old = queryset[index + 1]
                 index += 1
-                queryset_diff.extend(self.document_actions(new))
+                queryset_diff.extend(list(self.document_actions(new)))
                 queryset_diff.append(self.diff_object_fields(old, new))
 
             # The diff change for the shipment creation object is computed against a None object
             queryset_diff.append(self.diff_object_fields(None, queryset[index]))
 
-        return self.apply_filters(queryset_diff)
+        return self.datetime_filters(queryset_diff)
 
 
 class DevicesQueryParamsSerializer(serializers.Serializer):
