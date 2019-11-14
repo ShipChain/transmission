@@ -205,6 +205,12 @@ class TransactionReceiptTestCase(APITestCase):
         response = self.client.get(nested_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        # Ordering works as expected
+        response = self.client.get(f'{nested_url}?ordering=-created_at')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response_json = response.json()
+        self.assertEqual(response_json['data'][0]['attributes']['transaction_hash'], TRANSACTION_HASH_2)
+
         # A Transactions list view cannot be accessed by an anonymous user on a nested route
         self.set_user(None)
 

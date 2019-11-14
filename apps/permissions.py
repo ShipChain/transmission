@@ -33,6 +33,12 @@ def get_user(request):
     return None, None
 
 
+def shipment_owner_access_filter(request):
+    user_id, organization_id = get_user(request)
+    return Q(shipment__owner_id=organization_id) | Q(shipment__owner_id=user_id) if organization_id else \
+        Q(shipment__owner_id=user_id)
+
+
 def owner_access_filter(request):
     user_id, organization_id = get_user(request)
     return Q(owner_id=organization_id) | Q(owner_id=user_id) if organization_id else Q(owner_id=user_id)
