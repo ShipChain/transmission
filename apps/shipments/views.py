@@ -22,7 +22,7 @@ from shipchain_common.utils import send_templated_email
 
 from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id
-from .filters import ShipmentFilter, HistoricalShipmentFilter, SHIPMENT_SEARCH_FIELDS
+from .filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
 from .geojson import render_point_features
 from .iot_client import DeviceAWSIoTClient
 from .models import Shipment, TrackingData, PermissionLink
@@ -252,7 +252,6 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
     http_method_names = ('get', )
     permission_classes = ((IsOwnerOrShared,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
     pagination_class = CustomResponsePagination
-    filterset_class = HistoricalShipmentFilter
     renderer_classes = (renderers.JSONRenderer, )
 
     def list(self, request, *args, **kwargs):
