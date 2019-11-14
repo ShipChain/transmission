@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0003_add_asset_fields'),
+        ('shipments', '0004_exception_enum'),
     ]
 
     operations = [

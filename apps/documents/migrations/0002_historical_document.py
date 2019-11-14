@@ -14,7 +14,7 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0004_use_related_name_for_historical_relation'),
+        ('shipments', '0005_use_related_name_for_historical_relation'),
         ('documents', '0001_initial'),
     ]
 
