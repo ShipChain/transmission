@@ -2489,16 +2489,16 @@ description = "A PyPI package containing shared code for ShipChain's Python/Djan
 name = "shipchain-common"
 optional = false
 python-versions = ">=3.6,<3.8"
-version = "1.1.0"
+version = "1.1.1"
 
 [package.dependencies]
 aws-requests-auth = ">=0.4,<0.5"
 boto3 = ">=1.9,<1.10"
 cryptography = ">=2.5,<2.6"
-django = "2.2.7"
+django = ">=2.2.7,<2.3.0"
 django-enumfields = ">=0.10.0,<0.11.0"
 django-influxdb-tagged-metrics = "1.3.3"
-djangorestframework = "3.10.3"
+djangorestframework = ">=3.10,<3.11"
 djangorestframework-jsonapi = ">=3.0.0,<3.1.0"
 drf-nested-routers = ">=0.91.0,<0.92.0"
 python-dateutil = ">=2.7.5,<2.8.0"
@@ -3076,7 +3076,7 @@ rsa = ["14ba45700ff1ec9eeb206a2ce76b32814958a98e372006c8fb76ba820211be66", "1a83
 s3transfer = ["6efc926738a3cd576c2a79725fed9afde92378aa5c6a957e3af010cb019fac9d", "b780f2411b824cb541dbcd2c713d0cb61c7d1bcadae204cdddda2b35cef493ba"]
 safety = ["0a3a8a178a9c96242b224f033ee8d1d130c0448b0e6622d12deaf37f6c3b4e59", "5059f3ffab3648330548ea9c7403405bbfaf085b11235770825d14c58f24cb78"]
 setoptconf = ["5b0b5d8e0077713f5d5152d4f63be6f048d9a1bb66be15d089a11c898c3cf49c"]
-shipchain-common = ["0f458ed18c55ea529f8f5e3b859d803039f5b6855645c2f99e22e140ca2de0b5", "c984c4bdec333e088769aaf6b575e34f4e5acbd61f7ff16f65fb6a920c2a34f4"]
+shipchain-common = ["4220912a1069398ac39a1960ac0cba882001db3f302c284c016c9f3c4f6b47c0", "fbcde1ce381238c0996bb779332dbae37b75e5021d8807fba6c787e52d47caa7"]
 six = ["1f1b7d42e254082a9db6279deae68afb421ceba6158efa6131de7b3003ee93fd", "30f610279e8b2578cab6db20741130331735c781b56053c59c4076da27f06b66"]
 smmap2 = ["0555a7bf4df71d1ef4218e4807bbf9b201f910174e6e08af2e138d4e517b4dde", "29a9ffa0497e7f2be94ca0ed1ca1aa3cd4cf25a1f6b4f5f87f74b46ed91d609a"]
 snowballstemmer = ["209f257d7533fdb3cb73bdbd24f436239ca3b2fa67d56f6ff88e86be08cc5ef0", "df3bac3df4c2c01363f3dd2cfa78cce2840a79b9f1c2d2de9ce8d31683992f52"]

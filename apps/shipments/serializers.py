@@ -17,10 +17,9 @@ from django_fsm import can_proceed
 from enumfields import Enum
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
-from rest_framework import exceptions, status, serializers as rest_serializers
+from rest_framework import exceptions, status, serializers
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
-from rest_framework_json_api import serializers
 from shipchain_common.utils import UpperEnumField
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
@@ -387,7 +386,7 @@ class UnvalidatedTrackingDataSerializer(serializers.Serializer):
         return attrs
 
 
-class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
+class TrackingDataToDbSerializer(serializers.ModelSerializer):
     """
     Serializer for tracking data to be cached in db
     """
