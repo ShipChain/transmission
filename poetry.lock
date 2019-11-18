@@ -4,11 +4,16 @@ description = "asyncio (PEP 3156) Redis support"
 name = "aioredis"
 optional = false
 python-versions = "*"
-version = "1.3.1"
+version = "1.3.0"
 
 [package.dependencies]
 async-timeout = "*"
 hiredis = "*"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -21,6 +26,11 @@ version = "2.5.2"
 [package.dependencies]
 vine = ">=1.1.3,<5.0.0a1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "An unobtrusive argparse wrapper with natural syntax"
@@ -28,6 +38,11 @@ name = "argh"
 optional = false
 python-versions = "*"
 version = "0.26.2"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -40,6 +55,11 @@ version = "2.3.2"
 [package.dependencies]
 async-timeout = ">=2.0,<4.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Fast ASN.1 parser and serializer with definitions for private keys, public keys, certificates, CRL, OCSP, CMS, PKCS#3, PKCS#7, PKCS#8, PKCS#12, PKCS#5, X.509 and TSP"
@@ -47,6 +67,11 @@ name = "asn1crypto"
 optional = false
 python-versions = "*"
 version = "0.24.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -65,6 +90,11 @@ wrapt = "*"
 python = "<3.7"
 version = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Timeout context manager for asyncio programs"
@@ -73,14 +103,23 @@ optional = false
 python-versions = ">=3.5.3"
 version = "3.0.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Atomic file writes."
-marker = "sys_platform == \"win32\""
 name = "atomicwrites"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.3.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -89,6 +128,11 @@ name = "attrs"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "19.3.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -102,6 +146,11 @@ version = "19.6.1"
 six = ">=1.11.0"
 txaio = ">=18.8.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Self-service finite-state machines for the programmer on the go."
@@ -114,6 +163,11 @@ version = "0.8.0"
 attrs = ">=16.1.0"
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "AWS signature version 4 signing process for the python requests module"
@@ -125,18 +179,28 @@ version = "0.4.2"
 [package.dependencies]
 requests = ">=0.14.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "AWS SAM Translator is a library that transform SAM templates into AWS CloudFormation templates"
 name = "aws-sam-translator"
 optional = false
 python-versions = "*"
-version = "1.17.0"
+version = "1.15.1"
 
 [package.dependencies]
 boto3 = ">=1.5,<2.0"
 jsonschema = ">=3.0,<4.0"
 six = ">=1.11,<2.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -152,6 +216,11 @@ future = "*"
 jsonpickle = "*"
 wrapt = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Security oriented static analyser for python code."
@@ -166,6 +235,11 @@ PyYAML = ">=3.12"
 six = ">=1.10.0"
 stevedore = ">=1.20.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Python multiprocessing fork with improvements and bugfixes"
@@ -173,6 +247,11 @@ name = "billiard"
 optional = false
 python-versions = "*"
 version = "3.5.0.5"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -185,6 +264,11 @@ version = "1.7"
 [package.dependencies]
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Amazon Web Services Library"
@@ -192,6 +276,11 @@ name = "boto"
 optional = false
 python-versions = "*"
 version = "2.49.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -205,6 +294,11 @@ version = "1.9.253"
 botocore = ">=1.12.253,<1.13.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.2.0,<0.3.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -226,6 +320,11 @@ version = ">=2.1,<3.0.0"
 python = ">=3.4"
 version = ">=1.20,<1.26"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Fancy Interface to the Python Interpreter"
@@ -241,6 +340,11 @@ pygments = "*"
 requests = "*"
 six = ">=1.5"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "httplib2 caching for requests"
@@ -252,6 +356,11 @@ version = "0.12.5"
 [package.dependencies]
 msgpack = "*"
 requests = "*"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -266,6 +375,11 @@ billiard = ">=3.5.0.2,<3.6.0"
 kombu = ">=4.2.0,<5.0"
 pytz = ">0.0-dev"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Allows you to prevent multiple execution and queuing of celery tasks."
@@ -278,13 +392,23 @@ version = "2.0.0"
 celery = "*"
 redis = ">=2.10.2"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Python package for providing Mozilla's CA Bundle."
 name = "certifi"
 optional = false
 python-versions = "*"
-version = "2019.11.28"
+version = "2019.9.11"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -297,13 +421,18 @@ version = "1.13.2"
 [package.dependencies]
 pycparser = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "checks cloudformation for practices and behaviour         that could potentially be improved"
 name = "cfn-lint"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.25.7"
+version = "0.25.1"
 
 [package.dependencies]
 aws-sam-translator = ">=1.15.1"
@@ -315,6 +444,11 @@ six = ">=1.11,<2.0"
 [package.dependencies.importlib-resources]
 python = "<3.7"
 version = ">=1.0.0,<1.1.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -328,6 +462,11 @@ version = "2.1.7"
 Django = ">=1.11"
 asgiref = ">=2.3,<3.0"
 daphne = ">=2.2,<3.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -343,6 +482,11 @@ asgiref = ">=2.1,<3.0"
 channels = ">=2.0,<3.0"
 msgpack = ">=0.6.0,<0.7.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Universal encoding detector for Python 2 and 3"
@@ -351,6 +495,11 @@ optional = false
 python-versions = "*"
 version = "3.0.4"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Composable command line interface toolkit"
@@ -358,6 +507,11 @@ name = "click"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "7.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -368,6 +522,11 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.4.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Symbolic constants in Python"
@@ -375,6 +534,11 @@ name = "constantly"
 optional = false
 python-versions = "*"
 version = "15.1.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -384,6 +548,11 @@ optional = false
 python-versions = "*"
 version = "2.2.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Code coverage measurement for Python"
@@ -391,6 +560,11 @@ name = "coverage"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, <4"
 version = "4.5.1"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -405,6 +579,11 @@ asn1crypto = ">=0.21.0"
 cffi = ">=1.8,<1.11.3 || >1.11.3"
 six = ">=1.4.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Curses-like terminal wrapper, with colored strings!"
@@ -418,6 +597,11 @@ blessings = ">=1.5"
 typing = "*"
 wcwidth = ">=0.1.4"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Django ASGI (HTTP/WebSocket) server"
@@ -430,6 +614,11 @@ version = "2.2.5"
 autobahn = ">=0.18"
 twisted = ">=18.7"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Decorators for Humans"
@@ -438,17 +627,27 @@ optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*"
 version = "4.4.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
 name = "django"
 optional = false
 python-versions = ">=3.5"
-version = "2.2.4"
+version = "2.2.7"
 
 [package.dependencies]
 pytz = "*"
 sqlparse = "*"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -458,6 +657,11 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.5.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS)."
@@ -465,6 +669,11 @@ name = "django-cors-headers"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.2.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -474,6 +683,11 @@ optional = false
 python-versions = "*"
 version = "1.4.2"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Real Python Enums for Django."
@@ -482,6 +696,11 @@ optional = false
 python-versions = "*"
 version = "0.10.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Django-environ allows you to utilize 12factor inspired environment variables to configure your Django application."
@@ -489,6 +708,11 @@ name = "django-environ"
 optional = false
 python-versions = "*"
 version = "0.4.5"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -501,13 +725,10 @@ version = "2.0.6"
 [package.dependencies]
 six = ">=1.2"
 
-[[package]]
-category = "main"
-description = "A Django 'cache_page' decorator on steroids"
-name = "django-fancy-cache"
-optional = false
-python-versions = "*"
-version = "1.0.0"
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -516,6 +737,11 @@ name = "django-fieldsignals"
 optional = false
 python-versions = "*"
 version = "0.4.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -528,6 +754,11 @@ version = "2.1.0"
 [package.dependencies]
 Django = ">=1.11"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Django friendly finite state machine support."
@@ -535,6 +766,11 @@ name = "django-fsm"
 optional = false
 python-versions = "*"
 version = "2.6.1"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -546,6 +782,11 @@ version = "0.5"
 
 [package.dependencies]
 Django = ">=1.8"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -561,6 +802,11 @@ influxdb = ">=2.9.1"
 python-server-metrics = ">=0.1.9"
 tld = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "A django library for mocking queryset functions in memory for testing"
@@ -574,6 +820,11 @@ Django = ">=1.8.17,<2.2.99"
 mock = "*"
 model_mommy = ">=1.5.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Full featured redis cache backend for Django."
@@ -586,6 +837,11 @@ version = "4.10.0"
 Django = ">=1.11"
 redis = ">=2.10.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Store model history and view/revert changes from admin site."
@@ -597,13 +853,23 @@ version = "2.7.3"
 [package.dependencies]
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Web APIs for Django, made easy."
 name = "djangorestframework"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "3.9.1"
+python-versions = ">=3.5"
+version = "3.10.3"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -616,19 +882,28 @@ version = "0.14"
 [package.dependencies]
 djangorestframework = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "A Django REST framework API adapter for the JSON API spec."
 name = "djangorestframework-jsonapi"
 optional = false
-python-versions = "*"
-version = "2.5.0"
+python-versions = ">=3.5"
+version = "3.0.0"
 
 [package.dependencies]
 django = ">=1.11"
-djangorestframework = ">=3.6.3"
+djangorestframework = ">=3.10"
 inflection = ">=0.3.0"
-six = "*"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -664,6 +939,11 @@ websocket-client = ">=0.32.0"
 python = ">=3.6"
 version = "223"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Docutils -- Python Documentation Utilities"
@@ -672,6 +952,11 @@ optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 version = "0.15.2"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Dodgy: Searches for dodgy looking lines in Python code"
@@ -679,6 +964,11 @@ name = "dodgy"
 optional = false
 python-versions = "*"
 version = "0.1.9"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -693,6 +983,11 @@ packaging = "*"
 pyyaml = "*"
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Nested resources for the Django Rest Framework"
@@ -705,6 +1000,11 @@ version = "0.91"
 Django = ">=1.11"
 djangorestframework = ">=3.6.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "ECDSA cryptographic signature library (pure python)"
@@ -716,6 +1016,11 @@ version = "0.14.1"
 [package.dependencies]
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "An implementation of lxml.xmlfile for the standard library"
@@ -724,6 +1029,11 @@ optional = false
 python-versions = "*"
 version = "1.0.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Simple PDF generation for Python"
@@ -731,6 +1041,11 @@ name = "fpdf"
 optional = false
 python-versions = "*"
 version = "1.7.2"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -744,6 +1059,11 @@ version = "0.3.12"
 python-dateutil = ">=1.0,<2.0 || >2.0"
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Clean single-source support for Python 3 and 2"
@@ -751,6 +1071,11 @@ name = "future"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 version = "0.18.2"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -767,6 +1092,11 @@ ratelim = "*"
 requests = "*"
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Python bindings and utilities for GeoJSON"
@@ -774,6 +1104,11 @@ name = "geojson"
 optional = false
 python-versions = "*"
 version = "2.4.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -786,6 +1121,11 @@ version = "2.0.6"
 [package.dependencies]
 smmap2 = ">=2.0.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Python Git Library"
@@ -797,6 +1137,11 @@ version = "3.0.5"
 [package.dependencies]
 gitdb2 = ">=2.0.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Lightweight in-process concurrent programming"
@@ -805,6 +1150,11 @@ optional = false
 python-versions = "*"
 version = "0.4.15"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Python wrapper for hiredis"
@@ -812,6 +1162,11 @@ name = "hiredis"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.0.1"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -824,6 +1179,11 @@ version = "0.9.5"
 [package.dependencies]
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "A featureful, immutable, and correct URL for Python."
@@ -835,6 +1195,11 @@ version = "19.0.0"
 [package.dependencies]
 idna = ">=2.5"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -843,16 +1208,26 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.8"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Read metadata from Python packages"
 name = "importlib-metadata"
 optional = false
-python-versions = ">=2.7,!=3.0,!=3.1,!=3.2,!=3.3,!=3.4"
-version = "1.1.0"
+python-versions = ">=2.7,!=3.0,!=3.1,!=3.2,!=3.3"
+version = "0.23"
 
 [package.dependencies]
 zipp = ">=0.5"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -863,6 +1238,11 @@ optional = false
 python-versions = ">=2.7,!=3.0,!=3.1,!=3.2,!=3.3"
 version = "1.0.2"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = ""
@@ -871,6 +1251,11 @@ optional = false
 python-versions = "*"
 version = "17.5.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "A port of Ruby on Rails inflector to Python"
@@ -878,6 +1263,11 @@ name = "inflection"
 optional = false
 python-versions = "*"
 version = "0.3.1"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -893,6 +1283,11 @@ pytz = "*"
 requests = ">=2.17.0"
 six = ">=1.10.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Self-contained ISO 3166-1 country definitions."
@@ -900,6 +1295,11 @@ name = "iso3166"
 optional = false
 python-versions = "*"
 version = "1.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -909,6 +1309,11 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "4.3.21"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Julian dates from proleptic Gregorian and Julian calendars."
@@ -916,6 +1321,11 @@ name = "jdcal"
 optional = false
 python-versions = "*"
 version = "1.4.1"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -928,6 +1338,11 @@ version = "2.10.3"
 [package.dependencies]
 MarkupSafe = ">=0.23"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "JSON Matching Expressions"
@@ -936,6 +1351,11 @@ optional = false
 python-versions = "*"
 version = "0.9.4"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Diff JSON and JSON-like structures in Python"
@@ -943,6 +1363,11 @@ name = "jsondiff"
 optional = false
 python-versions = "*"
 version = "1.1.2"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -955,6 +1380,11 @@ version = "1.24"
 [package.dependencies]
 jsonpointer = ">=1.9"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Python library for serializing any arbitrary object graph into JSON"
@@ -963,6 +1393,11 @@ optional = false
 python-versions = "*"
 version = "1.2"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Identify specific nodes in a JSON document (RFC 6901)"
@@ -970,6 +1405,11 @@ name = "jsonpointer"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -989,6 +1429,11 @@ six = ">=1.11.0"
 python = "<3.8"
 version = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Messaging library for Python."
@@ -1001,6 +1446,11 @@ version = "4.6.6"
 amqp = ">=2.5.2,<2.6"
 importlib-metadata = ">=0.18"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "A fast and thorough lazy object proxy."
@@ -1008,6 +1458,11 @@ name = "lazy-object-proxy"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.4.3"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1017,6 +1472,11 @@ optional = false
 python-versions = "*"
 version = "0.0.9"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "JSON formatter meant for logstash"
@@ -1024,6 +1484,11 @@ name = "logstash-formatter"
 optional = false
 python-versions = "*"
 version = "0.5.17"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1042,6 +1507,11 @@ python-dateutil = ">=2.5.0"
 requests = "*"
 uritemplate = ">=2.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -1050,6 +1520,11 @@ optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
 version = "1.1.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "McCabe checker, plugin for flake8"
@@ -1057,6 +1532,11 @@ name = "mccabe"
 optional = false
 python-versions = "*"
 version = "0.6.1"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1072,6 +1552,11 @@ python-dateutil = "*"
 pytz = "*"
 urllib3 = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Rolling backport of unittest.mock for all Pythons"
@@ -1084,6 +1569,11 @@ version = "2.0.0"
 pbr = ">=0.11"
 six = ">=1.9"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Smart object creation facility for Django."
@@ -1095,13 +1585,23 @@ version = "2.0.0"
 [package.dependencies]
 django = ">=1.11.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "More routines for operating on iterables, beyond itertools"
 name = "more-itertools"
 optional = false
-python-versions = ">=3.5"
-version = "8.0.0"
+python-versions = ">=3.4"
+version = "7.2.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1134,6 +1634,11 @@ sshpubkeys = ">=3.1.0,<4.0"
 werkzeug = "*"
 xmltodict = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "MessagePack (de)serializer."
@@ -1141,6 +1646,11 @@ name = "msgpack"
 optional = false
 python-versions = "*"
 version = "0.6.2"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1154,6 +1664,11 @@ version = "2.5.14"
 et_xmlfile = "*"
 jdcal = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Core utilities for Python packages"
@@ -1166,6 +1681,11 @@ version = "19.2"
 pyparsing = ">=2.0.2"
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "File system general utilities"
@@ -1174,13 +1694,23 @@ optional = false
 python-versions = "*"
 version = "0.1.2"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Python Build Reasonableness"
 name = "pbr"
 optional = false
 python-versions = "*"
-version = "5.4.4"
+version = "5.4.3"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1190,6 +1720,11 @@ optional = false
 python-versions = "*"
 version = "0.4.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Python Imaging Library (Fork)"
@@ -1198,18 +1733,28 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "5.4.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "plugin and hook calling mechanisms for python"
 name = "pluggy"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.13.1"
+version = "0.13.0"
 
 [package.dependencies]
 [package.dependencies.importlib-metadata]
 python = "<3.8"
 version = ">=0.12"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1221,6 +1766,11 @@ version = "1.4.0"
 
 [package.dependencies]
 six = ">=1.8.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1247,13 +1797,23 @@ pyyaml = "*"
 requirements-detector = ">=0.6"
 setoptconf = ">=0.2.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Cross-platform lib for process and system monitoring in Python."
 name = "psutil"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "5.6.7"
+version = "5.6.5"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1263,6 +1823,11 @@ optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
 version = "2.8.4"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "library with cross-python path, ini-parsing, io, code, log facilities"
@@ -1270,6 +1835,11 @@ name = "py"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.8.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1279,6 +1849,11 @@ optional = false
 python-versions = "*"
 version = "0.4.8"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Python style guide checker"
@@ -1287,6 +1862,11 @@ optional = false
 python-versions = "*"
 version = "2.4.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "C parser in Python"
@@ -1294,6 +1874,11 @@ name = "pycparser"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.19"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1305,6 +1890,11 @@ version = "4.0.1"
 
 [package.dependencies]
 snowballstemmer = "*"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1319,6 +1909,11 @@ lml = ">=0.0.4"
 pyexcel-io = ">=0.5.19"
 texttable = ">=0.8.2"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "A python library to read and write structured data in csv, zipped csvformat and to/from databases"
@@ -1329,6 +1924,11 @@ version = "0.5.20"
 
 [package.dependencies]
 lml = ">=0.0.4"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1343,6 +1943,11 @@ pyexcel-io = ">=0.5.3"
 xlrd = "*"
 xlwt = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "A wrapper library to read, manipulate and write data in xlsx and xlsmformat"
@@ -1355,6 +1960,11 @@ version = "0.5.7"
 openpyxl = ">=2.5.0,<2.6.0"
 pyexcel-io = ">=0.5.3"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "passive checker of Python programs"
@@ -1363,13 +1973,23 @@ optional = false
 python-versions = "*"
 version = "1.6.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Pygments is a syntax highlighting package written in Python."
 name = "pygments"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-version = "2.5.2"
+version = "2.4.2"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1383,6 +2003,11 @@ version = "1.9.0"
 setuptools = "*"
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "JSON Web Token implementation in Python"
@@ -1390,6 +2015,11 @@ name = "pyjwt"
 optional = false
 python-versions = "*"
 version = "1.7.1"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1405,6 +2035,11 @@ colorama = "*"
 isort = ">=4.2.5"
 mccabe = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "pylint-celery is a Pylint plugin to aid Pylint in recognising and understandingerrors caused when using the Celery library"
@@ -1418,6 +2053,11 @@ astroid = ">=1.0"
 pylint = ">=1.0"
 pylint-plugin-utils = ">=0.2.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "A Pylint plugin to help Pylint understand the Django web framework"
@@ -1430,6 +2070,11 @@ version = "2.0.2"
 pylint = ">=2.0"
 pylint-plugin-utils = ">=0.4"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "pylint-flask is a Pylint plugin to aid Pylint in recognizing and understanding errors caused when using Flask"
@@ -1440,6 +2085,11 @@ version = "0.5"
 
 [package.dependencies]
 pylint-plugin-utils = ">=0.2.1"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1452,6 +2102,11 @@ version = "0.6"
 [package.dependencies]
 pylint = ">=1.7"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Python parsing module"
@@ -1459,6 +2114,11 @@ name = "pyparsing"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 version = "2.4.5"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1472,16 +2132,26 @@ version = "223"
 [package.dependencies]
 pywin32 = ">=223"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Persistent/Functional/Immutable data structures"
 name = "pyrsistent"
 optional = false
 python-versions = "*"
-version = "0.15.6"
+version = "0.15.5"
 
 [package.dependencies]
 six = "*"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1489,7 +2159,7 @@ description = "pytest: simple powerful testing with Python"
 name = "pytest"
 optional = false
 python-versions = ">=3.5"
-version = "5.3.1"
+version = "5.2.4"
 
 [package.dependencies]
 atomicwrites = ">=1.0"
@@ -1505,6 +2175,11 @@ wcwidth = "*"
 python = "<3.8"
 version = ">=0.12"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Pytest support for asyncio."
@@ -1515,6 +2190,11 @@ version = "0.10.0"
 
 [package.dependencies]
 pytest = ">=3.0.6"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1528,6 +2208,11 @@ version = "2.6.1"
 coverage = ">=4.4"
 pytest = ">=3.6"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "A Django plugin for pytest."
@@ -1539,16 +2224,26 @@ version = "3.4.8"
 [package.dependencies]
 pytest = ">=3.6"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Thin-wrapper around the mock package for easier use with py.test"
 name = "pytest-mock"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.12.1"
+version = "1.11.2"
 
 [package.dependencies]
 pytest = ">=2.7"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1560,6 +2255,11 @@ version = "2.7.5"
 
 [package.dependencies]
 six = ">=1.5"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1575,6 +2275,11 @@ future = "<1.0"
 rsa = "*"
 six = "<2.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "A very simple set of methods to collect metrics about your servers"
@@ -1586,6 +2291,11 @@ version = "0.2.1"
 [package.dependencies]
 psutil = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "World timezone definitions, modern and historical"
@@ -1593,6 +2303,11 @@ name = "pytz"
 optional = false
 python-versions = "*"
 version = "2019.3"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1603,13 +2318,23 @@ optional = false
 python-versions = "*"
 version = "227"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "5.2"
+version = "5.1.2"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1622,6 +2347,11 @@ version = "0.1.6"
 [package.dependencies]
 decorator = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Python client for Redis key-value store"
@@ -1629,6 +2359,11 @@ name = "redis"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "3.2.1"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1644,6 +2379,11 @@ chardet = ">=3.0.2,<3.1.0"
 idna = ">=2.5,<2.9"
 urllib3 = ">=1.21.1,<1.25"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Python tool to find and list requirements of a Python project"
@@ -1654,6 +2394,11 @@ version = "0.6"
 
 [package.dependencies]
 astroid = ">=1.4"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1668,6 +2413,11 @@ cookies = "*"
 requests = ">=2.0"
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Pure-Python RSA implementation"
@@ -1679,6 +2429,11 @@ version = "4.0"
 [package.dependencies]
 pyasn1 = ">=0.1.3"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "An Amazon S3 Transfer Manager"
@@ -1689,6 +2444,11 @@ version = "0.2.1"
 
 [package.dependencies]
 botocore = ">=1.12.36,<2.0.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1705,6 +2465,11 @@ packaging = "*"
 requests = "*"
 setuptools = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "A module for retrieving program settings from various sources in a consistant method."
@@ -1713,26 +2478,36 @@ optional = false
 python-versions = "*"
 version = "0.2.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "A PyPI package containing shared code for ShipChain's Python/Django projects."
 name = "shipchain-common"
 optional = false
 python-versions = ">=3.6,<3.8"
-version = "1.0.7"
+version = "1.1.0"
 
 [package.dependencies]
 aws-requests-auth = ">=0.4,<0.5"
 boto3 = ">=1.9,<1.10"
 cryptography = ">=2.5,<2.6"
-django = ">=2.2.4,<3.0.0"
+django = "2.2.7"
 django-enumfields = ">=0.10.0,<0.11.0"
 django-influxdb-tagged-metrics = "1.3.3"
-djangorestframework = ">=3.9.1,<4.0.0"
-djangorestframework-jsonapi = ">=2,<3"
+djangorestframework = "3.10.3"
+djangorestframework-jsonapi = ">=3.0.0,<3.1.0"
 drf-nested-routers = ">=0.91.0,<0.92.0"
 python-dateutil = ">=2.7.5,<2.8.0"
 requests = ">=2.21,<3.0"
+
+[package.source]
+reference = "test-pypi"
+type = "legacy"
+url = "https://test.pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1742,6 +2517,11 @@ optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*"
 version = "1.13.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "A pure Python implementation of a sliding window memory map manager"
@@ -1749,6 +2529,11 @@ name = "smmap2"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.0.5"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1758,6 +2543,11 @@ optional = false
 python-versions = "*"
 version = "2.0.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Non-validating SQL parser"
@@ -1765,6 +2555,11 @@ name = "sqlparse"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.3.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1778,6 +2573,11 @@ version = "3.1.0"
 cryptography = ">=2.1.4"
 ecdsa = ">=0.13"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Manage dynamic plugins for Python applications"
@@ -1790,6 +2590,11 @@ version = "1.31.0"
 pbr = ">=2.0.0,<2.1.0 || >2.1.0"
 six = ">=1.10.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "module for creating simple ASCII tables"
@@ -1798,16 +2603,26 @@ optional = false
 python-versions = "*"
 version = "1.6.2"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Extract the top-level domain (TLD) from the URL given."
 name = "tld"
 optional = false
 python-versions = "*"
-version = "0.10"
+version = "0.9.8"
 
 [package.dependencies]
 six = ">=1.9"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1826,6 +2641,11 @@ hyperlink = ">=17.1.1"
 incremental = ">=16.10.1"
 "zope.interface" = ">=4.4.2"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Compatibility API between asyncio/Twisted/Trollius"
@@ -1837,6 +2657,11 @@ version = "18.8.1"
 [package.dependencies]
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "a fork of Python 2 and 3 ast modules with type comment support"
@@ -1846,6 +2671,11 @@ optional = false
 python-versions = "*"
 version = "1.4.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Type Hints for Python"
@@ -1853,6 +2683,11 @@ name = "typing"
 optional = false
 python-versions = "*"
 version = "3.7.4.1"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1862,6 +2697,11 @@ optional = false
 python-versions = "*"
 version = "3.0.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -1869,6 +2709,11 @@ name = "urllib3"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4"
 version = "1.24.3"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1878,6 +2723,11 @@ optional = false
 python-versions = "*"
 version = "2.0.18"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Promises, promises, promises."
@@ -1885,6 +2735,11 @@ name = "vine"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.3.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1899,6 +2754,11 @@ PyYAML = ">=3.10"
 argh = ">=0.24.1"
 pathtools = ">=0.1.1"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Python CloudWatch Logging"
@@ -1910,6 +2770,11 @@ version = "0.5.5"
 [package.dependencies]
 boto3 = ">=1.3.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Measures number of Terminal column cells of wide-character codes"
@@ -1917,6 +2782,11 @@ name = "wcwidth"
 optional = false
 python-versions = "*"
 version = "0.1.7"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1929,6 +2799,11 @@ version = "0.53.0"
 [package.dependencies]
 six = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "The comprehensive WSGI web application library."
@@ -1936,6 +2811,11 @@ name = "werkzeug"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.16.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1945,6 +2825,11 @@ optional = false
 python-versions = "*"
 version = "4.1.4"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Module for decorators, wrappers and monkey patching."
@@ -1952,6 +2837,11 @@ name = "wrapt"
 optional = false
 python-versions = "*"
 version = "1.11.2"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "dev"
@@ -1961,6 +2851,11 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.2.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Library to create spreadsheet files compatible with MS Excel 97/2000/XP/2003 XLS files, on any platform, with Python 2.6, 2.7, 3.3+"
@@ -1969,6 +2864,11 @@ optional = false
 python-versions = "*"
 version = "1.3.0"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "dev"
 description = "Makes working with XML feel like you are working with JSON"
@@ -1976,6 +2876,11 @@ name = "xmltodict"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "0.12.0"
+
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
 
 [[package]]
 category = "main"
@@ -1988,6 +2893,11 @@ version = "0.6.0"
 [package.dependencies]
 more-itertools = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [[package]]
 category = "main"
 description = "Interfaces for Python"
@@ -1999,12 +2909,17 @@ version = "4.7.1"
 [package.dependencies]
 setuptools = "*"
 
+[package.source]
+reference = "pypi_"
+type = "legacy"
+url = "https://pypi.org/simple"
+
 [metadata]
-content-hash = "a1f7cc4a962e2764121920590b3541bd60386b6179e707cb95b65df454a9e7a6"
-python-versions = "==3.6.8"
+content-hash = "800f80cca84ca2681b42f00931f936ee9dae12779e08ddbc7f9977ac79680e3e"
+python-versions = "==3.6.9"
 
 [metadata.hashes]
-aioredis = ["15f8af30b044c771aee6787e5ec24694c048184c7b9e54c3b60c750a4b93273a", "b61808d7e97b7cd5a92ed574937a079c9387fdadd22bfbfa7ad2fd319ecc26e3"]
+aioredis = ["71302cebeb7add86f1fe660b469068760ca4364504e75ee83dd6f6b7118bfe28", "86da2748fb0652625a8346f413167f078ec72bdc76e217db7e605a059cd56e86"]
 amqp = ["6e649ca13a7df3faacdc8bbb280aa9a6602d22fd9d545336077e573a1f4ff3b8", "77f1aef9410698d20eaeac5b73a87817365f457a507d82edf292e12cbb83b08d"]
 argh = ["a9b3aaa1904eeb78e32394cd46c6f37ac0fb4af6dc488daa58971bdc7d7fcaf3", "e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65"]
 asgiref = ["9b05dcd41a6a89ca8c6e7f7e4089c3f3e76b5af60aebb81ae6d455ad81989c97", "b21dc4c43d7aba5a844f4c48b8f49d56277bc34937fd9f9cb93ec97fde7e3082"]
@@ -2016,7 +2931,7 @@ attrs = ["08a96c641c3a74e44eb59afb61a24f2cb9f4d7188748e76ba4bb5edfa3cb7d1c", "f7
 autobahn = ["8b58a7d3188e2c103dff5115fd6f449261df7282aa92e741acf676f90443e097", "92c3ff4c43017bfe2218f38e8bf71bb2dd474e1fc08922c4b4932310b8609c5d"]
 automat = ["269a09dfb063a3b078983f4976d83f0a0d3e6e7aaf8e27d8df1095e09dc4a484", "81c93c55d2742c55e74e6497a48e048a859fa01d7aa0b91a032be432229837e2"]
 aws-requests-auth = ["112c85fe938a01e28f7e1a87168615b6977b28596362b1dcbafbf4f2cc69f720"]
-aws-sam-translator = ["9e7d64ddf4d2e755dcf82c8a3562edbc184d5c7dbc30f4e23ac0a88c7c0c72d7"]
+aws-sam-translator = ["11c62c00f37b57c39a55d7a29d93f4704a88549c29a6448ebc953147173fbe85"]
 aws-xray-sdk = ["75cbce8c777b7d8055719ee1a0db6043e53c44e8f1a62a956bd84db87c4a4c7c", "ce4adb60fe67ebe91f2fc57d5067b4e44df6e233652987be4fb2e549688cf9fe"]
 bandit = ["6102b5d6afd9d966df5054e0bdfc2e73a24d0fea400ec25f2e54c134412158d7", "9413facfe9de1e1bd291d525c784e1beb1a55c9916b51dae12979af63a69ba4c"]
 billiard = ["42d9a227401ac4fba892918bba0a0c409def5435c4b483267ebfe821afaaba0e"]
@@ -2028,9 +2943,9 @@ bpython = ["6cd1b165888c232f2fcdd4313577b6066155d6c94b3d42c0f11649c000394417", "
 cachecontrol = ["cef77effdf51b43178f6a2d3b787e3734f98ade253fa3187f3bb7315aaa42ff7"]
 celery = ["77dab4677e24dc654d42dfbdfed65fa760455b6bb563a0877ecc35f4cfcfc678", "ad7a7411772b80a4d6c64f2f7f723200e39fb66cf614a7fdfab76d345acc7b13"]
 celery-once = ["a25072b6c524379cb15b1aadc1cdd5f01cda5220a6e2f04375d2b9c56222ad1a"]
-certifi = ["017c25db2a153ce562900032d5bc68e9f191e44e9a0f762f373977de9df1fbb3", "25b64c7da4cd7479594d035c08c2d809eb4aab3a26e5a990ea98cc450c320f1f"]
+certifi = ["e4f3620cfea4f83eedc95b24abd9cd56f3c4b146dd0177e83a21b4eb49e21e50", "fd7c7c74727ddcf00e9acd26bba8da604ffec95bf1c2144e67aff7a8b50e6cef"]
 cffi = ["0b49274afc941c626b605fb59b59c3485c17dc776dc3cc7cc14aca74cc19cc42", "0e3ea92942cb1168e38c05c1d56b0527ce31f1a370f6117f1d490b8dcd6b3a04", "135f69aecbf4517d5b3d6429207b2dff49c876be724ac0c8bf8e1ea99df3d7e5", "19db0cdd6e516f13329cba4903368bff9bb5a9331d3410b1b448daaadc495e54", "2781e9ad0e9d47173c0093321bb5435a9dfae0ed6a762aabafa13108f5f7b2ba", "291f7c42e21d72144bb1c1b2e825ec60f46d0a7468f5346841860454c7aa8f57", "2c5e309ec482556397cb21ede0350c5e82f0eb2621de04b2633588d118da4396", "2e9c80a8c3344a92cb04661115898a9129c074f7ab82011ef4b612f645939f12", "32a262e2b90ffcfdd97c7a5e24a6012a43c61f1f5a57789ad80af1d26c6acd97", "3c9fff570f13480b201e9ab69453108f6d98244a7f495e91b6c654a47486ba43", "415bdc7ca8c1c634a6d7163d43fb0ea885a07e9618a64bda407e04b04333b7db", "42194f54c11abc8583417a7cf4eaff544ce0de8187abaf5d29029c91b1725ad3", "4424e42199e86b21fc4db83bd76909a6fc2a2aefb352cb5414833c030f6ed71b", "4a43c91840bda5f55249413037b7a9b79c90b1184ed504883b72c4df70778579", "599a1e8ff057ac530c9ad1778293c665cb81a791421f46922d80a86473c13346", "5c4fae4e9cdd18c82ba3a134be256e98dc0596af1e7285a3d2602c97dcfa5159", "5ecfa867dea6fabe2a58f03ac9186ea64da1386af2159196da51c4904e11d652", "62f2578358d3a92e4ab2d830cd1c2049c9c0d0e6d3c58322993cc341bdeac22e", "6471a82d5abea994e38d2c2abc77164b4f7fbaaf80261cb98394d5793f11b12a", "6d4f18483d040e18546108eb13b1dfa1000a089bcf8529e30346116ea6240506", "71a608532ab3bd26223c8d841dde43f3516aa5d2bf37b50ac410bb5e99053e8f", "74a1d8c85fb6ff0b30fbfa8ad0ac23cd601a138f7509dc617ebc65ef305bb98d", "7b93a885bb13073afb0aa73ad82059a4c41f4b7d8eb8368980448b52d4c7dc2c", "7d4751da932caaec419d514eaa4215eaf14b612cff66398dd51129ac22680b20", "7f627141a26b551bdebbc4855c1157feeef18241b4b8366ed22a5c7d672ef858", "8169cf44dd8f9071b2b9248c35fc35e8677451c52f795daa2bb4643f32a540bc", "aa00d66c0fab27373ae44ae26a66a9e43ff2a678bf63a9c7c1a9a4d61172827a", "ccb032fda0873254380aa2bfad2582aedc2959186cce61e3a17abc1a55ff89c3", "d754f39e0d1603b5b24a7f8484b22d2904fa551fe865fd0d4c3332f078d20d4e", "d75c461e20e29afc0aee7172a0950157c704ff0dd51613506bd7d82b718e7410", "dcd65317dd15bc0451f3e01c80da2216a31916bdcffd6221ca1202d96584aa25", "e570d3ab32e2c2861c4ebe6ffcad6a8abf9347432a37608fe1fbd157b3f0036b", "fd43a88e045cf992ed09fa724b5315b790525f2676883a6ea64e3263bae6549d"]
-cfn-lint = ["0123be0c30f36216b26bdc418cf695e4ba1b82f01efbe7841c8d2cd3ed6f938f", "75d12b2c3104042a24200e83d48d3284431e392de466357fc65d9312efbf24c0"]
+cfn-lint = ["1e22dcc190176b6b2ad742d4d706b29766122389025affb56625b1543612c899", "f6dae77315debb22eb1def57b113fc31cb7e86034133c00f9245925763c3d91f"]
 channels = ["5e91da393337c053028b210ea9280ef71589c6dfce5477577b57c9c0438f3f06", "e13ba874d854ac493ece329dcd9947e82357c15437ac1a90ed1040d0e5b87aad"]
 channels-redis = ["3f84ebce1e20e339c099ac0ea336fdc6a599882eee4f2a01b394d766488c9d45", "9efc458d730a03b40ef1146427126711f848d2e1a9333ff929bd5f018b742d3b"]
 chardet = ["84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae", "fc323ffcaeaed0e0a02bf4d117757b98aed530d9ed4531e3e15460124c106691"]
@@ -2038,19 +2953,18 @@ click = ["2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13", "5b
 colorama = ["05eed71e2e327246ad6b38c540c4a3117230b19679b875190486ddd2d721422d", "f8ac84de7840f5b9c4e3347b3c1eaa50f7e49c2b07596221daec5edaabbd7c48"]
 constantly = ["586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35", "dd2fa9d6b1a51a83f0d7dd76293d734046aa176e384bf6e33b7e44880eb37c5d"]
 cookies = ["15bee753002dff684987b8df8c235288eb8d45f8191ae056254812dfd42c81d3", "d6b698788cae4cfa4e62ef8643a9ca332b79bd96cb314294b864ae8d7eb3ee8e"]
-coverage = ["03481e81d558d30d230bc12999e3edffe392d244349a90f4ef9b88425fac74ba", "0b136648de27201056c1869a6c0d4e23f464750fd9a9ba9750b8336a244429ed", "0bf8cbbd71adfff0ef1f3a1531e6402d13b7b01ac50a79c97ca15f030dba6306", "104ab3934abaf5be871a583541e8829d6c19ce7bde2923b2751e0d3ca44db60a", "10a46017fef60e16694a30627319f38a2b9b52e90182dddb6e37dcdab0f4bf95", "15b111b6a0f46ee1a485414a52a7ad1d703bdf984e9ed3c288a4414d3871dcbd", "198626739a79b09fa0a2f06e083ffd12eb55449b5f8bfdbeed1df4910b2ca640", "1c383d2ef13ade2acc636556fd544dba6e14fa30755f26812f54300e401f98f2", "23d341cdd4a0371820eb2b0bd6b88f5003a7438bbedb33688cd33b8eae59affd", "28b2191e7283f4f3568962e373b47ef7f0392993bb6660d079c62bd50fe9d162", "2a5b73210bad5279ddb558d9a2bfedc7f4bf6ad7f3c988641d83c40293deaec1", "2eb564bbf7816a9d68dd3369a510be3327f1c618d2357fa6b1216994c2e3d508", "337ded681dd2ef9ca04ef5d93cfc87e52e09db2594c296b4a0a3662cb1b41249", "3a2184c6d797a125dca8367878d3b9a178b6fdd05fdc2d35d758c3006a1cd694", "3c79a6f7b95751cdebcd9037e4d06f8d5a9b60e4ed0cd231342aa8ad7124882a", "3d72c20bd105022d29b14a7d628462ebdc61de2f303322c0212a054352f3b287", "3eb42bf89a6be7deb64116dd1cc4b08171734d721e7a7e57ad64cc4ef29ed2f1", "4635a184d0bbe537aa185a34193898eee409332a8ccb27eea36f262566585000", "56e448f051a201c5ebbaa86a5efd0ca90d327204d8b059ab25ad0f35fbfd79f1", "5a13ea7911ff5e1796b6d5e4fbbf6952381a611209b736d48e675c2756f3f74e", "69bf008a06b76619d3c3f3b1983f5145c75a305a0fea513aca094cae5c40a8f5", "6bc583dc18d5979dc0f6cec26a8603129de0304d5ae1f17e57a12834e7235062", "701cd6093d63e6b8ad7009d8a92425428bc4d6e7ab8d75efbb665c806c1d79ba", "7608a3dd5d73cb06c531b8925e0ef8d3de31fed2544a7de6c63960a1e73ea4bc", "76ecd006d1d8f739430ec50cc872889af1f9c1b6b8f48e29941814b09b0fd3cc", "7aa36d2b844a3e4a4b356708d79fd2c260281a7390d678a10b91ca595ddc9e99", "7d3f553904b0c5c016d1dad058a7554c7ac4c91a789fca496e7d8347ad040653", "7e1fe19bd6dce69d9fd159d8e4a80a8f52101380d5d3a4d374b6d3eae0e5de9c", "8c3cb8c35ec4d9506979b4cf90ee9918bc2e49f84189d9bf5c36c0c1119c6558", "9d6dd10d49e01571bf6e147d3b505141ffc093a06756c60b053a859cb2128b1f", "9e112fcbe0148a6fa4f0a02e8d58e94470fc6cb82a5481618fea901699bf34c4", "ac4fef68da01116a5c117eba4dd46f2e06847a497de5ed1d64bb99a5fda1ef91", "b8815995e050764c8610dbc82641807d196927c3dbed207f0a079833ffcf588d", "be6cfcd8053d13f5f5eeb284aa8a814220c3da1b0078fa859011c7fffd86dab9", "c1bb572fab8208c400adaf06a8133ac0712179a334c09224fb11393e920abcdd", "de4418dadaa1c01d497e539210cb6baa015965526ff5afc078c57ca69160108d", "e05cb4d9aad6233d67e0541caa7e511fa4047ed7750ec2510d466e806e0255d6", "e4d96c07229f58cb686120f168276e434660e4358cc9cf3b0464210b04913e77", "f05a636b4564104120111800021a92e43397bc12a5c72fed7036be8556e0029e", "f3f501f345f24383c0000395b26b726e46758b71393267aeae0bd36f8b3ade80", "f8a923a85cb099422ad5a2e345fe877bbc89a8a8b23235824a93488150e45f6e"]
+coverage = ["03481e81d558d30d230bc12999e3edffe392d244349a90f4ef9b88425fac74ba", "0b136648de27201056c1869a6c0d4e23f464750fd9a9ba9750b8336a244429ed", "0bf8cbbd71adfff0ef1f3a1531e6402d13b7b01ac50a79c97ca15f030dba6306", "10a46017fef60e16694a30627319f38a2b9b52e90182dddb6e37dcdab0f4bf95", "198626739a79b09fa0a2f06e083ffd12eb55449b5f8bfdbeed1df4910b2ca640", "23d341cdd4a0371820eb2b0bd6b88f5003a7438bbedb33688cd33b8eae59affd", "28b2191e7283f4f3568962e373b47ef7f0392993bb6660d079c62bd50fe9d162", "2a5b73210bad5279ddb558d9a2bfedc7f4bf6ad7f3c988641d83c40293deaec1", "2eb564bbf7816a9d68dd3369a510be3327f1c618d2357fa6b1216994c2e3d508", "337ded681dd2ef9ca04ef5d93cfc87e52e09db2594c296b4a0a3662cb1b41249", "3a2184c6d797a125dca8367878d3b9a178b6fdd05fdc2d35d758c3006a1cd694", "3c79a6f7b95751cdebcd9037e4d06f8d5a9b60e4ed0cd231342aa8ad7124882a", "3d72c20bd105022d29b14a7d628462ebdc61de2f303322c0212a054352f3b287", "3eb42bf89a6be7deb64116dd1cc4b08171734d721e7a7e57ad64cc4ef29ed2f1", "4635a184d0bbe537aa185a34193898eee409332a8ccb27eea36f262566585000", "56e448f051a201c5ebbaa86a5efd0ca90d327204d8b059ab25ad0f35fbfd79f1", "5a13ea7911ff5e1796b6d5e4fbbf6952381a611209b736d48e675c2756f3f74e", "69bf008a06b76619d3c3f3b1983f5145c75a305a0fea513aca094cae5c40a8f5", "6bc583dc18d5979dc0f6cec26a8603129de0304d5ae1f17e57a12834e7235062", "701cd6093d63e6b8ad7009d8a92425428bc4d6e7ab8d75efbb665c806c1d79ba", "7608a3dd5d73cb06c531b8925e0ef8d3de31fed2544a7de6c63960a1e73ea4bc", "76ecd006d1d8f739430ec50cc872889af1f9c1b6b8f48e29941814b09b0fd3cc", "7aa36d2b844a3e4a4b356708d79fd2c260281a7390d678a10b91ca595ddc9e99", "7d3f553904b0c5c016d1dad058a7554c7ac4c91a789fca496e7d8347ad040653", "7e1fe19bd6dce69d9fd159d8e4a80a8f52101380d5d3a4d374b6d3eae0e5de9c", "8c3cb8c35ec4d9506979b4cf90ee9918bc2e49f84189d9bf5c36c0c1119c6558", "9d6dd10d49e01571bf6e147d3b505141ffc093a06756c60b053a859cb2128b1f", "be6cfcd8053d13f5f5eeb284aa8a814220c3da1b0078fa859011c7fffd86dab9", "c1bb572fab8208c400adaf06a8133ac0712179a334c09224fb11393e920abcdd", "de4418dadaa1c01d497e539210cb6baa015965526ff5afc078c57ca69160108d", "e05cb4d9aad6233d67e0541caa7e511fa4047ed7750ec2510d466e806e0255d6", "f05a636b4564104120111800021a92e43397bc12a5c72fed7036be8556e0029e", "f3f501f345f24383c0000395b26b726e46758b71393267aeae0bd36f8b3ade80"]
 cryptography = ["05b3ded5e88747d28ee3ef493f2b92cbb947c1e45cf98cfef22e6d38bb67d4af", "06826e7f72d1770e186e9c90e76b4f84d90cdb917b47ff88d8dc59a7b10e2b1e", "08b753df3672b7066e74376f42ce8fc4683e4fd1358d34c80f502e939ee944d2", "2cd29bd1911782baaee890544c653bb03ec7d95ebeb144d714b0f5c33deb55c7", "31e5637e9036d966824edaa91bf0aa39dc6f525a1c599f39fd5c50340264e079", "42fad67d7072216a49e34f923d8cbda9edacbf6633b19a79655e88a1b4857063", "4946b67235b9d2ea7d31307be9d5ad5959d6c4a8f98f900157b47abddf698401", "522fdb2809603ee97a4d0ef2f8d617bc791eb483313ba307cb9c0a773e5e5695", "6f841c7272645dd7c65b07b7108adfa8af0aaea57f27b7f59e01d41f75444c85", "7d335e35306af5b9bc0560ca39f740dfc8def72749645e193dd35be11fb323b3", "8504661ffe324837f5c4607347eeee4cf0fcad689163c6e9c8d3b18cf1f4a4ad", "9260b201ce584d7825d900c88700aa0bd6b40d4ebac7b213857bd2babee9dbca", "9a30384cc402eac099210ab9b8801b2ae21e591831253883decdb4513b77a3cd", "9e29af877c29338f0cab5f049ccc8bd3ead289a557f144376c4fbc7d1b98914f", "ab50da871bc109b2d9389259aac269dd1b7c7413ee02d06fe4e486ed26882159", "b13c80b877e73bcb6f012813c6f4a9334fcf4b0e96681c5a15dac578f2eedfa0", "bfe66b577a7118e05b04141f0f1ed0959552d45672aa7ecb3d91e319d846001e", "e091bd424567efa4b9d94287a952597c05d22155a13716bf5f9f746b9dc906d3", "fa2b38c8519c5a3aa6e2b4e1cf1a549b54acda6adb25397ff542068e73d1ed00"]
 curtsies = ["89c802ec051d01dec6fc983e9856a3706e4ea8265d2940b1f6d504a9e26ed3a9"]
 daphne = ["07810599fb7df656192cf3deaaada078d876626e0d7243b7b80eca051921c1fc", "728dc952f8ddd65bab70a4f424a437233c70ddf3593acee833ed5e430196dca8"]
 decorator = ["54c38050039232e1db4ad7375cfce6748d7b41c29e95a081c8a6d2c30364a2ce", "5d19b92a3c8f7f101c8dd86afd86b0f061a8ce4540ab8cd401fa2542756bce6d"]
-django = ["16a5d54411599780ac9dfe3b9b38f90f785c51259a584e0b24b6f14a7f69aae8", "9a2f98211ab474c710fcdad29c82f30fc14ce9917c7a70c3682162a624de4035"]
+django = ["16040e1288c6c9f68c6da2fe75ebde83c0a158f6f5d54f4c5177b0c1478c5b86", "89c2007ca4fa5b351a51a279eccff298520783b713bf28efb89dfb81c80ea49b"]
 django-admin-rangefilter = ["0997b82d01b3791efd8b94063def7a7f4afb8b7986ec6776fbfee86715230274", "b867ecf893c049900964a9ac6495255a108905592a4030d338b231473f4f708f"]
 django-cors-headers = ["0e9532628b3aa8806442d4d0b15e56112e6cfbef3735e13401935c98b842a2b4", "c7ec4816ec49416517b84f317499d1519db62125471922ab78d670474ed9b987"]
 django-dotenv = ["3812bb0f4876cf31f902aad140f0645e120e51ee30eb7c40c22050f58a0e4adb", "a9b1b40a70bd321acd231926acedb9bd2c5e873e33a1873b34a7276d196a765e"]
 django-enumfields = ["fafbf81c1a1707429c3ec5b5c4d4a2ca33bbffb3fa4c777dd35567e164391bf6"]
 django-environ = ["6c9d87660142608f63ec7d5ce5564c49b603ea8ff25da595fd6098f6dc82afde", "c57b3c11ec1f319d9474e3e5a79134f40174b17c7cc024bbb2fad84646b120c4"]
 django-extensions = ["37a543af370ee3b0721ff50442d33c357dd083e6ea06c5b94a199283b6f9e361", "bc9f2946c117bb2f49e5e0633eba783787790ae810ea112fe7fd82fa64de2ff1"]
-django-fancy-cache = ["33256143041b468f46ef2dc3b909c2fb323272001169bce47fd01529822c5712", "a949ed5c663c44a1781ee50bb3eee564ad13269c8ccb2265bb109146ebde8a93"]
 django-fieldsignals = ["6d789f271d655fd8fc33397f91bcc58e796a1f3ac054706dfe1c28ae90763487", "8151847dee9e1e13af96535e6db2931d99e9b5d01ceb5a60ea4f7a2e0786bfdf"]
 django-filter = ["3dafb7d2810790498895c22a1f31b2375795910680ac9c1432821cbedb1e176d", "a3014de317bef0cd43075a0f08dfa1d319a7ccc5733c3901fb860da70b0dda68"]
 django-fsm = ["96f776736042b8cde03483cb4b27c3a62580da40fc9b942845349718afdf5d0f", "cacd5485c726b411c6728c9ae3120303c9badf8aa0edff2db3aecdbe3a906945"]
@@ -2059,9 +2973,9 @@ django-influxdb-tagged-metrics = ["f2a7c8dee5b32835b450474cc898e9842a4b9bfe10d8b
 django-mock-queries = ["d5b6991d1b65c54b272c89f17296a034f7fffd0f4ea78e39104b8c9f0796b4d4"]
 django-redis = ["af0b393864e91228dd30d8c85b5c44d670b5524cb161b7f9e41acc98b6e5ace7", "f46115577063d00a890867c6964ba096057f07cb756e78e0503b89cd18e4e083"]
 django-simple-history = ["7273add61d3f89453c475531627f8c69cbfc41d6fb99d45278dddc3bafe39284", "7f3044439e401fb02b12231b675590865a27a149f6bd99587e429cbe6a9dd6a6"]
-djangorestframework = ["79c6efbb2514bc50cf25906d7c0a5cfead714c7af667ff4bd110312cd380ae66", "a4138613b67e3a223be6c97f53b13d759c5b90d2b433bad670b8ebf95402075f"]
+djangorestframework = ["5488aed8f8df5ec1d70f04b2114abc52ae6729748a176c453313834a9ee179c8", "dc81cbf9775c6898a580f6f1f387c4777d12bd87abf0f5406018d32ccae71090"]
 djangorestframework-gis = ["35527c51e083ccc93f6e6d90a6515c132bbeb2c5648b166ac5b1a48c4ea8e2a4", "e645c6c8aedee53ac0a4851abcdf8121fff66813eebae1b040b1ccb941cb248b"]
-djangorestframework-jsonapi = ["61c3b5ce8b88243b5608254df7f2861cec9cbd933b06b798716c4ad7549710d7", "94cec93546ed48c92ace053562bdd94504d2f396c68d551c6f99277923cebaf4"]
+djangorestframework-jsonapi = ["1610aef92e211f3904fb8d51ad1f3cd6f1256f617169eb63524bb053430d98b2", "61d28ac49274815b1735d87b7ab93f38b481916ddfa7231509de297fd27e5b3b"]
 djangorestframework-simplejwt = []
 docker = ["6e06c5e70ba4fad73e35f00c55a895a448398f3ada7faae072e2bb01348bafc1", "8f93775b8bdae3a2df6bc9a5312cce564cade58d6555f2c2570165a1270cd8a7"]
 docutils = ["6c4f696463b79f1fb8ba0c594b63840ebd41f059e92b31957c46b74a4599b6d0", "9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827", "a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99"]
@@ -2070,7 +2984,7 @@ dparse = ["00a5fdfa900629e5159bf3600d44905b333f4059a3366f28e0dbd13eeab17b19", "c
 drf-nested-routers = ["46e5c3abc15c782cafafd7d75028e8f9121bbc6228e3599bbb48a3daa4585034", "60c1e1f5cc801e757d26a8138e61c44419ef800c213c3640c5b6138e77d46762"]
 ecdsa = ["64c613005f13efec6541bb0a33290d0d03c27abab5f15fbab20fb0ee162bdd8e", "e108a5fe92c67639abae3260e43561af914e7fd0d27bae6d2ec1312ae7934dfe"]
 et-xmlfile = ["614d9722d572f6246302c4491846d2c393c199cfa4edc9af593437691683335b"]
-fpdf = ["0a94eb783ee933e32a44ad949a1aa6c3ca6fb35b608db53f8b216aec52fc1fb5", "125840783289e7d12552b1e86ab692c37322e7a65b96a99e0ea86cca041b6779", "9542f6ad0791d673955da954a0cf3554a0affac79deab87bee06b9b4d4e60990"]
+fpdf = ["125840783289e7d12552b1e86ab692c37322e7a65b96a99e0ea86cca041b6779"]
 freezegun = ["2a4d9c8cd3c04a201e20c313caf8b6338f1cfa4cda43f46a94cc4a9fd13ea5e7", "edfdf5bc6040969e6ed2e36eafe277963bdc8b7c01daeda96c5c8594576c9390"]
 future = ["b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"]
 geocoder = ["a733e1dfbce3f4e1a526cac03aadcedb8ed1239cf55bd7f3a23c60075121a834", "c9925374c961577d0aee403b09e6f8ea1971d913f011f00ca70c76beaf7a77e7"]
@@ -2082,7 +2996,7 @@ hiredis = ["01b577f84c20ecc9c07fc4c184231b08e3c3942de096fa99978e053de231c423", "
 httpretty = ["543fa2bd9c319bfa1e1de9e37d7c9c08fa926a692b65b0be5df4b2f069fd0ad7"]
 hyperlink = ["4288e34705da077fada1111a24a0aa08bb1e76699c9ce49876af722441845654", "ab4a308feb039b04f855a020a6eda3b18ca5a68e6d8f8c899cbe9e653721d04f"]
 idna = ["c357b3f628cf53ae2c4c05627ecc484553142ca23264e593d327bcde5e9c3407", "ea8b7f6188e6fa117537c3df7da9fc686d485087abf6ac197f9c46432f7e4a3c"]
-importlib-metadata = ["b044f07694ef14a6683b097ba56bd081dbc7cdc7c7fe46011e499dfecc082f21", "e6ac600a142cf2db707b1998382cc7fc3b02befb7273876e01b8ad10b9652742"]
+importlib-metadata = ["aa18d7378b00b40847790e7c27e11673d7fed219354109d0e7b9e5b25dc3ad26", "d5f18a79777f3aa179c145737780282e27b508fc8fd688cb17c7a813e8bd39af"]
 importlib-resources = ["6e2783b2538bd5a14678284a3962b0660c715e5a0f10243fd5e00a4b5974f50b", "d3279fd0f6f847cced9f7acc19bd3e5df54d34f93a2e7bb5f238f81545787078"]
 incremental = ["717e12246dddf231a349175f48d74d93e2897244939173b01974ab6661406b9f", "7b751696aaf36eebfab537e458929e194460051ccad279c72b755a167eebd4b3"]
 inflection = ["18ea7fb7a7d152853386523def08736aa8c32636b047ade55f7578c4edeb16ca"]
@@ -2104,26 +3018,26 @@ logstash-formatter = ["163f5ef62df5459f1d36dcb54e9c3f8f0c90157a324a3361887532b61
 mapbox = ["45e2e42e1a4b382885248fad42a481da875d5d4dfe75453499ebf8941ecb8c78", "45edaf70ae7c162d0ea0af23181e83aa90e8ffccbba986f2c5097a7b34f8cb36"]
 markupsafe = ["00bc623926325b26bb9605ae9eae8a215691f33cae5df11ca5424f06f2d1f473", "09027a7803a62ca78792ad89403b1b7a73a01c8cb65909cd876f7fcebd79b161", "09c4b7f37d6c648cb13f9230d847adf22f8171b1ccc4d5682398e77f40309235", "1027c282dad077d0bae18be6794e6b6b8c91d58ed8a8d89a89d59693b9131db5", "24982cc2533820871eba85ba648cd53d8623687ff11cbb805be4ff7b4c971aff", "29872e92839765e546828bb7754a68c418d927cd064fd4708fab9fe9c8bb116b", "43a55c2930bbc139570ac2452adf3d70cdbb3cfe5912c71cdce1c2c6bbd9c5d1", "46c99d2de99945ec5cb54f23c8cd5689f6d7177305ebff350a58ce5f8de1669e", "500d4957e52ddc3351cabf489e79c91c17f6e0899158447047588650b5e69183", "535f6fc4d397c1563d08b88e485c3496cf5784e927af890fb3c3aac7f933ec66", "62fe6c95e3ec8a7fad637b7f3d372c15ec1caa01ab47926cfdf7a75b40e0eac1", "6dd73240d2af64df90aa7c4e7481e23825ea70af4b4922f8ede5b9e35f78a3b1", "717ba8fe3ae9cc0006d7c451f0bb265ee07739daf76355d06366154ee68d221e", "79855e1c5b8da654cf486b830bd42c06e8780cea587384cf6545b7d9ac013a0b", "7c1699dfe0cf8ff607dbdcc1e9b9af1755371f92a68f706051cc8c37d447c905", "88e5fcfb52ee7b911e8bb6d6aa2fd21fbecc674eadd44118a9cc3863f938e735", "8defac2f2ccd6805ebf65f5eeb132adcf2ab57aa11fdf4c0dd5169a004710e7d", "98c7086708b163d425c67c7a91bad6e466bb99d797aa64f965e9d25c12111a5e", "9add70b36c5666a2ed02b43b335fe19002ee5235efd4b8a89bfcf9005bebac0d", "9bf40443012702a1d2070043cb6291650a0841ece432556f784f004937f0f32c", "ade5e387d2ad0d7ebf59146cc00c8044acbd863725f887353a10df825fc8ae21", "b00c1de48212e4cc9603895652c5c410df699856a2853135b3967591e4beebc2", "b1282f8c00509d99fef04d8ba936b156d419be841854fe901d8ae224c59f0be5", "b2051432115498d3562c084a49bba65d97cf251f5a331c64a12ee7e04dacc51b", "ba59edeaa2fc6114428f1637ffff42da1e311e29382d81b339c1817d37ec93c6", "c8716a48d94b06bb3b2524c2b77e055fb313aeb4ea620c8dd03a105574ba704f", "cd5df75523866410809ca100dc9681e301e3c27567cf498077e8551b6d20e42f", "e249096428b3ae81b08327a63a485ad0878de3fb939049038579ac0ef61e17e7"]
 mccabe = ["ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42", "dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"]
-minio = ["22fd76486287b9cf51536d030a02ae8c6b0c26ad9b9e817fe336692e3b3daac3", "58811e86594e0742501f38207a4b804c4db292d25e5a3c3c0754f5799bd92a8a", "710135acaa242bced36022eba72d4093913a4ff201315fb45c97e7019cddae00"]
+minio = ["22fd76486287b9cf51536d030a02ae8c6b0c26ad9b9e817fe336692e3b3daac3", "710135acaa242bced36022eba72d4093913a4ff201315fb45c97e7019cddae00"]
 mock = ["5ce3c71c5545b472da17b72268978914d0252980348636840bd34a00b5cc96c1", "b158b6df76edd239b8208d481dc46b6afd45a846b7812ff0ce58971cf5bc8bba"]
 model-mommy = ["3d332afce941c57f1990f45b083ba13252ba74fcd1ae43fd047e5af7a70fb312", "40d6e740aad7509e696a324b94cf2b0a104da93c3d4a7924cea1be3d0eb95b4f"]
-more-itertools = ["53ff73f186307d9c8ef17a9600309154a6ae27f25579e80af4db8f047ba14bc2", "a0ea684c39bc4315ba7aae406596ef191fd84f873d2d2751f84d64e81a7a2d45"]
+more-itertools = ["409cd48d4db7052af495b09dec721011634af3753ae1ef92d2b32f73a745f832", "92b8c4b06dac4f0611c0729b2f2ede52b2e1bac1ab48f089c7ddc12e26bb60c4"]
 moto = ["2b3fa22778504b45715868cad95ad458fdea7227f9005b12e522fc9c2ae0cabc", "79aeaeed1592a24d3c488840065a3fcb3f4fa7ba40259e112482454c0e48a03a"]
 msgpack = ["0cc7ca04e575ba34fea7cfcd76039f55def570e6950e4155a4174368142c8e1b", "187794cd1eb73acccd528247e3565f6760bd842d7dc299241f830024a7dd5610", "1904b7cb65342d0998b75908304a03cb004c63ef31e16c8c43fee6b989d7f0d7", "229a0ccdc39e9b6c6d1033cd8aecd9c296823b6c87f0de3943c59b8bc7c64bee", "24149a75643aeaa81ece4259084d11b792308a6cf74e796cbb35def94c89a25a", "30b88c47e0cdb6062daed88ca283b0d84fa0d2ad6c273aa0788152a1c643e408", "32fea0ea3cd1ef820286863a6202dcfd62a539b8ec3edcbdff76068a8c2cc6ce", "355f7fd0f90134229eaeefaee3cf42e0afc8518e8f3cd4b25f541a7104dcb8f9", "4abdb88a9b67e64810fb54b0c24a1fd76b12297b4f7a1467d85a14dd8367191a", "757bd71a9b89e4f1db0622af4436d403e742506dbea978eba566815dc65ec895", "76df51492bc6fa6cc8b65d09efdb67cbba3cbfe55004c3afc81352af92b4a43c", "774f5edc3475917cd95fe593e625d23d8580f9b48b570d8853d06cac171cd170", "8a3ada8401736df2bf497f65589293a86c56e197a80ae7634ec2c3150a2f5082", "a06efd0482a1942aad209a6c18321b5e22d64eb531ea20af138b28172d8f35ba", "b24afc52e18dccc8c175de07c1d680bdf315844566f4952b5bedb908894bec79", "b8b4bd3dafc7b92608ae5462add1c8cc881851c2d4f5d8977fdea5b081d17f21", "c6e5024fc0cdf7f83b6624850309ddd7e06c48a75fa0d1c5173de4d93300eb19", "db7ff14abc73577b0bcbcf73ecff97d3580ecaa0fc8724babce21fdf3fe08ef6", "dedf54d72d9e7b6d043c244c8213fe2b8bbfe66874b9a65b39c4cc892dd99dd4", "ea3c2f859346fcd55fc46e96885301d9c2f7a36d453f5d8f2967840efa1e1830", "f0f47bafe9c9b8ed03e19a100a743662dd8c6d0135e684feea720a0d0046d116"]
 openpyxl = ["a5285901fff7b99a011462f18506a4fbfe4055191149ff42f59345828f8cf7b2"]
 packaging = ["28b924174df7a2fa32c1953825ff29c61e2f5e082343165438812f00d3a7fc47", "d9551545c6d761f3def1677baf08ab2a3ca17c56879e70fecba2fc4dde4ed108"]
 pathtools = ["7c35c5421a39bb82e58018febd90e3b6e5db34c5443aaaf742b3f33d4655f1c0"]
-pbr = ["139d2625547dbfa5fb0b81daebb39601c478c21956dc57e2e07b74450a8c506b", "61aa52a0f18b71c5cc58232d2cf8f8d09cd67fcad60b742a60124cb8d6951488"]
+pbr = ["2c8e420cd4ed4cec4e7999ee47409e876af575d4c35a45840d59e8b5f3155ab8", "b32c8ccaac7b1a20c0ce00ce317642e6cf231cf038f9875e0280e28af5bf7ac9"]
 pep8-naming = ["1b419fa45b68b61cd8c5daf4e0c96d28915ad14d3d5f35fcc1e7e95324a33a2e", "4eedfd4c4b05e48796f74f5d8628c068ff788b9c2b08471ad408007fc6450e5a"]
-pillow = ["01a501be4ae05fd714d269cb9c9f145518e58e73faa3f140ddb67fae0c2607b1", "051de330a06c99d6f84bcf582960487835bcae3fc99365185dc2d4f65a390c0e", "07c35919f983c2c593498edcc126ad3a94154184899297cc9d27a6587672cbaa", "0ae5289948c5e0a16574750021bd8be921c27d4e3527800dc9c2c1d2abc81bf7", "0b1efce03619cdbf8bcc61cfae81fcda59249a469f31c6735ea59badd4a6f58a", "0cf0208500df8d0c3cad6383cd98a2d038b0678fd4f777a8f7e442c5faeee81d", "163136e09bd1d6c6c6026b0a662976e86c58b932b964f255ff384ecc8c3cefa3", "18e912a6ccddf28defa196bd2021fe33600cbe5da1aa2f2e2c6df15f720b73d1", "24ec3dea52339a610d34401d2d53d0fb3c7fd08e34b20c95d2ad3973193591f1", "267f8e4c0a1d7e36e97c6a604f5b03ef58e2b81c1becb4fccecddcb37e063cc7", "3273a28734175feebbe4d0a4cde04d4ed20f620b9b506d26f44379d3c72304e1", "39fbd5d62167197318a0371b2a9c699ce261b6800bb493eadde2ba30d868fe8c", "4132c78200372045bb348fcad8d52518c8f5cfc077b1089949381ee4a61f1c6d", "4baab2d2da57b0d9d544a2ce0f461374dd90ccbcf723fe46689aff906d43a964", "4c678e23006798fc8b6f4cef2eaad267d53ff4c1779bd1af8725cc11b72a63f3", "4d4bc2e6bb6861103ea4655d6b6f67af8e5336e7216e20fff3e18ffa95d7a055", "505738076350a337c1740a31646e1de09a164c62c07db3b996abdc0f9d2e50cf", "5233664eadfa342c639b9b9977190d64ad7aca4edc51a966394d7e08e7f38a9f", "52e2e56fc3706d8791761a157115dc8391319720ad60cc32992350fda74b6be2", "5337ac3280312aa065ed0a8ec1e4b6142e9f15c31baed36b5cd964745853243f", "5ccd97e0f01f42b7e35907272f0f8ad2c3660a482d799a0c564c7d50e83604d4", "5d95cb9f6cced2628f3e4de7e795e98b2659dfcc7176ab4a01a8b48c2c2f488f", "634209852cc06c0c1243cc74f8fdc8f7444d866221de51125f7b696d775ec5ca", "75d1f20bd8072eff92c5f457c266a61619a02d03ece56544195c56d41a1a0522", "7eda4c737637af74bac4b23aa82ea6fbb19002552be85f0b89bc27e3a762d239", "801ddaa69659b36abf4694fed5aa9f61d1ecf2daaa6c92541bbbbb775d97b9fe", "825aa6d222ce2c2b90d34a0ea31914e141a85edefc07e17342f1d2fdf121c07c", "87fe838f9dac0597f05f2605c0700b1926f9390c95df6af45d83141e0c514bd9", "9c215442ff8249d41ff58700e91ef61d74f47dfd431a50253e1a1ca9436b0697", "a3d90022f2202bbb14da991f26ca7a30b7e4c62bf0f8bf9825603b22d7e87494", "a631fd36a9823638fe700d9225f9698fb59d049c942d322d4c09544dc2115356", "a6523a23a205be0fe664b6b8747a5c86d55da960d9586db039eec9f5c269c0e6", "a756ecf9f4b9b3ed49a680a649af45a8767ad038de39e6c030919c2f443eb000", "ac036b6a6bac7010c58e643d78c234c2f7dc8bb7e591bd8bc3555cf4b1527c28", "b117287a5bdc81f1bac891187275ec7e829e961b8032c9e5ff38b70fd036c78f", "ba04f57d1715ca5ff74bb7f8a818bf929a204b3b3c2c2826d1e1cc3b1c13398c", "ba6ef2bd62671c7fb9cdb3277414e87a5cd38b86721039ada1464f7452ad30b2", "c8939dba1a37960a502b1a030a4465c46dd2c2bca7adf05fa3af6bea594e720e", "cd878195166723f30865e05d87cbaf9421614501a4bd48792c5ed28f90fd36ca", "cee815cc62d136e96cf76771b9d3eb58e0777ec18ea50de5cfcede8a7c429aa8", "d1722b7aa4b40cf93ac3c80d3edd48bf93b9208241d166a14ad8e7a20ee1d4f3", "d7c1c06246b05529f9984435fc4fa5a545ea26606e7f450bdbe00c153f5aeaad", "db418635ea20528f247203bf131b40636f77c8209a045b89fa3badb89e1fcea0", "e1555d4fda1db8005de72acf2ded1af660febad09b4708430091159e8ae1963e", "e9c8066249c040efdda84793a2a669076f92a301ceabe69202446abb4c5c5ef9", "e9f13711780c981d6eadd6042af40e172548c54b06266a1aabda7de192db0838", "f0e3288b92ca5dbb1649bd00e80ef652a72b657dc94989fa9c348253d179054b", "f227d7e574d050ff3996049e086e1f18c7bd2d067ef24131e50a1d3fe5831fbc", "f62b1aeb5c2ced8babd4fbba9c74cbef9de309f5ed106184b12d9778a3971f15", "f71ff657e63a9b24cac254bb8c9bd3c89c7a1b5e00ee4b3997ca1c18100dac28", "fc9a12aad714af36cf3ad0275a96a733526571e52710319855628f476dcb144e"]
-pluggy = ["15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0", "966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"]
+pillow = ["051de330a06c99d6f84bcf582960487835bcae3fc99365185dc2d4f65a390c0e", "0ae5289948c5e0a16574750021bd8be921c27d4e3527800dc9c2c1d2abc81bf7", "0b1efce03619cdbf8bcc61cfae81fcda59249a469f31c6735ea59badd4a6f58a", "163136e09bd1d6c6c6026b0a662976e86c58b932b964f255ff384ecc8c3cefa3", "18e912a6ccddf28defa196bd2021fe33600cbe5da1aa2f2e2c6df15f720b73d1", "24ec3dea52339a610d34401d2d53d0fb3c7fd08e34b20c95d2ad3973193591f1", "267f8e4c0a1d7e36e97c6a604f5b03ef58e2b81c1becb4fccecddcb37e063cc7", "3273a28734175feebbe4d0a4cde04d4ed20f620b9b506d26f44379d3c72304e1", "4c678e23006798fc8b6f4cef2eaad267d53ff4c1779bd1af8725cc11b72a63f3", "4d4bc2e6bb6861103ea4655d6b6f67af8e5336e7216e20fff3e18ffa95d7a055", "505738076350a337c1740a31646e1de09a164c62c07db3b996abdc0f9d2e50cf", "5233664eadfa342c639b9b9977190d64ad7aca4edc51a966394d7e08e7f38a9f", "5d95cb9f6cced2628f3e4de7e795e98b2659dfcc7176ab4a01a8b48c2c2f488f", "7eda4c737637af74bac4b23aa82ea6fbb19002552be85f0b89bc27e3a762d239", "801ddaa69659b36abf4694fed5aa9f61d1ecf2daaa6c92541bbbbb775d97b9fe", "825aa6d222ce2c2b90d34a0ea31914e141a85edefc07e17342f1d2fdf121c07c", "9c215442ff8249d41ff58700e91ef61d74f47dfd431a50253e1a1ca9436b0697", "a3d90022f2202bbb14da991f26ca7a30b7e4c62bf0f8bf9825603b22d7e87494", "a631fd36a9823638fe700d9225f9698fb59d049c942d322d4c09544dc2115356", "a6523a23a205be0fe664b6b8747a5c86d55da960d9586db039eec9f5c269c0e6", "a756ecf9f4b9b3ed49a680a649af45a8767ad038de39e6c030919c2f443eb000", "b117287a5bdc81f1bac891187275ec7e829e961b8032c9e5ff38b70fd036c78f", "ba04f57d1715ca5ff74bb7f8a818bf929a204b3b3c2c2826d1e1cc3b1c13398c", "cd878195166723f30865e05d87cbaf9421614501a4bd48792c5ed28f90fd36ca", "cee815cc62d136e96cf76771b9d3eb58e0777ec18ea50de5cfcede8a7c429aa8", "d1722b7aa4b40cf93ac3c80d3edd48bf93b9208241d166a14ad8e7a20ee1d4f3", "d7c1c06246b05529f9984435fc4fa5a545ea26606e7f450bdbe00c153f5aeaad", "e9c8066249c040efdda84793a2a669076f92a301ceabe69202446abb4c5c5ef9", "f227d7e574d050ff3996049e086e1f18c7bd2d067ef24131e50a1d3fe5831fbc", "fc9a12aad714af36cf3ad0275a96a733526571e52710319855628f476dcb144e"]
+pluggy = ["0db4b7601aae1d35b4a033282da476845aa19185c1e6964b25cf324b5e4ec3e6", "fa5fa1622fa6dd5c030e9cad086fa19ef6a0cf6d7a2d12318e10cb49d6d68f34"]
 polyline = ["6559a0d5d37f4d14255744b3c6a648d5ff480d3d5c5f30186effc72a4142fd6c", "7c7f89d09a09c7b6161bdbfb4fd304b186fc7a2060fa4f31cb3f61c646a5c074"]
 prospector = ["877d8d361a5c0e04c8587718c22c5d671afcf814945c96b3e592836d772943fd"]
-psutil = ["094f899ac3ef72422b7e00411b4ed174e3c5a2e04c267db6643937ddba67a05b", "10b7f75cc8bd676cfc6fa40cd7d5c25b3f45a0e06d43becd7c2d2871cbb5e806", "1b1575240ca9a90b437e5a40db662acd87bbf181f6aa02f0204978737b913c6b", "21231ef1c1a89728e29b98a885b8e0a8e00d09018f6da5cdc1f43f988471a995", "28f771129bfee9fc6b63d83a15d857663bbdcae3828e1cb926e91320a9b5b5cd", "70387772f84fa5c3bb6a106915a2445e20ac8f9821c5914d7cbde148f4d7ff73", "b560f5cd86cf8df7bcd258a851ca1ad98f0d5b8b98748e877a0aec4e9032b465", "b74b43fecce384a57094a83d2778cdfc2e2d9a6afaadd1ebecb2e75e0d34e10d", "e85f727ffb21539849e6012f47b12f6dd4c44965e56591d8dec6e8bc9ab96f4a", "fd2e09bb593ad9bdd7429e779699d2d47c1268cbde4dda95fcd1bd17544a0217", "ffad8eb2ac614518bbe3c0b8eb9dffdb3a8d2e3a7d5da51c5b974fb723a5c5aa"]
+psutil = ["021d361439586a0fd8e64f8392eb7da27135db980f249329f1a347b9de99c695", "145e0f3ab9138165f9e156c307100905fd5d9b7227504b8a9d3417351052dc3d", "348ad4179938c965a27d29cbda4a81a1b2c778ecd330a221aadc7bd33681afbd", "3feea46fbd634a93437b718518d15b5dd49599dfb59a30c739e201cc79bb759d", "474e10a92eeb4100c276d4cc67687adeb9d280bbca01031a3e41fb35dfc1d131", "47aeb4280e80f27878caae4b572b29f0ec7967554b701ba33cd3720b17ba1b07", "73a7e002781bc42fd014dfebb3fc0e45f8d92a4fb9da18baea6fb279fbc1d966", "d051532ac944f1be0179e0506f6889833cf96e466262523e57a871de65a15147", "dfb8c5c78579c226841908b539c2374da54da648ee5a837a731aa6a105a54c00", "e3f5f9278867e95970854e92d0f5fe53af742a7fc4f2eba986943345bcaed05d", "e9649bb8fc5cea1f7723af53e4212056a6f984ee31784c10632607f472dec5ee"]
 psycopg2 = ["4212ca404c4445dc5746c0d68db27d2cbfb87b523fe233dc84ecd24062e35677", "47fc642bf6f427805daf52d6e52619fe0637648fe27017062d898f3bf891419d", "72772181d9bad1fa349792a1e7384dde56742c14af2b9986013eb94a240f005b", "8396be6e5ff844282d4d49b81631772f80dabae5658d432202faf101f5283b7c", "893c11064b347b24ecdd277a094413e1954f8a4e8cdaf7ffbe7ca3db87c103f0", "92a07dfd4d7c325dd177548c4134052d4842222833576c8391aab6f74038fc3f", "965c4c93e33e6984d8031f74e51227bd755376a9df6993774fd5b6fb3288b1f4", "9ab75e0b2820880ae24b7136c4d230383e07db014456a476d096591172569c38", "b0845e3bdd4aa18dc2f9b6fb78fbd3d9d371ad167fd6d1b7ad01c0a6cdad4fc6", "dca2d7203f0dfce8ea4b3efd668f8ea65cd2b35112638e488a4c12594015f67b", "ed686e5926929887e2c7ae0a700e32c6129abb798b4ad2b846e933de21508151", "ef6df7e14698e79c59c7ee7cf94cd62e5b869db369ed4b1b8f7b729ea825712a", "f898e5cc0a662a9e12bde6f931263a1bbd350cfb18e1d5336a12927851825bb6"]
 py = ["64f65755aee5b381cea27766a3a147c3f15b9b6b9ac88676de66ba2ae36793fa", "dc639b046a6e2cff5bbe40194ad65936d6ba360b52b3c3fe1d08a82dd50b5e53"]
-pyasn1 = ["014c0e9976956a08139dc0712ae195324a75e142284d5f87f1a87ee1b068a359", "03840c999ba71680a131cfaee6fab142e1ed9bbd9c693e285cc6aca0d555e576", "0458773cfe65b153891ac249bcf1b5f8f320b7c2ce462151f8fa74de8934becf", "08c3c53b75eaa48d71cf8c710312316392ed40899cb34710d092e96745a358b7", "39c7e2ec30515947ff4e87fb6f456dfc6e84857d34be479c9d4a4ba4bf46aa5d", "5c9414dcfede6e441f7e8f81b43b34e834731003427e5b09e4e00e3172a10f00", "6e7545f1a61025a4e58bb336952c5061697da694db1cae97b116e9c46abcf7c8", "78fa6da68ed2727915c4767bb386ab32cdba863caa7dbe473eaae45f9959da86", "7ab8a544af125fb704feadb008c99a88805126fb525280b2270bb25cc1d78a12", "99fcc3c8d804d1bc6d9a099921e39d827026409a58f2a720dcdb89374ea0c776", "aef77c9fb94a3ac588e87841208bdec464471d9871bd5050a287cc9a475cd0ba", "e89bf84b5437b532b0803ba5c9a5e054d21fec423a89952a74f87fa2c9b7bce2", "fec3e9d8e36808a28efb59b489e4528c10ad0f480e57dcc32b4de5c9d8c9fdf3"]
-pycodestyle = ["74abc4e221d393ea5ce1f129ea6903209940c1ecd29e002e8c6933c2b21026e0", "cbc619d09254895b0d12c2c691e237b2e91e9b2ecf5e84c26b35400f93dcfb83", "cbfca99bd594a10f674d0cd97a3d802a1fdef635d4361e1a2658de47ed261e3a"]
+pyasn1 = ["39c7e2ec30515947ff4e87fb6f456dfc6e84857d34be479c9d4a4ba4bf46aa5d", "aef77c9fb94a3ac588e87841208bdec464471d9871bd5050a287cc9a475cd0ba"]
+pycodestyle = ["cbc619d09254895b0d12c2c691e237b2e91e9b2ecf5e84c26b35400f93dcfb83", "cbfca99bd594a10f674d0cd97a3d802a1fdef635d4361e1a2658de47ed261e3a"]
 pycparser = ["a988718abfad80b6b157acce7bf130a30876d27603738ac39f140993246b25b3"]
 pydocstyle = ["04c84e034ebb56eb6396c820442b8c4499ac5eb94a3bda88951ac3dc519b6058", "66aff87ffe34b1e49bff2dd03a88ce6843be2f3346b0c9814410d34987fbab59"]
 pyexcel = ["7fac067e65567c380933b4d382587a5ce6581d0ad85992f6f0bc7c3f16012184", "f0a7797f3a0de9e6f81151c9581fa90c4e1afce207dc47d2f0ba728dd2e24467"]
@@ -2131,8 +3045,8 @@ pyexcel-io = ["08dfe39553b996359b143de3d9ec43e196f1138d47cabb73af04a16821b84d79"
 pyexcel-xls = ["2d33eb4bd8dadfb8c73b5ccc6a238d65b3914e89a7553b1f39b9397b17cbe402", "90aef211c0628e6652943e6ad32e030e7da71d5db0d6e9f443153f8f2985ed2d"]
 pyexcel-xlsx = ["31f261b38270b2a1cc4f86b2792722f1ba266c17d652b6866c353d5b06349d43", "d60bf71c770d391c61bd76e75e6a3de1619a1db931c5f9b7d3c1ee1f33a6c6bc"]
 pyflakes = ["08bd6a50edf8cffa9fa09a463063c425ecaaf10d1eb0335a7e8b1401aef89e6f", "8d616a382f243dbf19b54743f280b80198be0bca3a5396f1d2e1fca6223e8805"]
-pygments = ["2a3fe295e54a20164a9df49c75fa58526d3be48e14aceba6d6b1e8ac0bfd6f1b", "98c8aa5a9f778fcd1026a17361ddaf7330d1b7c62ae97c3bb0ae73e0b9b6b0fe"]
-pyhamcrest = ["6b672c02fdf7470df9674ab82263841ce8333fb143f32f021f6cb26f0e512420", "7a4bdade0ed98c699d728191a058a60a44d2f9c213c51e2dd1e6fb42f2c6128a", "8ffaa0a53da57e89de14ced7185ac746227a8894dbd5a3c718bf05ddbd1d56cd", "bac0bea7358666ce52e3c6c85139632ed89f115e9af52d44b3c36e0bf8cf16a9", "f30e9a310bcc1808de817a92e95169ffd16b60cbc5a016a49c8d0e8ababfae79"]
+pygments = ["71e430bc85c88a430f000ac1d9b331d2407f681d6f6aec95e8bcfbc3df5b0127", "881c4c157e45f30af185c1ffe8d549d48ac9127433f2c380c24b84572ad66297"]
+pyhamcrest = ["6b672c02fdf7470df9674ab82263841ce8333fb143f32f021f6cb26f0e512420", "8ffaa0a53da57e89de14ced7185ac746227a8894dbd5a3c718bf05ddbd1d56cd"]
 pyjwt = ["5c6eca3c2940464d106b99ba83b00c6add741c9becaec087fb7ccdefea71350e", "8d59a976fb773f3e6a39c85636357c4f0e242707394cadadd9814f5cbaa20e96"]
 pylint = ["1d6d3622c94b4887115fe5204982eee66fdd8a951cf98635ee5caee6ec98c3ec", "31142f764d2a7cd41df5196f9933b12b7ee55e73ef12204b648ad7e556c119fb"]
 pylint-celery = ["41e32094e7408d15c044178ea828dd524beedbdbe6f83f712c5e35bde1de4beb"]
@@ -2141,18 +3055,18 @@ pylint-flask = ["8fcdbb7cbf13d8c2ac1f2230b2aa1c1b83bb3ca2bd8b76f95561cb8757a305e
 pylint-plugin-utils = ["2f30510e1c46edf268d3a195b2849bd98a1b9433229bb2ba63b8d776e1fc4d0a", "57625dcca20140f43731311cd8fd879318bf45a8b0fd17020717a8781714a25a"]
 pyparsing = ["20f995ecd72f2a1f4bf6b072b63b22e2eb457836601e76d6e5dfcd75436acc1f", "4ca62001be367f01bd3e92ecbb79070272a9d4964dce6a48a82ff0b8bc7e683a"]
 pypiwin32 = ["67adf399debc1d5d14dffc1ab5acacb800da569754fafdc576b2a039485aa775", "71be40c1fbd28594214ecaecb58e7aa8b708eabfa0125c8a109ebd51edbd776a"]
-pyrsistent = ["f3b280d030afb652f79d67c5586157c5c1355c9a58dfc7940566e28d28f3df1b"]
-pytest = ["63344a2e3bce2e4d522fd62b4fdebb647c019f1f9e4ca075debbd13219db4418", "f67403f33b2b1d25a6756184077394167fe5e2f9d8bdaab30707d19ccec35427"]
+pyrsistent = ["eb6545dbeb1aa69ab1fb4809bfbf5a8705e44d92ef8fc7c2361682a47c46c778"]
+pytest = ["8e256fe71eb74e14a4d20a5987bb5e1488f0511ee800680aaedc62b9358714e8", "ff0090819f669aaa0284d0f4aad1a6d9d67a6efdc6dd4eb4ac56b704f890a0d6"]
 pytest-asyncio = ["9fac5100fd716cbecf6ef89233e8590a4ad61d729d1732e0a96b84182df1daaf", "d734718e25cfc32d2bf78d346e99d33724deeba774cc4afdf491530c6184b63b"]
 pytest-cov = ["0ab664b25c6aa9716cbf203b17ddb301932383046082c081b9848a0edf5add33", "230ef817450ab0699c6cc3c9c8f7a829c34674456f2ed8df1fe1d39780f7c87f"]
 pytest-django = ["30d773f1768e8f214a3106f1090e00300ce6edfcac8c55fd13b675fe1cbd1c85", "4d3283e774fe1d40630ee58bf34929b83875e4751b525eeb07a7506996eb42ee"]
-pytest-mock = ["96a0cebc66e09930be2a15b03333d90b59584d3fb011924f81c14b50ee0afbba", "e5381be2608e49547f5e47633c5f81241ebf6206d17ce516a7a18d5a917e3859"]
+pytest-mock = ["b3514caac35fe3f05555923eabd9546abce11571cc2ddf7d8615959d04f2c89e", "ea502c3891599c26243a3a847ccf0b1d20556678c528f86c98e3cd6d40c5cf11"]
 python-dateutil = ["063df5763652e21de43de7d9e00ccf239f953a832941e37be541614732cdfc93", "88f9287c0174266bb0d8cedd395cfba9c58e87e5ad86b2ce58859bc11be3cf02"]
 python-jose = ["29701d998fe560e52f17246c3213a882a4a39da7e42c7015bcc1f7823ceaff1c", "ed7387f0f9af2ea0ddc441d83a6eb47a5909bd0c8a72ac3250e75afec2cc1371"]
 python-server-metrics = ["da123c526fe7f1cc480797acd279b8c2ab139811b917ce378787fb9bd7f51b33"]
 pytz = ["1c557d7d0e871de1f5ccd5833f60fb2550652da6be2693c1e02300743d21500d", "b02c06db6cf09c12dd25137e563b31700d3b80fcc4ad23abb7a315f2789819be"]
 pywin32 = ["300a2db938e98c3e7e2093e4491439e62287d0d493fe07cce110db070b54c0be", "31f88a89139cb2adc40f8f0e65ee56a8c585f629974f9e07622ba80199057511", "371fcc39416d736401f0274dd64c2302728c9e034808e37381b5e1b22be4a6b0", "47a3c7551376a865dd8d095a98deba954a98f326c6fe3c72d8726ca6e6b15507", "4cdad3e84191194ea6d0dd1b1b9bdda574ff563177d2adf2b4efec2a244fa116", "7c1ae32c489dc012930787f06244426f8356e129184a02c25aef163917ce158e", "7f18199fbf29ca99dff10e1f09451582ae9e372a892ff03a28528a24d55875bc", "9b31e009564fb95db160f154e2aa195ed66bcc4c058ed72850d047141b36f3a2", "a929a4af626e530383a579431b70e512e736e9588106715215bf685a3ea508d4", "c054c52ba46e7eb6b7d7dfae4dbd987a1bb48ee86debe3f245a2884ece46e295", "f27cec5e7f588c3d1051651830ecc00294f90728d19c3bf6916e6dba93ea357c", "f4c5be1a293bae0076d93c88f37ee8da68136744588bc5e2be2f299a34ceb7aa"]
-pyyaml = ["0e7f69397d53155e55d10ff68fdfb2cf630a35e6daf65cf0bdeaf04f127c09dc", "2e9f0b7c5914367b0916c3c104a024bb68f269a486b9d04a2e8ac6f6597b7803", "35ace9b4147848cafac3db142795ee42deebe9d0dad885ce643928e88daebdcc", "38a4f0d114101c58c0f3a88aeaa44d63efd588845c5a2df5290b73db8f246d15", "483eb6a33b671408c8529106df3707270bfacb2447bf8ad856a4b4f57f6e3075", "4b6be5edb9f6bb73680f5bf4ee08ff25416d1400fbd4535fe0069b2994da07cd", "7f38e35c00e160db592091751d385cd7b3046d6d51f578b29943225178257b31", "8100c896ecb361794d8bfdb9c11fce618c7cf83d624d73d5ab38aef3bc82d43f", "c0ee8eca2c582d29c3c2ec6e2c4f703d1b7f1fb10bc72317355a746057e7346c", "e4c015484ff0ff197564917b4b4246ca03f411b9bd7f16e02a2f586eb48b6d04", "ebc4ed52dcc93eeebeae5cf5deb2ae4347b3a81c3fa12b0b8c976544829396a4"]
+pyyaml = ["0113bc0ec2ad727182326b61326afa3d1d8280ae1122493553fd6f4397f33df9", "01adf0b6c6f61bd11af6e10ca52b7d4057dd0be0343eb9283c878cf3af56aee4", "5124373960b0b3f4aa7df1707e63e9f109b5263eca5976c66e08b1c552d4eaf8", "5ca4f10adbddae56d824b2c09668e91219bb178a1eee1faa56af6f99f11bf696", "7907be34ffa3c5a32b60b95f4d95ea25361c951383a894fec31be7252b2b6f34", "7ec9b2a4ed5cad025c2278a1e6a19c011c80a3caaac804fd2d329e9cc2c287c9", "87ae4c829bb25b9fe99cf71fbb2140c448f534e24c998cc60f39ae4f94396a73", "9de9919becc9cc2ff03637872a440195ac4241c80536632fffeb6a1e25a74299", "a5a85b10e450c66b49f98846937e8cfca1db3127a9d5d1e31ca45c3d0bef4c5b", "b0997827b4f6a7c286c01c5f60384d218dca4ed7d9efa945c3e1aa623d5709ae", "b631ef96d3222e62861443cc89d6563ba3eeb816eeb96b2629345ab795e53681", "bf47c0607522fdbca6c9e817a6e81b08491de50f3766a7a0e6a5be7905961b41", "f81025eddd0327c7d4cfe9b62cf33190e1e736cc6e97502b3ec425f574b3e7a8"]
 ratelim = ["826d32177e11f9a12831901c9fda6679fd5bbea3605910820167088f5acbb11d", "e1a7dd39e6b552b7cc7f52169cd66cdb826a1a30198e355d7016012987c9ad08"]
 redis = ["6946b5dca72e86103edc8033019cc3814c031232d339d5f4533b02ea85685175", "8ca418d2ddca1b1a850afa1680a7d2fd1f3322739271de4b704e0d4668449273"]
 requests = ["502a824f31acdacb3a35b6690b5fbf0bc41d63a24a45c4004352b0242707598e", "7bf2a778576d825600030a110f3c0e3e8edc51dfaafe1c146e39a2027784957b"]
@@ -2162,7 +3076,7 @@ rsa = ["14ba45700ff1ec9eeb206a2ce76b32814958a98e372006c8fb76ba820211be66", "1a83
 s3transfer = ["6efc926738a3cd576c2a79725fed9afde92378aa5c6a957e3af010cb019fac9d", "b780f2411b824cb541dbcd2c713d0cb61c7d1bcadae204cdddda2b35cef493ba"]
 safety = ["0a3a8a178a9c96242b224f033ee8d1d130c0448b0e6622d12deaf37f6c3b4e59", "5059f3ffab3648330548ea9c7403405bbfaf085b11235770825d14c58f24cb78"]
 setoptconf = ["5b0b5d8e0077713f5d5152d4f63be6f048d9a1bb66be15d089a11c898c3cf49c"]
-shipchain-common = ["8fbf1ac1433e52c9405660606e23ffaf533bae049dfa47692107f54545aed0bf", "d062884530bfd0d614c81d3fb8a5521aeb83ee203e43719c4a28f03a9d87aa31"]
+shipchain-common = ["0f458ed18c55ea529f8f5e3b859d803039f5b6855645c2f99e22e140ca2de0b5", "c984c4bdec333e088769aaf6b575e34f4e5acbd61f7ff16f65fb6a920c2a34f4"]
 six = ["1f1b7d42e254082a9db6279deae68afb421ceba6158efa6131de7b3003ee93fd", "30f610279e8b2578cab6db20741130331735c781b56053c59c4076da27f06b66"]
 smmap2 = ["0555a7bf4df71d1ef4218e4807bbf9b201f910174e6e08af2e138d4e517b4dde", "29a9ffa0497e7f2be94ca0ed1ca1aa3cd4cf25a1f6b4f5f87f74b46ed91d609a"]
 snowballstemmer = ["209f257d7533fdb3cb73bdbd24f436239ca3b2fa67d56f6ff88e86be08cc5ef0", "df3bac3df4c2c01363f3dd2cfa78cce2840a79b9f1c2d2de9ce8d31683992f52"]
@@ -2170,7 +3084,7 @@ sqlparse = ["40afe6b8d4b1117e7dff5504d7a8ce07d9a1b15aeeade8a2d10f130a834f8177", 
 sshpubkeys = ["9f73d51c2ef1e68cd7bde0825df29b3c6ec89f4ce24ebca3bf9eaa4a23a284db", "b388399caeeccdc145f06fd0d2665eeecc545385c60b55c282a15a022215af80"]
 stevedore = ["01d9f4beecf0fbd070ddb18e5efb10567801ba7ef3ddab0074f54e3cd4e91730", "e0739f9739a681c7a1fda76a102b65295e96a144ccdb552f2ae03c5f0abe8a14"]
 texttable = ["eff3703781fbc7750125f50e10f001195174f13825a92a45e9403037d539b4f4"]
-tld = ["631b8ac1fc30db57e51756ed0f15c5019816efa1834109ef1a980d71291de392", "97a3685cbbb7e044c5e253bdf87c3802eaa709bdf309b4c2a60d23995bca9e37"]
+tld = ["5963b22029e632a17bde87e35a19dc8c5b17266fb8c58e4d550d5593307e3a72", "80aac213032afe9b4f29f605154ea5ca0e329d2c299cd844853075a201cf0921"]
 twisted = ["0f39698c2aac318032ed4fe95e28ee2bd7d72327c2f6927139811ad403770885", "1f0919a0363b4fbed5def5315383db36fd581464bca80290764f8c4465e91c04", "257dbc78e72bc69c2970035fc74df54b04573d5ddd380251a8a23f74d619db03", "3f651c52ad78cc5a643f61e3b786a6b5c9b4ee68eced975c04fdf6b02026f470", "58b581ae4eee5a831aac9d03edc331d662fa028f601015bb3df47f8704bfe876", "611ef7696d406605962d9a7b040d357f3e91df20cf75c0b06e350947f541538b", "6338e5b987e95c94360acb14e78b41097be9b45d44d15a68060db9c3bf89e102", "7394ba7f272ae722a74f3d969dcf599bc4ef093bc392038748a490f1724a515d", "776c65270b57ac074d5b7a471142f434b0ac5a8b39d9c974769c855c32abfd91", "8b2f7f4dded5ad02931bed38042e55329d1e4919b63078f5a29f05502a163f1d", "97f8a76632bf051a27179337fe937df315920a08e9bd146126e0126629db3721", "a1de7598ce977943b3edbcc0a7d2112f134cc1b98b2fd7e348ee9e0bef092e50", "d145c418a46f8a7021030a3246b9e5111f64531278e5252f2073f23c1661c8be", "d53e1f883bc429b14fd2999d355352974f9d7b4ae7554154bbfe3f90aecede5f", "d9037ff5e07909b1d31f81db71a3bbc8227ba1ed20c87332bdb2eb48e55f326e", "ef1396d1680d6a1ae6dff293d778755c8e10d471f286aff678877b2cee235d42", "f1fe9139fdcf7721d308e36c51cf975474678a8241a9799af02a7bb1c531b722", "f28355e61ce0b5c1ce47784522022322cc5059c8ed80638e0caae8c7301e1705", "f7cc56a45c983e4e48601fbeec879b62c740cb848c75164f69a48ac0c6e8a21c"]
 txaio = ["67e360ac73b12c52058219bb5f8b3ed4105d2636707a36a7cdafb56fe06db7fe", "b6b235d432cc58ffe111b43e337db71a5caa5d3eaa88f0eacf60b431c7626ef5"]
 typed-ast = ["1170afa46a3799e18b4c977777ce137bb53c7485379d9706af8a59f2ea1aa161", "18511a0b3e7922276346bcb47e2ef9f38fb90fd31cb9223eed42c85d1312344e", "262c247a82d005e43b5b7f69aff746370538e176131c32dda9cb0f324d27141e", "2b907eb046d049bcd9892e3076c7a6456c93a25bebfe554e931620c90e6a25b0", "354c16e5babd09f5cb0ee000d54cfa38401d8b8891eefa878ac772f827181a3c", "48e5b1e71f25cfdef98b013263a88d7145879fbb2d5185f2a0c79fa7ebbeae47", "4e0b70c6fc4d010f8107726af5fd37921b666f5b31d9331f0bd24ad9a088e631", "630968c5cdee51a11c05a30453f8cd65e0cc1d2ad0d9192819df9978984529f4", "66480f95b8167c9c5c5c87f32cf437d585937970f3fc24386f313a4c97b44e34", "71211d26ffd12d63a83e079ff258ac9d56a1376a25bc80b1cdcdf601b855b90b", "7954560051331d003b4e2b3eb822d9dd2e376fa4f6d98fee32f452f52dd6ebb2", "838997f4310012cf2e1ad3803bce2f3402e9ffb71ded61b5ee22617b3a7f6b6e", "95bd11af7eafc16e829af2d3df510cecfd4387f6453355188342c3e79a2ec87a", "bc6c7d3fa1325a0c6613512a093bc2a2a15aeec350451cbdf9e1d4bffe3e3233", "cc34a6f5b426748a507dd5d1de4c1978f2eb5626d51326e43280941206c209e1", "d755f03c1e4a51e9b24d899561fec4ccaf51f210d52abdf8c07ee2849b212a36", "d7c45933b1bdfaf9f36c579671fec15d25b06c8398f113dab64c18ed1adda01d", "d896919306dd0aa22d0132f62a1b78d11aaf4c9fc5b3410d3c666b818191630a", "fdc1c9bbf79510b76408840e009ed65958feba92a88833cdceecff93ae8fff66", "ffde2fbfad571af120fcbfbbc61c72469e72f550d676c3342492a9dfdefb8f12"]
