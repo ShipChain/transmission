@@ -3,6 +3,7 @@ import logging
 from collections import OrderedDict
 from datetime import datetime, timezone, timedelta
 from functools import partial
+from inflection import camelize
 
 import boto3
 import pytz
@@ -422,9 +423,9 @@ class ChangesDiffSerializer:
     # Enum field serializers
     stateEnumSerializer = UpperEnumField(TransitState, lenient=True, ints_as_names=True, read_only=True)
     exceptionEnumSerializer = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, read_only=True)
-    file_typeEnumSerializer = UpperEnumField(FileType, lenient=True, ints_as_names=True, read_only=True)
-    upload_statusEnumSerializer = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True)
-    document_typeEnumSerializer = UpperEnumField(DocumentType, lenient=True, ints_as_names=True, read_only=True)
+    fileTypeEnumSerializer = UpperEnumField(FileType, lenient=True, ints_as_names=True, read_only=True)
+    uploadStatusEnumSerializer = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True)
+    documentTypeEnumSerializer = UpperEnumField(DocumentType, lenient=True, ints_as_names=True, read_only=True)
 
     def __init__(self, queryset, request):
         self.queryset = queryset
@@ -449,6 +450,7 @@ class ChangesDiffSerializer:
         # The initial enum values are None
         if field_value is not None:
             # We wrap this in a try:except to avoid fields like Location.state
+            field_name = camelize(field_name, uppercase_first_letter=False)
             try:
                 representation = getattr(self, f'{field_name}EnumSerializer').to_representation(field_value)
             except (AttributeError, ValueError):
@@ -508,7 +510,7 @@ class ChangesDiffSerializer:
         return changes_list
 
     def document_actions(self, new_obj):
-        document_queryset = new_obj.historicaldocument_set.all().filter(upload_status=1)
+        document_queryset = new_obj.historicaldocument_set.all().filter(upload_status=UploadStatus.COMPLETE)
         if document_queryset.count() > 0:
             for hist_doc in document_queryset:
                 yield {
