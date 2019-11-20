@@ -18,7 +18,8 @@ S3_MAX_BYTES = 12500000
 
 
 if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
-    S3_CLIENT = BOTO3_SESSION.client('s3')
+    S3_CLIENT = BOTO3_SESSION.client('s3',
+                                     config=Config(s3={'use_accelerate_endpoint': True}))
 else:
     S3_CLIENT = boto3.client(
         's3',
