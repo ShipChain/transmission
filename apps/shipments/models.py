@@ -315,7 +315,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     asset_physical_id = models.CharField(null=True, max_length=255)
     asset_custodian_id = models.CharField(null=True, max_length=36)
 
-    geofences = ArrayField(models.CharField(null=False, max_length=36), null=True)
+    geofences = ArrayField(models.CharField(null=True, max_length=36), blank=True, null=True)
 
     customer_fields = JSONField(blank=True, null=True)
 

@@ -141,10 +141,12 @@ def shipment_iot_fields_changed(sender, instance, changed_fields, **kwargs):
             old, new = changed_fields[device_field]
             logging.info(f'Device ID changed from {old} to {new} for Shipment {instance.id}, updating shadow')
             if old:
-                iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': '', 'shipmentState': ''})
+                iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': '', 'shipmentState': '', 'geofences': ''})
             if new:
                 shadow_update['deviceId'] = new
                 shadow_update['shipmentId'] = instance.id
+                shadow_update['shipmentState'] = TransitState(instance.state).name
+                shadow_update['geofences'] = instance.geofences
 
         state_field = Shipment._meta.get_field('state')
         if state_field in changed_fields:
@@ -156,7 +158,7 @@ def shipment_iot_fields_changed(sender, instance, changed_fields, **kwargs):
         if geofences_field in changed_fields:
             old, new = changed_fields[geofences_field]
             logging.info(f'Shipment geofences changed from {old} to {new} for Shipment {instance.id}, updating shadow')
-            shadow_update['geofences'] = instance.geofences
+            shadow_update['geofences'] = instance.geofences if instance.geofences else ''
 
         if instance.device_id:
             try:

@@ -95,11 +95,25 @@ class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 
+class GeofenceListField(serializers.ListField):
+    def to_internal_value(self, data):
+        # In order to support form-data requests, we have to parse json-formatted geofence data
+        # ListFields come back like geofences: ["["geofence-id", "geofence2-id"]"]
+        if len(data) == 1:
+            try:
+                data = json.loads(data[0])
+            except (json.JSONDecodeError, TypeError):
+                pass
+        return super().to_internal_value(data)
+
+
 class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
     """
     Serializer for a shipment object
     """
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
+
+    geofences = GeofenceListField(child=serializers.CharField(), required=False)
 
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
     exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
