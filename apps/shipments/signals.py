@@ -129,14 +129,16 @@ def trackingdata_post_save(sender, **kwargs):
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})
 
 
-@receiver(post_save_changed, sender=Shipment, fields=['device', 'state'], dispatch_uid='shipment_iot_fields_post_save')
+@receiver(post_save_changed, sender=Shipment, fields=['device', 'state', 'geofences'],
+          dispatch_uid='shipment_iot_fields_post_save')
 def shipment_iot_fields_changed(sender, instance, changed_fields, **kwargs):
     if settings.IOT_THING_INTEGRATION:
         iot_client = DeviceAWSIoTClient()
 
         shadow_update = {}
-        if Shipment.device.field in changed_fields:
-            old, new = changed_fields[Shipment.device.field]
+        device_field = Shipment._meta.get_field('device')
+        if device_field in changed_fields:
+            old, new = changed_fields[device_field]
             logging.info(f'Device ID changed from {old} to {new} for Shipment {instance.id}, updating shadow')
             if old:
                 iot_client.update_shadow(old, {'deviceId': old, 'shipmentId': '', 'shipmentState': ''})
@@ -144,10 +146,17 @@ def shipment_iot_fields_changed(sender, instance, changed_fields, **kwargs):
                 shadow_update['deviceId'] = new
                 shadow_update['shipmentId'] = instance.id
 
-        if Shipment.state.field in changed_fields:
-            old, new = changed_fields[Shipment.state.field]
+        state_field = Shipment._meta.get_field('state')
+        if state_field in changed_fields:
+            old, new = changed_fields[state_field]
             logging.info(f'Shipment state changed from {old} to {new} for Shipment {instance.id}, updating shadow')
             shadow_update['shipmentState'] = TransitState(instance.state).name
+
+        geofences_field = Shipment._meta.get_field('geofences')
+        if geofences_field in changed_fields:
+            old, new = changed_fields[geofences_field]
+            logging.info(f'Shipment geofences changed from {old} to {new} for Shipment {instance.id}, updating shadow')
+            shadow_update['geofences'] = instance.geofences
 
         if instance.device_id:
             try:

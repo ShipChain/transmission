@@ -13,7 +13,7 @@ import pytz
 from django.conf import settings
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Point
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import JSONField, ArrayField
 from django.core.validators import RegexValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.functional import cached_property
@@ -314,6 +314,8 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
     asset_physical_id = models.CharField(null=True, max_length=255)
     asset_custodian_id = models.CharField(null=True, max_length=36)
+
+    geofences = ArrayField(models.CharField(null=False, max_length=36), null=True)
 
     customer_fields = JSONField(blank=True, null=True)
 
