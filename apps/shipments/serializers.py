@@ -136,6 +136,10 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data']
 
+    def validate_geofences(self, geofences):
+        # Deduplicate list
+        return list(set(geofences))
+
 
 class ShipmentCreateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, required=False)

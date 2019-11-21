@@ -68,4 +68,15 @@ def test_geofence_creates(api_client, mocked_iot_api, mocked_profiles, mocked_en
     updated_parameters = response.json()['data']['attributes']
     assert updated_parameters['geofences'] == [GEOFENCE_3]
 
-# TODO: check geofence_id uniqueness
+
+@pytest.mark.django_db
+def test_geofences_dedup(api_client, mocked_iot_api, shipment_with_device):
+    # Check geofence_id uniqueness
+    url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_with_device.id})
+    shipment_update_request = {
+        'geofences': [GEOFENCE_1, GEOFENCE_2, GEOFENCE_2, GEOFENCE_3, GEOFENCE_3, GEOFENCE_3]
+    }
+    response = api_client.patch(url, data=shipment_update_request, format='json')
+    assert response.status_code == status.HTTP_202_ACCEPTED
+    updated_parameters = response.json()['data']['attributes']
+    assert sorted(updated_parameters['geofences']) == sorted([GEOFENCE_1, GEOFENCE_2, GEOFENCE_3])
