@@ -1,6 +1,6 @@
 ## Base image with python and entrypoint scripts ##
 ## ============================================= ##
-FROM python:3.6.9-alpine3.10 AS base
+FROM python:3.6.9-alpine3.9 AS base
 
 LABEL maintainer="Adam Hodges <ahodges@shipchain.io>"
 
