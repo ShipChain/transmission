@@ -46,12 +46,3 @@ SHIPMENT_SEARCH_FIELDS = (
     'final_destination_location__postal_code', 'final_destination_location__country',
     'final_destination_location__state',
 )
-
-
-class HistoricalShipmentFilter(filters.filterset.FilterSet):
-    history_date__gte = filters.IsoDateTimeFilter(field_name='history_date', lookup_expr='gte')
-    history_date__lte = filters.IsoDateTimeFilter(field_name='history_date', lookup_expr='lte')
-
-    class Meta:
-        model = Shipment.history.model
-        fields = ('history_date', 'updated_at', )

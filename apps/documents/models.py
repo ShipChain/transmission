@@ -22,6 +22,7 @@ from shipchain_common.utils import random_id
 
 from apps.shipments.models import Shipment
 from apps.utils import UploadStatus
+from apps.simple_history import TxmHistoricalRecords
 
 
 class DocumentType(Enum):
@@ -60,6 +61,9 @@ class Document(models.Model):
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Model's history tracking definition
+    history = TxmHistoricalRecords()
 
     class Meta:
         ordering = ('-created_at',)

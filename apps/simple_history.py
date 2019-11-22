@@ -128,13 +128,13 @@ class TxmHistoricalRecords(HistoricalRecords):
                 finally:
                     old_field.swappable = old_swappable
 
-                if getattr(old_field, "one_to_one", False) or isinstance(old_field, models.OneToOneField):
+                if getattr(old_field, "one_to_one", False) or \
+                        isinstance(old_field, (models.OneToOneField, models.ForeignKey)):
                     field_type = models.ForeignKey
-                    field_model_name = old_field.name
 
-                    if field_model_name in settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys():
+                    if old_field.name in settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys():
                         field_args["to"] = f'shipments.Historical' \
-                                           f'{settings.RELATED_FIELDS_WITH_HISTORY_MAP[field_model_name]}'
+                                           f'{settings.RELATED_FIELDS_WITH_HISTORY_MAP[old_field.name]}'
                 else:
                     field_type = type(old_field)
 
@@ -145,7 +145,6 @@ class TxmHistoricalRecords(HistoricalRecords):
                 # so that they work for the historical field.
                 field_args.update(
                     db_constraint=False,
-                    related_name="+",
                     null=True,
                     blank=True,
                     primary_key=False,
@@ -168,16 +167,11 @@ class TxmHistoricalRecords(HistoricalRecords):
         manager = getattr(instance, self.manager_name)
 
         attrs = {}
-        if instance.__class__.__name__ == 'Shipment':
-            for field in self.fields_included(instance):
-                if field.name in settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys():
-                    related_instance = getattr(instance, field.name, None)
-                    if related_instance:
-                        attrs[field.name] = related_instance.history.first()
-                else:
-                    attrs[field.name] = getattr(instance, field.name)
-        else:
-            for field in self.fields_included(instance):
+        for field in self.fields_included(instance):
+            related_instance = getattr(instance, field.name, None)
+            if related_instance and hasattr(related_instance, 'history'):
+                attrs[field.name] = related_instance.history.first()
+            else:
                 attrs[field.name] = getattr(instance, field.name)
 
         history_instance = manager.model(

@@ -11,5 +11,6 @@ RELATED_FIELDS_WITH_HISTORY_MAP = {
     'ship_from_location': 'Location',
     'ship_to_location': 'Location',
     'final_destination_location': 'Location',
-    'bill_to_location': 'Location'
+    'bill_to_location': 'Location',
+    'shipment': 'Shipment'
 }

@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from functools import partial
 
 import boto3
+import pytz
 from botocore.exceptions import ClientError, BotoCoreError
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -24,6 +25,8 @@ from shipchain_common.utils import UpperEnumField
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData, PermissionLink, ExceptionType, TransitState
+from apps.documents.models import DocumentType, FileType
+from apps.utils import UploadStatus
 
 LOG = logging.getLogger('transmission')
 
@@ -414,11 +417,14 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 class ChangesDiffSerializer:
     relation_fields = settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys()
     excluded_fields = ('history_user', 'version', 'customer_fields', 'geometry',
-                       'background_data_hash_interval', 'manual_update_hash_interval')
+                       'background_data_hash_interval', 'manual_update_hash_interval', 'shipment', )
 
     # Enum field serializers
-    stateEnumSerializer = UpperEnumField(TransitState, lenient=True, ints_as_names=True, read_only=True)
-    exceptionEnumSerializer = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, read_only=True)
+    state_enum_serializer = UpperEnumField(TransitState, lenient=True, ints_as_names=True, read_only=True)
+    exception_enum_serializer = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, read_only=True)
+    file_type_enum_serializer = UpperEnumField(FileType, lenient=True, ints_as_names=True, read_only=True)
+    upload_status_enum_serializer = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True)
+    document_type_enum_serializer = UpperEnumField(DocumentType, lenient=True, ints_as_names=True, read_only=True)
 
     def __init__(self, queryset, request):
         self.queryset = queryset
@@ -444,7 +450,7 @@ class ChangesDiffSerializer:
         if field_value is not None:
             # We wrap this in a try:except to avoid fields like Location.state
             try:
-                representation = getattr(self, f'{field_name}EnumSerializer').to_representation(field_value)
+                representation = getattr(self, f'{field_name}_enum_serializer').to_representation(field_value)
             except (AttributeError, ValueError):
                 pass
         return representation
@@ -501,6 +507,36 @@ class ChangesDiffSerializer:
                     changes_list.extend(related_changes)
         return changes_list
 
+    def document_actions(self, new_obj):
+        document_queryset = new_obj.historicaldocument_set.all().filter(upload_status=UploadStatus.COMPLETE)
+        if document_queryset.count() > 0:
+            for hist_doc in document_queryset:
+                yield {
+                    'history_date': hist_doc.history_date,
+                    'fields': None,
+                    'relationships': {
+                        'documents': {
+                            'id': hist_doc.id,
+                            'fields': self.build_list_changes(hist_doc.diff(hist_doc.prev_record))
+                        }
+                    },
+                    'author': hist_doc.history_user
+                }
+
+    def datetime_filters(self, changes_diff):
+        gte_datetime = self.request.query_params.get('history_date__gte')
+        lte_datetime = self.request.query_params.get('history_date__lte')
+
+        if lte_datetime:
+            lte_datetime = parse(lte_datetime).astimezone(pytz.utc)
+            changes_diff = list(filter(lambda change: change['history_date'] <= lte_datetime, changes_diff))
+
+        if gte_datetime:
+            gte_datetime = parse(gte_datetime).astimezone(pytz.utc)
+            changes_diff = list(filter(lambda change: change['history_date'] >= gte_datetime, changes_diff))
+
+        return changes_diff
+
     @property
     def data(self):
         queryset = self.queryset
@@ -515,12 +551,13 @@ class ChangesDiffSerializer:
                 new = queryset[index]
                 old = queryset[index + 1]
                 index += 1
+                queryset_diff.extend(list(self.document_actions(new)))
                 queryset_diff.append(self.diff_object_fields(old, new))
 
-        if not self.request.query_params.get('history_date__gte'):
+            # The diff change for the shipment creation object is computed against a None object
             queryset_diff.append(self.diff_object_fields(None, queryset[index]))
 
-        return queryset_diff
+        return self.datetime_filters(queryset_diff)
 
 
 class DevicesQueryParamsSerializer(serializers.Serializer):

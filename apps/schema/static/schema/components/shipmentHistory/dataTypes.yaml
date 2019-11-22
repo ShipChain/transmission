@@ -68,3 +68,27 @@ locationFieldOld:
       description: Previous value of the location's field
       type: string
       example: 'Greenville'
+
+documentField:
+  properties:
+    field:
+      title: field
+      description: Document's field name
+      type: string
+      example: 'upload_status'
+
+documentFieldNew:
+  properties:
+    new:
+      title: new
+      description: New value of the document's field
+      type: string
+      example: 'COMPLETE'
+
+documentFieldOld:
+  properties:
+    old:
+      title: old
+      description: Previous value of the document's field
+      type: string
+      example: 'PENDING'
