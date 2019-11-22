@@ -1,7 +1,7 @@
 version: '3.4'
 services:
   newman:
-    image: postman/newman
+    image: postman/newman:alpine
     command: sh -c 'while sleep 3600; do :; done'
     entrypoint: ""
     links:
