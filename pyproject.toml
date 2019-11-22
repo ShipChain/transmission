@@ -45,7 +45,7 @@ django-redis = "==4.10.0"
 django-simple-history = "~2.7.0"
 djangorestframework = "==3.10.3"
 djangorestframework-gis = "==0.14"
-djangorestframework-jsonapi = "==3.0.0"
+djangorestframework-jsonapi = "~3.0"
 djangorestframework-simplejwt = {git = "git://github.com/ShipChain/django-rest-framework-simplejwt.git", rev = "f47065b7e0cf3adf8e4095796cfc13f651a117c6"}
 geocoder = "==1.38.1"
 geojson = "==2.4.0"
