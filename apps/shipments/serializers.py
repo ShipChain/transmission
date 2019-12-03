@@ -17,9 +17,10 @@ from django_fsm import can_proceed
 from enumfields import Enum
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from jose import jws, JWSError
-from rest_framework import exceptions, status, serializers
+from rest_framework import exceptions, status, serializers as rest_serializers
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
+from rest_framework_json_api import serializers
 from shipchain_common.utils import UpperEnumField
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
@@ -99,14 +100,18 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     Serializer for a shipment object
     """
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
-    ship_from_location = LocationSerializer(required=False)
-    ship_to_location = LocationSerializer(required=False)
-    bill_to_location = LocationSerializer(required=False)
-    final_destination_location = LocationSerializer(required=False)
-    device = DeviceSerializer(required=False)
 
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
     exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
+
+    included_serializers = {
+        'ship_from_location': LocationSerializer,
+        'ship_to_location': LocationSerializer,
+        'bill_to_location': LocationSerializer,
+        'final_destination_location': LocationSerializer,
+        'load_data': LoadShipmentSerializer,
+        'device': DeviceSerializer
+    }
 
     class Meta:
         model = Shipment
@@ -120,6 +125,11 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
 class ShipmentCreateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, required=False)
+    ship_from_location = LocationSerializer(required=False)
+    ship_to_location = LocationSerializer(required=False)
+    bill_to_location = LocationSerializer(required=False)
+    final_destination_location = LocationSerializer(required=False)
+    device = DeviceSerializer(required=False)
 
     def create(self, validated_data):
         extra_args = {}
@@ -175,6 +185,11 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, allow_null=True)
+    ship_from_location = LocationSerializer(required=False)
+    ship_to_location = LocationSerializer(required=False)
+    bill_to_location = LocationSerializer(required=False)
+    final_destination_location = LocationSerializer(required=False)
+    device = DeviceSerializer(required=False)
 
     class Meta:
         model = Shipment
@@ -279,14 +294,18 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     async_job_id = serializers.CharField(max_length=36)
 
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
-    ship_from_location = LocationSerializer(required=False)
-    ship_to_location = LocationSerializer(required=False)
-    bill_to_location = LocationSerializer(required=False)
-    final_destination_location = LocationSerializer(required=False)
-    device = DeviceSerializer(required=False)
 
     state = UpperEnumField(TransitState, ints_as_names=True)
     exception = UpperEnumField(ExceptionType, ints_as_names=True)
+
+    included_serializers = {
+        'ship_from_location': LocationSerializer,
+        'ship_to_location': LocationSerializer,
+        'bill_to_location': LocationSerializer,
+        'final_destination_location': LocationSerializer,
+        'load_data': LoadShipmentSerializer,
+        'device': DeviceSerializer
+    }
 
     class Meta:
         model = Shipment
@@ -317,7 +336,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours')
 
 
-class TrackingDataSerializer(serializers.Serializer):
+class TrackingDataSerializer(rest_serializers.Serializer):
     payload = serializers.RegexField(r'^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$')
 
     def validate(self, attrs):  # noqa: MC0001
