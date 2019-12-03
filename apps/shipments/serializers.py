@@ -336,7 +336,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours')
 
 
-class TrackingDataSerializer(rest_serializers.Serializer):
+class TrackingDataSerializer(serializers.Serializer):
     payload = serializers.RegexField(r'^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$')
 
     def validate(self, attrs):  # noqa: MC0001
@@ -405,7 +405,7 @@ class UnvalidatedTrackingDataSerializer(serializers.Serializer):
         return attrs
 
 
-class TrackingDataToDbSerializer(serializers.ModelSerializer):
+class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
     """
     Serializer for tracking data to be cached in db
     """
