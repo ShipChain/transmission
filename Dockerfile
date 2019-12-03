@@ -11,6 +11,7 @@ ENV PYTHONUNBUFFERED 1
 RUN apk add --no-cache bash curl libpq && \
     apk add --no-cache \
             --repository http://dl-3.alpinelinux.org/alpine/edge/main/ \
+            --repository http://dl-3.alpinelinux.org/alpine/edge/community/ \
             --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ \
             libcrypto1.1 binutils proj-dev gdal geos g++ && \
     curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && \

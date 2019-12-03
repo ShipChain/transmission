@@ -7,8 +7,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
+from fancy_cache import cache_page
 from influxdb_metrics.loader import log_metric
 from rest_framework import viewsets, permissions, status, filters, mixins, renderers
 from rest_framework.decorators import action
@@ -111,7 +111,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
 
-    @method_decorator(cache_page(60 * 10, cache='page'))  # Cache responses for 10 minutes
+    @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
     @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
     def tracking(self, request, version, pk):
         """
