@@ -6,7 +6,9 @@ from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from fancy_cache.memory import find_urls
 from fieldsignals import post_save_changed
+from rest_framework.reverse import reverse
 from shipchain_common.exceptions import AWSIoTError
 
 from apps.eth.models import TransactionReceipt
@@ -117,6 +119,12 @@ def trackingdata_pre_save(sender, **kwargs):
 def trackingdata_post_save(sender, **kwargs):
     instance = kwargs["instance"]
     LOG.debug(f'New tracking_data committed to db and will be pushed to the UI. Tracking_data: {instance.id}.')
+
+    # Invalidate cached tracking data view
+    tracking_get_url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': instance.shipment.id})
+    list(find_urls([tracking_get_url], purge=True))
+
+    # Notify websocket channel
     async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})
 
