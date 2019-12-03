@@ -111,7 +111,7 @@ class ShipmentViewSet(viewsets.ModelViewSet):
 
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
 
-    @method_decorator(cache_page(60 * 10, remember_all_urls=True))  # Cache responses for 10 minutes
+    @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
     @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
     def tracking(self, request, version, pk):
         """
