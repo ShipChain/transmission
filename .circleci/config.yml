@@ -4,7 +4,7 @@ orbs:
 jobs:
   build:
     docker:
-      - image: circleci/python:3.6.9
+      - image: circleci/python:3.6.8
         user: root
     environment:
       ROLE: circleci
@@ -118,7 +118,7 @@ jobs:
 
   integration-testing:
     docker:
-      - image: circleci/python:3.6.9-node
+      - image: circleci/python:3.6.8-node
         user: root
     environment:
       ROLE: int
