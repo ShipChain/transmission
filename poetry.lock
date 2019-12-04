@@ -131,7 +131,7 @@ description = "AWS SAM Translator is a library that transform SAM templates into
 name = "aws-sam-translator"
 optional = false
 python-versions = "*"
-version = "1.17.0"
+version = "1.18.0"
 
 [package.dependencies]
 boto3 = ">=1.5,<2.0"
@@ -444,7 +444,7 @@ description = "A high-level Python Web framework that encourages rapid developme
 name = "django"
 optional = false
 python-versions = ">=3.5"
-version = "2.2.4"
+version = "2.2.7"
 
 [package.dependencies]
 pytz = "*"
@@ -456,7 +456,7 @@ description = "django-admin-rangefilter app, add the filter by a custom date ran
 name = "django-admin-rangefilter"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.5.1"
+version = "0.5.2"
 
 [[package]]
 category = "main"
@@ -602,8 +602,8 @@ category = "main"
 description = "Web APIs for Django, made easy."
 name = "djangorestframework"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "3.9.1"
+python-versions = ">=3.5"
+version = "3.10.3"
 
 [[package]]
 category = "main"
@@ -621,14 +621,13 @@ category = "main"
 description = "A Django REST framework API adapter for the JSON API spec."
 name = "djangorestframework-jsonapi"
 optional = false
-python-versions = "*"
-version = "2.5.0"
+python-versions = ">=3.5"
+version = "3.0.0"
 
 [package.dependencies]
 django = ">=1.11"
-djangorestframework = ">=3.6.3"
+djangorestframework = ">=3.10"
 inflection = ">=0.3.0"
-six = "*"
 
 [[package]]
 category = "main"
@@ -1719,17 +1718,17 @@ description = "A PyPI package containing shared code for ShipChain's Python/Djan
 name = "shipchain-common"
 optional = false
 python-versions = ">=3.6,<3.8"
-version = "1.0.7"
+version = "1.0.9"
 
 [package.dependencies]
 aws-requests-auth = ">=0.4,<0.5"
 boto3 = ">=1.9,<1.10"
 cryptography = ">=2.5,<2.6"
-django = ">=2.2.4,<3.0.0"
+django = ">=2.2.7,<2.3.0"
 django-enumfields = ">=0.10.0,<0.11.0"
 django-influxdb-tagged-metrics = "1.3.3"
-djangorestframework = ">=3.9.1,<4.0.0"
-djangorestframework-jsonapi = ">=2,<3"
+djangorestframework = ">=3.10,<3.11"
+djangorestframework-jsonapi = ">=3,<4"
 drf-nested-routers = ">=0.91.0,<0.92.0"
 python-dateutil = ">=2.7.5,<2.8.0"
 requests = ">=2.21,<3.0"
@@ -2000,8 +1999,8 @@ version = "4.7.1"
 setuptools = "*"
 
 [metadata]
-content-hash = "a1f7cc4a962e2764121920590b3541bd60386b6179e707cb95b65df454a9e7a6"
-python-versions = "==3.6.8"
+content-hash = "23f1727a95eeb121e66867ca288aa75e3206387894ccaef3829cecc265c1a30a"
+python-versions = "==3.6.9"
 
 [metadata.hashes]
 aioredis = ["15f8af30b044c771aee6787e5ec24694c048184c7b9e54c3b60c750a4b93273a", "b61808d7e97b7cd5a92ed574937a079c9387fdadd22bfbfa7ad2fd319ecc26e3"]
@@ -2016,7 +2015,7 @@ attrs = ["08a96c641c3a74e44eb59afb61a24f2cb9f4d7188748e76ba4bb5edfa3cb7d1c", "f7
 autobahn = ["8b58a7d3188e2c103dff5115fd6f449261df7282aa92e741acf676f90443e097", "92c3ff4c43017bfe2218f38e8bf71bb2dd474e1fc08922c4b4932310b8609c5d"]
 automat = ["269a09dfb063a3b078983f4976d83f0a0d3e6e7aaf8e27d8df1095e09dc4a484", "81c93c55d2742c55e74e6497a48e048a859fa01d7aa0b91a032be432229837e2"]
 aws-requests-auth = ["112c85fe938a01e28f7e1a87168615b6977b28596362b1dcbafbf4f2cc69f720"]
-aws-sam-translator = ["9e7d64ddf4d2e755dcf82c8a3562edbc184d5c7dbc30f4e23ac0a88c7c0c72d7"]
+aws-sam-translator = ["b941d3f5d594346f02d8af628aec2550cd0df1ae608ddf009f6ff4859ccbfd3a"]
 aws-xray-sdk = ["75cbce8c777b7d8055719ee1a0db6043e53c44e8f1a62a956bd84db87c4a4c7c", "ce4adb60fe67ebe91f2fc57d5067b4e44df6e233652987be4fb2e549688cf9fe"]
 bandit = ["6102b5d6afd9d966df5054e0bdfc2e73a24d0fea400ec25f2e54c134412158d7", "9413facfe9de1e1bd291d525c784e1beb1a55c9916b51dae12979af63a69ba4c"]
 billiard = ["42d9a227401ac4fba892918bba0a0c409def5435c4b483267ebfe821afaaba0e"]
@@ -2043,8 +2042,8 @@ cryptography = ["05b3ded5e88747d28ee3ef493f2b92cbb947c1e45cf98cfef22e6d38bb67d4a
 curtsies = ["89c802ec051d01dec6fc983e9856a3706e4ea8265d2940b1f6d504a9e26ed3a9"]
 daphne = ["07810599fb7df656192cf3deaaada078d876626e0d7243b7b80eca051921c1fc", "728dc952f8ddd65bab70a4f424a437233c70ddf3593acee833ed5e430196dca8"]
 decorator = ["54c38050039232e1db4ad7375cfce6748d7b41c29e95a081c8a6d2c30364a2ce", "5d19b92a3c8f7f101c8dd86afd86b0f061a8ce4540ab8cd401fa2542756bce6d"]
-django = ["16a5d54411599780ac9dfe3b9b38f90f785c51259a584e0b24b6f14a7f69aae8", "9a2f98211ab474c710fcdad29c82f30fc14ce9917c7a70c3682162a624de4035"]
-django-admin-rangefilter = ["0997b82d01b3791efd8b94063def7a7f4afb8b7986ec6776fbfee86715230274", "b867ecf893c049900964a9ac6495255a108905592a4030d338b231473f4f708f"]
+django = ["16040e1288c6c9f68c6da2fe75ebde83c0a158f6f5d54f4c5177b0c1478c5b86", "89c2007ca4fa5b351a51a279eccff298520783b713bf28efb89dfb81c80ea49b"]
+django-admin-rangefilter = ["44a62eca17dcc36ea60312c6076463c11b81294420c727fa667d0f8ec6d5c54c", "9de20ff967ee55e7e40a0fb38529f3fb5df346efe20b1e46e1865c3021093cfa"]
 django-cors-headers = ["0e9532628b3aa8806442d4d0b15e56112e6cfbef3735e13401935c98b842a2b4", "c7ec4816ec49416517b84f317499d1519db62125471922ab78d670474ed9b987"]
 django-dotenv = ["3812bb0f4876cf31f902aad140f0645e120e51ee30eb7c40c22050f58a0e4adb", "a9b1b40a70bd321acd231926acedb9bd2c5e873e33a1873b34a7276d196a765e"]
 django-enumfields = ["fafbf81c1a1707429c3ec5b5c4d4a2ca33bbffb3fa4c777dd35567e164391bf6"]
@@ -2059,9 +2058,9 @@ django-influxdb-tagged-metrics = ["f2a7c8dee5b32835b450474cc898e9842a4b9bfe10d8b
 django-mock-queries = ["d5b6991d1b65c54b272c89f17296a034f7fffd0f4ea78e39104b8c9f0796b4d4"]
 django-redis = ["af0b393864e91228dd30d8c85b5c44d670b5524cb161b7f9e41acc98b6e5ace7", "f46115577063d00a890867c6964ba096057f07cb756e78e0503b89cd18e4e083"]
 django-simple-history = ["7273add61d3f89453c475531627f8c69cbfc41d6fb99d45278dddc3bafe39284", "7f3044439e401fb02b12231b675590865a27a149f6bd99587e429cbe6a9dd6a6"]
-djangorestframework = ["79c6efbb2514bc50cf25906d7c0a5cfead714c7af667ff4bd110312cd380ae66", "a4138613b67e3a223be6c97f53b13d759c5b90d2b433bad670b8ebf95402075f"]
+djangorestframework = ["5488aed8f8df5ec1d70f04b2114abc52ae6729748a176c453313834a9ee179c8", "dc81cbf9775c6898a580f6f1f387c4777d12bd87abf0f5406018d32ccae71090"]
 djangorestframework-gis = ["35527c51e083ccc93f6e6d90a6515c132bbeb2c5648b166ac5b1a48c4ea8e2a4", "e645c6c8aedee53ac0a4851abcdf8121fff66813eebae1b040b1ccb941cb248b"]
-djangorestframework-jsonapi = ["61c3b5ce8b88243b5608254df7f2861cec9cbd933b06b798716c4ad7549710d7", "94cec93546ed48c92ace053562bdd94504d2f396c68d551c6f99277923cebaf4"]
+djangorestframework-jsonapi = ["1610aef92e211f3904fb8d51ad1f3cd6f1256f617169eb63524bb053430d98b2", "61d28ac49274815b1735d87b7ab93f38b481916ddfa7231509de297fd27e5b3b"]
 djangorestframework-simplejwt = []
 docker = ["6e06c5e70ba4fad73e35f00c55a895a448398f3ada7faae072e2bb01348bafc1", "8f93775b8bdae3a2df6bc9a5312cce564cade58d6555f2c2570165a1270cd8a7"]
 docutils = ["6c4f696463b79f1fb8ba0c594b63840ebd41f059e92b31957c46b74a4599b6d0", "9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827", "a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99"]
@@ -2162,7 +2161,7 @@ rsa = ["14ba45700ff1ec9eeb206a2ce76b32814958a98e372006c8fb76ba820211be66", "1a83
 s3transfer = ["6efc926738a3cd576c2a79725fed9afde92378aa5c6a957e3af010cb019fac9d", "b780f2411b824cb541dbcd2c713d0cb61c7d1bcadae204cdddda2b35cef493ba"]
 safety = ["0a3a8a178a9c96242b224f033ee8d1d130c0448b0e6622d12deaf37f6c3b4e59", "5059f3ffab3648330548ea9c7403405bbfaf085b11235770825d14c58f24cb78"]
 setoptconf = ["5b0b5d8e0077713f5d5152d4f63be6f048d9a1bb66be15d089a11c898c3cf49c"]
-shipchain-common = ["8fbf1ac1433e52c9405660606e23ffaf533bae049dfa47692107f54545aed0bf", "d062884530bfd0d614c81d3fb8a5521aeb83ee203e43719c4a28f03a9d87aa31"]
+shipchain-common = ["358a9f4645b14496590751daeb4ded7579e694bfd6ced760e4b88ce6db4a780d", "3a3e85fc1908e7176d81173005603d5e675092353abfbcae3f1f91382fe19fe2"]
 six = ["1f1b7d42e254082a9db6279deae68afb421ceba6158efa6131de7b3003ee93fd", "30f610279e8b2578cab6db20741130331735c781b56053c59c4076da27f06b66"]
 smmap2 = ["0555a7bf4df71d1ef4218e4807bbf9b201f910174e6e08af2e138d4e517b4dde", "29a9ffa0497e7f2be94ca0ed1ca1aa3cd4cf25a1f6b4f5f87f74b46ed91d609a"]
 snowballstemmer = ["209f257d7533fdb3cb73bdbd24f436239ca3b2fa67d56f6ff88e86be08cc5ef0", "df3bac3df4c2c01363f3dd2cfa78cce2840a79b9f1c2d2de9ce8d31683992f52"]

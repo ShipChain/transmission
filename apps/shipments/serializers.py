@@ -100,14 +100,18 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     Serializer for a shipment object
     """
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
-    ship_from_location = LocationSerializer(required=False)
-    ship_to_location = LocationSerializer(required=False)
-    bill_to_location = LocationSerializer(required=False)
-    final_destination_location = LocationSerializer(required=False)
-    device = DeviceSerializer(required=False)
 
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
     exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
+
+    included_serializers = {
+        'ship_from_location': LocationSerializer,
+        'ship_to_location': LocationSerializer,
+        'bill_to_location': LocationSerializer,
+        'final_destination_location': LocationSerializer,
+        'load_data': LoadShipmentSerializer,
+        'device': DeviceSerializer
+    }
 
     class Meta:
         model = Shipment
@@ -121,6 +125,11 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
 class ShipmentCreateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, required=False)
+    ship_from_location = LocationSerializer(required=False)
+    ship_to_location = LocationSerializer(required=False)
+    bill_to_location = LocationSerializer(required=False)
+    final_destination_location = LocationSerializer(required=False)
+    device = DeviceSerializer(required=False)
 
     def create(self, validated_data):
         extra_args = {}
@@ -176,6 +185,11 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, allow_null=True)
+    ship_from_location = LocationSerializer(required=False)
+    ship_to_location = LocationSerializer(required=False)
+    bill_to_location = LocationSerializer(required=False)
+    final_destination_location = LocationSerializer(required=False)
+    device = DeviceSerializer(required=False)
 
     class Meta:
         model = Shipment
@@ -280,14 +294,18 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     async_job_id = serializers.CharField(max_length=36)
 
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
-    ship_from_location = LocationSerializer(required=False)
-    ship_to_location = LocationSerializer(required=False)
-    bill_to_location = LocationSerializer(required=False)
-    final_destination_location = LocationSerializer(required=False)
-    device = DeviceSerializer(required=False)
 
     state = UpperEnumField(TransitState, ints_as_names=True)
     exception = UpperEnumField(ExceptionType, ints_as_names=True)
+
+    included_serializers = {
+        'ship_from_location': LocationSerializer,
+        'ship_to_location': LocationSerializer,
+        'bill_to_location': LocationSerializer,
+        'final_destination_location': LocationSerializer,
+        'load_data': LoadShipmentSerializer,
+        'device': DeviceSerializer
+    }
 
     class Meta:
         model = Shipment
