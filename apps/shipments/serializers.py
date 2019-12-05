@@ -601,9 +601,20 @@ class ChangesDiffSerializer:
         return self.datetime_filters(queryset_diff)
 
 
+class ShipmentOverviewTransitState(Enum):
+    IN_TRANSIT = 20
+    AWAITING_DELIVERY = 30
+    DELIVERED = 40
+
+    @classmethod
+    def choices(cls):
+        return tuple((m.value, m.name) for m in cls)
+
+
 class DevicesQueryParamsSerializer(serializers.Serializer):
     active = serializers.BooleanField(required=False, allow_null=True, default=None)
     in_bbox = serializers.CharField(required=False, allow_null=True, default=None)
+    state = UpperEnumField(ShipmentOverviewTransitState, lenient=True, ints_as_names=True, required=False)
 
     def validate_in_bbox(self, in_bbox):
         long_range = (-180, 180)

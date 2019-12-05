@@ -39,14 +39,15 @@ class DeviceAWSIoTClient(AWSIoTClient):
 
         return iot_shadow['data']
 
-    def get_list_owner_devices(self, owner_id, active=None, in_bbox=None):
+    def get_list_owner_devices(self, owner_id, params):
         next_token = True
         results = []
         while next_token:
             params_dict = {
                 'ownerId': owner_id,
-                'active': active if active is not None else '',
-                'in_bbox': in_bbox if in_bbox else '',
+                'active': params.get('active') if params.get('active') is not None else '',
+                'in_bbox': params.get('in_bbox') if params.get('in_bbox') else '',
+                'state': params.get('state').name if params.get('state') else '',
                 'maxResults': settings.IOT_DEVICES_PAGE_SIZE,
                 'nextToken': next_token if next_token and not isinstance(next_token, bool) else ''
             }
