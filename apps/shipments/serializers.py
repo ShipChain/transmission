@@ -21,7 +21,7 @@ from rest_framework import exceptions, status, serializers as rest_serializers
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
-from shipchain_common.utils import UpperEnumField
+from shipchain_common.utils import UpperEnumField, validate_uuid4
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData, PermissionLink, ExceptionType, TransitState
@@ -137,6 +137,10 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
                               'final_destination_location', 'load_data']
 
     def validate_geofences(self, geofences):
+        for geofence in geofences:
+            if not validate_uuid4(geofence):
+                raise serializers.ValidationError(f'Invalid UUIDv4 {geofence} provided in Geofences')
+
         # Deduplicate list
         return list(set(geofences))
 

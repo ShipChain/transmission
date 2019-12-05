@@ -80,6 +80,7 @@ createAttributes:
   - $ref: '#/shipment/exception'
   - $ref: '#/shipment/assetPhysicalId'
   - $ref: '#/shipment/assetCustodianId'
+  - $ref: '#/shipment/geofences'
 
 patchAttributes:
   allOf:
@@ -140,6 +141,7 @@ patchAttributes:
     - $ref: '#/shipment/customerFields'
     - $ref: '#/shipment/assetPhysicalId'
     - $ref: '#/shipment/assetCustodianId'
+    - $ref: '#/shipment/geofences'
 
 createRequest:
   allOf:

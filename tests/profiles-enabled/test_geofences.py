@@ -35,7 +35,7 @@ def test_shadow_geofence_updates(mocked_iot_api, shipment_with_device):
 
 
 @pytest.mark.django_db
-def test_geofence_updates(api_client, mocked_iot_api, shipment_with_device):
+def test_geofence_updates(api_client, mocked_iot_api, shipment_with_device, shipment):
     url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_with_device.id})
     shipment_update_request = {
         'geofences': [GEOFENCE_1]
@@ -45,15 +45,23 @@ def test_geofence_updates(api_client, mocked_iot_api, shipment_with_device):
     updated_parameters = response.json()['data']['attributes']
     assert updated_parameters['geofences'] == [GEOFENCE_1]
 
-    url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_with_device.id})
     shipment_update_request_formdata, content_type = create_form_content({
         "geofences": json.dumps([GEOFENCE_2]),
     })
-
     response = api_client.patch(url, data=shipment_update_request_formdata, content_type=content_type)
     assert response.status_code == status.HTTP_202_ACCEPTED
     updated_parameters = response.json()['data']['attributes']
     assert updated_parameters['geofences'] == [GEOFENCE_2]
+
+    # Test shipment without a device
+    url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment.id})
+    shipment_update_request = {
+        'geofences': [GEOFENCE_3]
+    }
+    response = api_client.patch(url, data=shipment_update_request, format='json')
+    assert response.status_code == status.HTTP_202_ACCEPTED
+    updated_parameters = response.json()['data']['attributes']
+    assert updated_parameters['geofences'] == [GEOFENCE_3]
 
 
 @pytest.mark.django_db
@@ -70,7 +78,7 @@ def test_geofence_creates(api_client, mocked_iot_api, mocked_profiles, mocked_en
 
 
 @pytest.mark.django_db
-def test_geofences_dedup(api_client, mocked_iot_api, shipment_with_device):
+def test_geofence_dedup(api_client, mocked_iot_api, shipment_with_device):
     # Check geofence_id uniqueness
     url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_with_device.id})
     shipment_update_request = {
@@ -80,3 +88,22 @@ def test_geofences_dedup(api_client, mocked_iot_api, shipment_with_device):
     assert response.status_code == status.HTTP_202_ACCEPTED
     updated_parameters = response.json()['data']['attributes']
     assert sorted(updated_parameters['geofences']) == sorted([GEOFENCE_1, GEOFENCE_2, GEOFENCE_3])
+
+
+@pytest.mark.django_db
+def test_geofence_uuid_validation(api_client, mocked_iot_api, shipment_with_device):
+    # Test validity of UUID
+    url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_with_device.id})
+    shipment_update_request = {
+        'geofences': [GEOFENCE_1, "not-a-uuid-4"]
+    }
+    response = api_client.patch(url, data=shipment_update_request, format='json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    # UUID without dashes is invalid
+    url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_with_device.id})
+    shipment_update_request = {
+        'geofences': [GEOFENCE_1.replace('-', ''), GEOFENCE_2]
+    }
+    response = api_client.patch(url, data=shipment_update_request, format='json')
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
