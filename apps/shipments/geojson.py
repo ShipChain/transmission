@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from django.core.serializers.base import SerializationError
 from django.contrib.gis.serializers.geojson import Serializer as GeoSerializer
 from influxdb_metrics.loader import log_metric
 from apps.utils import AliasSerializerMixin
@@ -12,7 +13,21 @@ class TrackingDataSerializer(AliasSerializerMixin, GeoSerializer):
     pass
 
 
-def render_point_features(shipment, tracking_data):
+class SingleFeatureTrackingDataSerializer(TrackingDataSerializer):
+    def start_serialization(self):
+        self._init_options()
+        self._cts = {}  # pylint:disable=attribute-defined-outside-init
+
+    def end_serialization(self):
+        pass
+
+    def serialize(self, queryset, *args, **kwargs):  # pylint:disable=arguments-differ
+        if queryset.count() != 1:
+            raise SerializationError
+        return super().serialize(queryset, *args, **kwargs)
+
+
+def render_filtered_point_features(shipment, tracking_data):
     """
     :param shipment: Shipment to be used for datetime filtering
     :param tracking_data: queryset of TrackingData objects
@@ -26,10 +41,20 @@ def render_point_features(shipment, tracking_data):
 
     tracking_data = tracking_data.filter(timestamp__range=(begin, end))
 
-    geojson_data_as_point = TrackingDataSerializer().serialize(
+    return TrackingDataSerializer().serialize(
         tracking_data,
         geometry_field='point',
         fields=('uncertainty', 'source', 'time')
     )
 
-    return geojson_data_as_point
+
+def render_point_feature(tracking_data):
+    """
+    :param tracking_data: a TrackingData object
+    :return: A single GeoJSON Point Feature representing tracking_data
+    """
+    return SingleFeatureTrackingDataSerializer().serialize(
+        tracking_data,
+        geometry_field='point',
+        fields=('uncertainty', 'source', 'time')
+    )

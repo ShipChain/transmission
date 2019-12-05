@@ -48,7 +48,6 @@ djangorestframework-gis = "==0.14"
 djangorestframework-jsonapi = "~3.0"
 djangorestframework-simplejwt = {git = "git://github.com/ShipChain/django-rest-framework-simplejwt.git", rev = "f47065b7e0cf3adf8e4095796cfc13f651a117c6"}
 geocoder = "==1.38.1"
-geojson = "==2.4.0"
 inflection = ">=0.3.1"
 influxdb = "==5.0.0"
 logstash_formatter = "~0.5"
