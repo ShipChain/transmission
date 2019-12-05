@@ -21,8 +21,9 @@ from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.db import models
 from shipchain_common.test_utils import get_jwt
+from asynctest import patch
 
-from apps.consumers import EventTypes
+from apps.consumers import EventTypes, AppsConsumer
 from apps.jobs.models import AsyncJob, MessageType
 from apps.jobs.signals import job_update
 from apps.routing import application
@@ -83,26 +84,29 @@ async def test_jwt_auth():
 
 @pytest.mark.asyncio
 async def test_jwt_refresh():
-    my_jwt = await async_get_jwt()
-    communicator = await get_communicator(my_jwt)
+    # It's difficult to test JWT expiration w/ channels/asyncio - so we have to test using the mocked consumer
+    # Setup an AppsConsumer with no authenticated user in the scope
+    consumer = AppsConsumer(scope={'subprotocols': [], 'url_route': {'kwargs': {'user_id': USER_ID}}})
 
-    expired_jwt = await async_get_jwt(exp='1')
-    await communicator.send_to(text_data=json.dumps({"event": "refresh_jwt", "data": expired_jwt}))
+    # Mock consumer.send and consumer.close
+    with patch("channels.generic.websocket.AsyncWebsocketConsumer.send") as fake_send:
+        with patch("channels.generic.websocket.AsyncWebsocketConsumer.close") as fake_close:
+            # Test that invalid/missing/expired auth results in socket close
+            await consumer.receive(json.dumps({"hello": "world"}))
+            assert not fake_send.called
+            assert fake_close.called
+            fake_send.reset_mock()
+            fake_close.reset_mock()
 
-    await communicator.send_to(json.dumps({"hello": "world"}))
-    await communicator.receive_nothing()  # Socket should be closed due to expired jwt
-    await communicator.disconnect()
+            # Ensure refresh_jwt message gets accepted even without valid auth
+            await consumer.receive(json.dumps({"event": "refresh_jwt", "data": await async_get_jwt()}))
+            assert not fake_send.called
+            assert not fake_close.called
 
-    # TODO: Try to find a way to get freezegun to work with django channels to properly test token expiration
-
-    communicator = await get_communicator(my_jwt)
-    await communicator.send_json_to({"event": "refresh_jwt", "data": my_jwt})
-    await communicator.send_json_to({"hello": "world"})
-    response = await communicator.receive_json_from()
-    assert response['event'] == EventTypes.error.name
-    assert response['data'] == "This websocket endpoint is read-only"
-
-    await communicator.disconnect()
+            # After refreshing token, socket should be open/active
+            await consumer.receive(json.dumps({"hello": "world"}))
+            assert fake_send.called
+            assert not fake_close.called
 
 
 @pytest.mark.asyncio

@@ -16,8 +16,8 @@ limitations under the License.
 from asgiref import sync
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from jwt.exceptions import InvalidTokenError
 from rest_framework.exceptions import APIException
+from rest_framework_simplejwt.tokens import TokenError
 from shipchain_common.authentication import InternalRequest, passive_credentials_auth
 
 
@@ -36,15 +36,16 @@ class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
         await super().disconnect(code)
 
     async def receive(self, text_data=None, bytes_data=None, **kwargs):
-        if await self._authenticate():
-            if text_data:
-                json = await self.decode_json(text_data)
-                if 'event' in json and 'data' in json and json['event'] == 'refresh_jwt':
-                    self.scope['jwt'] = json['data']
-                else:
-                    await self.receive_json(json, **kwargs)
-            else:
-                raise ValueError("No text section for incoming WebSocket frame!")
+        if text_data:
+            json = await self.decode_json(text_data)
+            # Handle jwt_refresh requests before attempting authentication
+            refresh_request = 'event' in json and 'data' in json and json['event'] == 'refresh_jwt'
+            if refresh_request:
+                self.scope['jwt'] = json['data']
+            if await self._authenticate() and not refresh_request:
+                await self.receive_json(json, **kwargs)
+        else:
+            raise ValueError("No text section for incoming WebSocket frame!")
 
     async def send(self, text_data=None, bytes_data=None, close=False):
         if await self._authenticate():
@@ -76,7 +77,7 @@ class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
         try:
             if self.scope['jwt']:
                 user = await sync.sync_to_async(passive_credentials_auth)(self.scope['jwt'])
-        except (APIException, InvalidTokenError):
+        except (APIException, TokenError):
             # Can ignore JWT auth failures, scope['user'] will not be set.
             pass
 
