@@ -593,7 +593,7 @@ geofences:
       description: A JSON-formatted list of Geofence IDs to be triggered with location updates from this Shipment
       type: array
       items:
-        - $ref: '#/uuid'
+        $ref: '#/uuid'
 
 device:
   properties:
