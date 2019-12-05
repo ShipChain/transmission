@@ -28,11 +28,17 @@ class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         if await self._authenticate():
             await self.channel_layer.group_add(self.scope['user'].id, self.channel_name)
+            organization_id = await sync.sync_to_async(self.scope['user'].token.get)('organization_id', None)
+            if organization_id:
+                await self.channel_layer.group_add(organization_id, self.channel_name)
             await self.accept('base64.authentication.jwt')
 
     async def disconnect(self, code):
         if self.scope['user']:
             await self.channel_layer.group_discard(self.scope['user'].id, self.channel_name)
+            organization_id = await sync.sync_to_async(self.scope['user'].token.get)('organization_id', None)
+            if organization_id:
+                await self.channel_layer.group_discard(organization_id, self.channel_name)
         await super().disconnect(code)
 
     async def receive(self, text_data=None, bytes_data=None, **kwargs):
