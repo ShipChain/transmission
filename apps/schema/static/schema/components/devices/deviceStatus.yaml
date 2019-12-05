@@ -6,6 +6,7 @@ get:
   parameters:
     - $ref: 'parameters.yaml#/active'
     - $ref: 'parameters.yaml#/inBbox'
+    - $ref: 'parameters.yaml#/state'
   tags:
     - Devices
   responses:
