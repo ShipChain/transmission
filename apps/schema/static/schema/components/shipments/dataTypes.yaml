@@ -586,6 +586,15 @@ assetCustodianId:
       title: asset_custodian_id
       description: The User ID of the current asset custodian
 
+geofences:
+  properties:
+    geofences:
+      title: geofences
+      description: A JSON-formatted list of Geofence IDs to be triggered with location updates from this Shipment
+      type: array
+      items:
+        $ref: '#/uuid'
+
 device:
   properties:
     data:

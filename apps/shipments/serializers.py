@@ -21,7 +21,7 @@ from rest_framework import exceptions, status, serializers as rest_serializers
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
-from shipchain_common.utils import UpperEnumField
+from shipchain_common.utils import UpperEnumField, validate_uuid4
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData, PermissionLink, ExceptionType, TransitState
@@ -95,11 +95,25 @@ class LoadShipmentSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 
+class GeofenceListField(serializers.ListField):
+    def to_internal_value(self, data):
+        # In order to support form-data requests, we have to parse json-formatted geofence data
+        # ListFields come back like geofences: ["["geofence-id", "geofence2-id"]"]
+        if len(data) == 1:
+            try:
+                data = json.loads(data[0])
+            except (json.JSONDecodeError, TypeError):
+                pass
+        return super().to_internal_value(data)
+
+
 class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
     """
     Serializer for a shipment object
     """
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
+
+    geofences = GeofenceListField(child=serializers.CharField(), required=False)
 
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
     exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
@@ -121,6 +135,14 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data']
+
+    def validate_geofences(self, geofences):
+        for geofence in geofences:
+            if not validate_uuid4(geofence):
+                raise serializers.ValidationError(f'Invalid UUIDv4 {geofence} provided in Geofences')
+
+        # Deduplicate list
+        return list(set(geofences))
 
 
 class ShipmentCreateSerializer(ShipmentSerializer):
@@ -333,7 +355,8 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         model = Shipment
         exclude = ('owner_id', 'storage_credentials_id', 'background_data_hash_interval',
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id', 'manual_update_hash_interval',
-                   'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours')
+                   'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours',
+                   'geofences')
 
 
 class TrackingDataSerializer(serializers.Serializer):

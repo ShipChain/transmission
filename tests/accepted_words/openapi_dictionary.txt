@@ -33,6 +33,8 @@ JWS
 gasUsed
 GeoJson
 Geolocation
+geofence
+geofences
 
 linestringTimestamps
 LoadShipment

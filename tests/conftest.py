@@ -1,4 +1,9 @@
+import json
 import pytest
+
+from django.conf import settings as test_settings
+
+from rest_framework import status
 from rest_framework.request import ForcedAuthentication
 from rest_framework.test import APIClient
 from shipchain_common.utils import random_id
@@ -73,6 +78,34 @@ def mocked_engine_rpc(mocker):
 def mocked_iot_api(mocker):
     return mocker.patch('apps.shipments.iot_client.DeviceAWSIoTClient.update_shadow', return_value=mocked_rpc_response(
         {'data': {'shipmentId': 'dunno yet', 'shipmentState': 'dunno yet'}}))
+
+
+@pytest.yield_fixture
+def http_pretty():
+    import httpretty
+    httpretty.enable()
+    yield httpretty
+    httpretty.disable()
+
+
+@pytest.fixture
+def mocked_profiles(http_pretty):
+    profiles_ids = {
+        "shipper_wallet_id": random_id(),
+        "carrier_wallet_id": random_id(),
+        "storage_credentials_id": random_id()
+    }
+
+    http_pretty.register_uri(http_pretty.GET,
+                             f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['shipper_wallet_id']}/",
+                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+    http_pretty.register_uri(http_pretty.GET,
+                             f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['carrier_wallet_id']}/",
+                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+    http_pretty.register_uri(http_pretty.GET,
+                             f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{profiles_ids['storage_credentials_id']}/",
+                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+    return profiles_ids
 
 
 @pytest.fixture

@@ -31,13 +31,15 @@ services:
       GETH_VERBOSITY: 1
 
   profiles_psql:
-    image: sameersbn/postgresql:9.6-2
-    expose:
+    image: shipchain/postgis:9.6-2.4
+    ports:
       - '5432'
     environment:
-      DB_NAME: profiles
-      DB_PASS: profiles
-      DB_USER: profiles
+      POSTGRES_USER: profiles
+      POSTGRES_PASS: profiles
+      POSTGRES_HOST: profiles_psql
+      POSTGRES_DBNAME: profiles
+      ALLOW_IP_RANGE: 0.0.0.0/0
 
   engine_psql:
     image: sameersbn/postgresql:9.6-2
