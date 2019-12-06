@@ -1558,7 +1558,7 @@ class ShipmentAPITests(APITestCase):
 
         _shipment_id = 'b715a8ff-9299-4c87-96de-a4b0a4a54509'
         _vault_id = '01fc36c4-63e5-4c02-943a-b52cd25b235b'
-        shipment = Shipment.objects.create(id=_shipment_id, vault_id=_vault_id)
+        shipment = Shipment.objects.create(id=_shipment_id, vault_id=_vault_id, owner_id=self.user_1.id)
 
         profiles_url = shipment.get_device_request_url()
 

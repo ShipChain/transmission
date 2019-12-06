@@ -15,23 +15,24 @@ limitations under the License.
 """
 
 from string import Template
+
 from channels.db import database_sync_to_async
 from enumfields import Enum
 from rest_framework.renderers import JSONRenderer
 
 from apps.authentication import AsyncJsonAuthConsumer
-
 from apps.jobs.models import AsyncJob
-from apps.shipments.models import TrackingData
-
 from apps.jobs.serializers import AsyncJobSerializer
 from apps.shipments.geojson import render_point_feature
+from apps.shipments.models import Shipment
+from apps.shipments.models import TrackingData
 
 
 class EventTypes(Enum):
     error = 0
     asyncjob_update = 1
     trackingdata_update = 2
+    shipment_update = 3
 
 
 class AppsConsumer(AsyncJsonAuthConsumer):
@@ -43,6 +44,24 @@ class AppsConsumer(AsyncJsonAuthConsumer):
         job = AsyncJob.objects.get(id=job_id)
         return JSONRenderer().render({'event': EventTypes.asyncjob_update.name,
                                       'data': AsyncJobSerializer(job).data}).decode()
+
+    async def shipments_update(self, event):
+        fields_json = await database_sync_to_async(self.render_shipment_fields)(event['shipment_id'],
+                                                                                event['changed_fields'])
+        await self.send(fields_json)
+
+    def render_shipment_fields(self, shipment_id, changed_fields):
+        shipment = Shipment.objects.get(id=shipment_id)
+        attributes = {}
+        for field in changed_fields:
+            attributes[field] = getattr(shipment, field)
+        data = {
+            "id": shipment_id,
+            "type": "Shipment",
+            "attributes": attributes
+        }
+        return JSONRenderer().render({'event': EventTypes.shipment_update.name,
+                                      'data': data}).decode()
 
     async def tracking_data_save(self, event):
         tracking_data_json = await database_sync_to_async(self.render_async_tracking_data)(event['tracking_data_id'])
