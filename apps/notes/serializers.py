@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import logging
 
 from django.conf import settings
 
@@ -23,11 +22,15 @@ from rest_framework_json_api import serializers
 from apps.shipments.models import Shipment
 from .models import ShipmentNote
 
-LOG = logging.getLogger('transmission')
+
+class ShipmentNoteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ShipmentNote
+        exclude = ('shipment', )
 
 
-class ShipmentNoteSerializer(serializers.Serializer):
-
+class ShipmentNoteCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShipmentNote
         if settings.PROFILES_ENABLED:
@@ -36,12 +39,12 @@ class ShipmentNoteSerializer(serializers.Serializer):
             exclude = ('shipment', )
 
     def create(self, validated_data):
-        if not settings.PROFILES_ENABLED:
-            # Check specific to profiles disabled
-            try:
-                Shipment.objects.get(id=self.context['shipment_id'])
-            except Shipment.DoesNotExist:
-                raise serializers.ValidationError('Invalid shipment provided')
-            return ShipmentNote.objects.create(**validated_data, **self.context)
+        if settings.PROFILES_ENABLED:
+            return ShipmentNote.objects.create(**validated_data)
 
-        return ShipmentNote.objects.create(**validated_data)
+        try:
+            # We ensure that the provided shipment exists when profiles is disabled
+            Shipment.objects.get(id=self.context['shipment_id'])
+        except Shipment.DoesNotExist:
+            raise serializers.ValidationError('Invalid shipment provided')
+        return ShipmentNote.objects.create(**validated_data, **self.context)

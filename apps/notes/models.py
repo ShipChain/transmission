@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from django.core.validators import MaxLengthValidator
+from django.core.validators import MaxLengthValidator, MinLengthValidator
 from django.db import models
 from shipchain_common.utils import random_id
 
@@ -23,7 +23,7 @@ from apps.shipments.models import Shipment
 
 class ShipmentNote(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
-    message = models.TextField(validators=[MaxLengthValidator(500)], null=False, blank=False)
+    message = models.TextField(validators=[MaxLengthValidator(500), MinLengthValidator(1)])
     author_id = models.CharField(null=False, max_length=36)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
 

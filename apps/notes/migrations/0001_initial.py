@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             name='ShipmentNote',
             fields=[
                 ('id', models.CharField(default=shipchain_common.utils.random_id, max_length=36, primary_key=True, serialize=False)),
-                ('message', models.TextField(validators=[django.core.validators.MaxLengthValidator(500)])),
+                ('message', models.TextField(validators=[django.core.validators.MaxLengthValidator(500), django.core.validators.MinLengthValidator(1)])),
                 ('author_id', models.CharField(max_length=36)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('shipment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shipments.Shipment')),
