@@ -40,3 +40,9 @@ S3_RESOURCE = boto3.resource(
 )
 
 CACHES['page'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    },
+}

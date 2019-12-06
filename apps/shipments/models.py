@@ -8,7 +8,6 @@ from botocore.exceptions import ClientError
 import geocoder
 from geocoder.keys import mapbox_access_token
 
-import geojson
 import pytz
 from django.conf import settings
 from django.contrib.gis.db.models import GeometryField
@@ -16,11 +15,10 @@ from django.contrib.gis.geos import Point
 from django.contrib.postgres.fields import JSONField, ArrayField
 from django.core.validators import RegexValidator, MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils.functional import cached_property
 from django_fsm import FSMIntegerField, transition
 from enumfields import Enum, EnumIntegerField
 from enumfields import EnumField
-from rest_framework.exceptions import Throttled, PermissionDenied, APIException
+from rest_framework.exceptions import Throttled, PermissionDenied
 from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
 from shipchain_common.utils import AliasField, random_id
@@ -539,21 +537,3 @@ class TrackingData(models.Model):
 
     class Meta:
         ordering = ('timestamp',)
-
-    @cached_property
-    def as_point_feature(self):
-        LOG.debug(f'Device tracking as_point.')
-        log_metric('transmission.info', tags={'method': 'as_point_feature', 'module': __name__})
-
-        try:
-            return geojson.Feature(geometry=geojson.Point((self.longitude, self.latitude)), properties={
-                "time": self.timestamp,
-                "uncertainty": self.uncertainty,
-                "source": self.source,
-            })
-        except Exception as exception:
-            LOG.error(f'Device tracking as_point_feature exception {exception}.')
-            log_metric('transmission.error', tags={'method': 'as_point_feature_exception',
-                                                   'module': __name__, 'code': 'as_point_feature'})
-
-            raise APIException(detail="Unable to build GeoJSON Point Feature from tracking data")

@@ -23,7 +23,7 @@ from shipchain_common.utils import send_templated_email
 from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id
 from .filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
-from .geojson import render_point_features
+from .geojson import render_filtered_point_features
 from .iot_client import DeviceAWSIoTClient
 from .models import Shipment, TrackingData, PermissionLink
 from .permissions import IsOwnerOrShared, IsShipmentOwner
@@ -126,7 +126,9 @@ class ShipmentViewSet(viewsets.ModelViewSet):
         tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
 
         if tracking_data.exists():
-            response = Template('{"data": $geojson}').substitute(geojson=render_point_features(shipment, tracking_data))
+            response = Template('{"data": $geojson}').substitute(
+                geojson=render_filtered_point_features(shipment, tracking_data)
+            )
             httpresponse = HttpResponse(content=response,
                                         content_type='application/vnd.api+json')
             return httpresponse

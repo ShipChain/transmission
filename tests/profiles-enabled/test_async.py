@@ -20,14 +20,16 @@ import pytest
 from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.db import models
+from fieldsignals import post_save_changed
 from shipchain_common.test_utils import get_jwt
+from asynctest import patch
 
-from apps.consumers import EventTypes
+from apps.consumers import EventTypes, AppsConsumer
 from apps.jobs.models import AsyncJob, MessageType
 from apps.jobs.signals import job_update
 from apps.routing import application
 from apps.shipments.models import Shipment, Device, TrackingData
-from apps.shipments.signals import shipment_post_save, shipment_job_update
+from apps.shipments.signals import shipment_post_save, shipment_job_update, shipment_fields_changed
 
 USER_ID = '00000000-0000-0000-0000-000000000009'
 
@@ -83,26 +85,29 @@ async def test_jwt_auth():
 
 @pytest.mark.asyncio
 async def test_jwt_refresh():
-    my_jwt = await async_get_jwt()
-    communicator = await get_communicator(my_jwt)
+    # It's difficult to test JWT expiration w/ channels/asyncio - so we have to test using the mocked consumer
+    # Setup an AppsConsumer with no authenticated user in the scope
+    consumer = AppsConsumer(scope={'subprotocols': [], 'url_route': {'kwargs': {'user_id': USER_ID}}})
 
-    expired_jwt = await async_get_jwt(exp='1')
-    await communicator.send_to(text_data=json.dumps({"event": "refresh_jwt", "data": expired_jwt}))
+    # Mock consumer.send and consumer.close
+    with patch("channels.generic.websocket.AsyncWebsocketConsumer.send") as fake_send:
+        with patch("channels.generic.websocket.AsyncWebsocketConsumer.close") as fake_close:
+            # Test that invalid/missing/expired auth results in socket close
+            await consumer.receive(json.dumps({"hello": "world"}))
+            assert not fake_send.called
+            assert fake_close.called
+            fake_send.reset_mock()
+            fake_close.reset_mock()
 
-    await communicator.send_to(json.dumps({"hello": "world"}))
-    await communicator.receive_nothing()  # Socket should be closed due to expired jwt
-    await communicator.disconnect()
+            # Ensure refresh_jwt message gets accepted even without valid auth
+            await consumer.receive(json.dumps({"event": "refresh_jwt", "data": await async_get_jwt()}))
+            assert not fake_send.called
+            assert not fake_close.called
 
-    # TODO: Try to find a way to get freezegun to work with django channels to properly test token expiration
-
-    communicator = await get_communicator(my_jwt)
-    await communicator.send_json_to({"event": "refresh_jwt", "data": my_jwt})
-    await communicator.send_json_to({"hello": "world"})
-    response = await communicator.receive_json_from()
-    assert response['event'] == EventTypes.error.name
-    assert response['data'] == "This websocket endpoint is read-only"
-
-    await communicator.disconnect()
+            # After refreshing token, socket should be open/active
+            await consumer.receive(json.dumps({"hello": "world"}))
+            assert fake_send.called
+            assert not fake_close.called
 
 
 @pytest.mark.asyncio
@@ -114,6 +119,7 @@ async def test_job_notification(communicator):
 
     # Disable Shipment post-save signal
     await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
+    await sync_to_async(post_save_changed.disconnect)(sender=Shipment, dispatch_uid='shipment_fields_post_save')
 
     shipment, _ = await sync_to_async(Shipment.objects.get_or_create)(
         id='FAKE_SHIPMENT_ID',
@@ -127,6 +133,8 @@ async def test_job_notification(communicator):
     # Re-enable Shipment post-save signal
     await sync_to_async(models.signals.post_save.connect)(shipment_post_save, sender=Shipment,
                                                           dispatch_uid='shipment_post_save')
+    await sync_to_async(post_save_changed.connect)(shipment_fields_changed, sender=Shipment,
+                                                   dispatch_uid='shipment_fields_post_save')
 
     job = await sync_to_async(AsyncJob.rpc_job_for_listener)(rpc_method=DummyRPCClient.do_whatever, rpc_parameters=[],
                                                              signing_wallet_id='FAKE_WALLET_ID', shipment=shipment)
@@ -149,9 +157,9 @@ async def test_job_notification(communicator):
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_trackingdata_notification(communicator):
-
     # Disable Shipment post-save signal
     await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
+    await sync_to_async(post_save_changed.disconnect)(sender=Shipment, dispatch_uid='shipment_fields_post_save')
 
     shipment, _ = await sync_to_async(Shipment.objects.get_or_create)(
         id='FAKE_SHIPMENT_ID',
@@ -165,6 +173,8 @@ async def test_trackingdata_notification(communicator):
     # Re-enable Shipment post-save signal
     await sync_to_async(models.signals.post_save.connect)(shipment_post_save, sender=Shipment,
                                                           dispatch_uid='shipment_post_save')
+    await sync_to_async(post_save_changed.connect)(shipment_fields_changed, sender=Shipment,
+                                                   dispatch_uid='shipment_fields_post_save')
 
     device = await sync_to_async(Device.objects.create)(id='FAKE_DEVICE_ID')
 
@@ -190,5 +200,39 @@ async def test_trackingdata_notification(communicator):
 
     t_data = await sync_to_async(TrackingData.objects.get)(id='FAKE_TRACKING_DATA_ID')
     await sync_to_async(t_data.delete)()
+
+    await communicator.disconnect()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_shipmentupdate_notification(communicator):
+    # Disable Shipment post-save signal
+    await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
+    await sync_to_async(post_save_changed.disconnect)(sender=Shipment, dispatch_uid='shipment_fields_post_save')
+
+    shipment, _ = await sync_to_async(Shipment.objects.get_or_create)(
+        id='FAKE_SHIPMENT_ID',
+        owner_id=USER_ID,
+        storage_credentials_id='FAKE_STORAGE_CREDENTIALS_ID',
+        shipper_wallet_id='FAKE_SHIPPER_WALLET_ID',
+        carrier_wallet_id='FAKE_CARRIER_WALLET_ID',
+        contract_version='1.0.0'
+    )
+
+    await sync_to_async(post_save_changed.connect)(shipment_fields_changed, sender=Shipment,
+                                                   dispatch_uid='shipment_fields_post_save')
+    # Update shipment (should get a message)
+    shipment.carriers_scac = 'TESTING123'
+    await sync_to_async(shipment.save)()
+
+    # Re-enable Shipment post-save signal
+    await sync_to_async(models.signals.post_save.connect)(shipment_post_save, sender=Shipment,
+                                                          dispatch_uid='shipment_post_save')
+    response = await communicator.receive_json_from()
+
+    assert response['event'] == EventTypes.shipment_update.name
+    assert response['data']['type'] == 'Shipment'
+    assert response['data']['attributes']['carriers_scac'] == shipment.carriers_scac
 
     await communicator.disconnect()

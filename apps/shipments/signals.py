@@ -129,6 +129,16 @@ def trackingdata_post_save(sender, **kwargs):
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})
 
 
+@receiver(post_save_changed, sender=Shipment, dispatch_uid='shipment_fields_post_save')
+def shipment_fields_changed(sender, instance, changed_fields, **kwargs):
+    # Notify websocket channel
+    async_to_sync(channel_layer.group_send)(instance.owner_id, {
+        "type": "shipments.update",
+        "shipment_id": instance.id,
+        "changed_fields": [field.name for field in changed_fields]
+    })
+
+
 @receiver(post_save_changed, sender=Shipment, fields=['device', 'state', 'geofences'],
           dispatch_uid='shipment_iot_fields_post_save')
 def shipment_iot_fields_changed(sender, instance, changed_fields, **kwargs):

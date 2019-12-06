@@ -67,7 +67,7 @@ class ShipmentAPITests(APITestCase):
                           "carrier_wallet_id": "<<_carrier_wallet_id>>",
                           "shipper_wallet_id": "<<_shipper_wallet_id>>",
                           "storage_credentials_id": "<<_storage_credentials_id>>",
-                          "owner_id": "<<_owner_id>>"
+                          "owner_id": "owner-id-1234"
                         }
                       }
                     }
