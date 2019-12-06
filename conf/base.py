@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     'apps.schema',
     'apps.documents',
     'apps.imports',
+    'apps.notes'
     'channels',
     'simple_history',
     'rangefilter',
