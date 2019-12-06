@@ -231,6 +231,7 @@ SESSION_CACHE_ALIAS = "default"
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "apps/schema/static"),
+    os.path.join(BASE_DIR, "apps/shipments/static"),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
