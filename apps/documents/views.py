@@ -27,11 +27,10 @@ from influxdb_metrics.loader import log_metric
 
 from apps.authentication import DocsLambdaRequest
 from apps.jobs.models import AsyncActionType
-from apps.permissions import get_owner_id
+from apps.permissions import get_owner_id, UserHasShipmentPermission
 from apps.utils import UploadStatus
 from .filters import DocumentFilterSet
 from .models import Document
-from .permissions import UserHasPermission
 from .rpc import DocumentRPCClient
 from .serializers import DocumentSerializer, DocumentCreateSerializer
 
@@ -45,7 +44,7 @@ class DocumentViewSet(mixins.CreateModelMixin,
                       viewsets.GenericViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
-    permission_classes = ((UserHasPermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
+    permission_classes = ((UserHasShipmentPermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet
 

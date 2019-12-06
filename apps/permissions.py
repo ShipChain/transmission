@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
+
 from django.db.models import Q
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -25,6 +27,8 @@ from apps.shipments.models import Shipment, PermissionLink
 
 
 PROFILES_WALLET_URL = f'{settings.PROFILES_URL}/api/v1/wallet'
+
+LOG = logging.getLogger('transmission')
 
 
 def get_user(request):
@@ -127,3 +131,27 @@ class IsOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         # Permissions are only allowed to the owner of the shipment.
         return has_owner_access(request, obj)
+
+
+class UserHasShipmentPermission(permissions.BasePermission):
+    """
+    Custom permission to only allow owner, shipper, moderator and carrier
+    access to a shipment object on a nested route
+    """
+
+    def has_object_permission(self, request, view, obj):
+        return check_has_shipment_owner_access(request, obj.shipment)
+
+    def has_permission(self, request, view):
+
+        shipment_id = view.kwargs.get('shipment_pk', None)
+        if not shipment_id:
+            # The requested views are only accessible via nested routes
+            return False
+        try:
+            shipment = Shipment.objects.get(id=shipment_id)
+        except Shipment.DoesNotExist:
+            LOG.warning(f'User: {request.user}, is trying to access a non existing shipment: {shipment_id}')
+            return False
+
+        return check_has_shipment_owner_access(request, shipment)

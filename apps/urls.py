@@ -13,6 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.conf.urls import url
 from django.contrib import admin
 from django.views.generic import TemplateView
@@ -24,6 +25,7 @@ from apps.eth import views as eth
 from apps.imports import views as imports_app
 from apps.jobs import views as jobs
 from apps.management import views as management
+from apps.notes import views as notes
 from apps.shipments import views as shipments
 
 API_PREFIX = r'^api/(?P<version>(v1|v2))'
@@ -46,6 +48,7 @@ nested_router.register(r'documents', documents.DocumentViewSet, base_name='shipm
 nested_router.register(r'transactions', eth.TransactionViewSet, base_name='shipment-transactions')
 nested_router.register(r'permission_links', shipments.PermissionLinkViewSet, base_name='shipment-permissions')
 nested_router.register(r'history', shipments.ShipmentHistoryListView, base_name='shipment-history')
+nested_router.register(r'notes', notes.ShipmentNoteViewSet, base_name='shipment-notes')
 
 urlpatterns = [
     url('health', management.health_check, name='health'),
