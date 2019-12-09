@@ -24,8 +24,8 @@ from apps.authentication import AsyncJsonAuthConsumer
 from apps.jobs.models import AsyncJob
 from apps.jobs.serializers import AsyncJobSerializer
 from apps.shipments.geojson import render_point_feature
-from apps.shipments.models import Shipment
-from apps.shipments.models import TrackingData
+from apps.shipments.models import Shipment, TrackingData
+from apps.shipments.serializers import ShipmentDiffSerializer
 
 
 class EventTypes(Enum):
@@ -52,16 +52,12 @@ class AppsConsumer(AsyncJsonAuthConsumer):
 
     def render_shipment_fields(self, shipment_id, changed_fields):
         shipment = Shipment.objects.get(id=shipment_id)
-        attributes = {}
-        for field in changed_fields:
-            attributes[field] = getattr(shipment, field)
         data = {
             "id": shipment_id,
             "type": "Shipment",
-            "attributes": attributes
+            "attributes": ShipmentDiffSerializer(shipment, fields=changed_fields).data
         }
-        return JSONRenderer().render({'event': EventTypes.shipment_update.name,
-                                      'data': data}).decode()
+        return JSONRenderer().render({'event': EventTypes.shipment_update.name, 'data': data}).decode()
 
     async def tracking_data_save(self, event):
         tracking_data_json = await database_sync_to_async(self.render_async_tracking_data)(event['tracking_data_id'])
