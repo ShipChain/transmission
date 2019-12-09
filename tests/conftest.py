@@ -32,38 +32,68 @@ TRANSACTION_HASH = 'txHash'
 DEVICE_ID = random_id()
 
 
-@pytest.fixture(scope='session')
-def token():
-    return get_jwt(username='user1@shipchain.io', sub=USER_ID, organization_id=ORGANIZATION_ID)
+if test_settings.PROFILES_ENABLED:
+    # For compatibility with profiles disabled
+    @pytest.fixture(scope='session')
+    def token():
+        return get_jwt(username='user1@shipchain.io', sub=USER_ID, organization_id=ORGANIZATION_ID)
 
 
-@pytest.fixture(scope='session')
-def user(token):
-    return passive_credentials_auth(token)
+    @pytest.fixture(scope='session')
+    def user(token):
+        return passive_credentials_auth(token)
 
 
-@pytest.fixture(scope='session')
-def shipper_token():
-    return get_jwt(username='shipper1@shipchain.io', sub=SHIPPER_ID, organization_id=ORGANIZATION_ID)
+    @pytest.fixture(scope='session')
+    def shipper_token():
+        return get_jwt(username='shipper1@shipchain.io', sub=SHIPPER_ID, organization_id=ORGANIZATION_ID)
 
 
-@pytest.fixture(scope='session')
-def shipper_user(shipper_token):
-    return passive_credentials_auth(shipper_token)
+    @pytest.fixture(scope='session')
+    def shipper_user(shipper_token):
+        return passive_credentials_auth(shipper_token)
 
 
-@pytest.fixture(scope='session')
-def api_client(user, token):
-    client = APIClient()
-    client.force_authenticate(user=user, token=token)
-    return client
+    @pytest.fixture(scope='session')
+    def api_client(user, token):
+        client = APIClient()
+        client.force_authenticate(user=user, token=token)
+        return client
 
 
-@pytest.fixture(scope='session')
-def shipper_api_client(shipper_user, shipper_token):
-    client = APIClient()
-    client.force_authenticate(user=shipper_user, token=shipper_token)
-    return client
+    @pytest.fixture(scope='session')
+    def shipper_api_client(shipper_user, shipper_token):
+        client = APIClient()
+        client.force_authenticate(user=shipper_user, token=shipper_token)
+        return client
+
+
+    @pytest.fixture
+    def mocked_is_shipper(shipper_user, http_pretty, shipment):
+        http_pretty.register_uri(http_pretty.GET,
+                                 f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.shipper_wallet_id}/?is_active",
+                                 body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        return shipper_user
+
+
+    @pytest.fixture
+    def mocked_profiles(http_pretty):
+        profiles_ids = {
+            "shipper_wallet_id": random_id(),
+            "carrier_wallet_id": random_id(),
+            "storage_credentials_id": random_id()
+        }
+
+        http_pretty.register_uri(http_pretty.GET,
+                                 f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['shipper_wallet_id']}/",
+                                 body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        http_pretty.register_uri(http_pretty.GET,
+                                 f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['carrier_wallet_id']}/",
+                                 body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        http_pretty.register_uri(http_pretty.GET,
+                                 f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{profiles_ids['storage_credentials_id']}/",
+                                 body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        return profiles_ids
 
 
 @pytest.fixture(scope='session')
@@ -111,34 +141,6 @@ def http_pretty():
     httpretty.enable()
     yield httpretty
     httpretty.disable()
-
-
-@pytest.fixture
-def mocked_profiles(http_pretty):
-    profiles_ids = {
-        "shipper_wallet_id": random_id(),
-        "carrier_wallet_id": random_id(),
-        "storage_credentials_id": random_id()
-    }
-
-    http_pretty.register_uri(http_pretty.GET,
-                             f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['shipper_wallet_id']}/",
-                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-    http_pretty.register_uri(http_pretty.GET,
-                             f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['carrier_wallet_id']}/",
-                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-    http_pretty.register_uri(http_pretty.GET,
-                             f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{profiles_ids['storage_credentials_id']}/",
-                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-    return profiles_ids
-
-
-@pytest.fixture
-def mocked_is_shipper(shipper_user, http_pretty, shipment):
-    http_pretty.register_uri(http_pretty.GET,
-                             f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.shipper_wallet_id}/?is_active",
-                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-    return shipper_user
 
 
 @pytest.fixture

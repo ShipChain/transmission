@@ -22,7 +22,7 @@ from rest_framework import filters, viewsets, permissions, status, mixins
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
-from apps.permissions import get_owner_id, get_user, UserHasShipmentPermission
+from apps.permissions import get_user, UserHasShipmentPermission
 from .models import ShipmentNote
 from .serializers import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
 

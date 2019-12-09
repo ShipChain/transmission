@@ -100,7 +100,7 @@ def test_update_delete_shipment_note(api_client, shipment, shipment_notes):
 
 
 @pytest.mark.django_db
-def test_list_search_filter(user, api_client, shipper_api_client, unauthenticated_api_client, shipment,
+def test_list_search_filter(api_client, shipper_api_client, unauthenticated_api_client, shipment,
                             mocked_is_shipper, shipment_notes):
     url = reverse('shipment-notes-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
