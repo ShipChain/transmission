@@ -30,6 +30,8 @@ PROFILES_WALLET_URL = f'{settings.PROFILES_URL}/api/v1/wallet'
 
 LOG = logging.getLogger('transmission')
 
+NON_OWNER_ACCESS_METHODS = ('GET', 'PATCH', )
+
 
 def get_user(request):
     if request.user.is_authenticated:
@@ -58,17 +60,17 @@ def has_owner_access(request, obj):
     return (organization_id and obj.owner_id == organization_id) or obj.owner_id == user_id
 
 
-def is_carrier(request, shipment):
+def is_carrier(request, shipment, allowed_methods_set):
     """
     Custom permission for carrier shipment access
     """
     response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.carrier_wallet_id}/?is_active',
                                              headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
-    return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
+    return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
 
 
-def is_moderator(request, shipment):
+def is_moderator(request, shipment, allowed_methods_set):
     """
     Custom permission for moderator shipment access
     """
@@ -76,19 +78,19 @@ def is_moderator(request, shipment):
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.moderator_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
-        return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
+        return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
 
     return False
 
 
-def is_shipper(request, shipment):
+def is_shipper(request, shipment, allowed_methods_set):
     """
     Custom permission for shipper shipment access
     """
     response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.shipper_wallet_id}/?is_active',
                                              headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
-    return response.status_code == status.HTTP_200_OK and request.method in ('GET', 'PATCH')
+    return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
 
 
 def shipment_exists(shipment_id):
@@ -119,9 +121,11 @@ def check_permission_link(request, shipment_obj):
     return check_has_shipment_owner_access(request, shipment_obj)
 
 
-def check_has_shipment_owner_access(request, obj):
-    return request.user.is_authenticated and (has_owner_access(request, obj) or is_shipper(request, obj) or
-                                              is_carrier(request, obj) or is_moderator(request, obj))
+def check_has_shipment_owner_access(request, obj, allowed_methods=NON_OWNER_ACCESS_METHODS):
+    return request.user.is_authenticated and (has_owner_access(request, obj) or
+                                              is_shipper(request, obj, allowed_methods) or
+                                              is_carrier(request, obj, allowed_methods) or
+                                              is_moderator(request, obj, allowed_methods))
 
 
 class IsOwner(permissions.BasePermission):
@@ -139,6 +143,13 @@ class UserHasShipmentPermission(permissions.BasePermission):
     access to a shipment object on a nested route
     """
 
+    non_owner_access_methods = NON_OWNER_ACCESS_METHODS
+
+    def get_allowed_methods(self, view):
+        if view.basename in ('shipment-notes', ):
+            return self.non_owner_access_methods + ('POST', )
+        return self.non_owner_access_methods
+
     def has_object_permission(self, request, view, obj):
         return check_has_shipment_owner_access(request, obj.shipment)
 
@@ -154,4 +165,4 @@ class UserHasShipmentPermission(permissions.BasePermission):
             LOG.warning(f'User: {request.user}, is trying to access a non existing shipment: {shipment_id}')
             return False
 
-        return check_has_shipment_owner_access(request, shipment)
+        return check_has_shipment_owner_access(request, shipment, allowed_methods=self.get_allowed_methods(view))

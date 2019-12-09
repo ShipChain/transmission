@@ -37,6 +37,8 @@ class ShipmentNoteViewSet(mixins.CreateModelMixin,
     serializer_class = ShipmentNoteSerializer
     permission_classes = ((UserHasShipmentPermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
+    filterset_fields = ('author_id', )
+    ordering_fields = ('created_at', )
     search_fields = ('message', )
 
     def get_queryset(self):
