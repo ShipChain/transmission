@@ -22,7 +22,7 @@ from rest_framework import filters, viewsets, permissions, status, mixins
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
-from apps.permissions import get_owner_id, UserHasShipmentPermission
+from apps.permissions import get_owner_id, get_user, UserHasShipmentPermission
 from .models import ShipmentNote
 from .serializers import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
 
@@ -46,7 +46,7 @@ class ShipmentNoteViewSet(mixins.CreateModelMixin,
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(author_id=get_owner_id(self.request), shipment_id=self.kwargs['shipment_pk'])
+            created = serializer.save(author_id=get_user(self.request)[0], shipment_id=self.kwargs['shipment_pk'])
         else:
             created = serializer.save()
         return created
