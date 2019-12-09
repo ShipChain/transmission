@@ -122,7 +122,7 @@ def trackingdata_post_save(sender, **kwargs):
 
     # Invalidate cached tracking data view
     tracking_get_url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': instance.shipment.id})
-    list(find_urls([tracking_get_url], purge=True))
+    list(find_urls([tracking_get_url + "*"], purge=True))
 
     # Notify websocket channel
     async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
