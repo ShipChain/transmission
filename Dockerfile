@@ -1,5 +1,6 @@
 ## Base image with python and entrypoint scripts ##
 ## ============================================= ##
+FROM osgeo/gdal:alpine-normal-v2.4.1 as gdal
 FROM python:3.6.9-alpine3.9 AS base
 
 LABEL maintainer="Adam Hodges <ahodges@shipchain.io>"
@@ -11,12 +12,22 @@ ENV PYTHONUNBUFFERED 1
 RUN apk add --no-cache bash curl libpq && \
     apk add --no-cache \
             --repository http://dl-3.alpinelinux.org/alpine/edge/main/ \
-            --repository http://dl-3.alpinelinux.org/alpine/edge/community/ \
             --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ \
-            libcrypto1.1 binutils proj-dev gdal geos g++ && \
+            libcrypto1.1 binutils libcurl libwebp zstd-libs libjpeg-turbo libpng openjpeg libwebp pcre libxml2 lcms2-dev fontconfig && \
+    rm -f /usr/lib/libturbojpeg.so* /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so* /usr/lib/libpoppler-cpp.so* && \
     curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && \
     apk del curl
-RUN ln -s /usr/lib/libgeos_c.so.1 /usr/local/lib/libgeos_c.so && ln -s /usr/lib/libgdal.so.20 /usr/lib/libgdal.so
+COPY --from=gdal /usr/share/gdal /usr/share/gdal
+COPY --from=gdal /usr/lib/libgdal.so* /usr/lib/
+COPY --from=gdal /usr/lib/libproj.so* /usr/lib/
+COPY --from=gdal /usr/lib/libgeos*.so* /usr/lib/
+COPY --from=gdal /usr/lib/libpoppler.so* /usr/lib/
+COPY --from=gdal /usr/lib/libfreexl*.so* /usr/lib/
+COPY --from=gdal /usr/lib/libxerces-c*.so* /usr/lib/
+COPY --from=gdal /usr/lib/libnetcdf*.so* /usr/lib/
+COPY --from=gdal /usr/lib/libhdf5*.so* /usr/lib/
+COPY --from=gdal /usr/lib/libspatialite*.so* /usr/lib/
+COPY --from=gdal /usr/lib/libsz*.so* /usr/lib/
 
 # Install and configure virtualenv
 RUN pip install virtualenv==16.3.*
