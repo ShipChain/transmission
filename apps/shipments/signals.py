@@ -83,6 +83,11 @@ def shipment_post_save(sender, **kwargs):
         # Update LOAD contract with vault uri/hash
         instance.set_vault_hash(signature['hash'], action_type=AsyncActionType.SHIPMENT)
 
+        async_to_sync(channel_layer.group_send)(instance.owner_id, {
+            "type": "shipments.update",
+            "shipment_id": instance.id
+        })
+
 
 @receiver(post_save, sender=LoadShipment, dispatch_uid='loadshipment_post_save')
 def loadshipment_post_save(sender, **kwargs):
@@ -127,16 +132,6 @@ def trackingdata_post_save(sender, **kwargs):
     # Notify websocket channel
     async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})
-
-
-@receiver(post_save_changed, sender=Shipment, dispatch_uid='shipment_fields_post_save')
-def shipment_fields_changed(sender, instance, changed_fields, **kwargs):
-    # Notify websocket channel
-    async_to_sync(channel_layer.group_send)(instance.owner_id, {
-        "type": "shipments.update",
-        "shipment_id": instance.id,
-        "changed_fields": [field.name for field in changed_fields]
-    })
 
 
 @receiver(post_save_changed, sender=Shipment, fields=['device', 'state', 'geofences'],

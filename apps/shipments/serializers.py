@@ -26,7 +26,7 @@ from shipchain_common.utils import UpperEnumField, validate_uuid4
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData, PermissionLink, ExceptionType, TransitState
 from apps.documents.models import DocumentType, FileType
-from apps.utils import UploadStatus, DynamicFieldsModelSerializer
+from apps.utils import UploadStatus
 
 LOG = logging.getLogger('transmission')
 
@@ -143,17 +143,6 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
         # Deduplicate list
         return list(set(geofences))
-
-
-class ShipmentDiffSerializer(DynamicFieldsModelSerializer, ShipmentSerializer):
-    class Meta:
-        model = Shipment
-        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval')
-        read_only_fields = ('owner_id', 'contract_version',) if settings.PROFILES_ENABLED else ('contract_version',)
-
-    class JSONAPIMeta:
-        included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
-                              'final_destination_location', 'load_data']
 
 
 class ShipmentCreateSerializer(ShipmentSerializer):

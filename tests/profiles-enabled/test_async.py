@@ -18,9 +18,9 @@ import json
 
 import pytest
 from asgiref.sync import sync_to_async
+from channels.layers import get_channel_layer
 from channels.testing import WebsocketCommunicator
 from django.db import models
-from fieldsignals import post_save_changed
 from shipchain_common.test_utils import get_jwt
 from asynctest import patch
 
@@ -29,7 +29,7 @@ from apps.jobs.models import AsyncJob, MessageType
 from apps.jobs.signals import job_update
 from apps.routing import application
 from apps.shipments.models import Shipment, Device, TrackingData
-from apps.shipments.signals import shipment_post_save, shipment_job_update, shipment_fields_changed
+from apps.shipments.signals import shipment_post_save, shipment_job_update
 
 USER_ID = '00000000-0000-0000-0000-000000000009'
 
@@ -119,7 +119,6 @@ async def test_job_notification(communicator):
 
     # Disable Shipment post-save signal
     await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
-    await sync_to_async(post_save_changed.disconnect)(sender=Shipment, dispatch_uid='shipment_fields_post_save')
 
     shipment, _ = await sync_to_async(Shipment.objects.get_or_create)(
         id='FAKE_SHIPMENT_ID',
@@ -133,8 +132,6 @@ async def test_job_notification(communicator):
     # Re-enable Shipment post-save signal
     await sync_to_async(models.signals.post_save.connect)(shipment_post_save, sender=Shipment,
                                                           dispatch_uid='shipment_post_save')
-    await sync_to_async(post_save_changed.connect)(shipment_fields_changed, sender=Shipment,
-                                                   dispatch_uid='shipment_fields_post_save')
 
     job = await sync_to_async(AsyncJob.rpc_job_for_listener)(rpc_method=DummyRPCClient.do_whatever, rpc_parameters=[],
                                                              signing_wallet_id='FAKE_WALLET_ID', shipment=shipment)
@@ -159,7 +156,6 @@ async def test_job_notification(communicator):
 async def test_trackingdata_notification(communicator):
     # Disable Shipment post-save signal
     await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
-    await sync_to_async(post_save_changed.disconnect)(sender=Shipment, dispatch_uid='shipment_fields_post_save')
 
     shipment, _ = await sync_to_async(Shipment.objects.get_or_create)(
         id='FAKE_SHIPMENT_ID',
@@ -173,8 +169,6 @@ async def test_trackingdata_notification(communicator):
     # Re-enable Shipment post-save signal
     await sync_to_async(models.signals.post_save.connect)(shipment_post_save, sender=Shipment,
                                                           dispatch_uid='shipment_post_save')
-    await sync_to_async(post_save_changed.connect)(shipment_fields_changed, sender=Shipment,
-                                                   dispatch_uid='shipment_fields_post_save')
 
     device = await sync_to_async(Device.objects.create)(id='FAKE_DEVICE_ID')
 
@@ -209,7 +203,6 @@ async def test_trackingdata_notification(communicator):
 async def test_shipmentupdate_notification(communicator):
     # Disable Shipment post-save signal
     await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
-    await sync_to_async(post_save_changed.disconnect)(sender=Shipment, dispatch_uid='shipment_fields_post_save')
 
     shipment, _ = await sync_to_async(Shipment.objects.get_or_create)(
         id='FAKE_SHIPMENT_ID',
@@ -220,11 +213,16 @@ async def test_shipmentupdate_notification(communicator):
         contract_version='1.0.0'
     )
 
-    await sync_to_async(post_save_changed.connect)(shipment_fields_changed, sender=Shipment,
-                                                   dispatch_uid='shipment_fields_post_save')
     # Update shipment (should get a message)
     shipment.carriers_scac = 'TESTING123'
     await sync_to_async(shipment.save)()
+    # Have to manually send message to channel
+
+    channel_layer = get_channel_layer()
+    await channel_layer.group_send(shipment.owner_id, {
+        "type": "shipments.update",
+        "shipment_id": shipment.id
+    })
 
     # Re-enable Shipment post-save signal
     await sync_to_async(models.signals.post_save.connect)(shipment_post_save, sender=Shipment,
@@ -232,7 +230,7 @@ async def test_shipmentupdate_notification(communicator):
     response = await communicator.receive_json_from()
 
     assert response['event'] == EventTypes.shipment_update.name
-    assert response['data']['type'] == 'Shipment'
-    assert response['data']['attributes']['carriers_scac'] == shipment.carriers_scac
+    assert response['data']['data']['type'] == 'Shipment'
+    assert response['data']['data']['attributes']['carriers_scac'] == shipment.carriers_scac
 
     await communicator.disconnect()

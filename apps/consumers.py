@@ -18,14 +18,15 @@ from string import Template
 
 from channels.db import database_sync_to_async
 from enumfields import Enum
-from rest_framework.renderers import JSONRenderer
+from rest_framework_json_api.renderers import JSONRenderer
 
 from apps.authentication import AsyncJsonAuthConsumer
 from apps.jobs.models import AsyncJob
 from apps.jobs.serializers import AsyncJobSerializer
 from apps.shipments.geojson import render_point_feature
-from apps.shipments.models import Shipment, TrackingData
-from apps.shipments.serializers import ShipmentDiffSerializer
+from apps.shipments.models import Shipment, TrackingData, JobState
+from apps.shipments.serializers import ShipmentTxSerializer
+from apps.shipments.views import ShipmentViewSet
 
 
 class EventTypes(Enum):
@@ -46,18 +47,20 @@ class AppsConsumer(AsyncJsonAuthConsumer):
                                       'data': AsyncJobSerializer(job).data}).decode()
 
     async def shipments_update(self, event):
-        fields_json = await database_sync_to_async(self.render_shipment_fields)(event['shipment_id'],
-                                                                                event['changed_fields'])
+        fields_json = await database_sync_to_async(self.render_shipment_fields)(event['shipment_id'])
         await self.send(fields_json)
 
-    def render_shipment_fields(self, shipment_id, changed_fields):
+    def render_shipment_fields(self, shipment_id):
         shipment = Shipment.objects.get(id=shipment_id)
-        data = {
-            "id": shipment_id,
-            "type": "Shipment",
-            "attributes": ShipmentDiffSerializer(shipment, fields=changed_fields).data
-        }
-        return JSONRenderer().render({'event': EventTypes.shipment_update.name, 'data': data}).decode()
+        async_jobs = shipment.asyncjob_set.filter(state__in=[JobState.PENDING, JobState.RUNNING])
+        response = ShipmentTxSerializer(shipment)
+        response.instance.async_job_id = async_jobs.latest('created_at').id if async_jobs else None
+
+        shipment_json = JSONRenderer().render(response.data, renderer_context={'view': ShipmentViewSet()}).decode()
+        return Template('{"event": "$event", "data": $shipment}').substitute(
+            event=EventTypes.shipment_update.name,
+            shipment=shipment_json,
+        )
 
     async def tracking_data_save(self, event):
         tracking_data_json = await database_sync_to_async(self.render_async_tracking_data)(event['tracking_data_id'])
