@@ -23,6 +23,7 @@ from rest_framework_json_api.renderers import JSONRenderer
 from apps.authentication import AsyncJsonAuthConsumer
 from apps.jobs.models import AsyncJob
 from apps.jobs.serializers import AsyncJobSerializer
+from apps.jobs.views import JobsViewSet
 from apps.shipments.geojson import render_point_feature
 from apps.shipments.models import Shipment, TrackingData, JobState
 from apps.shipments.serializers import ShipmentTxSerializer
@@ -43,8 +44,13 @@ class AppsConsumer(AsyncJsonAuthConsumer):
 
     def render_async_job(self, job_id):
         job = AsyncJob.objects.get(id=job_id)
-        return JSONRenderer().render({'event': EventTypes.asyncjob_update.name,
-                                      'data': AsyncJobSerializer(job).data}).decode()
+        response = AsyncJobSerializer(job)
+
+        asyncjob_json = JSONRenderer().render(response.data, renderer_context={'view': JobsViewSet()}).decode()
+        return Template('{"event": "$event", "data": $asyncjob}').substitute(
+            event=EventTypes.asyncjob_update.name,
+            asyncjob=asyncjob_json
+        )
 
     async def shipments_update(self, event):
         fields_json = await database_sync_to_async(self.render_shipment_fields)(event['shipment_id'])

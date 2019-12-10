@@ -146,7 +146,7 @@ async def test_job_notification(communicator):
 
     response = await communicator.receive_json_from()
     assert response['event'] == EventTypes.asyncjob_update.name
-    assert response['data']['id'] == job.id
+    assert response['data']['data']['id'] == job.id
 
     await communicator.disconnect()
 
