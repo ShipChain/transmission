@@ -39,18 +39,26 @@ class DeviceAWSIoTClient(AWSIoTClient):
 
         return iot_shadow['data']
 
+    def build_devices_query_dict(self, owner_id, params, next_token):
+        params_dict = {
+            'ownerId': owner_id,
+            'maxResults': settings.IOT_DEVICES_PAGE_SIZE,
+            'nextToken': next_token
+        }
+        for param_key, param_value in params.items():
+            if hasattr(param_value, 'name'):
+                params_dict[param_key] = param_value.name
+            elif param_value is not None:
+                params_dict[param_key] = param_value
+        return params_dict
+
     def get_list_owner_devices(self, owner_id, params):
         next_token = True
         results = []
+
         while next_token:
-            params_dict = {
-                'ownerId': owner_id,
-                'active': params.get('active') if params.get('active') is not None else '',
-                'in_bbox': params.get('in_bbox') if params.get('in_bbox') else '',
-                'state': params.get('state').name if params.get('state') else '',
-                'maxResults': settings.IOT_DEVICES_PAGE_SIZE,
-                'nextToken': next_token if next_token and not isinstance(next_token, bool) else ''
-            }
+            params_dict = self.build_devices_query_dict(
+                owner_id, params, next_token if next_token and not isinstance(next_token, bool) else '')
 
             try:
                 list_devices = self._get('devices', query_params=params_dict)

@@ -602,6 +602,10 @@ class ChangesDiffSerializer:
 
 
 class ShipmentOverviewTransitState(Enum):
+    """
+    We need this enum here since enum classes cannot being subclassed
+    and AWAITING_PICKUP is not a valid state for this endpoint
+    """
     IN_TRANSIT = 20
     AWAITING_DELIVERY = 30
     DELIVERED = 40

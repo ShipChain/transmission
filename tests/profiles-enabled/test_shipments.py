@@ -2449,11 +2449,10 @@ class DevicesLocationsAPITests(APITestCase):
             'call_type_2': self.query_params_dict(OWNER_ID, active=True),
             'call_type_3': self.query_params_dict(OWNER_ID, active=False),
             'call_type_4': self.query_params_dict(OWNER_ID, next_token=NEXT_TOKEN),
-            'call_type_5': self.query_params_dict(OWNER_ID, box="-82.5,34.5,-82,35"),
+            'call_type_5': self.query_params_dict(OWNER_ID, in_bbox="-82.5,34.5,-82,35"),
             'call_type_6': self.query_params_dict(OWNER_ID, state='IN_TRANSIT'),
             'call_type_7': self.query_params_dict(OWNER_ID, state='AWAITING_DELIVERY'),
             'call_type_8': self.query_params_dict(OWNER_ID, state='DELIVERED'),
-            # 'call_type_9': self.query_params_dict(OWNER_ID, state='AWAITING_PICKUP'),
         }
 
     def side_effects(self, iot_endpoint, **kwargs):
@@ -2465,15 +2464,20 @@ class DevicesLocationsAPITests(APITestCase):
                 break
         return self.map_responses[found_key]
 
-    def query_params_dict(self, owner_id, next_token='', box='', active=None, state=None):
-        return {
-            'active': active if active is not None else '',
+    def query_params_dict(self, owner_id, next_token='', in_bbox=None, active=None, state=None):
+        params = {
             'ownerId': owner_id,
             'maxResults': test_settings.IOT_DEVICES_PAGE_SIZE,
-            'in_bbox': box,
-            'state': state if state else '',
             'nextToken': next_token
         }
+        if active is not None:
+            params['active'] = active
+        if state is not None:
+            params['state'] = state
+        if in_bbox is not None:
+            params['in_bbox'] = in_bbox
+
+        return params
 
     def test_get_devices_locations(self):
 
