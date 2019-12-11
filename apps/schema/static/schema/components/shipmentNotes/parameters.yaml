@@ -13,7 +13,6 @@ search:
   required: false
   schema:
     type: string
-    format: format
     example: instruction for
 
 ordering:
