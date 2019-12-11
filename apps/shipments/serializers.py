@@ -637,7 +637,7 @@ class DevicesQueryParamsSerializer(serializers.Serializer):
         return None
 
     def validate_state(self, state):
-        if state.name == 'AWAITING_PICKUP':
+        if state.name == TransitState.AWAITING_PICKUP.name:
             raise exceptions.ValidationError(f'[{state.name}] is an invalid state value!')
         return state.name
 
