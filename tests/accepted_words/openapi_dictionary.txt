@@ -61,6 +61,7 @@ scac
 shadowData
 shipmentId
 ShipmentImport
+ShipmentNote
 subhouse
 
 transactionHash

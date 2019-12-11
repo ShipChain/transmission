@@ -27,7 +27,7 @@ class ShipmentNoteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShipmentNote
-        exclude = ('shipment', )
+        fields = '__all__'
 
 
 class ShipmentNoteCreateSerializer(serializers.ModelSerializer):
