@@ -24,7 +24,7 @@ services:
       - 22
 
   geth-poa:
-    image: shipchain/geth-poa
+    image: shipchain/geth-poa:v1.9.2
     expose:
       - 8545
     environment:
