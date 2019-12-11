@@ -1462,6 +1462,147 @@
             ]
           },
           {
+            "name": "Shipment Notes",
+            "description": null,
+            "item": [
+              {
+                "name": "Create a ShipmentNote",
+                "event": [
+                    {
+                        "listen": "test",
+                        "script": {
+                            "id": "22fdff24-8c51-4e92-a825-68c1beed1ae4",
+                            "exec": [
+                                "var data = pm.response.json();",
+                                "pm.environment.set(\"shipment_note_id\", data.data.id);",
+                                "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n})\n"
+                            ],
+                            "type": "text/javascript"
+                        }
+                    }
+                ],
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "message",
+                        "value": "Test note message.",
+                        "type": "text",
+                        "disabled": false
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{shipment_id}/notes/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "shipments",
+                      "{{shipment_id}}",
+                      "notes",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "List ShipmentNote",
+                "event": [
+                    {
+                        "listen": "test",
+                        "script": {
+                            "id": "14b77df2-1f74-45ff-833f-13d80ee7a5a5",
+                            "exec": [
+                                "var data = pm.response.json();",
+                                "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n})\n"
+                            ],
+                            "type": "text/javascript"
+                        }
+                    }
+                ],
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{shipment_id}/notes/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "shipments",
+                      "{{shipment_id}}",
+                      "notes",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Get ShipmentNote",
+                "event": [
+                    {
+                        "listen": "test",
+                        "script": {
+                            "id": "e3a15b66-e4af-4fc9-a0db-60b266a4fa6e",
+                            "exec": [
+                                "var data = pm.response.json();",
+                                "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n})\n"
+                            ],
+                            "type": "text/javascript"
+                        }
+                    }
+                ],
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{shipment_id}/notes/{{shipment_note_id}}/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "shipments",
+                      "{{shipment_id}}",
+                      "notes",
+                      "{{shipment_note_id}}",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              }
+            ]
+          },
+          {
                 "name": "Delete Shipment",
                 "event": [
                     {
