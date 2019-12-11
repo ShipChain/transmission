@@ -311,8 +311,8 @@ class ListDevicesStatus(APIView):
 
         serializer = DevicesQueryParamsSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
-        params = serializer.validated_data
-        devices = iot_client.get_list_owner_devices(owner_id, params)
+
+        devices = iot_client.get_list_owner_devices(owner_id, serializer.validated_data)
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(devices, request, view=self)

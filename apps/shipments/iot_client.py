@@ -46,9 +46,7 @@ class DeviceAWSIoTClient(AWSIoTClient):
             'nextToken': next_token
         }
         for param_key, param_value in params.items():
-            if hasattr(param_value, 'name'):
-                params_dict[param_key] = param_value.name
-            elif param_value is not None:
+            if param_value is not None:
                 params_dict[param_key] = param_value
         return params_dict
 

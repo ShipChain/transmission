@@ -601,24 +601,10 @@ class ChangesDiffSerializer:
         return self.datetime_filters(queryset_diff)
 
 
-class ShipmentOverviewTransitState(Enum):
-    """
-    We need this enum here since enum classes cannot being subclassed
-    and AWAITING_PICKUP is not a valid state for this endpoint
-    """
-    IN_TRANSIT = 20
-    AWAITING_DELIVERY = 30
-    DELIVERED = 40
-
-    @classmethod
-    def choices(cls):
-        return tuple((m.value, m.name) for m in cls)
-
-
 class DevicesQueryParamsSerializer(serializers.Serializer):
     active = serializers.BooleanField(required=False, allow_null=True, default=None)
     in_bbox = serializers.CharField(required=False, allow_null=True, default=None)
-    state = UpperEnumField(ShipmentOverviewTransitState, lenient=True, ints_as_names=True, required=False)
+    state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False)
 
     def validate_in_bbox(self, in_bbox):
         long_range = (-180, 180)
@@ -648,8 +634,12 @@ class DevicesQueryParamsSerializer(serializers.Serializer):
                                                  'in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4].')
 
             return ','.join([c.strip() for c in in_bbox.split(',')])
-
         return None
+
+    def validate_state(self, state):
+        if state.name == 'AWAITING_PICKUP':
+            raise exceptions.ValidationError(f'[{state.name}] is an invalid state value!')
+        return state.name
 
 
 class ActionType(Enum):
