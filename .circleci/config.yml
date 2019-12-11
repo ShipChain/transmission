@@ -148,9 +148,9 @@ jobs:
       - run:
           name: Wait for Migrations
           command: |
-            bin/dc exec engine-rpc /wait-for-it.sh localhost:2000 -t 120
-            bin/dc exec profiles-django /wait-for-it.sh localhost:8000 -t 120
-            bin/dc exec transmission-django /wait-for-it.sh localhost:8000 -t 120
+            bin/dc exec engine-rpc /wait-for-it.sh localhost:2000 -t 180
+            bin/dc exec profiles-django /wait-for-it.sh localhost:8000 -t 180
+            bin/dc exec transmission-django /wait-for-it.sh localhost:8000 -t 180
       - run:
           name: Load profiles fixtures
           command: |
