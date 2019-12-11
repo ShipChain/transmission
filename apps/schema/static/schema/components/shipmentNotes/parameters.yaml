@@ -1,0 +1,38 @@
+path:
+  required: true
+  name: shipment_note_id
+  in: path
+  description: ID of the ShipmentNote
+  schema:
+    $ref: '#/dataTypes/uuid'
+
+search:
+  name: search
+  in: query
+  description: Shipment note info to search for.
+  required: false
+  schema:
+    type: string
+    format: format
+    example: instruction for
+
+ordering:
+  name: ordering
+  in: query
+  description: Ordering of the objects. Default is descending order, add a `-` symbol before the variable to make it ascending.
+  required: false
+  schema:
+    type: string
+    enum: [created_at, -created_at]
+    example: created_at
+
+authorId:
+  required: false
+  name: author_id
+  in: query
+  description: ID of the shipment note author
+  schema:
+    $ref: '#/dataTypes/uuid'
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml

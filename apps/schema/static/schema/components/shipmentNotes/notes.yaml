@@ -1,23 +1,25 @@
 get:
-  summary: Get document details
-  description: |
-    Get additional info about a `Document`.
-
-    If `Document.upload_status` is `COMPLETE`, a presigned S3 URL for downloading the file will be included in the
-    `meta` payload.
-  operationId: getShipmentDocument
+  summary: Get shipment notes
+  description: >
+    Get all `ShipmentNote`s associated with a `Shipment`.
+  operationId: listShipmentNotes
   parameters:
-    - $ref: 'parameters.yaml#/path'
+    - $ref: '../core/parameters.yaml#/page'
+    - $ref: '../core/parameters.yaml#/page_size'
+    - $ref: '../core/parameters.yaml#/search'
+    - $ref: './parameters.yaml#/ordering'
+    - $ref: './parameters.yaml#/authorId'
     - $ref: '../shipments/parameters.yaml#/path'
+
   tags:
-    - Documents
+  - Notes
   responses:
     '200':
       description: "Success"
       content:
         application/vnd.api+json:
           schema:
-            $ref: 'schema.yaml#/getResponse'
+            $ref: 'schema.yaml#/listResponse'
     '401':
       description: "Unauthorized"
       content:
@@ -25,23 +27,23 @@ get:
           schema:
             $ref: '../errors/schema.yaml#/401'
 
-patch:
-  summary: Update a document
-  description: >
-    Update a `Document` object with the provided parameters.
-  operationId: updateShipmentDocument
+post:
+  summary: Create a shipment note
+  description: |
+    Create a new `ShipmentNote` owned by the current user.
+
+  operationId: createShipmentNote
   parameters:
-    - $ref: 'parameters.yaml#/path'
     - $ref: '../shipments/parameters.yaml#/path'
   tags:
-    - Documents
+    - Notes
   responses:
-    '202':
+    '201':
       description: "Created"
       content:
         application/vnd.api+json:
           schema:
-            $ref: 'schema.yaml#/getResponse'
+            $ref: 'schema.yaml#/createResponse'
     '401':
       description: "Unauthorized"
       content:
@@ -58,12 +60,12 @@ patch:
     content:
       application/vnd.api+json:
         schema:
-          $ref: 'requestBody.yaml#/updateRequest'
+          $ref: 'requestBody.yaml#/createRequest'
       application/json:
         schema:
           allOf:
-            - $ref: 'requestBody.yaml#/updateAttributes'
+            - $ref: 'requestBody.yaml#/createAttributes'
       multipart/form-data:
         schema:
           allOf:
-            - $ref: 'requestBody.yaml#/updateAttributes'
+            - $ref: 'requestBody.yaml#/createAttributes'

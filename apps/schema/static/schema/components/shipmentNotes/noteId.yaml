@@ -1,0 +1,23 @@
+get:
+  summary: Get shipment note details
+  description: |
+    Get additional info about a `ShipmentNote`.
+  operationId: getShipmentNote
+  parameters:
+    - $ref: 'parameters.yaml#/path'
+    - $ref: '../shipments/parameters.yaml#/path'
+  tags:
+    - Notes
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/getResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'

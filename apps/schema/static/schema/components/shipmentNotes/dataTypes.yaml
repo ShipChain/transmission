@@ -1,0 +1,17 @@
+uuid: &uuid
+  $ref: '../core/dataTypes.yaml#/uuid'
+
+authorId:
+  properties:
+    author_id:
+      <<: *uuid
+      title: author_id
+      description: User UUID of the note author
+
+message:
+  properties:
+    message:
+      title: message
+      description: Note message to be associated to the shipment
+      type: string
+      example: 'Special instruction for the shipment.'
