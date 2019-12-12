@@ -2387,7 +2387,7 @@ class DevicesLocationsAPITests(APITestCase):
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
 
-    def iot_responses(self, owner_id, num_devices=5, next_token=False, active=True):
+    def iot_responses(self, owner_id, num_devices=5, next_token=False, active=True, state=None):
 
         device_template = {
             "deviceId": "",
@@ -2449,7 +2449,10 @@ class DevicesLocationsAPITests(APITestCase):
             'call_type_2': self.query_params_dict(OWNER_ID, active=True),
             'call_type_3': self.query_params_dict(OWNER_ID, active=False),
             'call_type_4': self.query_params_dict(OWNER_ID, next_token=NEXT_TOKEN),
-            'call_type_5': self.query_params_dict(OWNER_ID, box="-82.5,34.5,-82,35"),
+            'call_type_5': self.query_params_dict(OWNER_ID, in_bbox="-82.5,34.5,-82,35"),
+            'call_type_6': self.query_params_dict(OWNER_ID, state='IN_TRANSIT'),
+            'call_type_7': self.query_params_dict(OWNER_ID, state='AWAITING_DELIVERY'),
+            'call_type_8': self.query_params_dict(OWNER_ID, state='DELIVERED'),
         }
 
     def side_effects(self, iot_endpoint, **kwargs):
@@ -2461,14 +2464,20 @@ class DevicesLocationsAPITests(APITestCase):
                 break
         return self.map_responses[found_key]
 
-    def query_params_dict(self, owner_id, next_token='', box='', active=None):
-        return {
-            'active': active if active is not None else '',
+    def query_params_dict(self, owner_id, next_token='', in_bbox=None, active=None, state=None):
+        params = {
             'ownerId': owner_id,
             'maxResults': test_settings.IOT_DEVICES_PAGE_SIZE,
-            'in_bbox': box,
             'nextToken': next_token
         }
+        if active is not None:
+            params['active'] = active
+        if state is not None:
+            params['state'] = state
+        if in_bbox is not None:
+            params['in_bbox'] = in_bbox
+
+        return params
 
     def test_get_devices_locations(self):
 
@@ -2523,6 +2532,32 @@ class DevicesLocationsAPITests(APITestCase):
 
             # A request with a query params other than true or false should fail with status code 400
             bad_param_url = url + '?active=NONBOOLEAN'
+            response = self.client.get(bad_param_url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+            # ----------------------- state query param validation ------------------------- #
+            # self.map_responses['call_type_2'] = self.iot_responses(OWNER_ID, active=True)
+            # self.map_responses['call_type_3'] = self.iot_responses(OWNER_ID, active=False)
+
+            # Lower case state param values are allowed. Should succeed with 200 status code
+            self.map_responses['call_type_6'] = self.iot_responses(OWNER_ID, state='IN_TRANSIT')
+            active_url = url + '?state=in_transit'
+            response = self.client.get(active_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # Upper case state param values are allowed. Should succeed with 200 status code
+            self.map_responses['call_type_7'] = self.iot_responses(OWNER_ID, state='AWAITING_DELIVERY')
+            inactive_url = url + '?state=AWAITING_DELIVERY'
+            response = self.client.get(inactive_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # Enum internal values are allowed. Should succeed with 200 status code
+            inactive_url = url + '?state=30'
+            response = self.client.get(inactive_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            # AWAITING_PICKUP is not a valid enum on this endpoint. Should fail with status code 400
+            bad_param_url = url + '?state=AWAITING_PICKUP'
             response = self.client.get(bad_param_url)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

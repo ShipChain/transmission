@@ -20,6 +20,15 @@ inBbox:
     type: string
     example: -82.5,34.5,-83,36
 
+state:
+  name: state
+  in: query
+  description: Returns the devices for which the attached shipments are in the provided transit state.
+  schema:
+    type: string
+    enum: [IN_TRANSIT, AWAITING_DELIVERY, DELIVERED]
+    example: IN_TRANSIT
+
 path:
   required: true
   name: device_id

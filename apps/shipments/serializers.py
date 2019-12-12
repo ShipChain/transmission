@@ -604,6 +604,7 @@ class ChangesDiffSerializer:
 class DevicesQueryParamsSerializer(serializers.Serializer):
     active = serializers.BooleanField(required=False, allow_null=True, default=None)
     in_bbox = serializers.CharField(required=False, allow_null=True, default=None)
+    state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False)
 
     def validate_in_bbox(self, in_bbox):
         long_range = (-180, 180)
@@ -633,8 +634,12 @@ class DevicesQueryParamsSerializer(serializers.Serializer):
                                                  'in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4].')
 
             return ','.join([c.strip() for c in in_bbox.split(',')])
-
         return None
+
+    def validate_state(self, state):
+        if state.name == TransitState.AWAITING_PICKUP.name:
+            raise exceptions.ValidationError(f'[{state.name}] is an invalid state value!')
+        return state.name
 
 
 class ActionType(Enum):
