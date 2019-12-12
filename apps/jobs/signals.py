@@ -9,12 +9,19 @@ from redis.lock import LockError
 from influxdb_metrics.loader import log_metric
 
 from apps.shipments.models import Shipment
-from .models import Message, MessageType, JobState
+from .models import AsyncJob, Message, MessageType, JobState
 
 # pylint:disable=invalid-name
 job_update = Signal(providing_args=["message", "shipment"])
 channel_layer = get_channel_layer()
 LOG = logging.getLogger('transmission')
+
+
+@receiver(post_save, sender=AsyncJob, dispatch_uid='asyncjob_post_save')
+def asyncjob_post_save(sender, instance, **kwargs):
+    # Notify websockets of any AsyncJob create/updates
+    async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
+                                            {"type": "jobs.update", "async_job_id": instance.id})
 
 
 @receiver(post_save, sender=Message, dispatch_uid='message_post_save')
@@ -37,5 +44,3 @@ def message_post_save(sender, instance, **kwargs):
     # Update has been received, send signal to listener
     LOG.debug(f'Update has been received, and signal sent to listener {instance.id}.')
     job_update.send(sender=Shipment, message=instance, shipment=instance.async_job.shipment)
-    async_to_sync(channel_layer.group_send)(instance.async_job.shipment.owner_id,
-                                            {"type": "jobs.update", "async_job_id": instance.async_job.id})
