@@ -164,7 +164,7 @@ class TestShipmentRPCClient(TestCase):
                 },
             })
             try:
-                rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID, 'SHIP', 400)
+                rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID)
                 self.fail("Should have thrown RPC Error")
             except RPCError as rpc_error:
                 self.assertEqual(rpc_error.status_code, 500)
@@ -177,7 +177,7 @@ class TestShipmentRPCClient(TestCase):
                 },
             })
             try:
-                rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID, 'SHIP', 400)
+                rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID)
                 self.fail("Should have thrown RPC Error")
             except RPCError as rpc_error:
                 self.assertEqual(rpc_error.status_code, 500)
@@ -193,7 +193,7 @@ class TestShipmentRPCClient(TestCase):
                 "id": 0
             })
 
-            contractVersion, transaction = rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID, CARRIER_WALLET_ID, '{}')
+            contractVersion, transaction = rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID)
             self.assertEqual(contractVersion, "v1")
             self.assertEqual(transaction, SHIPPER_WALLET_ID)
 

@@ -79,18 +79,16 @@ class ShipmentRPCClient(RPCClient):
             LOG.error('Invalid addition of tracking data.')
             raise RPCError("Invalid response from Engine")
 
-    def create_shipment_transaction(self, shipper_wallet_id, shipment_id, funding_type, contracted_amount):
+    def create_shipment_transaction(self, shipper_wallet_id, shipment_id):
         LOG.debug(
-            f'Creating shipment transaction with funding_type {funding_type}, shipment_amount {contracted_amount},'
+            f'Creating shipment transaction with '
             f'shipper_wallet_id {shipper_wallet_id}, and shipment_id {shipment_id}.')
         log_metric('transmission.info', tags={'method': 'shipment_rpcclient.create_shipment_transaction',
                                               'module': __name__})
 
         result = self.call('load.create_shipment_tx', {
             "senderWallet": shipper_wallet_id,
-            "shipmentUuid": shipment_id,
-            "fundingType": funding_type,
-            "contractedAmount": contracted_amount
+            "shipmentUuid": shipment_id
         })
 
         if 'success' in result and result['success']:

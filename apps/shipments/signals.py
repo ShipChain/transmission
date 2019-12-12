@@ -99,9 +99,7 @@ def loadshipment_post_save(sender, **kwargs):
         AsyncJob.rpc_job_for_listener(
             rpc_method=RPCClientFactory.get_client().create_shipment_transaction,
             rpc_parameters=[instance.shipment.shipper_wallet_id,
-                            instance.shipment.id,
-                            instance.funding_type.value,
-                            instance.contracted_amount],
+                            instance.shipment.id],
             signing_wallet_id=instance.shipment.shipper_wallet_id,
             shipment=instance.shipment
         )
