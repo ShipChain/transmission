@@ -74,8 +74,9 @@ class AppsConsumer(AsyncJsonAuthConsumer):
 
     def render_async_tracking_data(self, data_id):
         data = TrackingData.objects.filter(id=data_id)
-        return Template('{"event": "$event", "data": $geojson}').substitute(
+        return Template('{"event": "$event", "data": {"shipment_id": "$shipment_id", "feature": $geojson}}').substitute(
             event=EventTypes.trackingdata_update.name,
+            shipment_id=data.first().shipment_id,
             geojson=render_point_feature(data),
         )
 

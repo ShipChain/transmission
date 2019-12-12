@@ -189,8 +189,9 @@ async def test_trackingdata_notification(communicator):
     response = await communicator.receive_json_from()
 
     assert response['event'] == EventTypes.trackingdata_update.name
-    assert response['data']['type'] == 'Feature'
-    assert response['data']['geometry']['coordinates'][0] == tracking_data.longitude
+    assert response['data']['shipment_id'] == shipment.id
+    assert response['data']['feature']['type'] == 'Feature'
+    assert response['data']['feature']['geometry']['coordinates'][0] == tracking_data.longitude
 
     t_data = await sync_to_async(TrackingData.objects.get)(id='FAKE_TRACKING_DATA_ID')
     await sync_to_async(t_data.delete)()
