@@ -3,9 +3,9 @@ uuid: &uuid
 
 authorId:
   properties:
-    author_id:
+    user_id:
       <<: *uuid
-      title: author_id
+      title: user_id
       description: User UUID of the note author
 
 message:

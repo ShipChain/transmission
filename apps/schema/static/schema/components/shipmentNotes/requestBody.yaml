@@ -9,7 +9,7 @@ createAttributes:
   required:
     - message
   allOf:
-    - $ref: '#/document/message'
+    - $ref: '#/note/message'
 
 createRequest:
   allOf:
@@ -18,7 +18,7 @@ createRequest:
         data:
           $ref: '#/createResource'
 
-document:
+note:
   $ref: dataTypes.yaml
 
 jsonApi:

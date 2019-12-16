@@ -1,5 +1,5 @@
 get:
-  summary: Get shipment notes
+  summary: List notes
   description: >
     Get all `ShipmentNote`s associated with a `Shipment`.
   operationId: listShipmentNotes
@@ -12,7 +12,7 @@ get:
     - $ref: '../shipments/parameters.yaml#/path'
 
   tags:
-  - Notes
+  - Shipments
   responses:
     '200':
       description: "Success"
@@ -28,7 +28,7 @@ get:
             $ref: '../errors/schema.yaml#/401'
 
 post:
-  summary: Create a shipment note
+  summary: Create note
   description: |
     Create a new `ShipmentNote` owned by the current user.
 
@@ -36,7 +36,7 @@ post:
   parameters:
     - $ref: '../shipments/parameters.yaml#/path'
   tags:
-    - Notes
+    - Shipments
   responses:
     '201':
       description: "Created"
