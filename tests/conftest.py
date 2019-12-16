@@ -25,8 +25,10 @@ ForcedAuthentication.get_raw_token = fake_get_raw_token
 ForcedAuthentication.get_header = fake_get_header
 
 USER_ID = random_id()
+USER_2_ID = random_id()
 SHIPPER_ID = random_id()
 ORGANIZATION_ID = random_id()
+ORGANIZATION_2_ID = random_id()
 VAULT_ID = random_id()
 TRANSACTION_HASH = 'txHash'
 DEVICE_ID = random_id()
@@ -42,6 +44,16 @@ if test_settings.PROFILES_ENABLED:
     @pytest.fixture(scope='session')
     def user(token):
         return passive_credentials_auth(token)
+
+
+    @pytest.fixture(scope='session')
+    def token_2():
+        return get_jwt(username='user2@shipchain.io', sub=USER_2_ID, organization_id=ORGANIZATION_2_ID)
+
+
+    @pytest.fixture(scope='session')
+    def user_2(token_2):
+        return passive_credentials_auth(token_2)
 
 
     @pytest.fixture(scope='session')
@@ -68,12 +80,40 @@ if test_settings.PROFILES_ENABLED:
         return client
 
 
+    @pytest.fixture(scope='session')
+    def user2_api_client(user_2, token_2):
+        client = APIClient()
+        client.force_authenticate(user=user_2, token=token_2)
+        return client
+
+
     @pytest.fixture
     def mocked_is_shipper(shipper_user, http_pretty, shipment):
         http_pretty.register_uri(http_pretty.GET,
                                  f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.shipper_wallet_id}/?is_active",
                                  body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
         return shipper_user
+
+
+    @pytest.fixture
+    def mocked_not_shipper(http_pretty, shipment):
+        http_pretty.register_uri(http_pretty.GET,
+                                 f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.shipper_wallet_id}/?is_active",
+                                 body=json.dumps({'bad': 'bad'}), status=status.HTTP_403_FORBIDDEN)
+
+
+    @pytest.fixture
+    def mocked_not_carrier(http_pretty, shipment):
+        http_pretty.register_uri(http_pretty.GET,
+                                 f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.carrier_wallet_id}/?is_active",
+                                 body=json.dumps({'bad': 'bad'}), status=status.HTTP_403_FORBIDDEN)
+
+
+    @pytest.fixture
+    def mocked_not_moderator(http_pretty, shipment):
+        http_pretty.register_uri(http_pretty.GET,
+                                 f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.moderator_wallet_id}/?is_active",
+                                 body=json.dumps({'bad': 'bad'}), status=status.HTTP_403_FORBIDDEN)
 
 
     @pytest.fixture
@@ -98,9 +138,7 @@ if test_settings.PROFILES_ENABLED:
 
 @pytest.fixture(scope='session')
 def unauthenticated_api_client():
-    client = APIClient()
-    client.force_authenticate(user=None, token=None)
-    return client
+    return APIClient()
 
 
 @pytest.fixture

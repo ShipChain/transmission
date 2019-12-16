@@ -84,6 +84,16 @@ def test_create_shipment_note(user, api_client, shipper_api_client, unauthentica
 
 
 @pytest.mark.django_db
+def test_non_org_user_shipment_note_creation(user2_api_client, shipment, mocked_not_shipper, mocked_not_carrier,
+                                             mocked_not_moderator):
+    url = reverse('shipment-notes-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
+
+    # user2 is an authenticated user from another Org. he cannot create a shipment note
+    response = user2_api_client.post(url, {'message': MESSAGE_1}, format='json')
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
 def test_update_delete_shipment_note(api_client, shipment, shipment_notes):
     url = reverse('shipment-notes-detail', kwargs={'version': 'v1', 'shipment_pk': shipment.id,
                                                    'pk': shipment_notes[0].id})
