@@ -44,9 +44,9 @@ MESSAGE_4 = 'Shipper note about the shipment.'
 @pytest.fixture
 def shipment_notes(user, shipper_user, shipment):
     return [
-        ShipmentNote.objects.create(author_id=user.id, message=MESSAGE_1, shipment=shipment),
-        ShipmentNote.objects.create(author_id=user.id, message=MESSAGE_3, shipment=shipment),
-        ShipmentNote.objects.create(author_id=shipper_user.id, message=MESSAGE_4, shipment=shipment),
+        ShipmentNote.objects.create(user_id=user.id, message=MESSAGE_1, shipment=shipment),
+        ShipmentNote.objects.create(user_id=user.id, message=MESSAGE_3, shipment=shipment),
+        ShipmentNote.objects.create(user_id=shipper_user.id, message=MESSAGE_4, shipment=shipment),
     ]
 
 
@@ -73,14 +73,14 @@ def test_create_shipment_note(user, api_client, shipper_api_client, unauthentica
     assert response.status_code == status.HTTP_201_CREATED
     note_data = response.json()['data']
     assert len(note_data['attributes']['message']) == len(MESSAGE_1)
-    assert note_data['attributes']['author_id'] == user.id
+    assert note_data['attributes']['user_id'] == user.id
 
     # A shipper also valid for moderator and carrier can add a shipment note
     response = shipper_api_client.post(url, {'message': MESSAGE_1}, format='json')
     assert response.status_code == status.HTTP_201_CREATED
     note_data = response.json()['data']
     assert len(note_data['attributes']['message']) == len(MESSAGE_1)
-    assert note_data['attributes']['author_id'] == mocked_is_shipper.id     # author_id is the shipper Id
+    assert note_data['attributes']['user_id'] == mocked_is_shipper.id     # user_id is the shipper Id
 
 
 @pytest.mark.django_db
@@ -121,10 +121,10 @@ def test_list_search_filter(api_client, shipper_api_client, unauthenticated_api_
     assert len(notes_data) == len(shipment_notes)
 
     # There is only one note authored by the shipper
-    response = api_client.get(f'{url}?author_id={mocked_is_shipper.id}')
+    response = api_client.get(f'{url}?user_id={mocked_is_shipper.id}')
     notes_data = response.json()['data']
     assert len(notes_data) == 1
-    assert notes_data[0]['attributes']['author_id'] == mocked_is_shipper.id
+    assert notes_data[0]['attributes']['user_id'] == mocked_is_shipper.id
 
     # There is only one note containing the word "ShipChain"
     response = api_client.get(f'{url}?search=shipchain')

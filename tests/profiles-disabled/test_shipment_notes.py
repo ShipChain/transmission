@@ -35,9 +35,9 @@ def test_create_shipment_note(unauthenticated_api_client, shipment):
 
     create_note_data, content_type = create_form_content({
         'message': MESSAGE,
-        'author_id': USER_ID})
+        'user_id': USER_ID})
 
-    # An unauthenticated user cannot create a shipment note without specifying the author
+    # An unauthenticated user cannot create a shipment note without specifying the user
     response = unauthenticated_api_client.post(url, {'message': MESSAGE}, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -45,9 +45,9 @@ def test_create_shipment_note(unauthenticated_api_client, shipment):
     response = unauthenticated_api_client.post(bad_shipment_url, create_note_data, content_type=content_type)
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    # An authenticated user with a specified author can create a shipment note
+    # An authenticated user with a specified user can create a shipment note
     response = unauthenticated_api_client.post(url, create_note_data, content_type=content_type)
     assert response.status_code == status.HTTP_201_CREATED
     note_data = response.json()['data']
     assert len(note_data['attributes']['message']) == len(MESSAGE)
-    assert note_data['attributes']['author_id'] == USER_ID
+    assert note_data['attributes']['user_id'] == USER_ID

@@ -34,7 +34,7 @@ class ShipmentNoteCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShipmentNote
         if settings.PROFILES_ENABLED:
-            exclude = ('author_id', 'shipment', )
+            exclude = ('user_id', 'shipment', )
         else:
             exclude = ('shipment', )
 

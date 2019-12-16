@@ -22,7 +22,7 @@ from rest_framework import filters, viewsets, permissions, status, mixins
 from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
-from apps.permissions import get_user, UserHasShipmentPermission
+from apps.permissions import UserHasShipmentPermission
 from ..models import ShipmentNote
 from ..serializers import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
 
@@ -37,7 +37,7 @@ class ShipmentNoteViewSet(mixins.CreateModelMixin,
     serializer_class = ShipmentNoteSerializer
     permission_classes = ((UserHasShipmentPermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
-    filterset_fields = ('author_id', )
+    filterset_fields = ('user_id', )
     ordering_fields = ('created_at', )
     search_fields = ('message', )
 
@@ -46,7 +46,7 @@ class ShipmentNoteViewSet(mixins.CreateModelMixin,
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(author_id=get_user(self.request)[0], shipment_id=self.kwargs['shipment_pk'])
+            created = serializer.save(user_id=self.request.user.id, shipment_id=self.kwargs['shipment_pk'])
         else:
             created = serializer.save()
         return created

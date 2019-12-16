@@ -24,7 +24,7 @@ from apps.shipments.models import Shipment
 class ShipmentNote(models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     message = models.TextField(validators=[MaxLengthValidator(500), MinLengthValidator(1)])
-    author_id = models.CharField(null=False, max_length=36)
+    user_id = models.CharField(null=False, max_length=36)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
