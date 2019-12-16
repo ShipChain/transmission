@@ -14,12 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-
 from django.conf import settings
 
 from rest_framework_json_api import serializers
 
-from apps.shipments.models import Shipment
 from ..models import ShipmentNote
 
 
@@ -37,14 +35,3 @@ class ShipmentNoteCreateSerializer(serializers.ModelSerializer):
             exclude = ('user_id', 'shipment', )
         else:
             exclude = ('shipment', )
-
-    def create(self, validated_data):
-        if settings.PROFILES_ENABLED:
-            return ShipmentNote.objects.create(**validated_data)
-
-        try:
-            # We ensure that the provided shipment exists when profiles is disabled
-            Shipment.objects.get(id=self.context['shipment_id'])
-        except Shipment.DoesNotExist:
-            raise serializers.ValidationError('Invalid shipment provided')
-        return ShipmentNote.objects.create(**validated_data, **self.context)

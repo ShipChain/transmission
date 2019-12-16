@@ -18,28 +18,38 @@ import logging
 
 from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets, permissions, status, mixins
-from rest_framework.response import Response
-from influxdb_metrics.loader import log_metric
+from rest_framework import filters, permissions
+from rest_framework_json_api import serializers
+from shipchain_common import mixins
+from shipchain_common.permissions import HasViewSetActionPermissions
+from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
 
-from apps.permissions import UserHasShipmentPermission
-from ..models import ShipmentNote
+from ..models import ShipmentNote, Shipment
 from ..serializers import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
 
 LOG = logging.getLogger('transmission')
 
 
-class ShipmentNoteViewSet(mixins.CreateModelMixin,
-                          mixins.RetrieveModelMixin,
-                          mixins.ListModelMixin,
-                          viewsets.GenericViewSet):
+class ShipmentNoteViewSet(mixins.ConfigurableCreateModelMixin,
+                          mixins.ConfigurableRetrieveModelMixin,
+                          mixins.ConfigurableListModelMixin,
+                          ConfigurableGenericViewSet):
     queryset = ShipmentNote.objects.all()
     serializer_class = ShipmentNoteSerializer
-    permission_classes = ((UserHasShipmentPermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
+    permission_classes = ((permissions.IsAuthenticated, HasViewSetActionPermissions, ) if settings.PROFILES_ENABLED
+                          else (permissions.AllowAny, ))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
     filterset_fields = ('user_id', )
     ordering_fields = ('created_at', )
     search_fields = ('message', )
+
+    configuration = {
+        'create': ActionConfiguration(
+            request_serializer=ShipmentNoteCreateSerializer,
+            response_serializer=ShipmentNoteSerializer
+        ),
+        'list': ActionConfiguration(response_serializer=ShipmentNoteSerializer)
+    }
 
     def get_queryset(self):
         return self.queryset.filter(shipment_id=self.kwargs['shipment_pk'])
@@ -48,16 +58,11 @@ class ShipmentNoteViewSet(mixins.CreateModelMixin,
         if settings.PROFILES_ENABLED:
             created = serializer.save(user_id=self.request.user.id, shipment_id=self.kwargs['shipment_pk'])
         else:
-            created = serializer.save()
+            try:
+                # We ensure that the provided shipment exists when profiles is disabled
+                Shipment.objects.get(id=self.kwargs['shipment_pk'])
+            except Shipment.DoesNotExist:
+                raise serializers.ValidationError('Invalid shipment provided')
+
+            created = serializer.save(shipment_id=self.kwargs['shipment_pk'])
         return created
-
-    def create(self, request, *args, **kwargs):
-        LOG.debug(f'Creating a note object for shipment: {self.kwargs["shipment_pk"]}.')
-        log_metric('transmission.info', tags={'method': 'notes.create', 'module': __name__})
-
-        serializer = ShipmentNoteCreateSerializer(data=request.data,
-                                                  context={'shipment_id': self.kwargs['shipment_pk']})
-        serializer.is_valid(raise_exception=True)
-        note_object = self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(self.get_serializer(note_object).data, status=status.HTTP_201_CREATED, headers=headers)
