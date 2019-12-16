@@ -19,7 +19,7 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from shipchain_common.test_utils import create_form_content
 
-from apps.notes.models import ShipmentNote
+from apps.shipments.models import ShipmentNote
 
 
 # 207 characters note message

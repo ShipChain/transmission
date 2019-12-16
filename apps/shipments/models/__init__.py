@@ -2,3 +2,4 @@ from .shipment import Device, Shipment, Location, LoadShipment, TransitState, Sh
     EscrowState, FundingType
 from .permission_link import PermissionLink
 from .tracking_data import TrackingData
+from .note import ShipmentNote

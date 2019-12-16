@@ -23,8 +23,8 @@ from rest_framework.response import Response
 from influxdb_metrics.loader import log_metric
 
 from apps.permissions import get_user, UserHasShipmentPermission
-from .models import ShipmentNote
-from .serializers import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
+from ..models import ShipmentNote
+from ..serializers import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
 
 LOG = logging.getLogger('transmission')
 

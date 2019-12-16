@@ -20,7 +20,7 @@ from django.conf import settings
 from rest_framework_json_api import serializers
 
 from apps.shipments.models import Shipment
-from .models import ShipmentNote
+from ..models import ShipmentNote
 
 
 class ShipmentNoteSerializer(serializers.ModelSerializer):
