@@ -1,3 +1,19 @@
+"""
+Copyright 2019 ShipChain, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 import logging
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -13,7 +29,7 @@ from django.conf import settings
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Point
 from django.contrib.postgres.fields import JSONField, ArrayField
-from django.core.validators import RegexValidator, MaxValueValidator, MinValueValidator
+from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
 from django_fsm import FSMIntegerField, transition
 from enumfields import Enum, EnumIntegerField
@@ -21,14 +37,16 @@ from enumfields import EnumField
 from rest_framework.exceptions import Throttled, PermissionDenied
 from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
 from influxdb_metrics.loader import log_metric
-from shipchain_common.utils import AliasField, random_id
+from shipchain_common.utils import random_id
 
 from apps.eth.fields import AddressField, HashField
 from apps.jobs.models import AsyncJob, JobState
 from apps.simple_history import TxmHistoricalRecords, AnonymousHistoricalMixin
-from .rpc import RPCClientFactory
+from ..rpc import RPCClientFactory
 
 LOG = logging.getLogger('transmission')
+
+# pylint: disable=too-many-branches
 
 
 class Location(AnonymousHistoricalMixin, models.Model):
@@ -488,20 +506,6 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     SHIPMENT_AMOUNT = 0
 
 
-class PermissionLink(models.Model):
-    id = models.CharField(primary_key=True, default=random_id, max_length=36)
-    expiration_date = models.DateTimeField(blank=True, null=True)
-    name = models.CharField(null=False, max_length=255)
-    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    @property
-    def is_valid(self):
-        if not self.expiration_date:
-            return True
-        return datetime.now(timezone.utc) < self.expiration_date
-
-
 class LoadShipment(models.Model):
     shipment = models.OneToOneField(Shipment, primary_key=True, on_delete=models.CASCADE)
 
@@ -522,23 +526,3 @@ class LoadShipment(models.Model):
     # Vault.Data
     vault_hash = HashField()
     vault_uri = models.CharField(max_length=255, blank=True)
-
-
-class TrackingData(models.Model):
-    id = models.CharField(primary_key=True, default=random_id, max_length=36)
-    created_at = models.DateTimeField(auto_now_add=True)
-    device = models.ForeignKey(Device, on_delete=models.DO_NOTHING)
-    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
-    latitude = models.FloatField(max_length=36)
-    longitude = models.FloatField(max_length=36)
-    altitude = models.FloatField(max_length=36, null=True, blank=True)
-    source = models.CharField(max_length=36)
-    uncertainty = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], null=True, blank=True)
-    speed = models.FloatField(validators=[MinValueValidator(0)], null=True, blank=True)
-    timestamp = models.DateTimeField()
-    time = AliasField(db_column='timestamp')
-    version = models.CharField(max_length=36)
-    point = GeometryField()
-
-    class Meta:
-        ordering = ('timestamp',)
