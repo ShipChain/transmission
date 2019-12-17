@@ -21,7 +21,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions
 from rest_framework_json_api import serializers
 from shipchain_common import mixins
-from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
 
 from apps.permissions import UserHasShipmentPermission
@@ -37,8 +36,8 @@ class ShipmentNoteViewSet(mixins.ConfigurableCreateModelMixin,
                           ConfigurableGenericViewSet):
     queryset = ShipmentNote.objects.all()
     serializer_class = ShipmentNoteSerializer
-    permission_classes = ((permissions.IsAuthenticated, HasViewSetActionPermissions, UserHasShipmentPermission, )
-                          if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
+    permission_classes = ((permissions.IsAuthenticated, UserHasShipmentPermission, ) if settings.PROFILES_ENABLED
+                          else (permissions.AllowAny, ))
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
     filterset_fields = ('user_id', )
     ordering_fields = ('created_at', )

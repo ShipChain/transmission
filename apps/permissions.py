@@ -22,6 +22,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import permissions, status
 from shipchain_common.authentication import get_jwt_from_request
+from shipchain_common.permissions import HasViewSetActionPermissions
 
 from apps.shipments.models import Shipment, PermissionLink
 
@@ -66,8 +67,10 @@ def is_carrier(request, shipment, allowed_methods_set):
     """
     response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.carrier_wallet_id}/?is_active',
                                              headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+    if allowed_methods_set is not None:
+        return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
 
-    return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
+    return response.status_code == status.HTTP_200_OK
 
 
 def is_moderator(request, shipment, allowed_methods_set):
@@ -78,7 +81,10 @@ def is_moderator(request, shipment, allowed_methods_set):
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.moderator_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
-        return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
+        if allowed_methods_set is not None:
+            return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
+
+        return response.status_code == status.HTTP_200_OK
 
     return False
 
@@ -90,7 +96,10 @@ def is_shipper(request, shipment, allowed_methods_set):
     response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.shipper_wallet_id}/?is_active',
                                              headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
 
-    return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
+    if allowed_methods_set is not None:
+        return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
+
+    return response.status_code == status.HTTP_200_OK
 
 
 def shipment_exists(shipment_id):
@@ -137,23 +146,19 @@ class IsOwner(permissions.BasePermission):
         return has_owner_access(request, obj)
 
 
-class UserHasShipmentPermission(permissions.BasePermission):
+class UserHasShipmentPermission(HasViewSetActionPermissions):
     """
     Custom permission to only allow owner, shipper, moderator and carrier
     access to a shipment object on a nested route
     """
 
-    non_owner_access_methods = NON_OWNER_ACCESS_METHODS
-
-    def get_allowed_methods(self, view):
-        if view.basename in ('shipment-notes', ):
-            return self.non_owner_access_methods + ('POST', )
-        return self.non_owner_access_methods
-
     def has_object_permission(self, request, view, obj):
-        return check_has_shipment_owner_access(request, obj.shipment)
+        return check_has_shipment_owner_access(request, obj.shipment, allowed_methods=None)
 
     def has_permission(self, request, view):
+        action_view_permission = super().has_permission(request, view)
+        if not action_view_permission:
+            return False
 
         shipment_id = view.kwargs.get('shipment_pk', None)
         if not shipment_id:
@@ -165,4 +170,4 @@ class UserHasShipmentPermission(permissions.BasePermission):
             LOG.warning(f'User: {request.user}, is trying to access a non existing shipment: {shipment_id}')
             return False
 
-        return check_has_shipment_owner_access(request, shipment, allowed_methods=self.get_allowed_methods(view))
+        return check_has_shipment_owner_access(request, shipment, allowed_methods=None)
