@@ -22,7 +22,6 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import permissions, status
 from shipchain_common.authentication import get_jwt_from_request
-from shipchain_common.permissions import HasViewSetActionPermissions
 
 from apps.shipments.models import Shipment, PermissionLink
 
@@ -146,28 +145,43 @@ class IsOwner(permissions.BasePermission):
         return has_owner_access(request, obj)
 
 
-class UserHasShipmentPermission(HasViewSetActionPermissions):
+class IsShipperCarrierModerator(permissions.BasePermission):
     """
     Custom permission to only allow owner, shipper, moderator and carrier
     access to a shipment object on a nested route
+
+    This class should be used in conjunction with ShipmentExists
+    to validate the provided shipment_id in nested route
+
+    Example:
+        permission_classes = (IsAuthenticated, ShipmentExists, IsShipperCarrierModerator, )
+
+        On a ConfigurableGenericViewSet:
+
+        permission_classes = (IsAuthenticated, ShipmentExists, HasViewSetActionPermissions, IsShipperCarrierModerator, )
+
+    The declaration order of these classes matter.
+
     """
 
     def has_object_permission(self, request, view, obj):
         return check_has_shipment_owner_access(request, obj.shipment, allowed_methods=None)
 
     def has_permission(self, request, view):
-        action_view_permission = super().has_permission(request, view)
-        if not action_view_permission:
-            return False
+        shipment = Shipment.objects.get(id=view.kwargs.get('shipment_pk'))
+
+        return check_has_shipment_owner_access(request, shipment, allowed_methods=None)
+
+
+class ShipmentExists(permissions.BasePermission):
+
+    def has_permission(self, request, view):
 
         shipment_id = view.kwargs.get('shipment_pk', None)
-        if not shipment_id:
+
+        if not shipment_exists(shipment_id):
             # The requested views are only accessible via nested routes
-            return False
-        try:
-            shipment = Shipment.objects.get(id=shipment_id)
-        except Shipment.DoesNotExist:
             LOG.warning(f'User: {request.user}, is trying to access a non existing shipment: {shipment_id}')
             return False
 
-        return check_has_shipment_owner_access(request, shipment, allowed_methods=None)
+        return True

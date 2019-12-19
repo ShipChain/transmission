@@ -43,7 +43,7 @@ def test_create_shipment_note(unauthenticated_api_client, shipment):
 
     # A shipment note cannot be created for a non existing shipment
     response = unauthenticated_api_client.post(bad_shipment_url, create_note_data, content_type=content_type)
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # An authenticated user with a specified user can create a shipment note
     response = unauthenticated_api_client.post(url, create_note_data, content_type=content_type)

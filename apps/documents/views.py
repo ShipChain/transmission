@@ -16,24 +16,23 @@ limitations under the License.
 
 import logging
 from urllib.parse import unquote_plus
-
 import re
+
 from django.conf import settings
 from django_filters import rest_framework as filters
 from rest_framework import permissions, status, exceptions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_json_api import serializers
-from influxdb_metrics.loader import log_metric
 from shipchain_common import mixins
+from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
 
 from apps.authentication import DocsLambdaRequest
 from apps.jobs.models import AsyncActionType
-from apps.permissions import get_owner_id, UserHasShipmentPermission
+from apps.permissions import get_owner_id, ShipmentExists, IsShipperCarrierModerator
 from apps.utils import UploadStatus
 from .filters import DocumentFilterSet
-from .models import Document, Shipment
+from .models import Document
 from .rpc import DocumentRPCClient
 from .serializers import DocumentSerializer, DocumentCreateSerializer
 
@@ -45,10 +44,18 @@ class DocumentViewSet(mixins.ConfigurableCreateModelMixin,
                       mixins.ConfigurableUpdateModelMixin,
                       mixins.ConfigurableListModelMixin,
                       ConfigurableGenericViewSet):
+
     queryset = Document.objects.all()
+
     serializer_class = DocumentSerializer
-    permission_classes = ((permissions.IsAuthenticated, UserHasShipmentPermission, ) if settings.PROFILES_ENABLED
-                          else (permissions.AllowAny, ))
+
+    permission_classes = (
+        (permissions.IsAuthenticated,
+         ShipmentExists,
+         HasViewSetActionPermissions,
+         IsShipperCarrierModerator, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
+    )
+
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet
 
@@ -66,33 +73,8 @@ class DocumentViewSet(mixins.ConfigurableCreateModelMixin,
         if settings.PROFILES_ENABLED:
             created = serializer.save(owner_id=get_owner_id(self.request), shipment_id=self.kwargs['shipment_pk'])
         else:
-            # Check specific to profiles disabled
-            try:
-                Shipment.objects.get(id=self.kwargs['shipment_pk'])
-            except Shipment.DoesNotExist:
-                raise serializers.ValidationError('Invalid shipment provided')
             created = serializer.save(shipment_id=self.kwargs['shipment_pk'])
         return created
-
-    def create(self, request, *args, **kwargs):
-        """
-        Create a pre-signed s3 post and create a corresponding  document object with pending status
-        """
-
-        LOG.debug(f'Creating a document object for shipment: {kwargs["shipment_pk"]}.')
-        log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
-
-        return super().create(request, *args, **kwargs)
-
-    def update(self, request, *args, **kwargs):
-        """
-        Update document object status according to upload status: COMPLETE or FAILED
-        """
-
-        LOG.debug(f'Updating document {self.get_object().id} with new details.')
-        log_metric('transmission.info', tags={'method': 'documents.update', 'module': __name__})
-
-        return super().update(request, *args, **kwargs)
 
 
 class S3Events(APIView):
