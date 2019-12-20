@@ -19,7 +19,7 @@ from django.contrib import admin
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
 
-from apps.admin import pretty_json_print, ShipmentAdminDisplayMixin
+from apps.admin import pretty_json_print, ShipmentAdminDisplayMixin, NoAddUpdateDeletePermissionMixin
 from .models import AsyncJob, JobState, AsyncAction, Message
 
 
@@ -30,7 +30,7 @@ def retry_attempt(async_job_admin, request, queryset):
         job.fire(delay=job.delay)
 
 
-class MessageInlineTab(admin.TabularInline):
+class MessageInlineTab(NoAddUpdateDeletePermissionMixin, admin.TabularInline):
     model = Message
 
     exclude = (
@@ -47,31 +47,13 @@ class MessageInlineTab(admin.TabularInline):
 
     body_display.short_description = "Body"
 
-    def has_add_permission(self, request, obj=None):
-        return False
 
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-class AsyncActionInlineTab(admin.TabularInline):
+class AsyncActionInlineTab(NoAddUpdateDeletePermissionMixin, admin.TabularInline):
     model = AsyncAction
 
     readonly_fields = (
         'created_at',
     )
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 class AsyncJobAdmin(ShipmentAdminDisplayMixin, admin.ModelAdmin):

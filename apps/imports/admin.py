@@ -19,11 +19,11 @@ from django.contrib import admin
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
 
-from apps.admin import pretty_json_print
+from apps.admin import pretty_json_print, NoAddUpdateDeletePermissionMixin
 from .models import ShipmentImport
 
 
-class ShipmentImportsAdmin(admin.ModelAdmin):
+class ShipmentImportsAdmin(NoAddUpdateDeletePermissionMixin, admin.ModelAdmin):
     list_per_page = settings.ADMIN_PAGE_SIZE
 
     list_display = (
@@ -53,15 +53,6 @@ class ShipmentImportsAdmin(admin.ModelAdmin):
         return pretty_json_print(obj.report, indent=4, sort_keys=False, lineseparator=u'\n\n')
 
     report_display.short_description = "Report"
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 admin.site.register(ShipmentImport, ShipmentImportsAdmin)

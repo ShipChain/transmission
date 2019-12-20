@@ -19,11 +19,13 @@ from django.contrib import admin
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
 
-from apps.admin import ShipmentAdminDisplayMixin
+from apps.admin import ShipmentAdminDisplayMixin, NoAddUpdateDeletePermissionMixin
 from .models import Document
 
 
-class ShipmentDocumentAdmin(ShipmentAdminDisplayMixin, admin.ModelAdmin):
+class ShipmentDocumentAdmin(NoAddUpdateDeletePermissionMixin,
+                            ShipmentAdminDisplayMixin,
+                            admin.ModelAdmin):
     list_per_page = settings.ADMIN_PAGE_SIZE
 
     list_display = (
@@ -56,15 +58,6 @@ class ShipmentDocumentAdmin(ShipmentAdminDisplayMixin, admin.ModelAdmin):
         'owner_id',
         'shipment__id',
     )
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 admin.site.register(Document, ShipmentDocumentAdmin)

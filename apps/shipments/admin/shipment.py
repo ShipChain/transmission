@@ -21,13 +21,13 @@ from rangefilter.filter import DateRangeFilter
 
 from apps.shipments.models import Shipment, Location, TransitState
 from apps.jobs.models import AsyncJob
-from apps.admin import object_detail_admin_link
+from apps.admin import object_detail_admin_link, NoAddUpdateDeletePermissionMixin
 
 from .filter import StateFilter
 from .historical import BaseModelHistory
 
 
-class AsyncJobInlineTab(admin.TabularInline):
+class AsyncJobInlineTab(NoAddUpdateDeletePermissionMixin, admin.TabularInline):
     model = AsyncJob
     fields = (
         'job_id',
@@ -54,15 +54,6 @@ class AsyncJobInlineTab(admin.TabularInline):
 
     def job_id(self, obj):
         return object_detail_admin_link(obj)
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 NON_SCHEMA_FIELDS = [
@@ -92,7 +83,7 @@ NON_SCHEMA_FIELDS = [
 ]
 
 
-class ShipmentAdmin(admin.ModelAdmin):
+class ShipmentAdmin(NoAddUpdateDeletePermissionMixin, admin.ModelAdmin):
     list_per_page = settings.ADMIN_PAGE_SIZE
 
     # Read Only admin page until this feature is worked
@@ -124,8 +115,8 @@ class ShipmentAdmin(admin.ModelAdmin):
     ]
 
     search_fields = ('id', 'shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id', 'state', 'owner_id',
-                     'ship_from_location__name', 'ship_to_location__name', 'final_destination_location__name',
-                     'bill_to_location__name', )
+                     'ship_from_location__name__icontains', 'ship_to_location__name__icontains',
+                     'final_destination_location__name__icontains', 'bill_to_location__name__icontains', )
 
     list_filter = [
         ('created_at', DateRangeFilter),
@@ -139,15 +130,6 @@ class ShipmentAdmin(admin.ModelAdmin):
 
     shipment_state.short_description = 'state'
 
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
 
 class HistoricalShipmentAdmin(BaseModelHistory, ShipmentAdmin):
     readonly_fields = [field.name for field in Shipment._meta.get_fields()]
@@ -156,8 +138,39 @@ class HistoricalShipmentAdmin(BaseModelHistory, ShipmentAdmin):
 class LocationAdmin(BaseModelHistory):
     list_per_page = settings.ADMIN_PAGE_SIZE
 
-    fieldsets = [(None, {'fields': [field.name for field in Location._meta.local_fields]})]
+    fieldsets = [(None, {'fields': [field.name for field in Location._meta.local_fields] + ['shipment_display']})]
 
-    readonly_fields = [field.name for field in Location._meta.get_fields()]
+    readonly_fields = [field.name for field in Location._meta.get_fields()] + ['shipment_display']
 
-    search_fields = ('id', 'name__contains', )
+    search_fields = (
+        'id',
+        'name__icontains',
+        'address_1__icontains',
+        'address_2__icontains',
+        'city__icontains',
+        'state__icontains',
+    )
+
+    list_filter = [
+        ('created_at', DateRangeFilter),
+        ('updated_at', DateRangeFilter),
+    ]
+
+    list_display = (
+        'id',
+        'shipment_display',
+        'name',
+        'created_at',
+        'updated_at',
+    )
+
+    def shipment_display(self, obj):
+        for related_name in ('shipment_from', 'shipment_to', 'shipment_dest', 'shipment_bill', ):
+            try:
+                shipment = getattr(obj, related_name)
+                return object_detail_admin_link(shipment)
+            except AttributeError:
+                continue
+        return None
+
+    shipment_display.short_description = "Shipment"
