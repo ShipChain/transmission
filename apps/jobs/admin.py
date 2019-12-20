@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from django.conf import settings
 from django.contrib import admin
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
@@ -75,6 +76,8 @@ class AsyncActionInlineTab(admin.TabularInline):
 
 class AsyncJobAdmin(admin.ModelAdmin):
     actions = [retry_attempt]
+
+    list_per_page = settings.ADMIN_PAGE_SIZE
 
     exclude = (
         'parameters',

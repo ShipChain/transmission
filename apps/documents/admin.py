@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from django.conf import settings
 from django.contrib import admin
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
@@ -23,6 +24,7 @@ from .models import Document
 
 
 class ShipmentDocumentAdmin(admin.ModelAdmin):
+    list_per_page = settings.ADMIN_PAGE_SIZE
 
     list_display = (
         'id',

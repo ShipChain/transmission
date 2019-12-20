@@ -306,3 +306,5 @@ if INFLUXDB_URL:
     EMAIL_BACKEND = 'influxdb_metrics.email.InfluxDbEmailBackend'
 
 GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'
+
+ADMIN_PAGE_SIZE = 20

@@ -1,4 +1,5 @@
 from django import http
+from django.conf import settings
 from django.contrib.admin import helpers
 from django.contrib.admin.utils import unquote
 from django.contrib.contenttypes.models import ContentType
@@ -12,6 +13,7 @@ from simple_history.admin import SimpleHistoryAdmin, USER_NATURAL_KEY, SIMPLE_HI
 
 
 class BaseModelHistory(SimpleHistoryAdmin):
+    list_per_page = settings.ADMIN_PAGE_SIZE
 
     def history_view(self, request, object_id, extra_context=None):     # pylint:disable=too-many-locals
         request.current_app = self.admin_site.name
