@@ -92,9 +92,38 @@ def pretty_json_print(field, indent=2, sort_keys=True, lineseparator=u'\n'):
     return SafeJson(style + response)
 
 
-def shipment_admin_link(shipment):
+def object_detail_admin_link(obj):
+    """
+    Returns the url admin link of the object passed in argument
+    """
     return format_html(
         '<a href="{}">{}</a>',
-        admin_change_url(shipment),
-        shipment.id if shipment else ''
+        admin_change_url(obj),
+        obj.id if obj else ''
     )
+
+
+class ShipmentAdminDisplayMixin:
+    """
+    This mixin aims at facilitating the addition of a shipment link on a list
+    or detail page.
+
+    example:
+        class MyModelAdmin(ShipmentAdminDisplayMixin, ModelAdmin):
+            ...
+
+            list_display = (
+                ...
+                'shipment_display',
+            )
+
+            # Or for detail display
+            readonly_fields = (
+                ...
+                'shipment_display',
+            )
+    """
+    def shipment_display(self, obj):
+        return object_detail_admin_link(obj.shipment)
+
+    shipment_display.short_description = "Shipment"

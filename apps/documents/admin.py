@@ -19,15 +19,16 @@ from django.contrib import admin
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
 
-from apps.admin import shipment_admin_link
+from apps.admin import ShipmentAdminDisplayMixin
 from .models import Document
 
 
-class ShipmentDocumentAdmin(admin.ModelAdmin):
+class ShipmentDocumentAdmin(ShipmentAdminDisplayMixin, admin.ModelAdmin):
     list_per_page = settings.ADMIN_PAGE_SIZE
 
     list_display = (
         'id',
+        'shipment_display',
         'owner_id',
         'document_type',
         'file_type',
@@ -55,11 +56,6 @@ class ShipmentDocumentAdmin(admin.ModelAdmin):
         'owner_id',
         'shipment__id',
     )
-
-    def shipment_display(self, obj):
-        return shipment_admin_link(obj.shipment)
-
-    shipment_display.short_description = "Shipment"
 
     def has_add_permission(self, request):
         return False

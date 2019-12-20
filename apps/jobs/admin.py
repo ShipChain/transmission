@@ -19,7 +19,7 @@ from django.contrib import admin
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
 
-from apps.admin import pretty_json_print, shipment_admin_link
+from apps.admin import pretty_json_print, ShipmentAdminDisplayMixin
 from .models import AsyncJob, JobState, AsyncAction, Message
 
 
@@ -74,7 +74,7 @@ class AsyncActionInlineTab(admin.TabularInline):
         return False
 
 
-class AsyncJobAdmin(admin.ModelAdmin):
+class AsyncJobAdmin(ShipmentAdminDisplayMixin, admin.ModelAdmin):
     actions = [retry_attempt]
 
     list_per_page = settings.ADMIN_PAGE_SIZE
@@ -117,11 +117,6 @@ class AsyncJobAdmin(admin.ModelAdmin):
     search_fields = [
         'id',
     ]
-
-    def shipment_display(self, obj):
-        return shipment_admin_link(obj.shipment)
-
-    shipment_display.short_description = "Shipment"
 
     def parameters_display(self, obj):
         return pretty_json_print(obj.parameters)

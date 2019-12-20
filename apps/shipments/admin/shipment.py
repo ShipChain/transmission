@@ -17,11 +17,11 @@ limitations under the License.
 from django.conf import settings
 from django.contrib import admin
 from django.utils.html import format_html
-from django.urls import reverse
 from rangefilter.filter import DateRangeFilter
 
 from apps.shipments.models import Shipment, Location, TransitState
 from apps.jobs.models import AsyncJob
+from apps.admin import object_detail_admin_link
 
 from .filter import StateFilter
 from .historical import BaseModelHistory
@@ -53,11 +53,7 @@ class AsyncJobInlineTab(admin.TabularInline):
         return "??"
 
     def job_id(self, obj):
-        return format_html(
-            '<a href="{}" target="_blank">{}</a>',
-            reverse('admin:jobs_asyncjob_change', kwargs={'object_id': obj.id}),
-            obj.id
-        )
+        return object_detail_admin_link(obj)
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -140,6 +136,8 @@ class ShipmentAdmin(admin.ModelAdmin):
 
     def shipment_state(self, obj):
         return TransitState(obj.state).label.upper()
+
+    shipment_state.short_description = 'state'
 
     def has_delete_permission(self, request, obj=None):
         return False
