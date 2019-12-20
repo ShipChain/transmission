@@ -90,3 +90,11 @@ def pretty_json_print(field, indent=2, sort_keys=True, lineseparator=u'\n'):
 
     # Safe the output
     return SafeJson(style + response)
+
+
+def shipment_admin_link(shipment):
+    return format_html(
+        '<a href="{}">{}</a>',
+        admin_change_url(shipment),
+        shipment.id if shipment else ''
+    )

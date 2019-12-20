@@ -15,11 +15,10 @@ limitations under the License.
 """
 
 from django.contrib import admin
-from django.utils.html import format_html
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
 
-from apps.admin import admin_change_url
+from apps.admin import shipment_admin_link
 from .models import Document
 
 
@@ -56,13 +55,7 @@ class ShipmentDocumentAdmin(admin.ModelAdmin):
     )
 
     def shipment_display(self, obj):
-        shipment = obj.shipment
-        url = admin_change_url(shipment)
-        return format_html(
-            '<a href="{}">{}</a>',
-            url,
-            shipment.id if shipment else ''
-        )
+        return shipment_admin_link(obj.shipment)
 
     shipment_display.short_description = "Shipment"
 
