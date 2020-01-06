@@ -50,7 +50,7 @@ class ShipmentImportsAdmin(NoAddUpdateDeletePermissionMixin, admin.ModelAdmin):
                      'shipper_wallet_id', 'carrier_wallet_id', 'owner_id', 'masquerade_id', )
 
     def report_display(self, obj):
-        return pretty_json_print(obj.report, indent=4, sort_keys=False, lineseparator=u'\n\n')
+        return pretty_json_print(obj.report, indent=4, sort_keys=False, line_separator=u'\n\n')
 
     report_display.short_description = "Report"
 

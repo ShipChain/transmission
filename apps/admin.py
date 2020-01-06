@@ -76,11 +76,11 @@ class SafeJson(str):
         return self
 
 
-def pretty_json_print(field, indent=2, sort_keys=True, lineseparator=u'\n'):
+def pretty_json_print(field, indent=2, sort_keys=True, line_separator=u'\n'):
     response = json.dumps(field, sort_keys=sort_keys, indent=indent)
 
     # Get the Pygments formatter
-    formatter = HtmlFormatter(style='colorful', lineseparator=lineseparator)
+    formatter = HtmlFormatter(style='colorful', lineseparator=line_separator)
 
     # Highlight the data
     response = highlight(response, JsonLexer(), formatter)
