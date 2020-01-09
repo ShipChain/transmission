@@ -543,14 +543,12 @@ class ChangesDiffSerializer:
         json_fields_changes = new_obj.diff(old_obj, json_fields_only=True)
         if json_fields_changes:
             for field_name, changes in json_fields_changes.items():
-                related_changes = self.build_list_changes(changes, json_field=True, base_field=field_name)
-                if related_changes:
-                    changes_list.extend(related_changes)
+                changes_list.extend(self.build_list_changes(changes, json_field=True, base_field=field_name))
         return changes_list
 
     def document_actions(self, new_obj):
         document_queryset = new_obj.historicaldocument_set.all().filter(upload_status=UploadStatus.COMPLETE)
-        if document_queryset.count() > 0:
+        if document_queryset.exists():
             for hist_doc in document_queryset:
                 yield {
                     'history_date': hist_doc.history_date,
@@ -580,23 +578,22 @@ class ChangesDiffSerializer:
 
     @property
     def data(self):
-        queryset = self.queryset
-        count = queryset.count()
-
+        count = self.queryset.count()
         queryset_diff = []
-        if count == 0:
-            return queryset_diff
-        index = 0
-        if count > 1:
-            while index + 1 < count:
-                new = queryset[index]
-                old = queryset[index + 1]
-                index += 1
-                queryset_diff.extend(list(self.document_actions(new)))
-                queryset_diff.append(self.diff_object_fields(old, new))
 
-            # The diff change for the shipment creation object is computed against a None object
-            queryset_diff.append(self.diff_object_fields(None, queryset[index]))
+        if count < 2:
+            return queryset_diff
+
+        index = 0
+        while index + 1 < count:
+            new = self.queryset[index]
+            old = self.queryset[index + 1]
+            index += 1
+            queryset_diff.extend(list(self.document_actions(new)))
+            queryset_diff.append(self.diff_object_fields(old, new))
+
+        # The diff change for the shipment creation object is computed against a None object
+        queryset_diff.append(self.diff_object_fields(None, self.queryset[index]))
 
         return self.datetime_filters(queryset_diff)
 

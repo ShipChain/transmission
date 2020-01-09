@@ -39,8 +39,8 @@ class HistoricalChangesMixin:
 
     def diff(self, old_history, json_fields_only=False):
         changes_map = {}
-        current_values = None
-        if json_fields_only and hasattr(self, 'instance'):
+
+        if json_fields_only:
             for field_name in self.json_fields:
                 current_values = getattr(self, field_name, None)
                 old_values = getattr(old_history, field_name, None)
@@ -52,18 +52,15 @@ class HistoricalChangesMixin:
                     continue
                 changes_map[field_name] = self.build_changes(current_values, old_values, old_history,
                                                              from_json_field=True)
-        elif hasattr(self, 'instance'):
-            current_values = _model_to_dict(self.instance)
-        else:
-            current_values = _model_to_dict(self)
+            return changes_map
 
-        if not old_history and not json_fields_only:
+        current_values = _model_to_dict(self.instance)
+        if not old_history:
             old_values = {f: None for f in current_values.keys()}
-        elif old_history:
+        else:
             old_values = _model_to_dict(old_history.instance)
 
-        to_return = changes_map if json_fields_only else self.build_changes(current_values, old_values, old_history)
-        return to_return
+        return self.build_changes(current_values, old_values, old_history)
 
     def build_changes(self, new_obj_dict, old_obj_dict, old_historical_obj, from_json_field=False):
         changes = []
