@@ -511,10 +511,10 @@ class ChangesDiffSerializer:
 
             if change.field in self.relation_fields:
                 if change.old is None:
-                    # The relationship field is created
+                    # The relationship object is created
                     field['new'] = Location.history.filter(pk=change.new).first().instance.id
-                if change.old and change.new:
-                    # The relationship field has been modified no need to include it in flat changes
+                elif change.old and change.new:
+                    # The relationship object has been modified no need to include it in flat changes
                     continue
 
             field_list.append(field)
@@ -562,7 +562,7 @@ class ChangesDiffSerializer:
                     'author': hist_doc.history_user
                 }
 
-    def datetime_filters(self, changes_diff):
+    def _filters(self, changes_diff):
         gte_datetime = self.request.query_params.get('history_date__gte')
         lte_datetime = self.request.query_params.get('history_date__lte')
 
@@ -589,13 +589,15 @@ class ChangesDiffSerializer:
             new = self.queryset[index]
             old = self.queryset[index + 1]
             index += 1
+            # The order of the following two statements is important
+            # since adding a document requires an existing shipment
             queryset_diff.extend(list(self.document_actions(new)))
             queryset_diff.append(self.diff_object_fields(old, new))
 
         # The diff change for the shipment creation object is computed against a None object
         queryset_diff.append(self.diff_object_fields(None, self.queryset[index]))
 
-        return self.datetime_filters(queryset_diff)
+        return self._filters(queryset_diff)
 
 
 class DevicesQueryParamsSerializer(serializers.Serializer):

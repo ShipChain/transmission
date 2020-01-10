@@ -55,10 +55,10 @@ class HistoricalChangesMixin:
             return changes_map
 
         current_values = _model_to_dict(self.instance)
-        if not old_history:
-            old_values = {f: None for f in current_values.keys()}
-        else:
+        if old_history:
             old_values = _model_to_dict(old_history.instance)
+        else:
+            old_values = {f: None for f in current_values.keys()}
 
         return self.build_changes(current_values, old_values, old_history)
 
@@ -69,13 +69,10 @@ class HistoricalChangesMixin:
             if field in old_obj_dict:
                 old_value = old_obj_dict[field]
                 if old_value != new_value:
-                    change = ModelChange(field, old_value, new_value)
-                    changes.append(change)
-                    changed_fields.append(field)
+                    changes.append(ModelChange(field, old_value, new_value))
             elif from_json_field:
-                change = ModelChange(field, None, new_value)
-                changes.append(change)
-                changed_fields.append(field)
+                changes.append(ModelChange(field, None, new_value))
+            changed_fields.append(field)
 
         return ModelDelta(changes, changed_fields, old_historical_obj, self)
 
