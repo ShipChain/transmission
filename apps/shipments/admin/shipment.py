@@ -21,13 +21,13 @@ from rangefilter.filter import DateRangeFilter
 
 from apps.shipments.models import Shipment, Location, TransitState
 from apps.jobs.models import AsyncJob
-from apps.admin import object_detail_admin_link, NoAddUpdateDeletePermissionMixin
+from apps.admin import object_detail_admin_link, NoWritePermissionMixin
 
 from .filter import StateFilter
 from .historical import BaseModelHistory
 
 
-class AsyncJobInlineTab(NoAddUpdateDeletePermissionMixin, admin.TabularInline):
+class AsyncJobInlineTab(NoWritePermissionMixin, admin.TabularInline):
     model = AsyncJob
     fields = (
         'job_id',
@@ -83,7 +83,7 @@ NON_SCHEMA_FIELDS = [
 ]
 
 
-class ShipmentAdmin(NoAddUpdateDeletePermissionMixin, admin.ModelAdmin):
+class ShipmentAdmin(NoWritePermissionMixin, admin.ModelAdmin):
     list_per_page = settings.ADMIN_PAGE_SIZE
 
     # Read Only admin page until this feature is worked

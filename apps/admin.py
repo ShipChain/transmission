@@ -129,7 +129,7 @@ class ShipmentAdminDisplayMixin:
     shipment_display.short_description = "Shipment"
 
 
-class NoAddUpdateDeletePermissionMixin:
+class NoWritePermissionMixin:
     def has_add_permission(self, request):
         return False
 

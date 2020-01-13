@@ -19,11 +19,11 @@ from django.contrib import admin
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
 
-from apps.admin import ShipmentAdminDisplayMixin, NoAddUpdateDeletePermissionMixin
+from apps.admin import ShipmentAdminDisplayMixin, NoWritePermissionMixin
 from .models import Document
 
 
-class ShipmentDocumentAdmin(NoAddUpdateDeletePermissionMixin,
+class ShipmentDocumentAdmin(NoWritePermissionMixin,
                             ShipmentAdminDisplayMixin,
                             admin.ModelAdmin):
     list_per_page = settings.ADMIN_PAGE_SIZE
