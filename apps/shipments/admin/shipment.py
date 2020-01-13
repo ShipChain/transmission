@@ -14,20 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from django.conf import settings
 from django.contrib import admin
 from django.utils.html import format_html
 from rangefilter.filter import DateRangeFilter
 
 from apps.shipments.models import Shipment, Location, TransitState
 from apps.jobs.models import AsyncJob
-from apps.admin import object_detail_admin_link, NoWritePermissionMixin
+from apps.admin import object_detail_admin_link, AdminPageSizeMixin, ReadOnlyPermissionMixin
 
 from .filter import StateFilter
 from .historical import BaseModelHistory
 
 
-class AsyncJobInlineTab(NoWritePermissionMixin, admin.TabularInline):
+class AsyncJobInlineTab(ReadOnlyPermissionMixin, admin.TabularInline):
     model = AsyncJob
     fields = (
         'job_id',
@@ -83,8 +82,9 @@ NON_SCHEMA_FIELDS = [
 ]
 
 
-class ShipmentAdmin(NoWritePermissionMixin, admin.ModelAdmin):
-    list_per_page = settings.ADMIN_PAGE_SIZE
+class ShipmentAdmin(AdminPageSizeMixin,
+                    ReadOnlyPermissionMixin,
+                    admin.ModelAdmin):
 
     # Read Only admin page until this feature is worked
     list_display = ('id', 'owner_id', 'shippers_reference', 'created_at', 'updated_at', 'shipment_state', )
@@ -135,8 +135,7 @@ class HistoricalShipmentAdmin(BaseModelHistory, ShipmentAdmin):
     readonly_fields = [field.name for field in Shipment._meta.get_fields()]
 
 
-class LocationAdmin(BaseModelHistory):
-    list_per_page = settings.ADMIN_PAGE_SIZE
+class LocationAdmin(AdminPageSizeMixin, BaseModelHistory):
 
     fieldsets = [(None, {'fields': [field.name for field in Location._meta.local_fields] + ['shipment_display']})]
 

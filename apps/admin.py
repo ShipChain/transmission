@@ -20,6 +20,7 @@ from pygments import highlight
 from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 
+from django.conf import settings
 from django.utils.html import format_html
 from rest_framework.reverse import reverse
 
@@ -129,7 +130,7 @@ class ShipmentAdminDisplayMixin:
     shipment_display.short_description = "Shipment"
 
 
-class NoWritePermissionMixin:
+class ReadOnlyPermissionMixin:
     def has_add_permission(self, request):
         return False
 
@@ -138,3 +139,7 @@ class NoWritePermissionMixin:
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+class AdminPageSizeMixin:
+    list_per_page = settings.ADMIN_PAGE_SIZE

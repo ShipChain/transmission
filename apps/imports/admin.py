@@ -14,17 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from django.conf import settings
 from django.contrib import admin
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
 
-from apps.admin import pretty_json_print, NoWritePermissionMixin
+from apps.admin import pretty_json_print, AdminPageSizeMixin, ReadOnlyPermissionMixin
 from .models import ShipmentImport
 
 
-class ShipmentImportsAdmin(NoWritePermissionMixin, admin.ModelAdmin):
-    list_per_page = settings.ADMIN_PAGE_SIZE
+class ShipmentImportsAdmin(AdminPageSizeMixin,
+                           ReadOnlyPermissionMixin,
+                           admin.ModelAdmin):
 
     list_display = (
         'id',
