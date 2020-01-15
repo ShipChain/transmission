@@ -1,37 +1,25 @@
-import json
+"""
+Copyright 2019 ShipChain, Inc.
 
-from pygments import highlight
-from pygments.lexers import JsonLexer
-from pygments.formatters import HtmlFormatter
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
 from django.contrib import admin
-from django.utils.html import format_html
 from enumfields.admin import EnumFieldListFilter
 from rangefilter.filter import DateRangeFilter
 
-from apps.admin import admin_change_url
+from apps.admin import pretty_json_print, AdminPageSizeMixin, ShipmentAdminDisplayMixin, ReadOnlyPermissionMixin
 from .models import AsyncJob, JobState, AsyncAction, Message
-
-
-class SafeJson(str):
-    def __html__(self):
-        return self
-
-
-def pretty_json_print(field):
-    response = json.dumps(field, sort_keys=True, indent=2)
-
-    # Get the Pygments formatter
-    formatter = HtmlFormatter(style='colorful')
-
-    # Highlight the data
-    response = highlight(response, JsonLexer(), formatter)
-
-    # Get the stylesheet
-    style = "<style>" + formatter.get_style_defs() + "</style><br>"
-
-    # Safe the output
-    return SafeJson(style + response)
 
 
 def retry_attempt(async_job_admin, request, queryset):
@@ -41,7 +29,7 @@ def retry_attempt(async_job_admin, request, queryset):
         job.fire(delay=job.delay)
 
 
-class MessageInlineTab(admin.TabularInline):
+class MessageInlineTab(ReadOnlyPermissionMixin, admin.TabularInline):
     model = Message
 
     exclude = (
@@ -58,34 +46,19 @@ class MessageInlineTab(admin.TabularInline):
 
     body_display.short_description = "Body"
 
-    def has_add_permission(self, request, obj=None):
-        return False
 
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-class AsyncActionInlineTab(admin.TabularInline):
+class AsyncActionInlineTab(ReadOnlyPermissionMixin, admin.TabularInline):
     model = AsyncAction
 
     readonly_fields = (
         'created_at',
     )
 
-    def has_add_permission(self, request, obj=None):
-        return False
 
-    def has_change_permission(self, request, obj=None):
-        return False
+class AsyncJobAdmin(AdminPageSizeMixin,
+                    ShipmentAdminDisplayMixin,
+                    admin.ModelAdmin):
 
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-class AsyncJobAdmin(admin.ModelAdmin):
     actions = [retry_attempt]
 
     exclude = (
@@ -126,17 +99,6 @@ class AsyncJobAdmin(admin.ModelAdmin):
     search_fields = [
         'id',
     ]
-
-    def shipment_display(self, obj):
-        shipment = obj.shipment
-        url = admin_change_url(shipment)
-        return format_html(
-            '<a href="{}">{}</a>',
-            url,
-            shipment.id if shipment else ''
-        )
-
-    shipment_display.short_description = "Shipment"
 
     def parameters_display(self, obj):
         return pretty_json_print(obj.parameters)

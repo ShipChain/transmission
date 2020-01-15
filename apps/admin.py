@@ -1,3 +1,26 @@
+"""
+Copyright 2019 ShipChain, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
+import json
+
+from pygments import highlight
+from pygments.lexers import JsonLexer
+from pygments.formatters import HtmlFormatter
+
+from django.conf import settings
 from django.utils.html import format_html
 from rest_framework.reverse import reverse
 
@@ -47,3 +70,76 @@ def admin_link(attr, short_description, empty_description="-"):
         return field_func
 
     return wrap
+
+
+class SafeJson(str):
+    def __html__(self):
+        return self
+
+
+def pretty_json_print(field, indent=2, sort_keys=True, line_separator=u'\n'):
+    response = json.dumps(field, sort_keys=sort_keys, indent=indent)
+
+    # Get the Pygments formatter
+    formatter = HtmlFormatter(style='colorful', lineseparator=line_separator)
+
+    # Highlight the data
+    response = highlight(response, JsonLexer(), formatter)
+
+    # Get the stylesheet
+    style = "<style>" + formatter.get_style_defs() + "</style><br>"
+
+    # Safe the output
+    return SafeJson(style + response)
+
+
+def object_detail_admin_link(obj):
+    """
+    Returns the url admin link of the object passed in argument
+    """
+    return format_html(
+        '<a href="{}">{}</a>',
+        admin_change_url(obj),
+        obj.id if obj else ''
+    )
+
+
+class ShipmentAdminDisplayMixin:
+    """
+    This mixin aims at facilitating the addition of a shipment link on a list
+    or detail page.
+
+    example:
+        class MyModelAdmin(ShipmentAdminDisplayMixin, ModelAdmin):
+            ...
+
+            list_display = (
+                ...
+                'shipment_display',
+            )
+
+            # Or for detail display
+            readonly_fields = (
+                ...
+                'shipment_display',
+            )
+    """
+    def shipment_display(self, obj):
+        return object_detail_admin_link(obj.shipment)
+
+    shipment_display.short_description = "Shipment"
+
+
+class ReadOnlyPermissionMixin:
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class AdminPageSizeMixin:
+    list_per_page = settings.ADMIN_PAGE_SIZE

@@ -10,9 +10,10 @@ from django.utils.text import capfirst
 from django.utils.translation import ugettext as _
 from simple_history.admin import SimpleHistoryAdmin, USER_NATURAL_KEY, SIMPLE_HISTORY_EDIT
 
+from apps.admin import ReadOnlyPermissionMixin
 
-class BaseModelHistory(SimpleHistoryAdmin):
 
+class BaseModelHistory(ReadOnlyPermissionMixin, SimpleHistoryAdmin):
     def history_view(self, request, object_id, extra_context=None):     # pylint:disable=too-many-locals
         request.current_app = self.admin_site.name
         model = self.model
@@ -122,12 +123,3 @@ class BaseModelHistory(SimpleHistoryAdmin):
         return render(
             request, self.object_history_form_template, context, **extra_kwargs
         )
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
