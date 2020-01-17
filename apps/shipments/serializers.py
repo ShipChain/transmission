@@ -2,7 +2,7 @@ import json
 import logging
 from collections import OrderedDict
 from datetime import datetime, timezone, timedelta
-from functools import partial
+from functools import partial, lru_cache
 
 import boto3
 import pytz
@@ -25,7 +25,7 @@ from shipchain_common.utils import UpperEnumField, validate_uuid4
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     TrackingData, PermissionLink, ExceptionType, TransitState
-from apps.documents.models import DocumentType, FileType
+from apps.documents.models import Document, DocumentType, FileType
 from apps.utils import UploadStatus
 
 LOG = logging.getLogger('transmission')
@@ -456,6 +456,9 @@ class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
 
 
 class ChangesDiffSerializer:
+    _allowed_historical_classes = (Shipment, Document, )
+    _many_to_one_historical_models = (Document.history.model, )
+
     relation_fields = settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys()
     excluded_fields = ('history_user', 'version', 'customer_fields', 'geometry',
                        'background_data_hash_interval', 'manual_update_hash_interval', 'shipment', )
@@ -472,6 +475,10 @@ class ChangesDiffSerializer:
         self.request = request
 
     def diff_object_fields(self, old, new):
+
+        if isinstance(new, self._many_to_one_historical_models):
+            return self.build_many_to_one_changes(new, new.instance._meta.model_name + 's')
+
         changes = new.diff(old)
 
         flat_changes = self.build_list_changes(changes)
@@ -546,58 +553,54 @@ class ChangesDiffSerializer:
                 changes_list.extend(self.build_list_changes(changes, json_field=True, base_field=field_name))
         return changes_list
 
-    def document_actions(self, new_obj):
-        document_queryset = new_obj.historicaldocument_set.all().filter(upload_status=UploadStatus.COMPLETE)
-        if document_queryset.exists():
-            for hist_doc in document_queryset:
-                yield {
-                    'history_date': hist_doc.history_date,
-                    'fields': None,
-                    'relationships': {
-                        'documents': {
-                            'id': hist_doc.id,
-                            'fields': self.build_list_changes(hist_doc.diff(hist_doc.prev_record))
-                        }
-                    },
-                    'author': hist_doc.history_user
+    def build_many_to_one_changes(self, historical_document, relation_object_name):
+        return {
+            'history_date': historical_document.history_date,
+            'fields': None,
+            'relationships': {
+                relation_object_name: {
+                    'id': historical_document.id,
+                    'fields': self.build_list_changes(historical_document.diff(historical_document.prev_record))
                 }
+            },
+            'author': historical_document.history_user
+        }
 
-    def _filters(self, changes_diff):
+    @property
+    @lru_cache()
+    def historical_queryset(self):
+        historical_queryset = []
+        for historical_shipment in self.queryset:
+            document_queryset = historical_shipment.historicaldocument_set.all().filter(
+                upload_status=UploadStatus.COMPLETE)
+            # The order of the following two operations is very
+            # important for the order of the historical tree
+            historical_queryset.extend(list(document_queryset))
+            historical_queryset.append(historical_shipment)
+
+        return historical_queryset
+
+    def filter_queryset(self, historical_queryset):
         gte_datetime = self.request.query_params.get('history_date__gte')
         lte_datetime = self.request.query_params.get('history_date__lte')
 
         if lte_datetime:
             lte_datetime = parse(lte_datetime).astimezone(pytz.utc)
-            changes_diff = list(filter(lambda change: change['history_date'] <= lte_datetime, changes_diff))
+            historical_queryset = list(filter(lambda h_obj: h_obj.history_date <= lte_datetime, historical_queryset))
 
         if gte_datetime:
             gte_datetime = parse(gte_datetime).astimezone(pytz.utc)
-            changes_diff = list(filter(lambda change: change['history_date'] >= gte_datetime, changes_diff))
+            historical_queryset = list(filter(lambda h_obj: h_obj.history_date >= gte_datetime, historical_queryset))
 
-        return changes_diff
+        return historical_queryset
 
-    @property
-    def data(self):
-        count = self.queryset.count()
-        queryset_diff = []
+    def get_data(self, page):
+        diff_changes = []
 
-        if count < 2:
-            return queryset_diff
+        for historical_obj in page:
+            diff_changes.append(self.diff_object_fields(historical_obj.prev_record, historical_obj))
 
-        index = 0
-        while index + 1 < count:
-            new = self.queryset[index]
-            old = self.queryset[index + 1]
-            index += 1
-            # The order of the following two statements is important
-            # since adding a document requires an existing shipment
-            queryset_diff.extend(list(self.document_actions(new)))
-            queryset_diff.append(self.diff_object_fields(old, new))
-
-        # The diff change for the shipment creation object is computed against a None object
-        queryset_diff.append(self.diff_object_fields(None, self.queryset[index]))
-
-        return self._filters(queryset_diff)
+        return diff_changes
 
 
 class DevicesQueryParamsSerializer(serializers.Serializer):
