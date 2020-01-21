@@ -51,6 +51,11 @@ class Location(AnonymousHistoricalMixin, models.Model):
 
     phone_number = models.CharField(validators=[phone_regex], max_length=255, blank=True, null=True)
     fax_number = models.CharField(validators=[phone_regex], max_length=255, blank=True, null=True)
+
+    # Contact fields
+    contact_email = models.EmailField(blank=True, null=True)
+    contact_name = models.CharField(max_length=255, blank=True, null=True)
+
     geometry = GeometryField(null=True)
 
     updated_at = models.DateTimeField(auto_now=True)

@@ -1390,6 +1390,22 @@ class ShipmentAPITests(APITestCase):
                                                            'ship_to_location.state': LOCATION_STATE,
                                                            })
 
+        location_bad_contact_email, content_type = create_form_content({
+            'carrier_wallet_id': CARRIER_WALLET_ID,
+            'shipper_wallet_id': SHIPPER_WALLET_ID,
+            'storage_credentials_id': STORAGE_CRED_ID,
+            'ship_from_location.name': LOCATION_NAME,
+            'ship_from_location.contact_email': 'Nonvalid@email',
+        })
+
+        location_contact_email, content_type = create_form_content({
+            'carrier_wallet_id': CARRIER_WALLET_ID,
+            'shipper_wallet_id': SHIPPER_WALLET_ID,
+            'storage_credentials_id': STORAGE_CRED_ID,
+            'ship_from_location.name': LOCATION_NAME,
+            'ship_from_location.contact_email': 'valid@email.io',
+        })
+
         # Mock RPC calls
         mock_shipment_rpc_client = Load110RPCClient
 
@@ -1521,6 +1537,15 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.state, parameters['_ship_to_location_state'])
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_to_location.geometry.coords, (23.0, 12.0))
+
+        self.set_user(self.user_1)
+        # A shipment creation with a invalid location contact email should fail
+        response = self.client.post(url, location_bad_contact_email, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # With a valid location contact email, the request should succeed
+        response = self.client.post(url, location_contact_email, content_type=content_type)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
