@@ -617,7 +617,7 @@ device:
       type: object
       allOf:
         - $ref: '../devices/schema.yaml#/deviceResource'
-        - $ref: '#/resourcePk'
+        - $ref: '../core/dataTypes.yaml#/resourcePk'
 
 
 locationData:
@@ -627,7 +627,7 @@ locationData:
       type: object
       allOf:
         - $ref: '../locations/schema.yaml#/resource'
-        - $ref: '#/resourcePk'
+        - $ref: '../core/dataTypes.yaml#/resourcePk'
 
 loadData:
   properties:

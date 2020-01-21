@@ -70,6 +70,9 @@ paths:
   /api/v1/shipments/{shipment_id}/tracking:
     $ref: components/shipments/tracking.yaml
 
+  /api/v1/shipments/{shipment_id}/telemetry:
+    $ref: components/shipments/telemetry.yaml
+
   /api/v1/shipments/{shipment_id}/history:
     $ref: components/shipmentHistory/shipmentHistory.yaml
 
@@ -87,6 +90,9 @@ paths:
 
   /api/v1/devices/{device_id}/tracking:
     $ref: components/devices/deviceTracking.yaml
+
+  /api/v1/devices/{device_id}/telemetry:
+    $ref: components/devices/deviceTelemetry.yaml
 
   /api/v1/imports/shipments:
     $ref: components/shipmentImports/shipmentImports.yaml

@@ -1,0 +1,24 @@
+get:
+  summary: Get telemetry data
+  description: >
+    Retrieve telemetry data associated with a `Shipment` as a collection of objects.
+  operationId: listShipmentTelemetry
+  parameters:
+  - $ref: 'parameters.yaml#/path'
+  - $ref: 'parameters.yaml#/sensorId'
+  - $ref: 'parameters.yaml#/hardwareId'
+  tags:
+  - Shipments
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../telemetry/schema.yaml#/responseBody'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'

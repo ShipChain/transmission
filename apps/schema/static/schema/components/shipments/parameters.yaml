@@ -240,5 +240,21 @@ customer_fields__{key}:
     type: string
     example: active
 
+hardwareId:
+  required: false
+  name: hardware_id
+  in: query
+  description: hardware ID of the device sensor
+  schema:
+    $ref: '#/dataTypes/uuid'
+
+sensorId:
+  required: false
+  name: sensor_id
+  in: query
+  description: ID of the device sensors
+  schema:
+    $ref: '#/dataTypes/uuid'
+
 dataTypes:
   $ref: ../core/dataTypes.yaml

@@ -101,6 +101,29 @@ class ShipmentRPCClient(RPCClient):
         LOG.error('Invalid creation of shipment data.')
         raise RPCError("Invalid response from Engine")
 
+    def add_telemetry_data(self, storage_credentials_id, wallet_id, vault_id, telemetry_data):
+        with cache.lock(vault_id, timeout=settings.VAULT_TIMEOUT):
+            LOG.debug(f'Adding telemetry data with storage_credentials_id {storage_credentials_id},'
+                      f'wallet_id {wallet_id}, and vault_id {vault_id}.')
+            log_metric('transmission.info', tags={'method': 'shipment_rpcclient.add_tracking_data',
+                                                  'module': __name__})
+
+            result = self.call('vault.add_telemetry', {
+                "storageCredentials": storage_credentials_id,
+                "vaultWallet": wallet_id,
+                "vault": vault_id,
+                "payload": telemetry_data
+            })
+
+            if 'success' in result and result['success']:
+                LOG.debug('Successful addition of telemetry data.')
+                return result['vault_signed']
+
+            log_metric('transmission.error', tags={'method': 'shipment_rpcclient.add_telemetry_data',
+                                                   'module': __name__, 'code': 'RPCError'})
+            LOG.error('Invalid addition of telemetry data.')
+            raise RPCError("Invalid response from Engine")
+
     def get_tracking_data(self, storage_credentials_id, wallet_id, vault_id):
         LOG.debug(f'Retrieving of tracking data with storage_credentials_id {storage_credentials_id},'
                   f'wallet_id {wallet_id}, and vault_id {vault_id}.')
