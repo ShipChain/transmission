@@ -3,6 +3,7 @@ import logging
 from collections import OrderedDict
 from datetime import datetime, timezone, timedelta
 from functools import partial, lru_cache
+from itertools import chain
 
 import boto3
 import pytz
@@ -470,9 +471,10 @@ class ChangesDiffSerializer:
     upload_status_enum_serializer = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True)
     document_type_enum_serializer = UpperEnumField(DocumentType, lenient=True, ints_as_names=True, read_only=True)
 
-    def __init__(self, queryset, request):
+    def __init__(self, queryset, request, shipment_id):
         self.queryset = queryset
         self.request = request
+        self.shipment_id = shipment_id
 
     def diff_object_fields(self, old, new):
 
@@ -569,14 +571,12 @@ class ChangesDiffSerializer:
     @property
     @lru_cache()
     def historical_queryset(self):
-        historical_queryset = []
-        for historical_shipment in self.queryset:
-            document_queryset = historical_shipment.historicaldocument_set.all().filter(
-                upload_status=UploadStatus.COMPLETE)
-            # The order of the following two operations is very
-            # important for the order of the historical tree
-            historical_queryset.extend(document_queryset)
-            historical_queryset.append(historical_shipment)
+        historical_document_queryset = Document.history.filter(shipment__id=self.shipment_id,
+                                                               upload_status=UploadStatus.COMPLETE)
+
+        historical_queryset = list(chain(historical_document_queryset, self.queryset))
+
+        historical_queryset.sort(key=lambda historical_object: historical_object.history_date, reverse=True)
 
         return historical_queryset
 

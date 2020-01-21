@@ -262,7 +262,7 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
 
         shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
 
-        serializer = ChangesDiffSerializer(shipment.history.all(), request)
+        serializer = ChangesDiffSerializer(shipment.history.all(), request, kwargs['shipment_pk'])
 
         queryset = serializer.filter_queryset(serializer.historical_queryset)
 
