@@ -575,7 +575,7 @@ class ChangesDiffSerializer:
                 upload_status=UploadStatus.COMPLETE)
             # The order of the following two operations is very
             # important for the order of the historical tree
-            historical_queryset.extend(list(document_queryset))
+            historical_queryset.extend(document_queryset)
             historical_queryset.append(historical_shipment)
 
         return historical_queryset
