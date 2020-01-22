@@ -71,6 +71,12 @@ parser.add_argument('-t-host', action='store',
                     default='transmission-runserver:8000',
                     help='Transmission host name, required for environment different than local')
 
+parser.add_argument('-t-sleep', action='store',
+                    dest='time_sleep',
+                    type=int,
+                    default=1,
+                    help='Hold time between operations, default 1 second')
+
 LOCATION_ATTRIBUTES = ('ship_from_location', 'ship_to_location', 'final_destination_location', 'bill_to_location', )
 
 LOCATION_CANDIDATES = (
@@ -224,8 +230,10 @@ def random_update_document_description(base_document_url, documents_list,  jwt):
 
 def update_shipment(shipment_url, shipment_fields, locations, jwt):
     shipment_data = {**shipment_fields, **locations}
-    requests.patch(shipment_url, data=shipment_data, headers={'Authorization': f'JWT {jwt}'})
-    LOG.debug(f'Shipment updated with: {shipment_data}')
+
+    if shipment_data:
+        requests.patch(shipment_url, data=shipment_data, headers={'Authorization': f'JWT {jwt}'})
+        LOG.debug(f'Shipment updated with: {shipment_data}')
 
 
 if __name__ == '__main__':
@@ -249,18 +257,18 @@ if __name__ == '__main__':
             jwt_session()
         )
 
-        # Sleep for 3s
-        time.sleep(2)
+        # Sleep for at least 1 second to avoid having too close historical changes
+        time.sleep(arguments.time_sleep)
 
         marked_documents = mark_documents_upload_status_complete(document_create_url, documents, jwt_session())
 
-        # Sleep for 3s
-        time.sleep(2)
+        # Sleep for at least 1 second to avoid having too close historical changes
+        time.sleep(arguments.time_sleep)
 
         random_update_document_description(document_create_url, marked_documents, jwt_session())
 
-        # Sleep for 3s
-        time.sleep(2)
+        # Sleep for at least 1 second to avoid having too close historical changes
+        time.sleep(arguments.time_sleep)
 
         update_shipment(
             shipment_update_url,

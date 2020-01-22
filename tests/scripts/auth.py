@@ -22,6 +22,7 @@ import jwt
 
 from conf.auth import SIMPLE_JWT
 from conf.requests import REQUESTS_SESSION
+from conf.base import PROFILES_ENABLED
 
 LEEWAY = 10
 
@@ -59,16 +60,19 @@ class GetSessionJwt:
         )
 
     def refresh_jwt(self):
-        response = REQUESTS_SESSION.post(f'{self.schema}://{self.host}/openid/token/', data=json.dumps({
-            'username': self.username,
-            'password': self.password,
-            'client_id': self.client_id,
-            'grant_type': 'password',
-            'scope': 'openid email'
-        }))
-        return response.json()['id_token']
+        if PROFILES_ENABLED:
+            response = REQUESTS_SESSION.post(f'{self.schema}://{self.host}/openid/token/', data=json.dumps({
+                'username': self.username,
+                'password': self.password,
+                'client_id': self.client_id,
+                'grant_type': 'password',
+                'scope': 'openid email'
+            }))
+            return response.json()['id_token']
+        return None
 
     def set_new_token(self):
         self._current_jwt = self.refresh_jwt()
-        decoded_jwt = self.decode_jwt(self._current_jwt)
-        self._current_exp_date = datetime.datetime.fromtimestamp(decoded_jwt['exp']).astimezone(tz=pytz.UTC)
+        if self._current_jwt is not None:
+            decoded_jwt = self.decode_jwt(self._current_jwt)
+            self._current_exp_date = datetime.datetime.fromtimestamp(decoded_jwt['exp']).astimezone(tz=pytz.UTC)
