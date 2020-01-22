@@ -2073,8 +2073,8 @@ class ShipmentAPITests(APITestCase):
         self.assertTrue(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # A shipment shipper, carrier, moderator should succeed sharing a shipment via email
-        with mock.patch('apps.permissions.is_carrier') as mock_carrier, \
-                mock.patch('apps.permissions.is_shipper') as mock_shipper:
+        with mock.patch('apps.permissions.IsShipperMixin.has_shipper_permission') as mock_carrier, \
+                mock.patch('apps.permissions.IsCarrierMixin.has_carrier_permission') as mock_shipper:
             mock_carrier.return_value = True
             mock_shipper.return_value = False
 

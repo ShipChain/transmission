@@ -22,8 +22,8 @@ from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.response import Response
 from shipchain_common.utils import send_templated_email
 
+from apps.permissions import ShipmentExists, IsOwnerShipperCarrierModerator
 from ..models import PermissionLink
-from ..permissions import IsShipmentOwner
 from ..serializers import PermissionLinkSerializer, PermissionLinkCreateSerializer
 
 LOG = logging.getLogger('transmission')
@@ -35,8 +35,12 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
                             viewsets.GenericViewSet):
 
     queryset = PermissionLink.objects.all()
-    permission_classes = ((IsShipmentOwner, ) if settings.PROFILES_ENABLED
-                          else (permissions.AllowAny,))
+    permission_classes = (
+        (permissions.IsAuthenticated,
+         ShipmentExists,
+         IsOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED
+        else (permissions.AllowAny, ShipmentExists, )
+    )
     serializer_class = PermissionLinkSerializer
     resource_name = 'PermissionLink'
 

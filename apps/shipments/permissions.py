@@ -17,32 +17,33 @@ limitations under the License.
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import permissions
 
-from apps.permissions import has_owner_access, check_has_shipment_owner_access, shipment_exists, check_permission_link
+from apps.permissions import has_owner_access, check_has_shipment_owner_access, shipment_exists, \
+    check_permission_link
 from .models import PermissionLink
 
 
-class IsShipmentOwner(permissions.BasePermission):
-    """
-    Custom permission to allow only the owner or a wallet owner to interact with a shipment's permission link
-    """
-
-    def has_object_permission(self, request, view, obj):
-        shipment_id = view.kwargs.get('shipment_pk', None)
-        if shipment_id:
-            shipment = shipment_exists(shipment_id)
-            if not shipment:
-                return False
-            return check_has_shipment_owner_access(request, shipment)
-        return False
-
-    def has_permission(self, request, view):
-        shipment_id = view.kwargs.get('shipment_pk', None)
-        if shipment_id:
-            shipment = shipment_exists(shipment_id)
-            if not shipment:
-                return False
-            return check_has_shipment_owner_access(request, shipment)
-        return False
+# class IsShipmentOwner(permissions.BasePermission):
+#     """
+#     Custom permission to allow only the owner or a wallet owner to interact with a shipment's permission link
+#     """
+#
+#     def has_object_permission(self, request, view, obj):
+#         shipment_id = view.kwargs.get('shipment_pk', None)
+#         if shipment_id:
+#             shipment = shipment_exists(shipment_id)
+#             if not shipment:
+#                 return False
+#             return check_has_shipment_owner_access(request, shipment)
+#         return False
+#
+#     def has_permission(self, request, view):
+#         shipment_id = view.kwargs.get('shipment_pk', None)
+#         if shipment_id:
+#             shipment = shipment_exists(shipment_id)
+#             if not shipment:
+#                 return False
+#             return check_has_shipment_owner_access(request, shipment)
+#         return False
 
 
 class IsListenerOwner(permissions.BasePermission):
@@ -104,6 +105,21 @@ class IsOwnerOrShared(permissions.IsAuthenticated):
             return check_has_shipment_owner_access(request, obj)
 
         return check_permission_link(request, obj)
+
+
+class IsSharedShipment(permissions.BasePermission):
+    def has_permission(self, request, view):
+
+        permission_link = request.query_params.get('permission_link')
+        if permission_link:
+            try:
+                PermissionLink.objects.get(pk=permission_link)
+            except ObjectDoesNotExist:
+                return False
+
+            return True
+
+        return False
 
 
 class IsAuthenticatedOrDevice(permissions.IsAuthenticated):

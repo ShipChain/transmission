@@ -22,8 +22,8 @@ from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.permissions import ShipmentExists, IsOwnerShipperCarrierModerator
 from ..models import Shipment
-from ..permissions import IsShipmentOwner
 from ..serializers import ShipmentSerializer, ShipmentActionRequestSerializer
 
 LOG = logging.getLogger('transmission')
@@ -31,7 +31,12 @@ LOG = logging.getLogger('transmission')
 
 class ShipmentActionsView(APIView):
     resource_name = 'Shipment'
-    permission_classes = ((IsShipmentOwner,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
+    permission_classes = (
+        (permissions.IsAuthenticated,
+         ShipmentExists,
+         IsOwnerShipperCarrierModerator,) if settings.PROFILES_ENABLED
+        else (permissions.AllowAny, ShipmentExists,)
+    )
 
     def post(self, request, *args, **kwargs):
         LOG.debug(f'Performing action on shipment with id: {kwargs["shipment_pk"]}.')

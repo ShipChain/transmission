@@ -145,7 +145,74 @@ class IsOwner(permissions.BasePermission):
         return has_owner_access(request, obj)
 
 
-class IsShipperCarrierModerator(permissions.BasePermission):
+class ShipmentExists(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+
+        shipment_id = view.kwargs.get('shipment_pk', None)
+
+        if not shipment_exists(shipment_id):
+            # The requested views are only accessible via nested routes
+            LOG.warning(f'User: {request.user}, is trying to access a non existing shipment: {shipment_id}')
+            return False
+
+        return True
+
+
+class IsShipmentOwnerMixin:
+    """
+    Main shipment owner permission
+    """
+    @staticmethod
+    def is_shipment_owner(request, shipment):
+        user_id, organization_id = get_user(request)
+        return (organization_id and shipment.owner_id == organization_id) or shipment.owner_id == user_id
+
+
+class IsShipperMixin:
+    """
+    Custom permission for Shipper shipment access
+    """
+    @staticmethod
+    def has_shipper_permission(request, shipment):
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.shipper_wallet_id}/?is_active',
+                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+        return response.status_code == status.HTTP_200_OK
+
+
+class IsCarrierMixin:
+    """
+    Custom permission for Carrier shipment access
+    """
+    @staticmethod
+    def has_carrier_permission(request, shipment):
+        response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.carrier_wallet_id}/?is_active',
+                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+        return response.status_code == status.HTTP_200_OK
+
+
+class IsModeratorMixin:
+    """
+    Custom permission for Moderator shipment access
+    """
+    @staticmethod
+    def has_moderator_permission(request, shipment):
+
+        if shipment.moderator_wallet_id:
+            response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.moderator_wallet_id}/?is_active',
+                                                     headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+
+            return response.status_code == status.HTTP_200_OK
+        return False
+
+
+class IsOwnerShipperCarrierModerator(IsShipmentOwnerMixin,
+                                     IsCarrierMixin,
+                                     IsModeratorMixin,
+                                     IsShipperMixin,
+                                     permissions.BasePermission):
     """
     Custom permission to only allow owner, shipper, moderator and carrier
     access to a shipment object on a nested route
@@ -164,24 +231,10 @@ class IsShipperCarrierModerator(permissions.BasePermission):
 
     """
 
-    def has_object_permission(self, request, view, obj):
-        return check_has_shipment_owner_access(request, obj.shipment, allowed_methods=None)
-
     def has_permission(self, request, view):
         shipment = Shipment.objects.get(id=view.kwargs.get('shipment_pk'))
 
-        return check_has_shipment_owner_access(request, shipment, allowed_methods=None)
-
-
-class ShipmentExists(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-
-        shipment_id = view.kwargs.get('shipment_pk', None)
-
-        if not shipment_exists(shipment_id):
-            # The requested views are only accessible via nested routes
-            LOG.warning(f'User: {request.user}, is trying to access a non existing shipment: {shipment_id}')
-            return False
-
-        return True
+        return self.is_shipment_owner(request, shipment) or \
+            self.has_shipper_permission(request, shipment) or \
+            self.has_carrier_permission(request, shipment) or \
+            self.has_moderator_permission(request, shipment)
