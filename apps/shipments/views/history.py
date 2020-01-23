@@ -22,6 +22,7 @@ from rest_framework import viewsets, permissions, renderers
 from rest_framework.response import Response
 from shipchain_common.pagination import CustomResponsePagination
 
+from apps.permissions import ShipmentExists
 from ..models import Shipment
 from ..permissions import IsOwnerOrShared
 from ..serializers import ChangesDiffSerializer
@@ -31,7 +32,10 @@ LOG = logging.getLogger('transmission')
 
 class ShipmentHistoryListView(viewsets.GenericViewSet):
     http_method_names = ('get', )
-    permission_classes = ((IsOwnerOrShared,) if settings.PROFILES_ENABLED else (permissions.AllowAny,))
+    permission_classes = (
+        (ShipmentExists,
+         IsOwnerOrShared, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
+    )
     pagination_class = CustomResponsePagination
     renderer_classes = (renderers.JSONRenderer, )
 

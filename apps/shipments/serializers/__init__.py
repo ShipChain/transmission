@@ -1,8 +1,7 @@
-from .shipment import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer, \
-    ShipmentVaultSerializer
-from .permission_link import PermissionLinkSerializer, PermissionLinkCreateSerializer
-from .shipment_history import ChangesDiffSerializer
-from .tracking_data import TrackingDataSerializer, TrackingDataToDbSerializer, UnvalidatedTrackingDataSerializer
-from .shipment_overview import DevicesQueryParamsSerializer
-from .shipment_action import ShipmentActionRequestSerializer, ActionType
-from .note import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
+from .note import *
+from .permission_link import *
+from .shipment_action import *
+from .shipment import *
+from .shipment_overview import *
+from .shipment_history import *
+from .tracking_data import *

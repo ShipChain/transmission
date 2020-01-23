@@ -19,52 +19,91 @@ import logging
 from string import Template
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+# from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
 from fancy_cache import cache_page
 from influxdb_metrics.loader import log_metric
-from rest_framework import viewsets, permissions, status, filters
+from rest_framework import permissions, status, filters
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotFound  # PermissionDenied
 from rest_framework.response import Response
 from shipchain_common.authentication import get_jwt_from_request
+from shipchain_common.permissions import HasViewSetActionPermissions
+from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelViewSet
 
 from apps.jobs.models import JobState
-from apps.permissions import owner_access_filter, get_owner_id
+from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
 from ..geojson import render_filtered_point_features
 from ..models import Shipment, TrackingData, PermissionLink
-from ..permissions import IsOwnerOrShared
+from ..permissions import IsOwnerOrShared, HasShipmentUpdatePermission
 from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer
 
 LOG = logging.getLogger('transmission')
 
 
-class ShipmentViewSet(viewsets.ModelViewSet):
+UPDATE_PERMISSION_CLASSES = (
+    (permissions.IsAuthenticated,
+     HasViewSetActionPermissions,
+     ShipmentExists,
+     HasShipmentUpdatePermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
+)
+
+RETRIEVE_PERMISSION_CLASSES = (
+    (ShipmentExists, IsOwnerOrShared, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
+)
+
+
+DELETE_PERMISSION_CLASSES = ((permissions.IsAuthenticated, IsOwner, ) if settings.PROFILES_ENABLED
+                             else (permissions.AllowAny, ))
+
+
+class ShipmentViewSet(ConfigurableModelViewSet):
+    # We need to revisit the ConfigurableGenericViewSet to ensure
+    # that it properly allow the inheritance of this attribute
+    resource_name = 'Shipment'
+
     queryset = Shipment.objects.all()
+
     serializer_class = ShipmentSerializer
-    permission_classes = ((IsOwnerOrShared,) if settings.PROFILES_ENABLED
-                          else (permissions.AllowAny,))
-    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
+
+    permission_classes = ((permissions.IsAuthenticated,
+                           HasViewSetActionPermissions,
+                           IsOwnerOrShared, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
+
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
+
     filterset_class = ShipmentFilter
+
     search_fields = SHIPMENT_SEARCH_FIELDS
+
     ordering_fields = ('updated_at', 'created_at', 'pickup_est', 'delivery_est')
+
     http_method_names = ['get', 'post', 'delete', 'patch']
 
-    def get_queryset(self):     # pylint: disable=too-many-branches
+    configuration = {
+        'update': ActionConfiguration(
+            permission_classes=UPDATE_PERMISSION_CLASSES
+        ),
+        'retrieve': ActionConfiguration(
+            permission_classes=RETRIEVE_PERMISSION_CLASSES
+        ),
+        'destroy': ActionConfiguration(
+            permission_classes=DELETE_PERMISSION_CLASSES
+        ),
+    }
+
+    def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
-            permission_link = self.request.query_params.get('permission_link', None)
+            permission_link = self.request.query_params.get('permission_link')
             if permission_link:
-                try:
-                    permission_link_obj = PermissionLink.objects.get(pk=permission_link)
-                except ObjectDoesNotExist:
-                    LOG.warning(f'User: {self.request.user}, is trying to access a shipment with permission link: '
-                                f'{permission_link}')
-                    raise PermissionDenied('No permission link found.')
+                # The  validity of the permission link object
+                # has already been done by the permission class
+                permission_link_obj = PermissionLink.objects.get(pk=permission_link)
                 queryset = queryset.filter(owner_access_filter(self.request) | Q(pk=permission_link_obj.shipment.pk))
             elif self.detail:
                 return queryset

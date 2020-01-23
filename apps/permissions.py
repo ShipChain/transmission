@@ -149,7 +149,7 @@ class ShipmentExists(permissions.BasePermission):
 
     def has_permission(self, request, view):
 
-        shipment_id = view.kwargs.get('shipment_pk', None)
+        shipment_id = view.kwargs.get('shipment_pk') or view.kwargs.get('pk')
 
         if not shipment_exists(shipment_id):
             # The requested views are only accessible via nested routes
@@ -165,8 +165,7 @@ class IsShipmentOwnerMixin:
     """
     @staticmethod
     def is_shipment_owner(request, shipment):
-        user_id, organization_id = get_user(request)
-        return (organization_id and shipment.owner_id == organization_id) or shipment.owner_id == user_id
+        return has_owner_access(request, shipment)
 
 
 class IsShipperMixin:

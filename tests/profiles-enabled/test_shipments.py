@@ -307,52 +307,71 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(len(response_data['data']), 1)
         self.assertEqual(response_data['data'][0]['id'], self.shipments[1].id)
 
-    @httpretty.activate
     def test_carrier_shipment_access(self):
         """
         Ensure that the owner of a shipment's carrier wallet is able to access and update shipment objects.
         """
-        self.create_shipment()
-        url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
 
-        httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{CARRIER_WALLET_ID}/?is_active",
-                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-        httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{SHIPPER_WALLET_ID}/?is_active",
-                               body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        with mock.patch.object(requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_id": "TEST_VAULT_ID",
+                    "vault_uri": "engine://test_url",
+                    "vault_signed": {'hash': "TEST_VAULT_SIGNATURE"}
+                }
+            })
+            self.create_shipment()
 
-        # Unauthenticated request should fail with 403
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
 
-        # Authenticated request for shipment owner should succeed
-        self.set_user(self.user_1)
+            with mock.patch('apps.permissions.IsShipperMixin.has_shipper_permission') as mock_carrier, \
+                mock.patch('apps.permissions.IsCarrierMixin.has_carrier_permission') as mock_shipper, \
+                mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_shipper_wallet_id') \
+                    as mock_wallet_validation, \
+                mock.patch('apps.shipments.serializers.ShipmentCreateSerializer.validate_storage_credentials_id') \
+                    as mock_storage_validation:
 
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+                mock_carrier.return_value = False
+                mock_shipper.return_value = False
 
-        # Authenticated request for shipment's carrier wallet owner should succeed
-        self.set_user(self.user_2)
+                mock_wallet_validation.return_value = SHIPPER_WALLET_ID
+                mock_storage_validation.return_value = STORAGE_CRED_ID
 
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+                # Unauthenticated request should fail with 403
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+                # Authenticated request for shipment owner should succeed
+                self.set_user(self.user_1)
 
-        # Authenticated request to update by shipment's carrier should succeed
-        shipment_update, content_type = create_form_content({"carrier_scac": "carrier_scac"})
-        response = self.client.patch(url, shipment_update, content_type=content_type)
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+                # User_2 is shipment's carrier
+                mock_carrier.return_value = True
 
-        # Authenticated request to delete a shipment by carrier should fail
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+                # Authenticated request for shipment's carrier wallet owner should succeed
+                self.set_user(self.user_2)
 
-        # Authenticated request by owner of a shipment to delete should succeed
-        self.set_user(self.user_1)
-        response = self.client.delete(url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+                # Authenticated request to update by shipment's carrier should succeed
+                shipment_update, content_type = create_form_content({"carrier_scac": "carrier_scac"})
+                response = self.client.patch(url, shipment_update, content_type=content_type)
+
+                self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+
+                # Authenticated request to delete a shipment by carrier should fail
+                response = self.client.delete(url)
+                self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+                # Authenticated request by owner of a shipment to delete should succeed
+                self.set_user(self.user_1)
+                response = self.client.delete(url)
+                self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     @mock_iot
     def test_add_tracking_data(self):
@@ -380,7 +399,9 @@ class ShipmentAPITests(APITestCase):
                 "jsonrpc": "2.0",
                 "result": {
                     "success": True,
-                    "vault_id": "TEST_VAULT_ID"
+                    "vault_id": "TEST_VAULT_ID",
+                    "vault_uri": "engine://test_url",
+                    "vault_signed": {'hash': "TEST_VAULT_SIGNATURE"}
                 }
             })
             self.create_shipment()
@@ -400,11 +421,18 @@ class ShipmentAPITests(APITestCase):
             })
             self.shipments[0].save()
 
-            # Get tracking data
-            response = self.client.get(tracking_get_url)
+            # A shipment shipper, carrier, moderator should succeed sharing a shipment via email
+            with mock.patch('apps.permissions.IsShipperMixin.has_shipper_permission') as mock_carrier, \
+                    mock.patch('apps.permissions.IsCarrierMixin.has_carrier_permission') as mock_shipper:
+                # mock.patch('apps.permissions.IsModeratorMixin.has_moderator_permission') as mock_moderator:
+                mock_carrier.return_value = False
+                mock_shipper.return_value = False
 
-            # Unauthenticated request should fail
-            self.assertEqual(response.status_code, 403)
+                # Get tracking data
+                response = self.client.get(tracking_get_url)
+
+                # Unauthenticated request should fail
+                self.assertEqual(response.status_code, 403)
 
             self.set_user(self.user_1)
             # Authenticated request with no tracking data associated should fail
@@ -834,7 +862,9 @@ class ShipmentAPITests(APITestCase):
                 "jsonrpc": "2.0",
                 "result": {
                     "success": True,
-                    "vault_id": "TEST_VAULT_ID"
+                    "vault_id": "TEST_VAULT_ID",
+                    "vault_uri": "engine://test_url",
+                    "vault_signed": {'hash': "TEST_VAULT_SIGNATURE"}
                 }
             })
 
@@ -1008,7 +1038,7 @@ class ShipmentAPITests(APITestCase):
             self.assertTrue('description' in history_document_changes)
 
             # ----------------------- Shipment update by someone other than owner --------------------------#
-            with mock.patch('apps.permissions.is_shipper') as mock_shipper_permission:
+            with mock.patch('apps.permissions.IsShipperMixin.has_shipper_permission') as mock_shipper_permission:
                 mock_shipper_permission.return_value = True
 
                 self.set_user(self.user_2)
@@ -1021,14 +1051,13 @@ class ShipmentAPITests(APITestCase):
                 # and his ID in the 'author' field of the related diff change
                 response = self.client.patch(url_patch, shipment_update_with_device, content_type=content_type)
                 self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
-                # The is_shipper method is called twice, one for accessing the shipment
-                # and one for object edit permission
-                self.assertEqual(mock_shipper_permission.call_count, 2)
+                # The has_shipper_permission method is called once for accessing the shipment update view
+                self.assertEqual(mock_shipper_permission.call_count, 1)
 
                 response = self.client.get(history_url)
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
-                # is_shipper method is called once just ofr accessing the shipment history
-                self.assertEqual(mock_shipper_permission.call_count, 3)
+                # has_shipper_permission method is called once just for accessing the shipment history
+                self.assertEqual(mock_shipper_permission.call_count, 2)
                 history_data = response.json()['data']
                 changed_fields = self.get_changed_fields(history_data[0]['fields'], 'field')
                 self.assertIn('device', changed_fields)
@@ -1944,7 +1973,7 @@ class ShipmentAPITests(APITestCase):
         response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_past_exp}')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # Assert that users cannot access shipment with expired date but can before expiration date
+        # Assert that users cannot access shipment with expired permission date but can before expiration date
         response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_with_exp}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
