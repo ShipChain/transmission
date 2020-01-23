@@ -761,8 +761,8 @@ class ShipmentAPITests(APITestCase):
             cert = kwargs['certificateId']
             return map_describe[cert]
 
-        with mock.patch('apps.shipments.serializers.tracking_data.boto3.client') as serial_client, \
-                mock.patch('apps.shipments.models.shipment.boto3.client') as model_client:
+        with mock.patch('apps.shipments.serializers.boto3.client') as serial_client, \
+                mock.patch('apps.shipments.models.boto3.client') as model_client:
             serial_client = serial_client.return_value
             model_client = model_client.return_value
             serial_client.describe_certificate.side_effect = side_effects

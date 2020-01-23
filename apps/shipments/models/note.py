@@ -18,7 +18,7 @@ from django.core.validators import MaxLengthValidator, MinLengthValidator
 from django.db import models
 from shipchain_common.utils import random_id
 
-from apps.shipments.models import Shipment
+from .shipment import Shipment
 
 
 class ShipmentNote(models.Model):
