@@ -22,15 +22,14 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import permissions, status
 from shipchain_common.authentication import get_jwt_from_request
+from shipchain_common.utils import get_client_ip
 
-from apps.shipments.models import Shipment, PermissionLink
+from apps.shipments.models import Shipment
 
 
 PROFILES_WALLET_URL = f'{settings.PROFILES_URL}/api/v1/wallet'
 
 LOG = logging.getLogger('transmission')
-
-NON_OWNER_ACCESS_METHODS = ('GET', 'PATCH', )
 
 
 def get_user(request):
@@ -60,47 +59,6 @@ def has_owner_access(request, obj):
     return (organization_id and obj.owner_id == organization_id) or obj.owner_id == user_id
 
 
-def is_carrier(request, shipment, allowed_methods_set):
-    """
-    Custom permission for carrier shipment access
-    """
-    response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.carrier_wallet_id}/?is_active',
-                                             headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
-    if allowed_methods_set is not None:
-        return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
-
-    return response.status_code == status.HTTP_200_OK
-
-
-def is_moderator(request, shipment, allowed_methods_set):
-    """
-    Custom permission for moderator shipment access
-    """
-    if shipment.moderator_wallet_id:
-        response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.moderator_wallet_id}/?is_active',
-                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
-
-        if allowed_methods_set is not None:
-            return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
-
-        return response.status_code == status.HTTP_200_OK
-
-    return False
-
-
-def is_shipper(request, shipment, allowed_methods_set):
-    """
-    Custom permission for shipper shipment access
-    """
-    response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.shipper_wallet_id}/?is_active',
-                                             headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
-
-    if allowed_methods_set is not None:
-        return response.status_code == status.HTTP_200_OK and request.method in allowed_methods_set
-
-    return response.status_code == status.HTTP_200_OK
-
-
 def shipment_exists(shipment_id):
     """
     Check whether a shipment_id included in a nested route exists.
@@ -112,28 +70,6 @@ def shipment_exists(shipment_id):
         return False
 
     return shipment_obj
-
-
-def check_permission_link(request, shipment_obj):
-    permission_link_id = request.query_params.get('permission_link', None)
-    if permission_link_id:
-        try:
-            permission_obj = PermissionLink.objects.get(pk=permission_link_id)
-        except ObjectDoesNotExist:
-            return False
-        if not permission_obj.is_valid:
-            return check_has_shipment_owner_access(request, shipment_obj)
-
-        return shipment_obj.pk == permission_obj.shipment.pk and request.method == 'GET'
-
-    return check_has_shipment_owner_access(request, shipment_obj)
-
-
-def check_has_shipment_owner_access(request, obj, allowed_methods=NON_OWNER_ACCESS_METHODS):
-    return request.user.is_authenticated and (has_owner_access(request, obj) or
-                                              is_shipper(request, obj, allowed_methods) or
-                                              is_carrier(request, obj, allowed_methods) or
-                                              is_moderator(request, obj, allowed_methods))
 
 
 class IsOwner(permissions.BasePermission):
@@ -153,7 +89,8 @@ class ShipmentExists(permissions.BasePermission):
 
         if not shipment_exists(shipment_id):
             # The requested views are only accessible via nested routes
-            LOG.warning(f'User: {request.user}, is trying to access a non existing shipment: {shipment_id}')
+            requester = f'User [{request.user.id}]' if request.user.id else f'Ip [{get_client_ip(request)}]'
+            LOG.warning(f'{requester}, is trying to access a non existing shipment: [{shipment_id}]')
             return False
 
         return True

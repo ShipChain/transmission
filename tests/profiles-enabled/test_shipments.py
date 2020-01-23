@@ -424,7 +424,6 @@ class ShipmentAPITests(APITestCase):
             # A shipment shipper, carrier, moderator should succeed sharing a shipment via email
             with mock.patch('apps.permissions.IsShipperMixin.has_shipper_permission') as mock_carrier, \
                     mock.patch('apps.permissions.IsCarrierMixin.has_carrier_permission') as mock_shipper:
-                # mock.patch('apps.permissions.IsModeratorMixin.has_moderator_permission') as mock_moderator:
                 mock_carrier.return_value = False
                 mock_shipper.return_value = False
 

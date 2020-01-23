@@ -17,37 +17,14 @@ limitations under the License.
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import permissions
 
-from apps.permissions import has_owner_access, shipment_exists, check_permission_link, IsShipmentOwnerMixin, \
-    IsShipperMixin, IsModeratorMixin, IsCarrierMixin
+from apps.permissions import shipment_exists, IsShipmentOwnerMixin, IsShipperMixin, IsModeratorMixin, IsCarrierMixin
 from .models import PermissionLink
-
-
-class IsListenerOwner(permissions.BasePermission):
-    """
-    Custom permission to only allow owners of an object to edit it
-    """
-
-    def has_permission(self, request, view):
-        shipment_id = view.kwargs.get('shipment_pk', None)
-
-        if shipment_id:
-            shipment = shipment_exists(shipment_id)
-            if not shipment:
-                return False
-            return check_permission_link(request, shipment)
-
-        # Transactions are still accessible on their own endpoint
-        return request.user.is_authenticated
-
-    def has_object_permission(self, request, view, obj):
-        # Permissions are allowed to anyone who owns a shipment listening to this job
-        return has_owner_access(request, obj.shipment)
 
 
 class IsSharedShipmentMixin:
 
     @staticmethod
-    def is_permission_link_valid(request, shipment):
+    def has_valid_permission_link(request, shipment):
         permission_link = request.query_params.get('permission_link')
         if permission_link:
             try:
@@ -95,7 +72,7 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
 
         if shipment:
             return self.is_shipment_owner(request, shipment) or \
-               self.is_permission_link_valid(request, shipment) or \
+               self.has_valid_permission_link(request, shipment) or \
                self.has_shipper_permission(request, shipment) or \
                self.has_carrier_permission(request, shipment) or \
                self.has_moderator_permission(request, shipment)
@@ -107,7 +84,7 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
 
     def has_object_permission(self, request, view, obj):
         return self.is_shipment_owner(request, obj) or \
-           self.is_permission_link_valid(request, obj) or \
+           self.has_valid_permission_link(request, obj) or \
            self.has_shipper_permission(request, obj) or \
            self.has_carrier_permission(request, obj) or \
            self.has_moderator_permission(request, obj)
@@ -137,3 +114,35 @@ class HasShipmentUpdatePermission(IsShipmentOwnerMixin,
             return False
 
         return False
+
+
+class IsListenerOwner(IsShipmentOwnerMixin,
+                      IsSharedShipmentMixin,
+                      IsShipperMixin,
+                      IsCarrierMixin,
+                      IsModeratorMixin,
+                      permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit it
+    """
+
+    def has_permission(self, request, view):
+        shipment_id = view.kwargs.get('shipment_pk')
+
+        if shipment_id:
+            shipment = shipment_exists(shipment_id)
+            if not shipment:
+                return False
+
+            return self.is_shipment_owner(request, shipment) or \
+                self.has_valid_permission_link(request, shipment) or \
+                self.has_shipper_permission(request, shipment) or \
+                self.has_carrier_permission(request, shipment) or \
+                self.has_moderator_permission(request, shipment)
+
+        # Transactions are still accessible on their own endpoint
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        # Permissions are allowed to anyone who owns a shipment listening to this job
+        return self.is_shipment_owner(request, obj.shipment)

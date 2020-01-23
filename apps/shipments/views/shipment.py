@@ -19,7 +19,6 @@ import logging
 from string import Template
 
 from django.conf import settings
-# from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -28,7 +27,7 @@ from fancy_cache import cache_page
 from influxdb_metrics.loader import log_metric
 from rest_framework import permissions, status, filters
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound  # PermissionDenied
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.permissions import HasViewSetActionPermissions
@@ -46,8 +45,7 @@ LOG = logging.getLogger('transmission')
 
 
 UPDATE_PERMISSION_CLASSES = (
-    (permissions.IsAuthenticated,
-     HasViewSetActionPermissions,
+    (HasViewSetActionPermissions,
      ShipmentExists,
      HasShipmentUpdatePermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
 )
@@ -70,8 +68,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
 
     serializer_class = ShipmentSerializer
 
-    permission_classes = ((permissions.IsAuthenticated,
-                           HasViewSetActionPermissions,
+    permission_classes = ((HasViewSetActionPermissions,
                            IsOwnerOrShared, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )

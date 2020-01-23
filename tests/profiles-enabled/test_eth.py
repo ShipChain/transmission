@@ -214,12 +214,17 @@ class TransactionReceiptTestCase(APITestCase):
         # A Transactions list view cannot be accessed by an anonymous user on a nested route
         self.set_user(None)
 
-        response = self.client.get(nested_url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        with mock.patch('apps.permissions.IsShipperMixin.has_shipper_permission') as mock_carrier, \
+                mock.patch('apps.permissions.IsCarrierMixin.has_carrier_permission') as mock_shipper:
+            mock_carrier.return_value = False
+            mock_shipper.return_value = False
 
-        # An anonymous user shouldn't have access to the shipment's transactions with an expired permission link
-        response = self.client.get(f'{nested_url}?permission_link={invalid_permission_link.id}')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            response = self.client.get(nested_url)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+            # An anonymous user shouldn't have access to the shipment's transactions with an expired permission link
+            response = self.client.get(f'{nested_url}?permission_link={invalid_permission_link.id}')
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         # An anonymous user with a valid permission link should have access to the shipment's transactions
         response = self.client.get(f'{nested_url}?permission_link={valid_permission_link.id}')
