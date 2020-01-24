@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('shipments', '0006_add_geofences'),
+        ('shipments', '0007_add_location_contact_fields'),
     ]
 
     operations = [

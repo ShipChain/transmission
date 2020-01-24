@@ -15,18 +15,23 @@ limitations under the License.
 """
 
 from datetime import timedelta
+from functools import lru_cache
+from itertools import chain
 
 import pytz
 from dateutil.parser import parse
 from django.conf import settings
 from shipchain_common.utils import UpperEnumField
 
-from apps.shipments.models import Location, ExceptionType, TransitState
-from apps.documents.models import DocumentType, FileType
+from apps.shipments.models import Location, Shipment, ExceptionType, TransitState
+from apps.documents.models import Document, DocumentType, FileType
 from apps.utils import UploadStatus
 
 
 class ChangesDiffSerializer:
+    _allowed_historical_classes = (Shipment, Document, )
+    _many_to_one_historical_models = (Document.history.model, )
+
     relation_fields = settings.RELATED_FIELDS_WITH_HISTORY_MAP.keys()
     excluded_fields = ('history_user', 'version', 'customer_fields', 'geometry',
                        'background_data_hash_interval', 'manual_update_hash_interval', 'shipment', )
@@ -38,11 +43,16 @@ class ChangesDiffSerializer:
     upload_status_enum_serializer = UpperEnumField(UploadStatus, lenient=True, ints_as_names=True, read_only=True)
     document_type_enum_serializer = UpperEnumField(DocumentType, lenient=True, ints_as_names=True, read_only=True)
 
-    def __init__(self, queryset, request):
+    def __init__(self, queryset, request, shipment_id):
         self.queryset = queryset
         self.request = request
+        self.shipment_id = shipment_id
 
     def diff_object_fields(self, old, new):
+
+        if isinstance(new, self._many_to_one_historical_models):
+            return self.build_many_to_one_changes(new, new.instance._meta.model_name + 's')
+
         changes = new.diff(old)
 
         flat_changes = self.build_list_changes(changes)
@@ -82,10 +92,10 @@ class ChangesDiffSerializer:
 
             if change.field in self.relation_fields:
                 if change.old is None:
-                    # The relationship field is created
+                    # The relationship object is created
                     field['new'] = Location.history.filter(pk=change.new).first().instance.id
-                if change.old and change.new:
-                    # The relationship field has been modified no need to include it in flat changes
+                elif change.old and change.new:
+                    # The relationship object has been modified no need to include it in flat changes
                     continue
 
             field_list.append(field)
@@ -114,59 +124,52 @@ class ChangesDiffSerializer:
         json_fields_changes = new_obj.diff(old_obj, json_fields_only=True)
         if json_fields_changes:
             for field_name, changes in json_fields_changes.items():
-                related_changes = self.build_list_changes(changes, json_field=True, base_field=field_name)
-                if related_changes:
-                    changes_list.extend(related_changes)
+                changes_list.extend(self.build_list_changes(changes, json_field=True, base_field=field_name))
         return changes_list
 
-    def document_actions(self, new_obj):
-        document_queryset = new_obj.historicaldocument_set.all().filter(upload_status=UploadStatus.COMPLETE)
-        if document_queryset.count() > 0:
-            for hist_doc in document_queryset:
-                yield {
-                    'history_date': hist_doc.history_date,
-                    'fields': None,
-                    'relationships': {
-                        'documents': {
-                            'id': hist_doc.id,
-                            'fields': self.build_list_changes(hist_doc.diff(hist_doc.prev_record))
-                        }
-                    },
-                    'author': hist_doc.history_user
+    def build_many_to_one_changes(self, historical_document, relation_object_name):
+        return {
+            'history_date': historical_document.history_date,
+            'fields': None,
+            'relationships': {
+                relation_object_name: {
+                    'id': historical_document.id,
+                    'fields': self.build_list_changes(historical_document.diff(historical_document.prev_record))
                 }
+            },
+            'author': historical_document.history_user
+        }
 
-    def datetime_filters(self, changes_diff):
+    @property
+    @lru_cache()
+    def historical_queryset(self):
+        historical_document_queryset = Document.history.filter(shipment__id=self.shipment_id,
+                                                               upload_status=UploadStatus.COMPLETE)
+
+        historical_queryset = list(chain(historical_document_queryset, self.queryset))
+
+        historical_queryset.sort(key=lambda historical_object: historical_object.history_date, reverse=True)
+
+        return historical_queryset
+
+    def filter_queryset(self, historical_queryset):
         gte_datetime = self.request.query_params.get('history_date__gte')
         lte_datetime = self.request.query_params.get('history_date__lte')
 
         if lte_datetime:
             lte_datetime = parse(lte_datetime).astimezone(pytz.utc)
-            changes_diff = list(filter(lambda change: change['history_date'] <= lte_datetime, changes_diff))
+            historical_queryset = list(filter(lambda h_obj: h_obj.history_date <= lte_datetime, historical_queryset))
 
         if gte_datetime:
             gte_datetime = parse(gte_datetime).astimezone(pytz.utc)
-            changes_diff = list(filter(lambda change: change['history_date'] >= gte_datetime, changes_diff))
+            historical_queryset = list(filter(lambda h_obj: h_obj.history_date >= gte_datetime, historical_queryset))
 
-        return changes_diff
+        return historical_queryset
 
-    @property
-    def data(self):
-        queryset = self.queryset
-        count = queryset.count()
+    def get_data(self, page):
+        diff_changes = []
 
-        queryset_diff = []
-        if count == 0:
-            return queryset_diff
-        index = 0
-        if count > 1:
-            while index + 1 < count:
-                new = queryset[index]
-                old = queryset[index + 1]
-                index += 1
-                queryset_diff.extend(list(self.document_actions(new)))
-                queryset_diff.append(self.diff_object_fields(old, new))
+        for historical_obj in page:
+            diff_changes.append(self.diff_object_fields(historical_obj.prev_record, historical_obj))
 
-            # The diff change for the shipment creation object is computed against a None object
-            queryset_diff.append(self.diff_object_fields(None, queryset[index]))
-
-        return self.datetime_filters(queryset_diff)
+        return diff_changes

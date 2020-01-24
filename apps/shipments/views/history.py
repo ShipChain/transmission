@@ -32,11 +32,13 @@ LOG = logging.getLogger('transmission')
 
 class ShipmentHistoryListView(viewsets.GenericViewSet):
     http_method_names = ('get', )
+
     permission_classes = (
-        (ShipmentExists,
-         IsOwnerOrShared, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
+        (ShipmentExists, IsOwnerOrShared, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
     )
+
     pagination_class = CustomResponsePagination
+
     renderer_classes = (renderers.JSONRenderer, )
 
     def list(self, request, *args, **kwargs):
@@ -44,12 +46,14 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
         log_metric('transmission.info', tags={'method': 'shipment.history', 'module': __name__})
 
         shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
-        queryset = shipment.history.all()
-        serializer = ChangesDiffSerializer(queryset, request)
+
+        serializer = ChangesDiffSerializer(shipment.history.all(), request, kwargs['shipment_pk'])
+
+        queryset = serializer.filter_queryset(serializer.historical_queryset)
 
         paginator = self.pagination_class()
-        page = paginator.paginate_queryset(serializer.data, self.request, view=self)
+        page = paginator.paginate_queryset(queryset, self.request, view=self)
         if page is not None:
-            return paginator.get_paginated_response(page)
+            return paginator.get_paginated_response(serializer.get_data(page))
 
-        return Response(serializer.data)
+        return Response(serializer.get_data(queryset))
