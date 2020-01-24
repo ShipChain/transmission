@@ -1,0 +1,68 @@
+resource:
+  properties:
+    type:
+      description: ShipmentNote
+      example: ShipmentNote
+
+attributes:
+  allOf:
+    - $ref: '#/note/message'
+    - $ref: '#/note/authorId'
+    - $ref: '#/dataTypes/createdAt'
+
+relationships:
+  type: object
+  description: Relationships for this resource
+  properties:
+    shipment:
+      type: object
+      description: Shipment associated with this note
+      properties:
+        data:
+          allOf:
+            - $ref: '#/shipments/resource'
+            - $ref: '#/dataTypes/resourceId'
+
+getResource:
+  allOf:
+    - $ref: '#/resource'
+    - properties:
+        attributes:
+          $ref: '#/attributes'
+        relationships:
+          $ref: '#/relationships'
+
+getResponse:
+  allOf:
+    - $ref: '#/jsonApi/data'
+    - properties:
+        data:
+          $ref: '#/getResource'
+
+createResponse:
+  allOf:
+    - $ref: '#/jsonApi/data'
+    - properties:
+        data:
+          $ref: '#/getResource'
+
+listResponse:
+  allOf:
+    - $ref: '#/jsonApi/dataArray'
+    - $ref: '#/jsonApi/linksAndMeta'
+    - properties:
+        data:
+          items:
+            $ref: '#/getResource'
+
+note:
+  $ref: dataTypes.yaml
+
+shipments:
+  $ref: ../shipments/schema.yaml
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/schema.yaml

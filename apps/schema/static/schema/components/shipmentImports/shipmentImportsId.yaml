@@ -9,7 +9,7 @@ get:
     - Imports
   responses:
     '200':
-      description: "Created"
+      description: "Success"
       content:
         application/vnd.api+json:
           schema:

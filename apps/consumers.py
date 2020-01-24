@@ -21,11 +21,11 @@ from enumfields import Enum
 from rest_framework_json_api.renderers import JSONRenderer
 
 from apps.authentication import AsyncJsonAuthConsumer
-from apps.jobs.models import AsyncJob
+from apps.jobs.models import AsyncJob, JobState
 from apps.jobs.serializers import AsyncJobSerializer
 from apps.jobs.views import JobsViewSet
 from apps.shipments.geojson import render_point_feature
-from apps.shipments.models import Shipment, TrackingData, JobState
+from apps.shipments.models import Shipment, TrackingData
 from apps.shipments.serializers import ShipmentTxSerializer
 from apps.shipments.views import ShipmentViewSet
 

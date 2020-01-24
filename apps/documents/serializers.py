@@ -26,7 +26,6 @@ from influxdb_metrics.loader import log_metric
 from shipchain_common.utils import UpperEnumField
 
 from apps.utils import S3PreSignedMixin
-from apps.shipments.models import Shipment
 from .models import Document, DocumentType, FileType, UploadStatus
 from .rpc import DocumentRPCClient
 
@@ -56,17 +55,6 @@ class DocumentCreateSerializer(BaseDocumentSerializer):
         else:
             exclude = ('shipment', )
         meta_fields = ('presigned_s3', )
-
-    def create(self, validated_data):
-        if not settings.PROFILES_ENABLED:
-            # Check specific to profiles disabled
-            try:
-                Shipment.objects.get(id=self.context['shipment_id'])
-            except Shipment.DoesNotExist:
-                raise serializers.ValidationError('Invalid shipment provided')
-            return Document.objects.create(**validated_data, **self.context)
-
-        return Document.objects.create(**validated_data)
 
 
 class DocumentSerializer(BaseDocumentSerializer):

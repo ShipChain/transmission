@@ -80,4 +80,4 @@ class DocumentViewSetAPITests(APITestCase):
             bad_shipment_id = 'non-existing-shipment-in-db'
             bad_shipment_in_url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': bad_shipment_id})
             response = self.client.post(bad_shipment_in_url, file_data, format='json')
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

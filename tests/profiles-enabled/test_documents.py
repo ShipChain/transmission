@@ -377,9 +377,9 @@ class DocumentAPITests(APITestCase):
 
         self.set_user(self.user_1)
 
-        with mock.patch('apps.permissions.is_shipper') as mock_is_shipper, \
-                mock.patch('apps.permissions.is_carrier') as mock_is_carrier, \
-                mock.patch('apps.permissions.is_moderator') as mock_is_moderator, \
+        with mock.patch('apps.permissions.IsShipperMixin.has_shipper_permission') as mock_is_shipper, \
+                mock.patch('apps.permissions.IsCarrierMixin.has_carrier_permission') as mock_is_carrier, \
+                mock.patch('apps.permissions.IsModeratorMixin.has_moderator_permission') as mock_is_moderator, \
                 mock.patch.object(requests.Session, 'post') as mock_rpc_call:
 
             mock_rpc_call.return_value = mocked_rpc_response({

@@ -46,6 +46,12 @@ paths:
   /api/v1/shipments/{shipment_id}/documents/{document_id}:
     $ref: components/documents/documentId.yaml
 
+  /api/v1/shipments/{shipment_id}/notes:
+    $ref: components/shipmentNotes/notes.yaml
+
+  /api/v1/shipments/{shipment_id}/notes/{shipment_note_id}:
+    $ref: components/shipmentNotes/noteId.yaml
+
   /api/v1/shipments/{shipment_id}/transactions:
     $ref: components/shipments/transactions.yaml
 

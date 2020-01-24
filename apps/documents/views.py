@@ -16,38 +16,56 @@ limitations under the License.
 
 import logging
 from urllib.parse import unquote_plus
-
 import re
+
 from django.conf import settings
 from django_filters import rest_framework as filters
-from rest_framework import viewsets, permissions, status, mixins, exceptions
+from rest_framework import permissions, status, exceptions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from influxdb_metrics.loader import log_metric
+from shipchain_common import mixins
+from shipchain_common.permissions import HasViewSetActionPermissions
+from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
 
 from apps.authentication import DocsLambdaRequest
 from apps.jobs.models import AsyncActionType
-from apps.permissions import get_owner_id
+from apps.permissions import get_owner_id, ShipmentExists, IsOwnerShipperCarrierModerator
 from apps.utils import UploadStatus
 from .filters import DocumentFilterSet
 from .models import Document
-from .permissions import UserHasPermission
 from .rpc import DocumentRPCClient
 from .serializers import DocumentSerializer, DocumentCreateSerializer
 
 LOG = logging.getLogger('transmission')
 
 
-class DocumentViewSet(mixins.CreateModelMixin,
-                      mixins.RetrieveModelMixin,
-                      mixins.UpdateModelMixin,
-                      mixins.ListModelMixin,
-                      viewsets.GenericViewSet):
+class DocumentViewSet(mixins.ConfigurableCreateModelMixin,
+                      mixins.ConfigurableRetrieveModelMixin,
+                      mixins.ConfigurableUpdateModelMixin,
+                      mixins.ConfigurableListModelMixin,
+                      ConfigurableGenericViewSet):
+
     queryset = Document.objects.all()
+
     serializer_class = DocumentSerializer
-    permission_classes = ((UserHasPermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
+
+    permission_classes = (
+        (permissions.IsAuthenticated,
+         ShipmentExists,
+         HasViewSetActionPermissions,
+         IsOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED
+        else (permissions.AllowAny, ShipmentExists, )
+    )
+
     filter_backends = (filters.DjangoFilterBackend,)
     filter_class = DocumentFilterSet
+
+    configuration = {
+        'create': ActionConfiguration(
+            request_serializer=DocumentCreateSerializer,
+            response_serializer=DocumentSerializer
+        ),
+    }
 
     def get_queryset(self):
         return self.queryset.filter(shipment__id=self.kwargs['shipment_pk'])
@@ -56,37 +74,8 @@ class DocumentViewSet(mixins.CreateModelMixin,
         if settings.PROFILES_ENABLED:
             created = serializer.save(owner_id=get_owner_id(self.request), shipment_id=self.kwargs['shipment_pk'])
         else:
-            created = serializer.save()
+            created = serializer.save(shipment_id=self.kwargs['shipment_pk'])
         return created
-
-    def create(self, request, *args, **kwargs):
-        """
-        Create a pre-signed s3 post and create a corresponding pdf document object with pending status
-        """
-        LOG.debug(f'Creating a document object.')
-        log_metric('transmission.info', tags={'method': 'documents.create', 'module': __name__})
-
-        serializer = DocumentCreateSerializer(data=request.data, context={'shipment_id': self.kwargs['shipment_pk']})
-        serializer.is_valid(raise_exception=True)
-        doc_obj = self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(self.get_serializer(doc_obj).data, status=status.HTTP_201_CREATED, headers=headers)
-
-    def update(self, request, *args, **kwargs):
-        """
-        Update document object status according to upload status: COMPLETE or FAILED
-        """
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        LOG.debug(f'Updating document {instance.id} with new details.')
-        log_metric('transmission.info', tags={'method': 'documents.update', 'module': __name__})
-
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-
-        self.perform_update(serializer)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class S3Events(APIView):
