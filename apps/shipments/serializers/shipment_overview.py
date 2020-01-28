@@ -25,11 +25,6 @@ from ..serializers import ShipmentOverviewSerializer
 
 
 class DevicesQueryParamsSerializer(serializers.Serializer):
-    active = serializers.ListField(
-        child=serializers.BooleanField(required=False, allow_null=True, default=None),
-        required=False, allow_null=True, default=[]
-    )
-
     in_bbox = serializers.ListField(
         child=serializers.CharField(required=False, allow_null=True, default=None),
         required=False, max_length=1, allow_null=True, default=[]
@@ -45,7 +40,7 @@ class DevicesQueryParamsSerializer(serializers.Serializer):
         lat_range = (-90, 90)
         box_ranges = (long_range, lat_range, long_range, lat_range)
 
-        if in_bbox[0]:
+        if in_bbox:
             box_to_list = in_bbox[0].split(',')
             if not len(box_to_list) == 4:
                 raise exceptions.ValidationError(f'in_box parameter takes 4 position parameters but '

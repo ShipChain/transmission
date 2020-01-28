@@ -44,12 +44,12 @@ class ShipmentOverviewListView(ListAPIView):
 
         shipment_queryset = self.state_filter(shipment_queryset, query_params.get('state'))
 
-        latest_tracking_created = shipment_queryset.annotate(
+        latest_tracking = shipment_queryset.annotate(
             latest_tracking_created=Max('trackingdata__created_at')
         ).values_list('latest_tracking_created')
 
         tracking_data_queryset = queryset.filter(shipment__in=shipment_queryset,
-                                                 created_at__in=latest_tracking_created)
+                                                 created_at__in=latest_tracking)
 
         bbox_tracking_data_queryset = self.bbox_filter(tracking_data_queryset, query_params.get('in_bbox'))
 
