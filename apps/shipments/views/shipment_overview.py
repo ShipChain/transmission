@@ -16,49 +16,80 @@ limitations under the License.
 
 import logging
 
-from django.conf import settings
+from django.contrib.gis.geos import Polygon
+from django.db.models import Max
 from influxdb_metrics.loader import log_metric
-from rest_framework import permissions, status, renderers
-
+from rest_framework import permissions, status
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from shipchain_common.exceptions import RPCError
-from shipchain_common.pagination import CustomResponsePagination
-
 
 from apps.permissions import get_owner_id
-
-from ..iot_client import DeviceAWSIoTClient
-from ..serializers import DevicesQueryParamsSerializer
+from ..serializers import DevicesQueryParamsSerializer, ShipmentLocationSerializer
+from ..models import Shipment, TrackingData
 
 LOG = logging.getLogger('transmission')
 
 
-class ListDevicesStatus(APIView):
-    http_method_names = ['get', ]
+class ShipmentOverviewListView(ListAPIView):
+
     permission_classes = (permissions.IsAuthenticated, )
-    pagination_class = CustomResponsePagination
-    renderer_classes = (renderers.JSONRenderer,)
+
+    serializer_class = ShipmentLocationSerializer
+
+    tracking_data_queryset = TrackingData.objects.filter(shipment__device_id__isnull=False)
+    shipment_queryset = Shipment.objects.filter(device_id__isnull=False)
+
+    def filter_tracking_data_queryset(self, owner_id, queryset, query_params):
+        shipment_queryset = self.owner_filter(owner_id, self.shipment_queryset)
+
+        shipment_queryset = self.state_filter(shipment_queryset, query_params.get('state'))
+
+        latest_tracking_created = shipment_queryset.annotate(
+            latest_tracking_created=Max('trackingdata__created_at')
+        ).values_list('latest_tracking_created')
+
+        tracking_data_queryset = queryset.filter(shipment__in=shipment_queryset,
+                                                 created_at__in=latest_tracking_created)
+
+        bbox_tracking_data_queryset = self.bbox_filter(tracking_data_queryset, query_params.get('in_bbox'))
+
+        return bbox_tracking_data_queryset
+
+    @staticmethod
+    def owner_filter(owner_id, queryset):
+        return queryset.filter(owner_id=owner_id)
+
+    @staticmethod
+    def state_filter(queryset, state_params):
+        if state_params:
+            return queryset.filter(state__in=state_params)
+        return queryset
+
+    @staticmethod
+    def bbox_filter(queryset, bbox_param):
+        if bbox_param:
+            polygon = Polygon.from_bbox(bbox_param)
+            return queryset.filter(point__contained=polygon)
+        return queryset
 
     def get(self, request, *args, **kwargs):
         owner_id = get_owner_id(request)
 
-        LOG.debug(f'Listing devices for owner with id: {owner_id}.')
+        LOG.debug(f'Listing devices for owner with id: [{owner_id}]')
         log_metric('transmission.info', tags={'method': 'devices.list', 'module': __name__})
 
-        if not settings.IOT_THING_INTEGRATION:
-            raise RPCError('IoT Integration is not set up in this environment.',
-                           status_code=status.HTTP_501_NOT_IMPLEMENTED)
+        param_serializer = DevicesQueryParamsSerializer(data=dict(request.query_params))
+        param_serializer.is_valid(raise_exception=True)
 
-        iot_client = DeviceAWSIoTClient()
-
-        serializer = DevicesQueryParamsSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-
-        devices = iot_client.get_list_owner_devices(owner_id, serializer.validated_data)
+        queryset = self.filter_tracking_data_queryset(owner_id, self.tracking_data_queryset,
+                                                      param_serializer.validated_data)
 
         paginator = self.pagination_class()
-        page = paginator.paginate_queryset(devices, request, view=self)
+        page = paginator.paginate_queryset(queryset, request, view=self)
+
         if page is not None:
-            return paginator.get_paginated_response(page)
-        return Response(devices, status=status.HTTP_200_OK)
+            serializer = self.serializer_class(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

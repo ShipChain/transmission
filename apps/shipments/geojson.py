@@ -13,7 +13,7 @@ class TrackingDataSerializer(AliasSerializerMixin, GeoSerializer):
     pass
 
 
-class SingleFeatureTrackingDataSerializer(TrackingDataSerializer):
+class BaseFeatureTrackingDataSerializer(TrackingDataSerializer):
     def start_serialization(self):
         self._init_options()
         self._cts = {}  # pylint:disable=attribute-defined-outside-init
@@ -21,9 +21,18 @@ class SingleFeatureTrackingDataSerializer(TrackingDataSerializer):
     def end_serialization(self):
         pass
 
+
+class SingleFeatureTrackingDataSerializer(BaseFeatureTrackingDataSerializer):
     def serialize(self, queryset, *args, **kwargs):  # pylint:disable=arguments-differ
         if queryset.count() != 1:
             raise SerializationError
+        return super().serialize(queryset, *args, **kwargs)
+
+
+class MultiFeatureTrackingDataSerializer(BaseFeatureTrackingDataSerializer):
+    def serialize(self, queryset, *args, **kwargs):  # pylint:disable=arguments-differ
+        if not isinstance(queryset, list):
+            queryset = [queryset]
         return super().serialize(queryset, *args, **kwargs)
 
 
