@@ -17,15 +17,18 @@ limitations under the License.
 import logging
 
 from django.contrib.gis.geos import Polygon
+from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Max
 from influxdb_metrics.loader import log_metric
 from rest_framework import permissions, status
+from rest_framework import filters
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
 from apps.permissions import get_owner_id
 from ..serializers import DevicesQueryParamsSerializer, ShipmentLocationSerializer
 from ..models import Shipment, TrackingData
+from ..filters import ShipmentOverviewFilter, SHIPMENT_OVERVIEW_SEARCH_FIELDS
 
 LOG = logging.getLogger('transmission')
 
@@ -36,13 +39,19 @@ class ShipmentOverviewListView(ListAPIView):
 
     serializer_class = ShipmentLocationSerializer
 
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
+
+    filterset_class = ShipmentOverviewFilter
+
+    ordering_fields = ('created_at', )
+
+    search_fields = SHIPMENT_OVERVIEW_SEARCH_FIELDS
+
     tracking_data_queryset = TrackingData.objects.filter(shipment__device_id__isnull=False)
     shipment_queryset = Shipment.objects.filter(device_id__isnull=False)
 
     def filter_tracking_data_queryset(self, owner_id, queryset, query_params):
         shipment_queryset = self.owner_filter(owner_id, self.shipment_queryset)
-
-        shipment_queryset = self.state_filter(shipment_queryset, query_params.get('state'))
 
         latest_tracking = shipment_queryset.annotate(
             latest_tracking_created=Max('trackingdata__created_at')
@@ -60,12 +69,6 @@ class ShipmentOverviewListView(ListAPIView):
         return queryset.filter(owner_id=owner_id)
 
     @staticmethod
-    def state_filter(queryset, state_params):
-        if state_params:
-            return queryset.filter(state__in=state_params)
-        return queryset
-
-    @staticmethod
     def bbox_filter(queryset, bbox_param):
         if bbox_param:
             polygon = Polygon.from_bbox(bbox_param)
@@ -75,19 +78,20 @@ class ShipmentOverviewListView(ListAPIView):
     def get(self, request, *args, **kwargs):
         owner_id = get_owner_id(request)
 
-        LOG.debug(f'Listing devices for owner with id: [{owner_id}]')
+        LOG.debug(f'Listing shipment with device for [{owner_id}]')
         log_metric('transmission.info', tags={'method': 'devices.list', 'module': __name__})
 
-        param_serializer = DevicesQueryParamsSerializer(data=dict(request.query_params))
+        param_serializer = DevicesQueryParamsSerializer(data=request.query_params)
         param_serializer.is_valid(raise_exception=True)
 
         queryset = self.filter_tracking_data_queryset(owner_id, self.tracking_data_queryset,
                                                       param_serializer.validated_data)
 
         paginator = self.pagination_class()
-        page = paginator.paginate_queryset(queryset, request, view=self)
+        page = paginator.paginate_queryset(self.filter_queryset(queryset), request, view=self)
 
         if page is not None:
+
             serializer = self.serializer_class(page, many=True)
             return paginator.get_paginated_response(serializer.data)
 
