@@ -805,7 +805,7 @@
                             "exec": [
                                 "var data = pm.response.json();",
                                 "console.log(data);",
-                                "pm.test(\"Status code is 501\", function () {\n    pm.response.to.have.status(501);\n})\n"
+                                "pm.test(\"Status code is 202\", function () {\n    pm.response.to.have.status(200);\n})\n"
                             ],
                             "type": "text/javascript"
                         }
