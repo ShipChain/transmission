@@ -54,13 +54,6 @@ getIncludedResource:
         attributes:
           $ref: '#/includedAttributes'
 
-#resource:
-#  allOf:
-#    - $ref: '#/device/trackingDataId'
-#    - $ref: '#/device/deviceType'
-#    - $ref: '#/device/deviceGroups'
-#    - $ref: '#/device/shadowData'
-
 includedResource:
   title: Shipment
   description: Shipment light details associated to the resource

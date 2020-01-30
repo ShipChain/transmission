@@ -28,10 +28,8 @@ def filter_state(queryset, _, value):
 
 
 class ShipmentFilter(filters.filterset.FilterSet):
-    has_ship_from_location = filters.BooleanFilter(
-        field_name='ship_from_location', lookup_expr='isnull', exclude=True)
-    has_ship_to_location = filters.BooleanFilter(
-        field_name='ship_to_location', lookup_expr='isnull', exclude=True)
+    has_ship_from_location = filters.BooleanFilter(field_name='ship_from_location', lookup_expr='isnull', exclude=True)
+    has_ship_to_location = filters.BooleanFilter(field_name='ship_to_location', lookup_expr='isnull', exclude=True)
     has_final_destination_location = filters.BooleanFilter(
         field_name='final_destination_location', lookup_expr='isnull', exclude=True)
     state = filters.MultipleChoiceFilter(method=filter_state, choices=MULTI_STATE_CHOICES)
