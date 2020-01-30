@@ -16,7 +16,6 @@ limitations under the License.
 
 import logging
 
-from django.conf import settings
 from influxdb_metrics.loader import log_metric
 from shipchain_common.exceptions import AWSIoTError
 from shipchain_common.iot import AWSIoTClient
