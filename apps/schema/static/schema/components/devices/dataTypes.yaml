@@ -1,61 +1,12 @@
 uuid: &uuid
   $ref: '../core/dataTypes.yaml#/uuid'
 
-deviceId:
+trackingDataId:
   properties:
-    deviceId:
+    TrackingData:
       <<: *uuid
-      title: deviceId
-      description: device UUID
-
-devicePk:
-  properties:
-    deviceId:
-      <<: *uuid
-      title: deviceId
-      description: device UUID
-
-
-deviceType:
-  properties:
-    deviceType:
-      title: deviceType
-      description: Device platform
-      type: string
-      enum: [ANDROID, AXLE_GATEWAY]
-      example: 'AXLE_GATEWAY'
-
-creationDate:
-  properties:
-    creationDate:
-      title: creationDate
-      description: Date/time of the device's creation
-      type: string
-      format: date-time
-      example: '2018-06-18T14:54:56.652732Z'
-
-environment:
-  properties:
-    environment:
-      title: environment
-      description: Device environment
-      type: string
-      example: 'prod'
-
-version:
-  properties:
-    version:
-      title: version
-      description: Device's version
-      type: string
-      example: '1.1.0'
-
-owner:
-  properties:
-    owner:
-      <<: *uuid
-      title: owner
-      description: Device owner's UUID
+      title: TrackingData
+      description: Tracking data UUID
 
 location:
   properties:
@@ -65,92 +16,6 @@ location:
       description: Location's GeoJson point coordinates
       allOf:
         - $ref: '#/tracking/pointFeature'
-
-activated:
-  title: activated
-  description: Indicates whether the device is activated or not
-  type: boolean
-  example: true
-
-connected:
-  title: connected
-  description: Indicates whether the device is currently online or not
-  type: boolean
-  example: true
-
-ownerId:
-  $ref: '#/owner/properties/owner'
-
-samplingInterval:
-  properties:
-    samplingInterval:
-      title: samplingInterval
-      description: The device's reporting interval, in milliseconds
-      type: integer
-      example: 600
-
-shipmentId:
-  properties:
-    shipmentId:
-      <<: *uuid
-      title: shipmentId
-      description: The shipment UUID currently associated with the device
-
-deviceGroups:
-  properties:
-    deviceGroups:
-      title: deviceGroups
-      description: Owner group associated with device
-      type: array
-      items:
-        type: string
-      example: ["fb2024be-5518-4b85-9564-ec24144f2b81"]
-
-reported:
-  type: object
-  title: reported
-  description: Device's current configurations. _May be absent from the response depending on the device's conditions._
-  properties:
-    activated:
-      $ref: '#/activated'
-    connected:
-      $ref: '#/connected'
-    devicePk:
-      $ref: '#/devicePk'
-    location:
-      $ref: '#/location'
-    ownerId:
-      $ref: '#/ownerId'
-    samplingInterval:
-      $ref: '#/samplingInterval'
-    shipmentId:
-      $ref: '#/shipmentId/properties/shipmentId'
-
-notSet:
-  type: object
-  title: notSet
-  description: Device's pending configurations. _May be absent from response depending on the device's conditions._
-  properties:
-    location:
-      $ref: '#/location'
-    ownerId:
-      $ref: '#/ownerId'
-    samplingInterval:
-      $ref: '#/samplingInterval'
-    shipmentId:
-      $ref: '#/shipmentId/properties/shipmentId'
-
-shadowData:
-  properties:
-    shadowData:
-      type: object
-      title: shadowData
-      description: Device's shadow
-      properties:
-        reported:
-          $ref: '#/reported'
-        notSet:
-          $ref: '#/notSet'
 
 tracking:
   $ref: ../tracking/schema.yaml
