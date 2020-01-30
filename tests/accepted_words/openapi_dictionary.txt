@@ -64,6 +64,7 @@ ShipmentImport
 ShipmentNote
 subhouse
 
+TrackingData
 transactionHash
 transactionIndex
 TransactionReceipt

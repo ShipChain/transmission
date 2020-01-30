@@ -17,8 +17,8 @@ limitations under the License.
 import logging
 
 from django.contrib.gis.geos import Polygon
-from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Max
+from django_filters.rest_framework import DjangoFilterBackend
 from influxdb_metrics.loader import log_metric
 from rest_framework import permissions, status
 from rest_framework import filters
