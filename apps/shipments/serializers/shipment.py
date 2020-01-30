@@ -338,4 +338,4 @@ class ShipmentOverviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shipment
-        fields = ('state', 'exception', )
+        fields = ('state', 'exception', 'delayed', )

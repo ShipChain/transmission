@@ -28,7 +28,7 @@ from rest_framework.response import Response
 from apps.permissions import get_owner_id
 from ..serializers import DevicesQueryParamsSerializer, ShipmentLocationSerializer
 from ..models import Shipment, TrackingData
-from ..filters import ShipmentOverviewFilter, SHIPMENT_OVERVIEW_SEARCH_FIELDS
+from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
 
 LOG = logging.getLogger('transmission')
 
@@ -41,17 +41,22 @@ class ShipmentOverviewListView(ListAPIView):
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
 
-    filterset_class = ShipmentOverviewFilter
+    filterset_class = ShipmentFilter
 
     ordering_fields = ('created_at', )
 
-    search_fields = SHIPMENT_OVERVIEW_SEARCH_FIELDS
+    search_fields = SHIPMENT_SEARCH_FIELDS
 
-    tracking_data_queryset = TrackingData.objects.filter(shipment__device_id__isnull=False)
+    queryset = TrackingData.objects.filter(shipment__device_id__isnull=False)
     shipment_queryset = Shipment.objects.filter(device_id__isnull=False)
 
     def filter_tracking_data_queryset(self, owner_id, queryset, query_params):
-        shipment_queryset = self.owner_filter(owner_id, self.shipment_queryset)
+
+        # Shipment owner filter
+        shipment_queryset = self.shipment_queryset.filter(owner_id=owner_id)
+
+        # Shipment fields filter
+        shipment_queryset = self.filter_queryset(shipment_queryset)
 
         latest_tracking = shipment_queryset.annotate(
             latest_tracking_created=Max('trackingdata__created_at')
@@ -63,10 +68,6 @@ class ShipmentOverviewListView(ListAPIView):
         bbox_tracking_data_queryset = self.bbox_filter(tracking_data_queryset, query_params.get('in_bbox'))
 
         return bbox_tracking_data_queryset
-
-    @staticmethod
-    def owner_filter(owner_id, queryset):
-        return queryset.filter(owner_id=owner_id)
 
     @staticmethod
     def bbox_filter(queryset, bbox_param):
@@ -84,11 +85,11 @@ class ShipmentOverviewListView(ListAPIView):
         param_serializer = DevicesQueryParamsSerializer(data=request.query_params)
         param_serializer.is_valid(raise_exception=True)
 
-        queryset = self.filter_tracking_data_queryset(owner_id, self.tracking_data_queryset,
+        queryset = self.filter_tracking_data_queryset(owner_id, self.queryset,
                                                       param_serializer.validated_data)
 
         paginator = self.pagination_class()
-        page = paginator.paginate_queryset(self.filter_queryset(queryset), request, view=self)
+        page = paginator.paginate_queryset(queryset, request, view=self)
 
         if page is not None:
 

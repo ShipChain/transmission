@@ -49,35 +49,3 @@ class DeviceAWSIoTClient(AWSIoTClient):
             if param_value is not None:
                 params_dict[param_key] = param_value
         return params_dict
-
-    def get_list_owner_devices(self, owner_id, params):
-        next_token = True
-        results = []
-
-        while next_token:
-            params_dict = self.build_devices_query_dict(
-                owner_id, params, next_token if next_token and not isinstance(next_token, bool) else '')
-
-            try:
-                list_devices = self._get('devices', query_params=params_dict)
-            except AWSIoTError as exc:
-                if 'NotFoundError' in exc.detail:
-                    # AwsIoT couldn't list any device for the authenticated User/Org
-                    break
-                else:
-                    raise exc
-
-            if 'error' in list_devices:
-                LOG.error(f'IoT was not able to fulfill the following request, endpoint: "devices",'
-                          f' params: {params_dict}. Error message: {list_devices["error"]}')
-                raise AWSIoTError(f'Error in AWS IoT response: {list_devices["error"]}')
-
-            new_devices = list_devices['data'].get('devices')
-            if new_devices:
-                for device in new_devices:
-                    device = remove_dict_key_recursively(device, ['certificate_id', 'certificateId'])
-                    results.append(device)
-
-            next_token = list_devices['data'].get('nextToken')
-
-        return results
