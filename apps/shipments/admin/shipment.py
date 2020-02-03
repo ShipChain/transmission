@@ -62,6 +62,7 @@ NON_SCHEMA_FIELDS = [
     'loadshipment',
     'trackingdata',
     'document',
+    'shipmentnote',
     'id',
     'owner_id',
     'storage_credentials_id',
