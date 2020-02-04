@@ -1,12 +1,11 @@
+from django.forms.fields import MultipleChoiceField
 from django_filters import rest_framework as filters
 from rest_framework_json_api.serializers import ValidationError
 from shipchain_common.filters import filter_enum
 
 from .models import Shipment, TransitState
 
-
-MULTI_STATE_CHOICES = tuple((m.name.lower(), m.value, ) for m in TransitState) + \
-                      tuple((m.name, m.value, ) for m in TransitState)
+SHIPMENT_STATE_CHOICES = tuple((m.name, m.value, ) for m in TransitState)
 
 
 def filter_state(queryset, _, value):
@@ -27,12 +26,22 @@ def filter_state(queryset, _, value):
     return queryset
 
 
+class CaseInsensitiveMultipleChoiceField(MultipleChoiceField):
+    def valid_value(self, value):
+        value = value.upper()
+        return super().valid_value(value)
+
+
+class CustomMultipleChoiceFilter(filters.MultipleChoiceFilter):
+    field_class = CaseInsensitiveMultipleChoiceField
+
+
 class ShipmentFilter(filters.filterset.FilterSet):
     has_ship_from_location = filters.BooleanFilter(field_name='ship_from_location', lookup_expr='isnull', exclude=True)
     has_ship_to_location = filters.BooleanFilter(field_name='ship_to_location', lookup_expr='isnull', exclude=True)
     has_final_destination_location = filters.BooleanFilter(
         field_name='final_destination_location', lookup_expr='isnull', exclude=True)
-    state = filters.MultipleChoiceFilter(method=filter_state, choices=MULTI_STATE_CHOICES)
+    state = CustomMultipleChoiceFilter(method=filter_state, choices=SHIPMENT_STATE_CHOICES)
     exception = filters.CharFilter(method=filter_enum)
 
     class Meta:
