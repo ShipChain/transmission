@@ -34,7 +34,7 @@ from . import ShipmentSerializer
 LOG = logging.getLogger('transmission')
 
 
-class TrackingDataSerializer(serializers.Serializer):
+class SignedDevicePayloadSerializer(serializers.Serializer):
     payload = serializers.RegexField(r'^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$')
 
     def validate(self, attrs):  # noqa: MC0001
@@ -90,7 +90,7 @@ class TrackingDataSerializer(serializers.Serializer):
         return attrs
 
 
-class UnvalidatedTrackingDataSerializer(serializers.Serializer):
+class UnvalidatedDevicePayloadSerializer(serializers.Serializer):
     payload = serializers.JSONField()
 
     def validate(self, attrs):

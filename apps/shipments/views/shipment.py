@@ -37,9 +37,10 @@ from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
 from ..geojson import render_filtered_point_features
-from ..models import Shipment, TrackingData, PermissionLink
+from ..models import Shipment, TrackingData, PermissionLink, TelemetryData
 from ..permissions import IsOwnerOrShared, HasShipmentUpdatePermission
-from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer
+from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer,\
+    render_filtered_telemetry
 
 LOG = logging.getLogger('transmission')
 
@@ -183,6 +184,38 @@ class ShipmentViewSet(ConfigurableModelViewSet):
             return httpresponse
 
         raise NotFound("No tracking data found for Shipment.")
+
+    @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
+    @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
+    def telemetry(self, request, version, pk):
+        """
+        Retrieve tracking data from db
+        """
+        LOG.debug(f'Retrieve telemetry data for a shipment {pk}.')
+        log_metric('transmission.info', tags={'method': 'shipments.tracking', 'module': __name__})
+        shipment = Shipment.objects.get(pk=pk)
+
+        sensor_id = request.query_params.get('sensor_id', None)
+        hardware_id = request.query_params.get('hardware_id', None)
+
+        # TODO: implement device/shipment authorization for telemetry data
+
+        telemetry_data = TelemetryData.objects.filter(shipment__id=shipment.id)
+        if sensor_id:
+            telemetry_data = telemetry_data.filter(sensor_id=sensor_id)
+
+        if hardware_id:
+            telemetry_data = telemetry_data.filter(hardware_id=hardware_id)
+
+        if telemetry_data.exists():
+            response = Template('{"data": $geojson}').substitute(
+                geojson=render_filtered_telemetry(shipment, telemetry_data)
+            )
+            httpresponse = HttpResponse(content=response,
+                                        content_type='application/vnd.api+json')
+            return httpresponse
+
+        raise NotFound("No telemetry data found for Shipment.")
 
     def update(self, request, *args, **kwargs):
         """

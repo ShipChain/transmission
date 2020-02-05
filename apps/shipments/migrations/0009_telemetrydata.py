@@ -10,7 +10,7 @@ import shipchain_common.utils
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0007_add_location_contact_fields'),
+        ('shipments', '0008_shipment_notes'),
     ]
 
     operations = [
