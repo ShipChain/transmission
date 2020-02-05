@@ -19,7 +19,7 @@ from rest_framework import exceptions
 from rest_framework_json_api import serializers
 
 from ..models import TrackingData
-from ..geojson import MultiFeatureTrackingDataSerializer
+from ..geojson import SingleFeatureTrackingDataSerializer
 from ..serializers import ShipmentOverviewSerializer
 
 
@@ -58,11 +58,11 @@ class DevicesQueryParamsSerializer(serializers.Serializer):
 
 
 class ShipmentLocationSerializer(serializers.ModelSerializer):
-    location = serializers.SerializerMethodField()
+    point = serializers.SerializerMethodField()
 
     class Meta:
         model = TrackingData
-        fields = ('location', 'device', 'shipment', )
+        fields = ('point', 'device', 'shipment', )
 
     class JSONAPIMeta:
         included_resources = ('shipment', )
@@ -71,8 +71,8 @@ class ShipmentLocationSerializer(serializers.ModelSerializer):
         'shipment': ShipmentOverviewSerializer,
     }
 
-    def get_location(self, obj):
-        return json.loads(MultiFeatureTrackingDataSerializer().serialize(
+    def get_point(self, obj):
+        return json.loads(SingleFeatureTrackingDataSerializer().serialize(
             obj,
             geometry_field='point',
             fields=('uncertainty', 'source', 'time')
