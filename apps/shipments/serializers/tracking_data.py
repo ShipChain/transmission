@@ -103,22 +103,28 @@ class UnvalidatedDevicePayloadSerializer(serializers.Serializer):
         return attrs
 
 
-class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
-    """
-    Serializer for tracking data to be cached in db
-    """
+class BaseDataToDbSerializer(rest_serializers.ModelSerializer):
     shipment = ShipmentSerializer(read_only=True)
 
     def __init__(self, *args, **kwargs):
-        # Flatten 'position' fields to the parent tracking data payload
-        kwargs['data'].update(kwargs['data'].pop('position'))
-
         # Ensure that the timestamps is valid
         try:
             kwargs['data']['timestamp'] = parse(kwargs['data']['timestamp'])
         except Exception as exception:
             raise exceptions.ValidationError(detail=f"Unable to parse tracking data timestamp in to datetime object: \
                                                     {exception}")
+
+        super().__init__(*args, **kwargs)
+
+
+class TrackingDataToDbSerializer(BaseDataToDbSerializer):
+    """
+    Serializer for tracking data to be cached in db
+    """
+    shipment = ShipmentSerializer(read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        kwargs['data'].update(kwargs['data'].pop('position'))
 
         super().__init__(*args, **kwargs)
 
