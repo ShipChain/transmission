@@ -16,14 +16,13 @@ limitations under the License.
 
 import logging
 
-from django.contrib.gis.geos import Polygon
 from django.db.models import Max
 from django_filters.rest_framework import DjangoFilterBackend
 from influxdb_metrics.loader import log_metric
-from rest_framework import permissions, status
-from rest_framework import filters
+from rest_framework import filters, permissions, status
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
+from rest_framework_gis.filters import InBBoxFilter
 
 from apps.permissions import get_owner_id
 from ..serializers import DevicesQueryParamsSerializer, ShipmentLocationSerializer
@@ -47,10 +46,12 @@ class ShipmentOverviewListView(ListAPIView):
 
     search_fields = SHIPMENT_SEARCH_FIELDS
 
+    bbox_filter_field = 'point'
+
     queryset = TrackingData.objects.filter(shipment__device_id__isnull=False)
     shipment_queryset = Shipment.objects.filter(device_id__isnull=False)
 
-    def filter_tracking_data_queryset(self, owner_id, queryset, query_params):
+    def filter_tracking_data_queryset(self, owner_id, queryset):
 
         # Shipment owner filter
         shipment_queryset = self.shipment_queryset.filter(owner_id=owner_id)
@@ -65,16 +66,12 @@ class ShipmentOverviewListView(ListAPIView):
         tracking_data_queryset = queryset.filter(shipment__in=shipment_queryset,
                                                  created_at__in=latest_tracking)
 
-        bbox_tracking_data_queryset = self.bbox_filter(tracking_data_queryset, query_params.get('in_bbox'))
+        # The Bbox filter needs to happen here for performance reasons.
+        # tracking_data_queryset at this level contains significantly
+        # less points than if performed with the view filter_queryset
+        bbox_tracking_data_queryset = InBBoxFilter().filter_queryset(self.request, tracking_data_queryset, self)
 
         return bbox_tracking_data_queryset
-
-    @staticmethod
-    def bbox_filter(queryset, bbox_param):
-        if bbox_param:
-            polygon = Polygon.from_bbox(bbox_param)
-            return queryset.filter(point__contained=polygon)
-        return queryset
 
     def get(self, request, *args, **kwargs):
         owner_id = get_owner_id(request)
@@ -85,8 +82,7 @@ class ShipmentOverviewListView(ListAPIView):
         param_serializer = DevicesQueryParamsSerializer(data=request.query_params)
         param_serializer.is_valid(raise_exception=True)
 
-        queryset = self.filter_tracking_data_queryset(owner_id, self.queryset,
-                                                      param_serializer.validated_data)
+        queryset = self.filter_tracking_data_queryset(owner_id, self.queryset)
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request, view=self)

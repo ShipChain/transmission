@@ -6,8 +6,8 @@ from django.contrib.gis.serializers.geojson import Serializer as GeoSerializer
 from django.db.models.query import QuerySet
 from influxdb_metrics.loader import log_metric
 
-from .models import TrackingData
 from apps.utils import AliasSerializerMixin
+from .models import TrackingData
 
 LOG = logging.getLogger('transmission')
 

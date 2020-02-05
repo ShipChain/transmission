@@ -22,7 +22,7 @@ from shipchain_common.utils import random_id
 from apps.shipments.models import Shipment, Device, Location, TrackingData, TransitState
 from apps.shipments.serializers import ActionType
 
-BBOX = (-90.90, 30.90, -78.80, 36.80)
+BBOX = [-90.90, 30.90, -78.80, 36.80]
 
 NUM_DEVICES = 7     # should be >= 7
 NUM_TRACKING_DATA_BBOX = 3
@@ -222,3 +222,26 @@ def test_filter_shipment_device_location(api_client, shipment_tracking_data, jso
     response_data = response.json()
     json_asserter.HTTP_200(response, vnd=True, is_list=True)
     assert response_data['meta']['pagination']['count'] == 0
+
+
+@pytest.mark.django_db
+def test_bbox_param(api_client, shipment_tracking_data, json_asserter):
+    url = reverse('devices-status', kwargs={'version': 'v1'})
+
+    bbox_reversed = BBOX.copy()
+    bbox_reversed.reverse()
+    bad_in_bbox_url_1 = f'{url}?in_bbox={",".join([str(x) for x in bbox_reversed])}'
+
+    bad_in_bbox_url_2 = f'{url}?in_bbox={",".join([str(x) for x in BBOX[0:2]])}'
+
+    good_in_bbox_url = f'{url}?in_bbox={",".join([str(x) for x in BBOX])}'
+
+
+    response = api_client.get(bad_in_bbox_url_1)
+    json_asserter.HTTP_400(response)
+
+    response = api_client.get(bad_in_bbox_url_2)
+    json_asserter.HTTP_400(response)
+
+    response = api_client.get(good_in_bbox_url)
+    json_asserter.HTTP_200(response, vnd=True, is_list=True)
