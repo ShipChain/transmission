@@ -228,7 +228,7 @@ class ExceptionType(Enum):
 class Shipment(AnonymousHistoricalMixin, models.Model):
     id = models.CharField(primary_key=True, default=random_id, max_length=36)
     owner_id = models.CharField(null=False, max_length=36)
-    assignee_id = models.CharField(null=True, max_length=36)
+    assignee_id = models.UUIDField(null=True)
 
     storage_credentials_id = models.CharField(null=False, max_length=36)
     vault_id = models.CharField(null=True, max_length=36)

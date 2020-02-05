@@ -329,7 +329,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         exclude = ('owner_id', 'storage_credentials_id', 'background_data_hash_interval',
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id', 'manual_update_hash_interval',
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours',
-                   'geofences')
+                   'geofences', 'assignee_id', )
 
 
 class ShipmentOverviewSerializer(serializers.ModelSerializer):

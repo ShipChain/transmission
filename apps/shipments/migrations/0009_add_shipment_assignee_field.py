@@ -13,12 +13,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='historicalshipment',
             name='assignee_id',
-            field=models.CharField(max_length=36, null=True),
+            field=models.UUIDField(null=True),
         ),
         migrations.AddField(
             model_name='shipment',
             name='assignee_id',
-            field=models.CharField(max_length=36, null=True),
+            field=models.UUIDField(null=True),
         ),
         migrations.AlterField(
             model_name='historicalshipment',
