@@ -10,9 +10,9 @@ trackingDataId:
 
 location:
   properties:
-    location:
+    point:
       type: object
-      title: location
+      title: point
       description: Location's GeoJson point coordinates
       allOf:
         - $ref: '#/tracking/pointFeature'
