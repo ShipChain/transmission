@@ -50,6 +50,13 @@ updatedBy:
       title: updated_by
       description: UUID of the last user that updated the shipment
 
+assignee:
+  properties:
+    assignee_id:
+      <<: *uuid
+      title: assignee_id
+      description: UUID of the user assigned to pick up this shipment
+
 deviceId:
   properties:
     device_id:
