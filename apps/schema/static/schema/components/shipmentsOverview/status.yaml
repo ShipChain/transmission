@@ -1,8 +1,8 @@
 get:
-  summary: List device statuses
+  summary: List Shipments status
   description: >
-    List all current `Device` statuses/configurations for an organization
-  operationId: listDeviceStatuses
+    List last reported shipment's TrackingData objects  owned by user / organization
+  operationId: listShipmentsStatus
   parameters:
     - $ref: '../core/parameters.yaml#/page'
     - $ref: '../core/parameters.yaml#/page_size'
@@ -32,7 +32,7 @@ get:
     - $ref: '../shipments/parameters.yaml#/customer_fields__has_key'
     - $ref: '../shipments/parameters.yaml#/customer_fields__{key}'
   tags:
-    - Devices
+    - Shipments
   responses:
     '200':
       description: "Success"

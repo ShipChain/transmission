@@ -23,7 +23,7 @@ from ..geojson import SingleFeatureTrackingDataSerializer
 from ..serializers import ShipmentOverviewSerializer
 
 
-class DevicesQueryParamsSerializer(serializers.Serializer):
+class QueryParamsSerializer(serializers.Serializer):
     in_bbox = serializers.CharField(required=False, allow_null=True, default=None)
 
     def validate_in_bbox(self, in_bbox):

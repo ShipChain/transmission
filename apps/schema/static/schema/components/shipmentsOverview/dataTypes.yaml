@@ -1,0 +1,21 @@
+uuid: &uuid
+  $ref: '../core/dataTypes.yaml#/uuid'
+
+trackingDataId:
+  properties:
+    TrackingData:
+      <<: *uuid
+      title: TrackingData
+      description: Tracking data UUID
+
+location:
+  properties:
+    point:
+      type: object
+      title: point
+      description: Location's GeoJson point coordinates
+      allOf:
+        - $ref: '#/tracking/pointFeature'
+
+tracking:
+  $ref: ../tracking/schema.yaml

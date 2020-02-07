@@ -796,7 +796,7 @@
                 "response": []
               },
               {
-                "name": "Get List Organization devices",
+                "name": "List Shipments status",
                 "event": [
                     {
                         "listen": "test",
@@ -805,7 +805,7 @@
                             "exec": [
                                 "var data = pm.response.json();",
                                 "console.log(data);",
-                                "pm.test(\"Status code is 202\", function () {\n    pm.response.to.have.status(200);\n})\n"
+                                "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n})\n"
                             ],
                             "type": "text/javascript"
                         }
@@ -821,15 +821,15 @@
                   ],
                   "body": {},
                   "url": {
-                    "raw": "{{transmission_url}}/api/v1/devices/status/",
+                    "raw": "{{transmission_url}}/api/v1/shipments/overview/",
                     "host": [
                       "{{transmission_url}}"
                     ],
                     "path": [
                       "api",
                       "v1",
-                      "devices",
-                      "status",
+                      "shipments",
+                      "overview",
                       ""
                     ]
                   }

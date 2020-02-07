@@ -25,7 +25,7 @@ from rest_framework.response import Response
 from rest_framework_gis.filters import InBBoxFilter
 
 from apps.permissions import get_owner_id
-from ..serializers import DevicesQueryParamsSerializer, ShipmentLocationSerializer
+from ..serializers import QueryParamsSerializer, ShipmentLocationSerializer
 from ..models import Shipment, TrackingData
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
 
@@ -79,7 +79,7 @@ class ShipmentOverviewListView(ListAPIView):
         LOG.debug(f'Listing shipment with device for [{owner_id}]')
         log_metric('transmission.info', tags={'method': 'devices.list', 'module': __name__})
 
-        param_serializer = DevicesQueryParamsSerializer(data=request.query_params)
+        param_serializer = QueryParamsSerializer(data=request.query_params)
         param_serializer.is_valid(raise_exception=True)
 
         queryset = self.filter_tracking_data_queryset(owner_id, self.queryset)

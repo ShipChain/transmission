@@ -1,0 +1,21 @@
+dataTypes:
+  $ref: ../core/dataTypes.yaml
+
+
+inBbox:
+  name: in_bbox
+  in: query
+  description: Device's location viewport box coordinates, in the form `minLon, minLat, maxLon, maxLat`
+  required: false
+  schema:
+    type: string
+    example: -82.5,34.5,-83,36
+
+state:
+  name: state
+  in: query
+  description: Returns the devices for which the attached shipments are in the provided transit state.
+  schema:
+    type: string
+    enum: [IN_TRANSIT, AWAITING_DELIVERY, DELIVERED]
+    example: IN_TRANSIT

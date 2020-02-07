@@ -124,7 +124,7 @@ def shipment_tracking_data(shipments_with_device, tracking_data):
 
 @pytest.mark.django_db
 def test_owner_shipment_device_location(api_client, unauthenticated_api_client, shipment_tracking_data, json_asserter):
-    url = reverse('devices-status', kwargs={'version': 'v1'})
+    url = reverse('shipments-overview', kwargs={'version': 'v1'})
 
     # An unauthenticated request should with 403 status code
     response = unauthenticated_api_client.get(url)
@@ -141,7 +141,7 @@ def test_owner_shipment_device_location(api_client, unauthenticated_api_client, 
 
 @pytest.mark.django_db
 def test_filter_shipment_device_location(api_client, shipment_tracking_data, json_asserter):
-    url = reverse('devices-status', kwargs={'version': 'v1'})
+    url = reverse('shipments-overview', kwargs={'version': 'v1'})
 
     shipment_action_url = reverse('shipment-actions',
                                   kwargs={'version': 'v1', 'shipment_pk': shipment_tracking_data[0].id})
@@ -226,7 +226,7 @@ def test_filter_shipment_device_location(api_client, shipment_tracking_data, jso
 
 @pytest.mark.django_db
 def test_bbox_param(api_client, shipment_tracking_data, json_asserter):
-    url = reverse('devices-status', kwargs={'version': 'v1'})
+    url = reverse('shipments-overview', kwargs={'version': 'v1'})
 
     bbox_reversed = BBOX.copy()
     bbox_reversed.reverse()
