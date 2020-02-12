@@ -48,10 +48,10 @@ def test_shipment_creation_with_assignee(api_client, mocked_engine_rpc, mocked_i
 
     # With a valid assignee ID the request should succeed
     response = api_client.post(url, data=valid_uuid4_data, format='json')
-    response_data = response.json()['data']
-    assert response.status_code == status.HTTP_202_ACCEPTED
-    assert response_data['attributes']['assignee_id'] == VALID_UUID4
-
+    json_asserter.HTTP_202(response,
+                           entity_refs=json_asserter.EntityRef(
+                               resource='Shipment', attributes={'assignee_id': VALID_UUID4})
+                           )
 
 
 @pytest.mark.django_db
@@ -73,6 +73,7 @@ def test_shipment_update_with_assignee(api_client, mocked_engine_rpc, shipment, 
 
     # With a valid assignee ID the request should succeed
     response = api_client.patch(url, data=valid_uuid4_data, format='json')
-    response_data = response.json()['data']
-    assert response.status_code == status.HTTP_202_ACCEPTED
-    assert response_data['attributes']['assignee_id'] == VALID_UUID4
+    json_asserter.HTTP_202(response,
+                           entity_refs=json_asserter.EntityRef(
+                               resource='Shipment', attributes={'assignee_id': VALID_UUID4})
+                           )
