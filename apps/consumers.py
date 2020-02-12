@@ -89,7 +89,7 @@ class AppsConsumer(AsyncJsonAuthConsumer):
         telemetry_data = {
             'sensor_id': data.sensor_id,
             'hardware_id': data.hardware_id,
-            'timestamp': str(data.timestamp.iso_format()),
+            'timestamp': str(data.timestamp),
             'value': data.value,
         }
         return Template(
