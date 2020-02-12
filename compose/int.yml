@@ -135,7 +135,7 @@ services:
       - SERVICE=circleci
       - REDIS_URL=redis://:redis_pass@redis_db:6379/1
       - PSQL_NAME=profiles_psql
-      - DATABASE_URL=psql://profiles:profiles@profiles_psql:5432/profiles
+      - DATABASE_URL=postgis://profiles:profiles@profiles_psql:5432/profiles
       - INFLUXDB_DISABLED=True
       - ENGINE_RPC_URL=http://engine-rpc:2000
 
