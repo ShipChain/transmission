@@ -14,10 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import logging
-from datetime import datetime, timezone
-
-from django.core.serializers import serialize
-from influxdb_metrics.loader import log_metric
 
 from apps.shipments.models import TelemetryData
 from . import BaseDataToDbSerializer
@@ -35,24 +31,3 @@ class TelemetryDataToDbSerializer(BaseDataToDbSerializer):
 
     def create(self, validated_data):
         return TelemetryData.objects.create(**validated_data, **self.context)
-
-
-def render_filtered_telemetry(shipment, telemetry):
-    """
-    :param shipment: Shipment to be used for datetime filtering
-    :param tracking_data: queryset of TrackingData objects
-    :return: All tracking coordinates each in their own GeoJSON Point Feature
-    """
-    log_metric('transmission.info', tags={'method': 'render_filtered_telemetry', 'module': __name__})
-    LOG.debug(f'Rendering filtered telemetry for shipment: {shipment.id}.')
-
-    begin = (shipment.pickup_act or datetime.min).replace(tzinfo=timezone.utc)
-    end = (shipment.delivery_act or datetime.max).replace(tzinfo=timezone.utc)
-
-    telemetry = telemetry.filter(timestamp__range=(begin, end))
-
-    return serialize(
-        'json',
-        telemetry,
-        fields=["timestamp", "hardware_id", "sensor_id", "value"]
-    )

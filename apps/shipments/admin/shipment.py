@@ -61,6 +61,7 @@ NON_SCHEMA_FIELDS = [
     'permissionlink',
     'loadshipment',
     'trackingdata',
+    'telemetrydata',
     'document',
     'shipmentnote',
     'shipment_tags',

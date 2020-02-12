@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
+import json
 from string import Template
 
 from channels.db import database_sync_to_async
@@ -25,7 +25,7 @@ from apps.jobs.models import AsyncJob, JobState
 from apps.jobs.serializers import AsyncJobSerializer
 from apps.jobs.views import JobsViewSet
 from apps.shipments.geojson import render_point_feature
-from apps.shipments.models import Shipment, TrackingData
+from apps.shipments.models import Shipment, TrackingData, TelemetryData
 from apps.shipments.serializers import ShipmentTxSerializer
 from apps.shipments.views import ShipmentViewSet
 
@@ -78,6 +78,25 @@ class AppsConsumer(AsyncJsonAuthConsumer):
             event=EventTypes.trackingdata_update.name,
             shipment_id=data.first().shipment_id,
             geojson=render_point_feature(data),
+        )
+
+    async def telemetry_data_save(self, event):
+        telemetry_data_json = await database_sync_to_async(self.render_async_telemetry_data)(event['telemetry_data_id'])
+        await self.send(telemetry_data_json)
+
+    def render_async_telemetry_data(self, data_id):
+        data = TelemetryData.objects.filter(id=data_id).first()
+        telemetry_data = {
+            'sensor_id': data.sensor_id,
+            'hardware_id': data.hardware_id,
+            'timestamp': str(data.timestamp.iso_format()),
+            'value': data.value,
+        }
+        return Template(
+            '{"event": "$event", "data": {"shipment_id": "$shipment_id", "feature": $telemetry}}').substitute(
+            event=EventTypes.trackingdata_update.name,
+            shipment_id=data.shipment_id,
+            telemetry=json.dumps(telemetry_data),
         )
 
     async def receive_json(self, content, **kwargs):

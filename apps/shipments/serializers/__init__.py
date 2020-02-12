@@ -6,4 +6,4 @@ from .shipment_overview import *
 from .shipment_history import *
 from .tags import *
 from .tracking_data import *
-from .telemetry_data import render_filtered_telemetry, TelemetryDataToDbSerializer
+from .telemetry_data import TelemetryDataToDbSerializer

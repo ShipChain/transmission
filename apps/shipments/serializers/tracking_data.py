@@ -121,8 +121,6 @@ class TrackingDataToDbSerializer(BaseDataToDbSerializer):
     """
     Serializer for tracking data to be cached in db
     """
-    shipment = ShipmentSerializer(read_only=True)
-
     def __init__(self, *args, **kwargs):
         kwargs['data'].update(kwargs['data'].pop('position'))
 

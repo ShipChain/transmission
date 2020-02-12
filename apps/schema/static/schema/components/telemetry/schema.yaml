@@ -4,27 +4,16 @@ responseBody:
     data:
       type: array
       items:
-        type: object
-        title: Telemetry Data
-        allOf:
-          - $ref: '#/telemetry/pk'
-          - $ref: '#/telemetry/model'
-          - $ref: '#/fields'
+        $ref: '#/fields'
 
 fields:
   type: object
-  title: fields
-  properties:
-    fields:
-      title: fields
-      description: Telemetry data saved
-      type: object
-      allOf:
-        - $ref: '#/telemetry/sensorId'
-        - $ref: '#/telemetry/hardwareId'
-        - $ref: '#/telemetry/version'
-        - $ref: '#/telemetry/timestamp'
-        - $ref: '#/telemetry/value'
+  description: Telemetry data saved
+  allOf:
+    - $ref: '#/telemetry/sensorId'
+    - $ref: '#/telemetry/hardwareId'
+    - $ref: '#/telemetry/timestamp'
+    - $ref: '#/telemetry/value'
 
 telemetry:
   $ref: dataTypes.yaml

@@ -44,5 +44,5 @@ def telemetry_data_update(self, shipment_id, payload):
                                               payload)
     shipment.set_vault_hash(signature['hash'],
                             rate_limit=shipment.background_data_hash_interval,
-                            action_type=AsyncActionType.TRACKING,
+                            action_type=AsyncActionType.TELEMETRY,
                             use_updated_by=False)

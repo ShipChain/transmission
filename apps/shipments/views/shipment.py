@@ -17,7 +17,7 @@ limitations under the License.
 import json
 import logging
 from string import Template
-
+import datetime
 from django.conf import settings
 from django.db.models import Q
 from django.http import HttpResponse
@@ -26,9 +26,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from fancy_cache import cache_page
 from influxdb_metrics.loader import log_metric
 from rest_framework import permissions, status, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, renderer_classes
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
+from rest_framework.renderers import JSONRenderer
 from shipchain_common.mixins import SerializationType
 from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelViewSet
@@ -39,8 +40,8 @@ from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
 from ..geojson import render_filtered_point_features
 from ..models import Shipment, TrackingData, PermissionLink, TelemetryData
 from ..permissions import IsOwnerOrShared, HasShipmentUpdatePermission
-from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer,\
-    render_filtered_telemetry
+from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer
+
 
 LOG = logging.getLogger('transmission')
 
@@ -187,6 +188,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
 
     @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
     @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
+    @renderer_classes([JSONRenderer])
     def telemetry(self, request, version, pk):
         """
         Retrieve tracking data from db
@@ -207,13 +209,21 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         if hardware_id:
             telemetry_data = telemetry_data.filter(hardware_id=hardware_id)
 
+        begin = (shipment.pickup_act or datetime.datetime.min).replace(tzinfo=datetime.timezone.utc)
+        end = (shipment.delivery_act or datetime.datetime.max).replace(tzinfo=datetime.timezone.utc)
+
+        telemetry_data = telemetry_data.filter(timestamp__range=(begin, end))
+
         if telemetry_data.exists():
-            response = Template('{"data": $geojson}').substitute(
-                geojson=render_filtered_telemetry(shipment, telemetry_data)
-            )
-            httpresponse = HttpResponse(content=response,
-                                        content_type='application/vnd.api+json')
-            return httpresponse
+            response_data = []
+            for telemetry in telemetry_data:
+                response_data.append({
+                    'sensor_id': telemetry.sensor_id,
+                    'hardware_id': telemetry.hardware_id,
+                    'timestamp': telemetry.timestamp,
+                    'value': telemetry.value,
+                })
+            return Response(response_data)
 
         raise NotFound("No telemetry data found for Shipment.")
 

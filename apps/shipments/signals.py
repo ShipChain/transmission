@@ -17,7 +17,7 @@ from apps.jobs.models import JobState, MessageType, AsyncJob, AsyncActionType
 from apps.jobs.signals import job_update
 from .events import LoadEventHandler
 from .iot_client import DeviceAWSIoTClient
-from .models import Shipment, LoadShipment, Location, TrackingData, TransitState
+from .models import Shipment, LoadShipment, Location, TrackingData, TransitState, TelemetryData
 from .rpc import RPCClientFactory
 from .serializers import ShipmentVaultSerializer
 
@@ -130,6 +130,20 @@ def trackingdata_post_save(sender, **kwargs):
     # Notify websocket channel
     async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
                                             {"type": "tracking_data.save", "tracking_data_id": instance.id})
+
+
+@receiver(post_save, sender=TelemetryData, dispatch_uid='telemetrydata_post_save')
+def telemetrydata_post_save(sender, **kwargs):
+    instance = kwargs["instance"]
+    LOG.debug(f'New telemetry_data committed to db and will be pushed to the UI. Telemetry_data: {instance.id}.')
+
+    # Invalidate cached telemetry data view
+    tracking_get_url = reverse('shipment-telemetry', kwargs={'version': 'v1', 'pk': instance.shipment.id})
+    list(find_urls([tracking_get_url + "*"], purge=True))
+
+    # Notify websocket channel
+    async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
+                                            {"type": "telemetry_data.save", "telemetry_data_id": instance.id})
 
 
 @receiver(post_save_changed, sender=Shipment, fields=['device', 'state', 'geofences'],
