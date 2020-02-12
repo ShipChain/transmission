@@ -29,8 +29,9 @@ from rest_framework_json_api import serializers
 from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
-from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
+from ..models import Shipment, ShipmentTag, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     ExceptionType, TransitState
+from .tags import ShipmentTagSerializer
 
 
 class NullableFieldsMixin:
@@ -119,6 +120,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
     exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
+    shipment_tags = serializers.ResourceRelatedField(queryset=ShipmentTag.objects, many=True)
 
     included_serializers = {
         'ship_from_location': LocationSerializer,
@@ -126,7 +128,8 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
         'bill_to_location': LocationSerializer,
         'final_destination_location': LocationSerializer,
         'load_data': LoadShipmentSerializer,
-        'device': DeviceSerializer
+        'device': DeviceSerializer,
+        'shipment_tags': ShipmentTagSerializer,
     }
 
     class Meta:
@@ -136,7 +139,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
-                              'final_destination_location', 'load_data']
+                              'final_destination_location', 'load_data', 'shipment_tags', ]
 
     @property
     def user(self):

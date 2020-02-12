@@ -45,9 +45,10 @@ class ShipmentFilter(filters.filterset.FilterSet):
     exception = filters.CharFilter(method=filter_enum)
     assignee_id = filters.UUIDFilter(field_name='assignee_id')
 
-    tag_type = filters.CharFilter(field_name='shipmenttag__definition__type', lookup_expr='icontains', distinct=True)
-    tag_value = filters.CharFilter(field_name='shipmenttag__definition__value', lookup_expr='icontains', distinct=True)
-    tag_owner = filters.CharFilter(field_name='shipmenttag__user_id', distinct=True)
+    # Tag filter fields
+    tag_type = filters.CharFilter(field_name='shipment_tags__definition__type', lookup_expr='icontains', distinct=True)
+    tag_value = filters.CharFilter(field_name='shipment_tags__definition__value',
+                                   lookup_expr='icontains', distinct=True)
 
     class Meta:
         model = Shipment

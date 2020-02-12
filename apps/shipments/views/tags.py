@@ -15,8 +15,7 @@ limitations under the License.
 """
 
 from django.conf import settings
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, permissions
+from rest_framework import permissions
 from shipchain_common import mixins
 from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
@@ -27,9 +26,7 @@ from ..serializers import ShipmentTagSerializer, ShipmentTagCreateSerializer
 
 
 class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
-                          mixins.ConfigurableRetrieveModelMixin,
-                          mixins.ConfigurableListModelMixin,
-                          ConfigurableGenericViewSet):
+                         ConfigurableGenericViewSet):
 
     queryset = ShipmentTag.objects.all()
 
@@ -43,20 +40,12 @@ class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
         (permissions.AllowAny, ShipmentExists, )
     )
 
-    # filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
-    # ordering_fields = ('created_at', )
-    # search_fields = ('name', )
-
     configuration = {
         'create': ActionConfiguration(
             request_serializer=ShipmentTagCreateSerializer,
             response_serializer=ShipmentTagSerializer
         ),
-        'list': ActionConfiguration(response_serializer=ShipmentTagSerializer)
     }
-
-    def get_queryset(self):
-        return self.queryset.filter(shipment_id=self.kwargs['shipment_pk'])
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:

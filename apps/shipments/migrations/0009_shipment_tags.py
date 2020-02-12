@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                 ('definition', django.contrib.postgres.fields.hstore.HStoreField(validators=[django.contrib.postgres.validators.KeysValidator(keys=['type', 'value'], strict=True)])),
                 ('user_id',models.UUIDField(null=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('shipment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shipments.Shipment')),
+                ('shipment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shipments.Shipment', related_name='shipment_tags')),
             ],
             options={
                 'ordering': ('-created_at',),

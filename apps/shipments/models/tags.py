@@ -31,7 +31,7 @@ class ShipmentTag(models.Model):
 
     user_id = models.UUIDField(null=False)
 
-    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False)
+    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False, related_name='shipment_tags')
 
     created_at = models.DateTimeField(auto_now_add=True)
 

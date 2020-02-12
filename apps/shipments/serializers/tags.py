@@ -23,12 +23,14 @@ from ..models import ShipmentTag
 
 class ShipmentTagSerializer(serializers.ModelSerializer):
     definition = serializers.HStoreField(child=serializers.CharField(max_length=25))
+
     class Meta:
         model = ShipmentTag
-        exclude = ('user_id', )
+        fields = '__all__'
 
 
 class ShipmentTagCreateSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = ShipmentTag
         if settings.PROFILES_ENABLED:
