@@ -43,7 +43,6 @@ class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
     configuration = {
         'create': ActionConfiguration(
             request_serializer=ShipmentTagCreateSerializer,
-            response_serializer=ShipmentTagSerializer
         ),
     }
 

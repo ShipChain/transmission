@@ -29,7 +29,7 @@ from rest_framework_json_api import serializers
 from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
-from ..models import Shipment, ShipmentTag, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
+from ..models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     ExceptionType, TransitState
 from .tags import ShipmentTagSerializer
 
@@ -120,7 +120,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
     exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
-    shipment_tags = serializers.ResourceRelatedField(queryset=ShipmentTag.objects, many=True)
+    shipment_tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True)
 
     included_serializers = {
         'ship_from_location': LocationSerializer,

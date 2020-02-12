@@ -15,21 +15,23 @@ limitations under the License.
 """
 
 from django.conf import settings
-
 from rest_framework_json_api import serializers
 
 from ..models import ShipmentTag
 
 
 class ShipmentTagSerializer(serializers.ModelSerializer):
-    definition = serializers.HStoreField(child=serializers.CharField(max_length=25))
+    definition = serializers.HStoreField(
+        child=serializers.RegexField(regex=r'^\S*$', max_length=25,
+                                     error_messages={'invalid': 'Spaces not allowed within definition fields'})
+    )
 
     class Meta:
         model = ShipmentTag
         fields = '__all__'
 
 
-class ShipmentTagCreateSerializer(serializers.ModelSerializer):
+class ShipmentTagCreateSerializer(ShipmentTagSerializer):
 
     class Meta:
         model = ShipmentTag
