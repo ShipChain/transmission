@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=25)),
-                ('definition', django.contrib.postgres.fields.hstore.HStoreField(validators=[django.contrib.postgres.validators.KeysValidator(keys=['type', 'value'], strict=True)])),
+                ('definition', django.contrib.postgres.fields.hstore.HStoreField(validators=[django.contrib.postgres.validators.KeysValidator(keys=('type', 'value'), strict=True)])),
                 ('user_id',models.UUIDField(null=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('shipment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shipments.Shipment', related_name='shipment_tags')),

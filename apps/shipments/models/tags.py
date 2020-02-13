@@ -24,10 +24,12 @@ from .shipment import Shipment
 
 
 class ShipmentTag(models.Model):
+    definition_validator = KeysValidator(keys=('type', 'value'), strict=True)
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=25, null=False)
 
-    definition = HStoreField(validators=[KeysValidator(keys=['type', 'value'], strict=True)])
+    definition = HStoreField(validators=[definition_validator])
 
     user_id = models.UUIDField(null=False)
 

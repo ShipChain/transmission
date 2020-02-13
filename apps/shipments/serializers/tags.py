@@ -22,14 +22,24 @@ from ..models import ShipmentTag
 
 class ShipmentTagSerializer(serializers.ModelSerializer):
     definition = serializers.HStoreField(
-        child=serializers.RegexField(regex=r'^\S*$', max_length=25,
-                                     error_messages={'invalid': 'Spaces not allowed within definition fields'})
+        child=serializers.RegexField(
+            regex=r'^\S*$',
+            max_length=25,
+            error_messages={'invalid': 'Space(s) not allowed within definition fields'}
+        )
     )
 
     class Meta:
         model = ShipmentTag
         fields = '__all__'
 
+    def validate_definition(self, definition):
+        """
+        Apparently the model field validation is not run on HStoreField
+        """
+        ShipmentTag.definition_validator(definition)
+
+        return definition
 
 class ShipmentTagCreateSerializer(ShipmentTagSerializer):
 
