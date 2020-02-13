@@ -13,18 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+import json
 
 from rest_framework import exceptions
 from rest_framework_json_api import serializers
-from shipchain_common.utils import UpperEnumField
 
-from apps.shipments.models import TransitState
+from ..models import TrackingData
+from ..geojson import SingleFeatureTrackingDataSerializer
+from ..serializers import ShipmentOverviewSerializer
 
 
-class DevicesQueryParamsSerializer(serializers.Serializer):
-    active = serializers.BooleanField(required=False, allow_null=True, default=None)
+class QueryParamsSerializer(serializers.Serializer):
     in_bbox = serializers.CharField(required=False, allow_null=True, default=None)
-    state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False)
 
     def validate_in_bbox(self, in_bbox):
         long_range = (-180, 180)
@@ -53,10 +53,27 @@ class DevicesQueryParamsSerializer(serializers.Serializer):
                 raise exceptions.ValidationError('Invalid geo box, make sure that: '
                                                  'in_bbox[1] < in_bbox[3] and in_bbox[2] < in_bbox[4].')
 
-            return ','.join([c.strip() for c in in_bbox.split(',')])
+            return in_bbox_num
         return None
 
-    def validate_state(self, state):
-        if state.name == TransitState.AWAITING_PICKUP.name:
-            raise exceptions.ValidationError(f'[{state.name}] is an invalid state value!')
-        return state.name
+
+class ShipmentLocationSerializer(serializers.ModelSerializer):
+    point = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TrackingData
+        fields = ('point', 'device', 'shipment', )
+
+    class JSONAPIMeta:
+        included_resources = ('shipment', )
+
+    included_serializers = {
+        'shipment': ShipmentOverviewSerializer,
+    }
+
+    def get_point(self, obj):
+        return json.loads(SingleFeatureTrackingDataSerializer().serialize(
+            obj,
+            geometry_field='point',
+            fields=('uncertainty', 'source', 'time')
+        ))

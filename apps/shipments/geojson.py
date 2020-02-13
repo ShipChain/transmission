@@ -3,8 +3,11 @@ import logging
 
 from django.core.serializers.base import SerializationError
 from django.contrib.gis.serializers.geojson import Serializer as GeoSerializer
+from django.db.models.query import QuerySet
 from influxdb_metrics.loader import log_metric
+
 from apps.utils import AliasSerializerMixin
+from .models import TrackingData
 
 LOG = logging.getLogger('transmission')
 
@@ -22,8 +25,12 @@ class SingleFeatureTrackingDataSerializer(TrackingDataSerializer):
         pass
 
     def serialize(self, queryset, *args, **kwargs):  # pylint:disable=arguments-differ
-        if queryset.count() != 1:
+        if isinstance(queryset, QuerySet) and queryset.count() != 1:
             raise SerializationError
+
+        if isinstance(queryset, TrackingData):
+            queryset = [queryset]
+
         return super().serialize(queryset, *args, **kwargs)
 
 

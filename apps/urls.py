@@ -58,7 +58,9 @@ urlpatterns = [
     ),
     url(r'^admin/', admin.site.urls),
     url(f'{API_PREFIX[1:]}/documents/events', documents.S3Events.as_view(), name='document-events'),
-    url(f'{API_PREFIX[1:]}/devices/status/', shipments.ListDevicesStatus.as_view(), name='devices-status'),
+    url(f'{API_PREFIX[1:]}/devices/status/', shipments.ShipmentOverviewListView.as_view(), name='devices-status'),
+    url(f'{API_PREFIX[1:]}/shipments/overview/', shipments.ShipmentOverviewListView.as_view(),
+        name='shipments-overview'),
     url(f'{API_PREFIX[1:]}/shipments/(?P<shipment_pk>[0-9a-f-]+)/actions/',
         shipments.ShipmentActionsView.as_view(), name='shipment-actions'),
 ]

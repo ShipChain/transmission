@@ -16,11 +16,9 @@ limitations under the License.
 
 import logging
 
-from django.conf import settings
 from influxdb_metrics.loader import log_metric
 from shipchain_common.exceptions import AWSIoTError
 from shipchain_common.iot import AWSIoTClient
-from shipchain_common.utils import remove_dict_key_recursively
 
 LOG = logging.getLogger('transmission')
 
@@ -38,46 +36,3 @@ class DeviceAWSIoTClient(AWSIoTClient):
             raise AWSIoTError("Error in response from AWS IoT")
 
         return iot_shadow['data']
-
-    def build_devices_query_dict(self, owner_id, params, next_token):
-        params_dict = {
-            'ownerId': owner_id,
-            'maxResults': settings.IOT_DEVICES_PAGE_SIZE,
-            'nextToken': next_token
-        }
-        for param_key, param_value in params.items():
-            if param_value is not None:
-                params_dict[param_key] = param_value
-        return params_dict
-
-    def get_list_owner_devices(self, owner_id, params):
-        next_token = True
-        results = []
-
-        while next_token:
-            params_dict = self.build_devices_query_dict(
-                owner_id, params, next_token if next_token and not isinstance(next_token, bool) else '')
-
-            try:
-                list_devices = self._get('devices', query_params=params_dict)
-            except AWSIoTError as exc:
-                if 'NotFoundError' in exc.detail:
-                    # AwsIoT couldn't list any device for the authenticated User/Org
-                    break
-                else:
-                    raise exc
-
-            if 'error' in list_devices:
-                LOG.error(f'IoT was not able to fulfill the following request, endpoint: "devices",'
-                          f' params: {params_dict}. Error message: {list_devices["error"]}')
-                raise AWSIoTError(f'Error in AWS IoT response: {list_devices["error"]}')
-
-            new_devices = list_devices['data'].get('devices')
-            if new_devices:
-                for device in new_devices:
-                    device = remove_dict_key_recursively(device, ['certificate_id', 'certificateId'])
-                    results.append(device)
-
-            next_token = list_devices['data'].get('nextToken')
-
-        return results

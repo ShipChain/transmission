@@ -3,38 +3,3 @@ deviceResource:
     type:
       description: device
       example: device
-
-attributes:
-  allOf:
-    - $ref: '#/device/creationDate'
-    - $ref: '#/device/environment'
-    - $ref: '#/device/version'
-    - $ref: '#/device/owner'
-
-listResponse:
-  allOf:
-    - $ref: '#/jsonApi/linksAndMeta'
-    - properties:
-        data:
-          items:
-            $ref: '#/getResource'
-
-getResource:
-  allOf:
-    - $ref: '#/resource'
-    - properties:
-        attributes:
-          $ref: '#/attributes'
-
-resource:
-  allOf:
-    - $ref: '#/device/deviceId'
-    - $ref: '#/device/deviceType'
-    - $ref: '#/device/deviceGroups'
-    - $ref: '#/device/shadowData'
-
-device:
-  $ref: dataTypes.yaml
-
-jsonApi:
-  $ref: ../jsonApi/schema.yaml

@@ -330,3 +330,12 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id', 'manual_update_hash_interval',
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours',
                    'geofences')
+
+
+class ShipmentOverviewSerializer(serializers.ModelSerializer):
+    state = UpperEnumField(TransitState, ints_as_names=True)
+    exception = UpperEnumField(ExceptionType, ints_as_names=True)
+
+    class Meta:
+        model = Shipment
+        fields = ('state', 'exception', 'delayed', )

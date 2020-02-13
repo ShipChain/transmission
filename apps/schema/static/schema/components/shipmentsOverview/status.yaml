@@ -1,0 +1,48 @@
+get:
+  summary: List Shipments status
+  description: >
+    List last reported shipment's TrackingData objects  owned by user / organization
+  operationId: listShipmentsStatus
+  parameters:
+    - $ref: '../core/parameters.yaml#/page'
+    - $ref: '../core/parameters.yaml#/page_size'
+    - $ref: '../core/parameters.yaml#/search'
+    - $ref: '../core/parameters.yaml#/ordering'
+    - $ref: '../shipments/parameters.yaml#/state'
+    - $ref: 'parameters.yaml#/inBbox'
+    - $ref: '../shipments/parameters.yaml#/exception'
+    - $ref: '../shipments/parameters.yaml#/delayed'
+    - $ref: '../shipments/parameters.yaml#/has_ship_from_location'
+    - $ref: '../shipments/parameters.yaml#/has_ship_to_location'
+    - $ref: '../shipments/parameters.yaml#/has_final_destination_location'
+    - $ref: '../shipments/parameters.yaml#/ship_from_location__city'
+    - $ref: '../shipments/parameters.yaml#/ship_from_location__state'
+    - $ref: '../shipments/parameters.yaml#/ship_from_location__postal_code'
+    - $ref: '../shipments/parameters.yaml#/ship_from_location__country'
+    - $ref: '../shipments/parameters.yaml#/ship_to_location__city'
+    - $ref: '../shipments/parameters.yaml#/ship_to_location__state'
+    - $ref: '../shipments/parameters.yaml#/ship_to_location__postal_code'
+    - $ref: '../shipments/parameters.yaml#/ship_to_location__country'
+    - $ref: '../shipments/parameters.yaml#/final_destination_location__city'
+    - $ref: '../shipments/parameters.yaml#/final_destination_location__state'
+    - $ref: '../shipments/parameters.yaml#/final_destination_location__postal_code'
+    - $ref: '../shipments/parameters.yaml#/final_destination_location__country'
+    - $ref: '../shipments/parameters.yaml#/asset_physical_id'
+    - $ref: '../shipments/parameters.yaml#/asset_custodian_id'
+    - $ref: '../shipments/parameters.yaml#/customer_fields__has_key'
+    - $ref: '../shipments/parameters.yaml#/customer_fields__{key}'
+  tags:
+    - Shipments
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/listResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
