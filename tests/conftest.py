@@ -88,3 +88,12 @@ def shipment_with_device(shipment):
     shipment.save()
     shipment.refresh_from_db(fields=('device',))
     return shipment
+
+
+@pytest.fixture
+def second_shipment(mocked_engine_rpc, mocked_iot_api):
+    return Shipment.objects.create(vault_id=random_id(),
+                                   carrier_wallet_id=random_id(),
+                                   shipper_wallet_id=SHIPPER_ID,
+                                   storage_credentials_id=random_id(),
+                                   owner_id=USER_ID)

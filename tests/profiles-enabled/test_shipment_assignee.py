@@ -13,11 +13,12 @@
 #  limitations under the License.
 
 import pytest
+import uuid
 
-from rest_framework import status
 from rest_framework.reverse import reverse
 from shipchain_common.utils import random_id
 
+from apps.shipments.models import Shipment
 
 VALID_UUID4 = random_id()
 
@@ -55,7 +56,7 @@ def test_shipment_creation_with_assignee(api_client, mocked_engine_rpc, mocked_i
 
 
 @pytest.mark.django_db
-def test_shipment_update_with_assignee(api_client, mocked_engine_rpc, shipment, json_asserter):
+def test_shipment_update_with_assignee(api_client, mocked_engine_rpc, shipment,  json_asserter):
 
     url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment.id})
 
@@ -74,6 +75,28 @@ def test_shipment_update_with_assignee(api_client, mocked_engine_rpc, shipment, 
     # With a valid assignee ID the request should succeed
     response = api_client.patch(url, data=valid_uuid4_data, format='json')
     json_asserter.HTTP_202(response,
+                           entity_refs=json_asserter.EntityRef(
+                               resource='Shipment', attributes={'assignee_id': VALID_UUID4})
+                           )
+
+@pytest.mark.django_db
+def test_shipment_assignee_filter(api_client, mocked_engine_rpc, shipment, second_shipment, json_asserter):
+
+    url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment.id})
+
+    shipment.assignee_id = uuid.UUID(VALID_UUID4)
+    shipment.save()
+
+    invalid_uuid = VALID_UUID4 + '12'
+
+    # A  filter with an invalid UUID value should fail
+    response = api_client.get(f'{url}?assignee={invalid_uuid}')
+    json_asserter.HTTP_400(response, error='Enter a valid UUID.')
+
+    # There is only one shipment with the provided assignee ID
+    response = api_client.get(f'{url}?assignee={VALID_UUID4}')
+    json_asserter.HTTP_200(response,
+                           is_list=False,
                            entity_refs=json_asserter.EntityRef(
                                resource='Shipment', attributes={'assignee_id': VALID_UUID4})
                            )
