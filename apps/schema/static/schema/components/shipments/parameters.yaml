@@ -198,6 +198,14 @@ asset_custodian_id:
     type: string
     example: c150b0b3f37a4fea11741e0adf253efa8e4870511d283d9a0d034ec0179feaa2
 
+assignee_id:
+  name: assignee_id
+  in: query
+  description: UUID of the user assigned to pick up this shipment
+  schema:
+    type: string
+    example: 3341e506-a23b-4eb8-a645-70fee41a1798
+
 customer_fields__has_key:
   name: customer_fields__has_key
   in: query

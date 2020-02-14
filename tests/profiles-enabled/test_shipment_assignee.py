@@ -90,11 +90,11 @@ def test_shipment_assignee_filter(api_client, mocked_engine_rpc, shipment, secon
     invalid_uuid = VALID_UUID4 + '12'
 
     # A  filter with an invalid UUID value should fail
-    response = api_client.get(f'{url}?assignee={invalid_uuid}')
+    response = api_client.get(f'{url}?assignee_id={invalid_uuid}')
     json_asserter.HTTP_400(response, error='Enter a valid UUID.')
 
     # There is only one shipment with the provided assignee ID
-    response = api_client.get(f'{url}?assignee={VALID_UUID4}')
+    response = api_client.get(f'{url}?assignee_id={VALID_UUID4}')
     json_asserter.HTTP_200(response,
                            is_list=False,
                            entity_refs=json_asserter.EntityRef(

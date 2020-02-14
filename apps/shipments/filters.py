@@ -43,7 +43,7 @@ class ShipmentFilter(filters.filterset.FilterSet):
         field_name='final_destination_location', lookup_expr='isnull', exclude=True)
     state = CustomMultipleChoiceFilter(method=filter_state, choices=SHIPMENT_STATE_CHOICES)
     exception = filters.CharFilter(method=filter_enum)
-    assignee = filters.UUIDFilter(field_name='assignee_id')
+    assignee_id = filters.UUIDFilter(field_name='assignee_id')
 
     class Meta:
         model = Shipment
