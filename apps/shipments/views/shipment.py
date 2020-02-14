@@ -166,8 +166,8 @@ class ShipmentViewSet(ConfigurableModelViewSet):
     @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
     def tracking(self, request, version, pk):
         """
-                Retrieve tracking data from db
-                """
+        Retrieve tracking data from db
+        """
         LOG.debug(f'Retrieve tracking data for a shipment {pk}.')
         log_metric('transmission.info', tags={'method': 'shipments.tracking', 'module': __name__})
         shipment = Shipment.objects.get(pk=pk)
@@ -191,10 +191,10 @@ class ShipmentViewSet(ConfigurableModelViewSet):
     @renderer_classes([JSONRenderer])
     def telemetry(self, request, version, pk):
         """
-        Retrieve tracking data from db
+        Retrieve telemetry data from db
         """
         LOG.debug(f'Retrieve telemetry data for a shipment {pk}.')
-        log_metric('transmission.info', tags={'method': 'shipments.tracking', 'module': __name__})
+        log_metric('transmission.info', tags={'method': 'shipments.telemetry', 'module': __name__})
         shipment = Shipment.objects.get(pk=pk)
 
         sensor_id = request.query_params.get('sensor_id', None)
@@ -220,7 +220,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
                 response_data.append({
                     'sensor_id': telemetry.sensor_id,
                     'hardware_id': telemetry.hardware_id,
-                    'timestamp': telemetry.timestamp,
+                    'timestamp': telemetry.timestamp.isoformat(),
                     'value': telemetry.value,
                 })
             return Response(response_data)

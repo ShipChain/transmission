@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 import freezegun
 import pytest
@@ -14,13 +14,13 @@ def unsigned_telemetry(current_datetime):
         'sensor_id': 'sensor_id',
         'version': '1.2.3',
         'value': 3.14,
-        'timestamp': str(current_datetime.isoformat()) + 'Z'
+        'timestamp': current_datetime.isoformat()
     }
 
 
 @pytest.fixture
 def current_datetime():
-    return datetime.now()
+    return datetime.now(timezone.utc)
 
 
 @pytest.fixture(autouse=True)

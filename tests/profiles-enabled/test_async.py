@@ -233,8 +233,7 @@ async def test_telemetrydata_notification(communicator):
     )
 
     response = await communicator.receive_json_from()
-
-    assert response['event'] == EventTypes.trackingdata_update.name
+    assert response['event'] == EventTypes.telemetrydata_update.name
     assert response['data']['shipment_id'] == shipment.id
     assert response['data']['feature']['value'] == telemetry_data.value
 

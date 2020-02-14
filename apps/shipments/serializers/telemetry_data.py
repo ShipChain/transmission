@@ -23,7 +23,7 @@ LOG = logging.getLogger('transmission')
 
 class TelemetryDataToDbSerializer(BaseDataToDbSerializer):
     """
-    Serializer for tracking data to be cached in db
+    Serializer for telemetry data to be cached in db
     """
     class Meta:
         model = TelemetryData

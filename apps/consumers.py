@@ -35,6 +35,7 @@ class EventTypes(Enum):
     asyncjob_update = 1
     trackingdata_update = 2
     shipment_update = 3
+    telemetrydata_update = 4
 
 
 class AppsConsumer(AsyncJsonAuthConsumer):
@@ -89,12 +90,12 @@ class AppsConsumer(AsyncJsonAuthConsumer):
         telemetry_data = {
             'sensor_id': data.sensor_id,
             'hardware_id': data.hardware_id,
-            'timestamp': str(data.timestamp),
+            'timestamp': data.timestamp.isoformat(),
             'value': data.value,
         }
         return Template(
             '{"event": "$event", "data": {"shipment_id": "$shipment_id", "feature": $telemetry}}').substitute(
-            event=EventTypes.trackingdata_update.name,
+            event=EventTypes.telemetrydata_update.name,
             shipment_id=data.shipment_id,
             telemetry=json.dumps(telemetry_data),
         )

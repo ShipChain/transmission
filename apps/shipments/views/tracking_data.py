@@ -82,17 +82,17 @@ class DeviceViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['post'], permission_classes=(permissions.AllowAny,))
     def telemetry(self, request, version, pk):
         LOG.debug(f'Adding telemetry data by device with id: {pk}.')
-        log_metric('transmission.info', tags={'method': 'devices.tracking', 'module': __name__})
+        log_metric('transmission.info', tags={'method': 'devices.telemetry', 'module': __name__})
 
-        shipment, tracking_data = self._validate_payload(request, pk)
+        shipment, telemetry_data = self._validate_payload(request, pk)
 
-        for data in tracking_data:
+        for data in telemetry_data:
             payload = data['payload']
 
             # Add telemetry data to shipment via Engine RPC
             telemetry_data_update.delay(shipment.id, payload)
 
-            # Cache tracking data to db
+            # Cache telemetry data to db
             telemetry_model_serializer = TelemetryDataToDbSerializer(data=payload, context={'shipment': shipment,
                                                                                             'device': shipment.device})
             telemetry_model_serializer.is_valid(raise_exception=True)

@@ -105,7 +105,7 @@ class ShipmentRPCClient(RPCClient):
         with cache.lock(vault_id, timeout=settings.VAULT_TIMEOUT):
             LOG.debug(f'Adding telemetry data with storage_credentials_id {storage_credentials_id},'
                       f'wallet_id {wallet_id}, and vault_id {vault_id}.')
-            log_metric('transmission.info', tags={'method': 'shipment_rpcclient.add_tracking_data',
+            log_metric('transmission.info', tags={'method': 'shipment_rpcclient.add_telemetry_data',
                                                   'module': __name__})
 
             result = self.call('vault.add_telemetry', {
@@ -144,6 +144,28 @@ class ShipmentRPCClient(RPCClient):
         log_metric('transmission.error', tags={'method': 'shipment_rpcclient.get_tracking_data',
                                                'module': __name__, 'code': 'RPCError'})
         LOG.error('Invalid retrieval of tracking data.')
+        raise RPCError("Invalid response from Engine")
+
+    def get_telemetry_data(self, storage_credentials_id, wallet_id, vault_id):
+        LOG.debug(f'Retrieving of telemetry data with storage_credentials_id {storage_credentials_id},'
+                  f'wallet_id {wallet_id}, and vault_id {vault_id}.')
+        log_metric('transmission.info', tags={'method': 'shipment_rpcclient.get_telemetry_data',
+                                              'module': __name__})
+
+        result = self.call('vault.get_telemetry', {
+            "storageCredentials": storage_credentials_id,
+            "vaultWallet": wallet_id,
+            "vault": vault_id
+        })
+
+        if 'success' in result and result['success']:
+            if 'contents' in result:
+                LOG.debug('Successful retrieval of telemetry data.')
+                return result['contents']
+
+        log_metric('transmission.error', tags={'method': 'shipment_rpcclient.get_telemetry_data',
+                                               'module': __name__, 'code': 'RPCError'})
+        LOG.error('Invalid retrieval of telemetry data.')
         raise RPCError("Invalid response from Engine")
 
     @abstractmethod
