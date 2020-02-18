@@ -104,6 +104,12 @@ def mocked_is_shipper(shipper_user, http_pretty, shipment):
                              body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
     return shipper_user
 
+@pytest.fixture
+def mocked_storage_credential(http_pretty, shipment):
+    http_pretty.register_uri(http_pretty.GET,
+                             f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/"
+                             f"{shipment.storage_credentials_id}/?is_active", body=json.dumps({'good': 'good'}),
+                             status=status.HTTP_200_OK)
 
 @pytest.fixture
 def mocked_not_shipper(http_pretty, shipment):
