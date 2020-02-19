@@ -122,6 +122,8 @@ class TrackingDataToDbSerializer(BaseDataToDbSerializer):
     Serializer for tracking data to be cached in db
     """
     def __init__(self, *args, **kwargs):
+        if 'position' not in kwargs['data']:
+            raise exceptions.ValidationError(detail='Unable to find `position` field in body.')
         kwargs['data'].update(kwargs['data'].pop('position'))
 
         super().__init__(*args, **kwargs)

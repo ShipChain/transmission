@@ -12,7 +12,7 @@ def unsigned_telemetry(current_datetime):
     return {
         'hardware_id': 'hardware_id',
         'sensor_id': 'sensor_id',
-        'version': '1.2.3',
+        'version': '1.2.4',
         'value': 3.14,
         'timestamp': current_datetime.isoformat()
     }

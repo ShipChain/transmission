@@ -585,6 +585,62 @@
                 ]
               },
               {
+                "name":  "Devices",
+                "event": [
+                    {
+                        "listen": "test",
+                        "script": {
+                            "id": "29f9eb32-d157-4bc2-aa7e-6e943419274e",
+                            "exec": [
+                                "pm.test(\"Status code is 204\", function () {\n    pm.response.to.have.status(204);\n})\n"
+                            ],
+                            "type": "text/javascript"
+                        }
+                    }
+                ],
+                "description": null,
+                "item": [
+                  {
+                    "name": "Add Telemetry Data",
+                    "request": {
+                      "method": "POST",
+                      "header": [
+                        {
+                          "key": "Authorization",
+                          "value": "JWT {{token}}",
+                          "description": "",
+                          "enabled": true
+                        },
+                        {
+                            "key": "Content-Type",
+                            "value": "application/json"
+                        }
+                      ],
+                      "body":
+                      {
+                        "mode": "raw",
+					"raw": "[\n{\n\"payload\":{\n\"value\": 83.03,\n\"hardware_id\": \"nsoft\",\n\"version\": \"1.2.4\",\n\"sensor_id\": \"6857b929-4cbe-4b34-93f1-0d47b1e242c9\",\n\"device_id\": \"9b310960-7c4b-4dc0-a872-ad0878735b78\",\n\"timestamp\": \"2018-09-18T15:02:30.563847+00:00\"\n}\n},\n{\n\"payload\": {\n\"value\": 83.03,\n\"hardware_id\": \"nsoft\",\n\"version\": \"1.2.4\",\n\"sensor_id\": \"6857b929-4cbe-4b34-93f1-0d47b1e242c9\",\n\"device_id\": \"9b310960-7c4b-4dc0-a872-ad0878735b78\",\n\"timestamp\": \"2018-09-18T15:02:30.563847+00:00\"\n}\n}\n]"
+                      },
+                      "url": {
+                        "raw": "{{transmission_url}}/api/v1/devices/{{device_id}}/telemetry/",
+                        "host": [
+                          "{{transmission_url}}"
+                        ],
+                        "path": [
+                          "api",
+                          "v1",
+                          "devices",
+                          "{{device_id}}",
+                          "telemetry",
+                          ""
+                        ]
+                      }
+                    },
+                    "response": []
+                  }
+                ]
+              },
+              {
                 "name": "Get Tracking Data",
                 "event": [
                     {
@@ -610,6 +666,47 @@
                   "body": {},
                   "url": {
                     "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/tracking/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "shipments",
+                      "{{shipment_id}}",
+                      "tracking",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              },
+              {
+                "name": "Get Telemetry Data",
+                "event": [
+                    {
+                        "listen": "test",
+                        "script": {
+                            "id": "01eb7d7f-8b54-4d20-808c-4f1316f37e95",
+                            "exec": [
+                                "var data = pm.response.json();",
+                                "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n})\n"
+                            ],
+                            "type": "text/javascript"
+                        }
+                    }
+                ],
+                "request": {
+                  "method": "GET",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {},
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{{shipment_id}}/telemetry/",
                     "host": [
                       "{{transmission_url}}"
                     ],
@@ -850,7 +947,15 @@
                             "exec": [
                                 "var data = pm.response.json();",
                                 "pm.environment.set(\"job_id\", data.data[0].id);",
-                                "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n})\n"
+                                "pm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n})\n",
+                                "console.log(data.data.length)",
+                                "for (index = 0; index < data.data.length; index++) {",
+                                "    job = data.data[index];",
+                                "    var testTitle = \"Job \" + job.id + \" expected to be complete\"",
+                                "    pm.test(testTitle, function () { ",
+                                "        pm.expect(job.attributes.state).to.eql(\"COMPLETE\");",
+                                "    });",
+                                "}"
                             ],
                             "type": "text/javascript"
                         }
