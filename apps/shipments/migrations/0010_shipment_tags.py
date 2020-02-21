@@ -9,20 +9,10 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0008_shipment_notes'),
+        ('shipments', '0009_add_shipment_assignee_field'),
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='historicalshipment',
-            name='version',
-            field=models.CharField(default='1.2.3', max_length=255),
-        ),
-        migrations.AlterField(
-            model_name='shipment',
-            name='version',
-            field=models.CharField(default='1.2.3', max_length=255),
-        ),
         migrations.CreateModel(
             name='ShipmentTag',
             fields=[
