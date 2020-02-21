@@ -15,21 +15,19 @@ limitations under the License.
 """
 
 import uuid
-
-from django.contrib.postgres.fields import HStoreField
-from django.contrib.postgres.validators import KeysValidator
+from django.core.validators import RegexValidator
 from django.db import models
 
 from .shipment import Shipment
 
 
 class ShipmentTag(models.Model):
-    definition_validator = KeysValidator(keys=('type', 'value'), strict=True)
+    tag_field_regex_validator = RegexValidator(regex=r'^\S*$', message='Space(s) not allowed in this field')
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=25, null=False)
 
-    definition = HStoreField(validators=[definition_validator])
+    tag_type = models.CharField(max_length=50, null=False, validators=[tag_field_regex_validator])
+    tag_value = models.CharField(max_length=50, null=False, validators=[tag_field_regex_validator])
 
     user_id = models.UUIDField(null=False)
 
