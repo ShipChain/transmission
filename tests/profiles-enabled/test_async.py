@@ -229,13 +229,17 @@ async def test_telemetrydata_notification(communicator):
         sensor_id='sensor_id',
         value=867.5309,
         version='1.1.0',
-        timestamp=datetime.datetime.now(tz=None)
+        timestamp=datetime.datetime.now(datetime.timezone.utc)
     )
 
     response = await communicator.receive_json_from()
     assert response['event'] == EventTypes.telemetrydata_update.name
-    assert response['data']['shipment_id'] == shipment.id
-    assert response['data']['feature']['value'] == telemetry_data.value
+    assert response['data'] == {
+        'sensor_id': telemetry_data.sensor_id,
+        'timestamp': telemetry_data.timestamp.isoformat().replace('+00:00', 'Z'),
+        'hardware_id': telemetry_data.hardware_id,
+        'value': telemetry_data.value
+    }
 
     t_data = await sync_to_async(TelemetryData.objects.get)(id=telemetry_id)
     await sync_to_async(t_data.delete)()

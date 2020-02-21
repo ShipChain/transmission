@@ -14,7 +14,7 @@ def unsigned_telemetry(current_datetime):
         'sensor_id': 'sensor_id',
         'version': '1.2.4',
         'value': 3.14,
-        'timestamp': current_datetime.isoformat()
+        'timestamp': current_datetime.isoformat().replace('+00:00', 'Z')
     }
 
 

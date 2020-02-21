@@ -49,14 +49,14 @@ class DeviceViewSet(viewsets.ViewSet):
             LOG.debug(f'Adding data for device: {pk} for shipment: {shipment.id}')
             serializer = serializer(data=data, context={'shipment': shipment})
             serializer.is_valid(raise_exception=True)
-            tracking_data = [serializer.validated_data]
+            payload = [serializer.validated_data]
         else:
             LOG.debug(f'Adding bulk data for device: {pk} shipment: {shipment.id}')
             serializer = serializer(data=data, context={'shipment': shipment}, many=True)
             serializer.is_valid(raise_exception=True)
-            tracking_data = serializer.validated_data
+            payload = serializer.validated_data
 
-        return shipment, tracking_data
+        return shipment, payload
 
     @action(detail=True, methods=['post'], permission_classes=(permissions.AllowAny,))
     def tracking(self, request, version, pk):

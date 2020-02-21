@@ -138,8 +138,9 @@ def telemetrydata_post_save(sender, **kwargs):
     LOG.debug(f'New telemetry_data committed to db and will be pushed to the UI. Telemetry_data: {instance.id}.')
 
     # Invalidate cached telemetry data view
-    tracking_get_url = reverse('shipment-telemetry', kwargs={'version': 'v1', 'pk': instance.shipment.id})
-    list(find_urls([tracking_get_url + "*"], purge=True))
+    telemetry_get_url = reverse('shipment-telemetry-list',
+                                kwargs={'version': 'v1', 'shipment_pk': instance.shipment.id})
+    list(find_urls([telemetry_get_url + "*"], purge=True))
 
     # Notify websocket channel
     async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,

@@ -15,6 +15,8 @@ limitations under the License.
 """
 import logging
 
+from rest_framework import serializers
+
 from apps.shipments.models import TelemetryData
 from . import BaseDataToDbSerializer
 
@@ -31,3 +33,12 @@ class TelemetryDataToDbSerializer(BaseDataToDbSerializer):
 
     def create(self, validated_data):
         return TelemetryData.objects.create(**validated_data, **self.context)
+
+
+class TelemetryResponseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for telemetry data consumer
+    """
+    class Meta:
+        model = TelemetryData
+        fields = ('sensor_id', 'timestamp', 'hardware_id', 'value')

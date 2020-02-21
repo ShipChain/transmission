@@ -13,11 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 import json
 import logging
 from string import Template
-import datetime
+
 from django.conf import settings
 from django.db.models import Q
 from django.http import HttpResponse
@@ -26,10 +25,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from fancy_cache import cache_page
 from influxdb_metrics.loader import log_metric
 from rest_framework import permissions, status, filters
-from rest_framework.decorators import action, renderer_classes
+from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
-from rest_framework.renderers import JSONRenderer
 from shipchain_common.mixins import SerializationType
 from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelViewSet
@@ -38,10 +36,10 @@ from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
 from ..geojson import render_filtered_point_features
-from ..models import Shipment, TrackingData, PermissionLink, TelemetryData
+from ..models import Shipment, TrackingData, PermissionLink
 from ..permissions import IsOwnerOrShared, HasShipmentUpdatePermission
-from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer
-
+from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, \
+    ShipmentTxSerializer
 
 LOG = logging.getLogger('transmission')
 
@@ -185,47 +183,6 @@ class ShipmentViewSet(ConfigurableModelViewSet):
             return httpresponse
 
         raise NotFound("No tracking data found for Shipment.")
-
-    @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
-    @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
-    @renderer_classes([JSONRenderer])
-    def telemetry(self, request, version, pk):
-        """
-        Retrieve telemetry data from db
-        """
-        LOG.debug(f'Retrieve telemetry data for a shipment {pk}.')
-        log_metric('transmission.info', tags={'method': 'shipments.telemetry', 'module': __name__})
-        shipment = Shipment.objects.get(pk=pk)
-
-        sensor_id = request.query_params.get('sensor_id', None)
-        hardware_id = request.query_params.get('hardware_id', None)
-
-        # TODO: implement device/shipment authorization for telemetry data
-
-        telemetry_data = TelemetryData.objects.filter(shipment__id=shipment.id)
-        if sensor_id:
-            telemetry_data = telemetry_data.filter(sensor_id=sensor_id)
-
-        if hardware_id:
-            telemetry_data = telemetry_data.filter(hardware_id=hardware_id)
-
-        begin = (shipment.pickup_act or datetime.datetime.min).replace(tzinfo=datetime.timezone.utc)
-        end = (shipment.delivery_act or datetime.datetime.max).replace(tzinfo=datetime.timezone.utc)
-
-        telemetry_data = telemetry_data.filter(timestamp__range=(begin, end))
-
-        if telemetry_data.exists():
-            response_data = []
-            for telemetry in telemetry_data:
-                response_data.append({
-                    'sensor_id': telemetry.sensor_id,
-                    'hardware_id': telemetry.hardware_id,
-                    'timestamp': telemetry.timestamp.isoformat(),
-                    'value': telemetry.value,
-                })
-            return Response(response_data)
-
-        raise NotFound("No telemetry data found for Shipment.")
 
     def update(self, request, *args, **kwargs):
         """

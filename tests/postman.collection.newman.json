@@ -245,6 +245,7 @@
                             "id": "d211e775-ae8b-4731-ba57-c87c0d8126e5",
                             "exec": [
                                 "var data = pm.response.json();",
+                                "console.log(data)",
                                 "pm.environment.set(\"shipment_id\", data.data.id);",
                                 "pm.test(\"Status code is 202\", function () {\n    pm.response.to.have.status(202);\n})\n"
                             ],

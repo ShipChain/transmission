@@ -13,12 +13,12 @@ get:
     '200':
       description: "Success"
       content:
-        application/vnd.api+json:
+        application/json:
           schema:
             $ref: '../telemetry/schema.yaml#/responseBody'
     '401':
       description: "Unauthorized"
       content:
-        application/vnd.api+json:
+        application/json:
           schema:
-            $ref: '../errors/schema.yaml#/401'
+            $ref: '../errors/schema.yaml#/json401'

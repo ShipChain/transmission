@@ -15,18 +15,14 @@
 import json
 from datetime import datetime, timezone, timedelta
 
-import re
-
 import pytest
-
 from django.conf import settings as test_settings
 from moto import mock_iot
-
 from rest_framework import status
 from rest_framework.request import ForcedAuthentication
 from rest_framework.test import APIClient
-from shipchain_common.utils import random_id
 from shipchain_common.test_utils import get_jwt
+from shipchain_common.utils import random_id
 
 from apps.authentication import passive_credentials_auth
 from apps.shipments.models import Shipment, Device, PermissionLink

@@ -1,10 +1,7 @@
 responseBody:
-  type: object
-  properties:
-    data:
-      type: array
-      items:
-        $ref: '#/fields'
+  type: array
+  items:
+    $ref: '#/fields'
 
 fields:
   type: object

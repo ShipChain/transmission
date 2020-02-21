@@ -67,62 +67,63 @@ class TestPostTelemetryData(JsonAsserterMixin):
 class TestRetrieveTelemetryData(JsonAsserterMixin):
     @pytest.fixture(autouse=True)
     def set_up(self, shipment_alice_with_device, create_signed_telemetry_post, shipment_alice, unsigned_telemetry):
-        self.telemetry_url = reverse('shipment-telemetry', kwargs={'version': 'v1', 'pk': shipment_alice_with_device.id})
-        self.empty_telemetry_url = reverse('shipment-telemetry', kwargs={'version': 'v1', 'pk': shipment_alice.id})
-        self.random_telemetry_url = reverse('shipment-telemetry', kwargs={'version': 'v1', 'pk': random_id()})
+        self.telemetry_url = reverse('shipment-telemetry-list', kwargs={'version': 'v1', 'shipment_pk': shipment_alice_with_device.id})
+        self.empty_telemetry_url = reverse('shipment-telemetry-list', kwargs={'version': 'v1', 'shipment_pk': shipment_alice.id})
+        self.random_telemetry_url = reverse('shipment-telemetry-list', kwargs={'version': 'v1', 'shipment_pk': random_id()})
         self.shipment_alice_with_device = shipment_alice_with_device
         add_telemetry_data_to_shipment([unsigned_telemetry], self.shipment_alice_with_device)
         self.unsigned_telemetry = unsigned_telemetry
 
     def test_unauthenticated_user_fails(self, no_user_api_client, mock_non_wallet_owner_calls):
         response = no_user_api_client.get(self.telemetry_url)
-        self.json_asserter.HTTP_403(response)
-        # Todo: HTTPretty Call asserter
+        # self.json_asserter.HTTP_403(response, vnd=False)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json()['detail'] == 'You do not have permission to perform this action.'
 
     def test_random_shipment_url_fails(self, client_alice):
         response = client_alice.get(self.random_telemetry_url)
-        self.json_asserter.HTTP_403(response)
+        # self.json_asserter.HTTP_403(response, vnd=False)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json()['detail'] == 'You do not have permission to perform this action.'
 
     def test_non_shipment_owner_retrieves(self, client_bob, mock_successful_wallet_owner_calls):
         response = client_bob.get(self.telemetry_url)
-        self.json_asserter.HTTP_200(response, is_list=True)
         self.unsigned_telemetry.pop('version')
-        assert self.unsigned_telemetry in response.json()['data']
-        assert len(response.json()['data']) == 1
-        # Todo: HTTPretty Call asserter
+        self.json_asserter.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
+        assert len(response.json()) == 1
 
     def test_shipment_owner_retrieves(self, client_alice):
         response = client_alice.get(self.telemetry_url)
-        self.json_asserter.HTTP_200(response, is_list=True)
+        self.unsigned_telemetry.pop('version')
+        self.json_asserter.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
 
     def test_filter_sensor(self, client_alice, unsigned_telemetry_different_sensor):
         add_telemetry_data_to_shipment([unsigned_telemetry_different_sensor],
                                        self.shipment_alice_with_device)
         response = client_alice.get(f'{self.telemetry_url}?sensor_id={self.unsigned_telemetry["sensor_id"]}')
-        self.json_asserter.HTTP_200(response, is_list=True)
         self.unsigned_telemetry.pop('version')
-        assert self.unsigned_telemetry in response.json()['data']
-        assert len(response.json()['data']) == 1
+        self.json_asserter.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
+        assert len(response.json()) == 1
         assert self.unsigned_telemetry['sensor_id'] != unsigned_telemetry_different_sensor['sensor_id']
 
     def test_filter_hardware_id(self, client_alice, unsigned_telemetry_different_hardware):
         add_telemetry_data_to_shipment([unsigned_telemetry_different_hardware],
                                        self.shipment_alice_with_device)
         response = client_alice.get(f'{self.telemetry_url}?hardware_id={self.unsigned_telemetry["hardware_id"]}')
-        self.json_asserter.HTTP_200(response, is_list=True)
         self.unsigned_telemetry.pop('version')
-        assert self.unsigned_telemetry in response.json()['data']
+        self.json_asserter.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
         assert self.unsigned_telemetry['hardware_id'] != unsigned_telemetry_different_hardware['hardware_id']
-        assert len(response.json()['data']) == 1
+        assert len(response.json()) == 1
 
     def test_permission_link_succeeds(self, no_user_api_client, permission_link_device_shipment):
         response = no_user_api_client.get(f'{self.telemetry_url}?permission_link={permission_link_device_shipment.id}')
-        self.json_asserter.HTTP_200(response, is_list=True)
         self.unsigned_telemetry.pop('version')
-        assert self.unsigned_telemetry in response.json()['data']
-        assert len(response.json()['data']) == 1
+        self.json_asserter.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
+        assert self.unsigned_telemetry in response.json()
+        assert len(response.json()) == 1
 
     def test_unique_per_shipment(self, client_alice):
         response = client_alice.get(self.empty_telemetry_url)
-        self.json_asserter.HTTP_404(response, error="No telemetry data found for Shipment.")
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()) == 0
         assert TelemetryData.objects.all().count() == 1

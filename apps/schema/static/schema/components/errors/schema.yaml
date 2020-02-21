@@ -44,5 +44,11 @@ strings:
             status:
               example: "500"
 
+json401:
+  type: object
+  properties:
+    detail:
+      example: *response_401
+
 jsonApi:
   $ref: ../jsonApi/schema.yaml

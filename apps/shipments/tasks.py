@@ -33,7 +33,7 @@ def tracking_data_update(self, shipment_id, payload):
 @shared_task(bind=True, autoretry_for=(RPCError,),
              retry_backoff=3, retry_backoff_max=60, max_retries=10)
 def telemetry_data_update(self, shipment_id, payload):
-    log_metric('transmission.info', tags={'method': 'shipments_tasks.tracking_data_update',
+    log_metric('transmission.info', tags={'method': 'shipments_tasks.telemetry_data_update',
                                           'module': __name__})
     shipment = Shipment.objects.get(id=shipment_id)
 
