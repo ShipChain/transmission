@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from django.conf import settings
+from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
 
 from ..models import ShipmentTag
@@ -28,6 +29,8 @@ class ShipmentTagSerializer(serializers.ModelSerializer):
 
 
 class ShipmentTagCreateSerializer(ShipmentTagSerializer):
+    _unique_together_validator = UniqueTogetherValidator(queryset=ShipmentTag.objects.all(),
+                                                         fields=('shipment_id', 'tag_type', 'tag_value'))
 
     class Meta:
         model = ShipmentTag
@@ -35,3 +38,17 @@ class ShipmentTagCreateSerializer(ShipmentTagSerializer):
             exclude = ('shipment', 'user_id', )
         else:
             exclude = ('shipment', )
+
+    def validate(self, attrs):
+        """
+        This method aims at validate the Unique Together constrain on tag_type, tag_value
+        and shipment_id(foreign key) attributes.
+        This to avoid having multiple tags on a shipment with same definition.
+        """
+
+        attrs['shipment_id'] = self.context['view'].kwargs.get('shipment_pk')
+
+        self._unique_together_validator.instance = self.instance
+        self._unique_together_validator(attrs)
+
+        return attrs

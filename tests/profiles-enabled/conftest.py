@@ -189,6 +189,15 @@ def shipment(mocked_engine_rpc, mocked_iot_api):
                                    storage_credentials_id=random_id(),
                                    owner_id=USER_ID)
 
+
+@pytest.fixture
+def second_shipment(mocked_engine_rpc, mocked_iot_api):
+    return Shipment.objects.create(vault_id=VAULT_ID,
+                                   carrier_wallet_id=random_id(),
+                                   shipper_wallet_id=SHIPPER_ID,
+                                   storage_credentials_id=random_id(),
+                                   owner_id=ORGANIZATION_ID)
+
 @pytest.fixture
 def org2_shipment(mocked_engine_rpc, mocked_iot_api):
     return Shipment.objects.create(vault_id=VAULT_ID,
