@@ -1603,6 +1603,70 @@
             ]
           },
           {
+            "name": "Shipment Tags",
+            "description": null,
+            "item": [
+              {
+                "name": "Create a ShipmentTag",
+                "event": [
+                    {
+                        "listen": "test",
+                        "script": {
+                            "id": "d9ef118e-95c1-448e-9695-29747050c8c6",
+                            "exec": [
+                                "var data = pm.response.json();",
+                                "pm.test(\"Status code is 201\", function () {\n    pm.response.to.have.status(201);\n})\n"
+                            ],
+                            "type": "text/javascript"
+                        }
+                    }
+                ],
+                "request": {
+                  "method": "POST",
+                  "header": [
+                    {
+                      "key": "Authorization",
+                      "value": "JWT {{token}}"
+                    }
+                  ],
+                  "body": {
+                    "mode": "formdata",
+                    "formdata": [
+                      {
+                        "key": "tag_type",
+                        "value": "Export-Shipment",
+                        "type": "text",
+                        "disabled": false
+                      },
+                      {
+                        "key": "tag_value",
+                        "value": "-->Germany",
+                        "type": "text",
+                        "disabled": false
+                      }
+                    ]
+                  },
+                  "url": {
+                    "raw": "{{transmission_url}}/api/v1/shipments/{shipment_id}/tags/",
+                    "host": [
+                      "{{transmission_url}}"
+                    ],
+                    "path": [
+                      "api",
+                      "v1",
+                      "shipments",
+                      "{{shipment_id}}",
+                      "tags",
+                      ""
+                    ]
+                  }
+                },
+                "response": []
+              }
+
+            ]
+          },
+          {
                 "name": "Delete Shipment",
                 "event": [
                     {
