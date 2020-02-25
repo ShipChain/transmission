@@ -1,7 +1,7 @@
 openapi: 3.0.0
 servers:
-  - url: https://transmission.shipchain.io
-    description: ShipChain Transmission API
+- url: https://transmission.shipchain.io
+  description: ShipChain Transmission API
 info:
   version: 1.0.0
   title: ShipChain Transmission API
@@ -99,20 +99,20 @@ components:
     $ref: components/securitySchemes.yaml
 
 security:
-  - JWT: []
+- JWT: []
 tags:
-  - name: AsyncJobs
-    description: >
-      AsyncJobs model an asynchronous interaction with ShipChain Engine. They also contain references to the state of an associated Ethereum Transaction.
-  - name: Documents
-    description: >
-      Documents are entities that allow documents and media objects management within ShipChain Transmission service.
-  - name: Imports
-    description: >
-      Imports are entities that allow creation or import of Transmission objects from external sources within ShipChain Transmission service.
-  - name: Shipments
-    description: >
-      Shipments are the core entity in the ShipChain Transmission service. This is a collection of endpoints related to managing shipments.
-  - name: Transactions
-    description: >
-      Transaction entities contain read-only data about Ethereum Transactions and Transaction Receipts.
+- name: AsyncJobs
+  description: >
+    AsyncJobs model an asynchronous interaction with ShipChain Engine. They also contain references to the state of an associated Ethereum Transaction.
+- name: Documents
+  description: >
+    Documents are entities that allow documents and media objects management within ShipChain Transmission service.
+- name: Imports
+  description: >
+    Imports are entities that allow creation or import of Transmission objects from external sources within ShipChain Transmission service.
+- name: Shipments
+  description: >
+    Shipments are the core entity in the ShipChain Transmission service. This is a collection of endpoints related to managing shipments.
+- name: Transactions
+  description: >
+    Transaction entities contain read-only data about Ethereum Transactions and Transaction Receipts.
