@@ -1,0 +1,25 @@
+uuid: &uuid
+  $ref: '../core/dataTypes.yaml#/uuid'
+
+authorId:
+  properties:
+    user_id:
+      <<: *uuid
+      title: user_id
+      description: User UUID of the tag author
+
+tagType:
+  properties:
+    tag_type:
+      title: tag_type
+      description: Value of this shipment tag type without spaces
+      type: string
+      example: 'Export-Shipment'
+
+tagValue:
+  properties:
+    tag_value:
+      title: tag_value
+      description: Value of this shipment tag without spaces
+      type: string
+      example: '-->Europe'

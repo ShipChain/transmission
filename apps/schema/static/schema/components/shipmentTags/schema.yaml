@@ -1,0 +1,58 @@
+resource:
+  properties:
+    type:
+      description: ShipmentTag
+      example: ShipmentTag
+
+attributes:
+  type: object
+  description: ShipmentTag Attributes
+  allOf:
+  - $ref: '#/tag/tagType'
+  - $ref: '#/tag/tagValue'
+  - $ref: '#/tag/authorId'
+  - $ref: '#/dataTypes/createdAt'
+
+getResource:
+  allOf:
+    - $ref: '#/resource'
+    - properties:
+        attributes:
+          $ref: '#/attributes'
+        relationships:
+          $ref: '#/shipments/shipmentInRelationship'
+
+getResponse:
+  allOf:
+    - $ref: '#/jsonApi/data'
+    - properties:
+        data:
+          $ref: '#/getResource'
+
+createResponse:
+  allOf:
+    - $ref: '#/jsonApi/data'
+    - properties:
+        data:
+          $ref: '#/getResource'
+
+listResponse:
+  allOf:
+    - $ref: '#/jsonApi/dataArray'
+    - $ref: '#/jsonApi/linksAndMeta'
+    - properties:
+        data:
+          items:
+            $ref: '#/getResource'
+
+tag:
+  $ref: ./dataTypes.yaml
+
+shipments:
+  $ref: ../shipments/schema.yaml
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/schema.yaml

@@ -11,6 +11,8 @@ get:
   - $ref: 'parameters.yaml#/state'
   - $ref: 'parameters.yaml#/exception'
   - $ref: 'parameters.yaml#/delayed'
+  - $ref: 'parameters.yaml#/tag_type'
+  - $ref: 'parameters.yaml#/tag_value'
   - $ref: 'parameters.yaml#/has_ship_from_location'
   - $ref: 'parameters.yaml#/has_ship_to_location'
   - $ref: 'parameters.yaml#/has_final_destination_location'
