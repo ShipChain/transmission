@@ -37,3 +37,7 @@ class ShipmentTag(models.Model):
 
     class Meta:
         ordering = ('-created_at', )
+        constraints = [
+            models.UniqueConstraint(fields=['tag_type', 'tag_value', 'shipment'],
+                                    name='unique_tag_definition_for_shipment'),
+        ]

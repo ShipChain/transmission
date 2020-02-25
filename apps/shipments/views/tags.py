@@ -14,8 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from django.db import IntegrityError
 from django.conf import settings
 from rest_framework import permissions
+from rest_framework_json_api.serializers import ValidationError
 from shipchain_common import mixins
 from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
@@ -47,7 +49,13 @@ class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
     }
 
     def perform_create(self, serializer):
-        if settings.PROFILES_ENABLED:
-            return serializer.save(user_id=self.request.user.id, shipment_id=self.kwargs['shipment_pk'])
+        try:
+            if settings.PROFILES_ENABLED:
+                return serializer.save(user_id=self.request.user.id, shipment_id=self.kwargs['shipment_pk'])
 
-        return serializer.save(shipment_id=self.kwargs['shipment_pk'])
+            return serializer.save(shipment_id=self.kwargs['shipment_pk'])
+
+        except IntegrityError:
+            raise ValidationError(f'This shipment already has a tag with, '
+                                  f'`tag_type: {serializer.validated_data["tag_type"]}` and '
+                                  f'`tag_value: {serializer.validated_data["tag_value"]}`.')

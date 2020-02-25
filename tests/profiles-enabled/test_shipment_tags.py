@@ -158,7 +158,9 @@ def test_org_user_shipment_tag(user, api_client, unauthenticated_api_client, shi
 
     # Trying to tag a shipment with an existing (tag_type, tag_value) pair should fail
     response = api_client.post(url, shipment_tag_creation_data, format='json')
-    json_asserter.HTTP_400(response, error='The fields shipment_id, tag_type, tag_value must make a unique set.')
+    json_asserter.HTTP_400(response, error=f'This shipment already has a tag with, '
+                                           f'`tag_type: {shipment_tag_creation_data["tag_type"]}` and '
+                                           f'`tag_value: {shipment_tag_creation_data["tag_value"]}`.')
 
 @pytest.mark.django_db
 def test_shipper_carrier_moderator_shipment_tag(user_2, user2_api_client, mocked_is_shipper, mocked_not_carrier,

@@ -27,4 +27,8 @@ class Migration(migrations.Migration):
                 'ordering': ('-created_at',),
             },
         ),
+        migrations.AddConstraint(
+            model_name='shipmenttag',
+            constraint=models.UniqueConstraint(fields=('tag_type', 'tag_value', 'shipment'), name='unique_tag_definition_for_shipment'),
+        ),
     ]
