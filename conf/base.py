@@ -72,7 +72,7 @@ if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
     else:
         DEBUG = os.environ.get('FORCE_DEBUG', False)
         LOG_LEVEL = os.environ.get('LOG_LEVEL', 'DEBUG')
-        FRONTEND_DOMAIN = 'portal-stage.ops.shipchain.io'
+        FRONTEND_DOMAIN = f'portal-{ENVIRONMENT.lower()}.shipchain.io'
 
     import boto3
     BOTO3_SESSION = boto3.Session(region_name='us-east-1')
