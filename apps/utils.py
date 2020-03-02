@@ -80,3 +80,15 @@ class UploadStatus(Enum):
         PENDING = 'PENDING'
         COMPLETE = 'COMPLETE'
         FAILED = 'FAILED'
+
+
+def get_organization_name(request):
+    if request.user.is_authenticated():
+        return request.user.token.payload.get('organization_name')
+    return None
+
+
+def get_requester_username(request):
+    if request.user.is_authenticated():
+        return request.user.username
+    return None

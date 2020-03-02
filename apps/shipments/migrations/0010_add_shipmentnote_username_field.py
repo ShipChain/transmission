@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='shipmentnote',
             name='username',
-            field=models.CharField(max_length=150, null=True),
+            field=models.CharField(max_length=250, null=True),
         ),
     ]

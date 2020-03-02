@@ -22,6 +22,7 @@ from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
 
 from apps.permissions import ShipmentExists, IsOwnerShipperCarrierModerator
+from apps.utils import get_organization_name, get_requester_username
 from ..models import ShipmentNote
 from ..serializers import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
 
@@ -61,7 +62,14 @@ class ShipmentNoteViewSet(mixins.ConfigurableCreateModelMixin,
 
     def perform_create(self, serializer):
         if settings.PROFILES_ENABLED:
-            created = serializer.save(user_id=self.request.user.id, shipment_id=self.kwargs['shipment_pk'])
+            username = get_requester_username(self.request).split('@')[0]
+            org_name = get_organization_name(self.request)
+            if org_name:
+                username = f'{username} [{org_name}]'
+
+            created = serializer.save(user_id=self.request.user.id,
+                                      shipment_id=self.kwargs['shipment_pk'],
+                                      username=username)
         else:
             created = serializer.save(shipment_id=self.kwargs['shipment_pk'])
         return created
