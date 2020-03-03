@@ -66,7 +66,7 @@ class GetSessionJwt:
                 'password': self.password,
                 'client_id': self.client_id,
                 'grant_type': 'password',
-                'scope': 'openid email'
+                'scope': 'openid email permissions'
             }))
             return response.json()['id_token']
         return None
