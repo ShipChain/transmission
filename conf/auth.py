@@ -22,4 +22,5 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('JWT',),
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.UntypedToken',),
     'USER_ID_CLAIM': 'sub',
+    'TOKEN_USER_CLASS': 'shipchain_common.authentication.PermissionedTokenUser',
 }
