@@ -42,55 +42,83 @@ MESSAGE_4 = 'Shipper note about the shipment.'
 
 
 @pytest.fixture
-def shipment_notes(user, shipper_user, shipment):
+def username(user):
+    return f'{user.username.split("@")[0]} [{user.token.payload["organization_name"]}]'
+
+@pytest.fixture
+def username2(user2):
+    return f'{user2.username.split("@")[0]} [{user2.token.payload["organization_name"]}]'
+
+@pytest.fixture
+def shipper_username(shipper_user):
+    # The shipper does not belong to any organization
+    return shipper_user.username.split("@")[0]
+
+@pytest.fixture
+def shipment_notes(user, user2, username, shipper_user, shipper_username, username2, shipment, org2_shipment):
     return [
-        ShipmentNote.objects.create(user_id=user.id, message=MESSAGE_1, shipment=shipment),
-        ShipmentNote.objects.create(user_id=user.id, message=MESSAGE_3, shipment=shipment),
-        ShipmentNote.objects.create(user_id=shipper_user.id, message=MESSAGE_4, shipment=shipment),
+        ShipmentNote.objects.create(user_id=user.id, username=username, message=MESSAGE_1, shipment=shipment),
+        ShipmentNote.objects.create(user_id=user.id, username=username, message=MESSAGE_3, shipment=shipment),
+        ShipmentNote.objects.create(user_id=shipper_user.id, username=shipper_username, message=MESSAGE_4, shipment=shipment),
+        ShipmentNote.objects.create(user_id=user2.id, username=username2, message=MESSAGE_4, shipment=org2_shipment),
     ]
 
 
 @pytest.mark.django_db
-def test_create_shipment_note(user, api_client, shipper_api_client, unauthenticated_api_client,
-                              shipment, mocked_is_shipper):
+def test_create_shipment_note(user, username, api_client, shipper_api_client, shipper_username,
+                              unauthenticated_api_client, shipment, mocked_is_shipper, entity_ref_shipment,
+                              json_asserter):
+
     url = reverse('shipment-notes-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
     create_note_data, content_type = create_form_content({'message': MESSAGE_1})
 
     # An unauthenticated user cannot create a shipment note
     response = unauthenticated_api_client.post(url, {'message': MESSAGE_1}, format='json')
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    json_asserter.HTTP_403(response, error='You do not have permission to perform this action.')
 
     # An authenticated request with a empty message should fail
     response = api_client.post(url, {'message': ''}, format='json')
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    json_asserter.HTTP_400(response, error='This field may not be blank.', pointer='message')
 
     # An authenticated request with a message with more than 500 characters should fail
     response = api_client.post(url, {'message': MESSAGE_2}, format='json')
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    json_asserter.HTTP_400(response,
+                           error='Ensure this value has at most 500 characters (it has 632).',
+                           pointer='message')
 
     # An authenticated user can create a shipment note
     response = api_client.post(url, create_note_data, content_type=content_type)
-    assert response.status_code == status.HTTP_201_CREATED
-    note_data = response.json()['data']
-    assert len(note_data['attributes']['message']) == len(MESSAGE_1)
-    assert note_data['attributes']['user_id'] == user.id
+
+    json_asserter.HTTP_201(response,
+                           entity_refs=json_asserter.EntityRef(resource='ShipmentNote',
+                                                               attributes={
+                                                                   'message': MESSAGE_1,
+                                                                   'user_id': user.id,
+                                                                   'username': username},
+                                                               relationships={'shipment': entity_ref_shipment})
+                           )
 
     # A shipper also valid for moderator and carrier can add a shipment note
     response = shipper_api_client.post(url, {'message': MESSAGE_1}, format='json')
-    assert response.status_code == status.HTTP_201_CREATED
-    note_data = response.json()['data']
-    assert len(note_data['attributes']['message']) == len(MESSAGE_1)
-    assert note_data['attributes']['user_id'] == mocked_is_shipper.id     # user_id is the shipper Id
+
+    json_asserter.HTTP_201(response,
+                           entity_refs=json_asserter.EntityRef(resource='ShipmentNote',
+                                                               attributes={
+                                                                   'message': MESSAGE_1,
+                                                                   'user_id': mocked_is_shipper.id,
+                                                                   'username': shipper_username},
+                                                               relationships={'shipment': entity_ref_shipment})
+                           )
 
 
 @pytest.mark.django_db
 def test_non_org_user_shipment_note_creation(user2_api_client, shipment, mocked_not_shipper, mocked_not_carrier,
-                                             mocked_not_moderator):
+                                             mocked_not_moderator, json_asserter):
     url = reverse('shipment-notes-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
     # user2 is an authenticated user from another Org. he cannot create a shipment note
     response = user2_api_client.post(url, {'message': MESSAGE_1}, format='json')
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    json_asserter.HTTP_403(response, error='You do not have permission to perform this action.')
 
 
 @pytest.mark.django_db
@@ -111,33 +139,51 @@ def test_update_delete_shipment_note(api_client, shipment, shipment_notes):
 
 @pytest.mark.django_db
 def test_list_search_filter(api_client, shipper_api_client, unauthenticated_api_client, shipment,
-                            mocked_is_shipper, shipment_notes):
+                            mocked_is_shipper, shipment_notes, entity_ref_shipment, json_asserter):
+
     url = reverse('shipment-notes-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
     # An unauthenticated user cannot list a shipment notes
     response = unauthenticated_api_client.get(url)
     assert response.status_code == status.HTTP_403_FORBIDDEN
+    json_asserter.HTTP_403(response, error='You do not have permission to perform this action.')
 
     # A shipment owner can list all notes associated
     response = api_client.get(url)
-    assert response.status_code == status.HTTP_200_OK
+    json_asserter.HTTP_200(response, is_list=True)
     notes_data = response.json()['data']
-    assert len(notes_data) == len(shipment_notes)
+    assert len(notes_data) == len(shipment_notes) - 1
 
-    # A shipment shipper can list all notes associated
+    # A shipper can list only the notes associated to the relative shipment
     response = shipper_api_client.get(url)
-    assert response.status_code == status.HTTP_200_OK
+    json_asserter.HTTP_200(response, is_list=True)
     notes_data = response.json()['data']
-    assert len(notes_data) == len(shipment_notes)
+    assert len(notes_data) == len(shipment_notes) - 1
 
     # There is only one note authored by the shipper
     response = api_client.get(f'{url}?user_id={mocked_is_shipper.id}')
     notes_data = response.json()['data']
     assert len(notes_data) == 1
-    assert notes_data[0]['attributes']['user_id'] == mocked_is_shipper.id
+    json_asserter.HTTP_200(response,
+                           is_list=True,
+                           entity_refs=[json_asserter.EntityRef(resource='ShipmentNote',
+                                                               attributes={
+                                                                   'message': shipment_notes[2].message,
+                                                                   'user_id': shipment_notes[2].user_id,
+                                                                   'username': shipment_notes[2].username},
+                                                               relationships={'shipment': entity_ref_shipment})]
+                           )
 
     # There is only one note containing the word "ShipChain"
     response = api_client.get(f'{url}?search=shipchain')
     notes_data = response.json()['data']
     assert len(notes_data) == 1
-    assert 'ShipChain' in notes_data[0]['attributes']['message']
+    json_asserter.HTTP_200(response,
+                           is_list=True,
+                           entity_refs=[json_asserter.EntityRef(resource='ShipmentNote',
+                                                                attributes={
+                                                                    'message': shipment_notes[1].message,
+                                                                    'user_id': shipment_notes[1].user_id,
+                                                                    'username': shipment_notes[1].username},
+                                                                relationships={'shipment': entity_ref_shipment})]
+                           )
