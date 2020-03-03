@@ -29,7 +29,7 @@ from rest_framework import permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
-from shipchain_common.authentication import get_jwt_from_request
+from shipchain_common.mixins import SerializationType
 from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelViewSet
 
@@ -82,7 +82,13 @@ class ShipmentViewSet(ConfigurableModelViewSet):
     http_method_names = ['get', 'post', 'delete', 'patch']
 
     configuration = {
+        'create': ActionConfiguration(
+            request_serializer=ShipmentCreateSerializer,
+            response_serializer=ShipmentTxSerializer,
+        ),
         'update': ActionConfiguration(
+            request_serializer=ShipmentUpdateSerializer,
+            response_serializer=ShipmentTxSerializer,
             permission_classes=UPDATE_PERMISSION_CLASSES
         ),
         'retrieve': ActionConfiguration(
@@ -141,13 +147,13 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         LOG.debug(f'Creating a shipment object.')
         log_metric('transmission.info', tags={'method': 'shipments.create', 'module': __name__})
         # Create Shipment
-        serializer = ShipmentCreateSerializer(data=request.data, context={'auth': get_jwt_from_request(request)})
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         shipment = self.perform_create(serializer)
         async_job = shipment.asyncjob_set.all()[:1]
 
-        response = ShipmentTxSerializer(shipment)
+        response = self.get_serializer(shipment, serialization_type=SerializationType.RESPONSE)
         if async_job:
             LOG.debug(f'AsyncJob created with id {async_job[0].id}.')
             response.instance.async_job_id = async_job[0].id
@@ -187,13 +193,12 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         LOG.debug(f'Updating shipment {instance.id} with new details.')
         log_metric('transmission.info', tags={'method': 'shipments.update', 'module': __name__})
 
-        serializer = ShipmentUpdateSerializer(instance, data=request.data, partial=partial,
-                                              context={'auth': get_jwt_from_request(request)})
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
 
         shipment = self.perform_update(serializer)
         async_jobs = shipment.asyncjob_set.filter(state__in=[JobState.PENDING, JobState.RUNNING])
-        response = ShipmentTxSerializer(shipment)
+        response = self.get_serializer(shipment, serialization_type=SerializationType.RESPONSE)
 
         response.instance.async_job_id = async_jobs.latest('created_at').id if async_jobs else None
 

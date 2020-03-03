@@ -153,6 +153,14 @@ class ShipmentCreateSerializer(ShipmentSerializer):
     final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
 
+    @property
+    def user(self):
+        return self.context['request'].user
+
+    @property
+    def auth(self):
+        return self.user.token.token.decode('utf8')
+
     def create(self, validated_data):
         extra_args = {}
 
@@ -168,9 +176,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             return Shipment.objects.create(**validated_data, **extra_args)
 
     def validate_device_id(self, device_id):
-        auth = self.context['auth']
-
-        device = Device.get_or_create_with_permission(auth, device_id)
+        device = Device.get_or_create_with_permission(self.auth, device_id)
         if hasattr(device, 'shipment'):
             if TransitState(device.shipment.state) == TransitState.IN_TRANSIT:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
@@ -185,7 +191,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
     def validate_shipper_wallet_id(self, shipper_wallet_id):
         if settings.PROFILES_ENABLED:
             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
-                                                     headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
+                                                     headers={'Authorization': 'JWT {}'.format(self.auth)})
 
             if response.status_code != status.HTTP_200_OK:
                 raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
@@ -196,7 +202,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
         if settings.PROFILES_ENABLED:
             response = settings.REQUESTS_SESSION.get(
                 f'{settings.PROFILES_URL}/api/v1/storage_credentials/{storage_credentials_id}/',
-                headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
+                headers={'Authorization': 'JWT {}'.format(self.auth)})
 
             if response.status_code != status.HTTP_200_OK:
                 raise serializers.ValidationError(
@@ -258,7 +264,6 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         return instance
 
     def validate_device_id(self, device_id):
-        auth = self.context['auth']
         if not device_id:
             if not self.instance.device:
                 return None
@@ -266,7 +271,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                 raise serializers.ValidationError('Cannot remove device from Shipment in progress')
             return None
 
-        device = Device.get_or_create_with_permission(auth, device_id)
+        device = Device.get_or_create_with_permission(self.auth, device_id)
 
         if hasattr(device, 'shipment'):
             if TransitState(device.shipment.state) == TransitState.IN_TRANSIT:
