@@ -22,6 +22,7 @@ from django.conf import settings
 from django.db import transaction
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
@@ -129,12 +130,25 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     class Meta:
         model = Shipment
-        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval')
+        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
         read_only_fields = ('owner_id', 'contract_version',) if settings.PROFILES_ENABLED else ('contract_version',)
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data']
+
+    @property
+    def user(self):
+        return self.context['request'].user
+
+    @property
+    def auth(self):
+        auth = self.user.token.token
+        try:
+            auth = auth.decode('utf8')
+        except (UnicodeDecodeError, AttributeError):
+            pass
+        return auth
 
     def validate_geofences(self, geofences):
         for geofence in geofences:
@@ -152,14 +166,6 @@ class ShipmentCreateSerializer(ShipmentSerializer):
     bill_to_location = LocationSerializer(required=False)
     final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
-
-    @property
-    def user(self):
-        return self.context['request'].user
-
-    @property
-    def auth(self):
-        return self.user.token.token.decode('utf8')
 
     def create(self, validated_data):
         extra_args = {}
@@ -210,6 +216,12 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
         return storage_credentials_id
 
+    def validate_gtx_required(self, gtx_required):
+        if settings.PROFILES_ENABLED:
+            if gtx_required and not self.user.has_perm('gtx.shipment_use'):
+                raise PermissionDenied('User does not have access to enable GTX for this shipment')
+        return gtx_required
+
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, allow_null=True)
@@ -221,9 +233,10 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     class Meta:
         model = Shipment
-        exclude = (('owner_id', 'version', 'background_data_hash_interval', 'manual_update_hash_interval')
+        exclude = (('owner_id', 'version',
+                    'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
                    if settings.PROFILES_ENABLED else ('version', 'background_data_hash_interval',
-                                                      'manual_update_hash_interval'))
+                                                      'manual_update_hash_interval', 'asset_physical_id'))
         read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                             'storage_credentials_id', 'contract_version', 'state')
 
@@ -289,6 +302,19 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
             return delivery_act
         raise serializers.ValidationError('Cannot update Shipment with future delivery_act')
 
+    def validate_gtx_required(self, gtx_required):
+        if self.instance.gtx_required == gtx_required:
+            return gtx_required
+
+        if settings.PROFILES_ENABLED:
+            if (self.instance.gtx_required or gtx_required) and not self.user.has_perm('gtx.shipment_use'):
+                raise PermissionDenied('User does not have access to modify GTX for this shipment')
+
+        if TransitState(self.instance.state).value > TransitState.AWAITING_PICKUP.value:
+            raise serializers.ValidationError('Cannot modify GTX for a shipment in progress')
+
+        return gtx_required
+
 
 class ShipmentTxSerializer(serializers.ModelSerializer):
     async_job_id = serializers.CharField(max_length=36)
@@ -334,7 +360,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         exclude = ('owner_id', 'storage_credentials_id', 'background_data_hash_interval',
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id', 'manual_update_hash_interval',
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours',
-                   'geofences', 'assignee_id', )
+                   'geofences', 'assignee_id', 'gtx_required')
 
 
 class ShipmentOverviewSerializer(serializers.ModelSerializer):

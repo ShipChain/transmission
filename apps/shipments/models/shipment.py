@@ -475,10 +475,18 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
     # State transitions
     @transition(field=state, source=TransitState.AWAITING_PICKUP.value, target=TransitState.IN_TRANSIT.value)
-    def pick_up(self, document_id=None, **kwargs):
+    def pick_up(self, document_id=None, asset_physical_id=None, **kwargs):
         if document_id:
             # TODO: Validate that ID is a BOL Document?
             pass
+
+        if self.gtx_required and not asset_physical_id:
+            raise PermissionDenied('In order to proceed with this shipment pick up, '
+                                   'you need to provide a value for the field [Shipment.asset_physical_id].')
+
+        if asset_physical_id:
+            self.asset_physical_id = hashlib.sha256(asset_physical_id.encode()).hexdigest()
+
         self.pickup_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
 
     @transition(field=state, source=TransitState.IN_TRANSIT.value, target=TransitState.AWAITING_DELIVERY.value)
