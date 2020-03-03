@@ -334,6 +334,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
     is_hazmat = models.NullBooleanField()
 
+    gtx_required = models.BooleanField(default=False)
     asset_physical_id = models.CharField(null=True, max_length=255)
     asset_custodian_id = models.CharField(null=True, max_length=36)
 
