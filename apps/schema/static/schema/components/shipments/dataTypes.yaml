@@ -578,6 +578,14 @@ exception:
       enum: [NONE, CUSTOMS_HOLD, DOCUMENTATION_ERROR]
       example: NONE
 
+gtxRequired:
+  properties:
+    gtx_required:
+      title: gtx_required
+      description: Marks a Shipment as requiring GTX tag for PICK_UP and DROP_OFF actions.  Only available if User has "gtx.shipment_use" permission
+      type: boolean
+      example: true
+
 assetPhysicalId:
   properties:
     asset_physical_id:

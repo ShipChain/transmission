@@ -79,7 +79,7 @@ createAttributes:
   - $ref: '#/shipment/nmfcClass'
   - $ref: '#/shipment/isHazmat'
   - $ref: '#/shipment/exception'
-  - $ref: '#/shipment/assetPhysicalId'
+  - $ref: '#/shipment/gtxRequired'
   - $ref: '#/shipment/assetCustodianId'
   - $ref: '#/shipment/geofences'
 
@@ -141,7 +141,7 @@ patchAttributes:
     - $ref: '#/shipment/nmfcClass'
     - $ref: '#/shipment/exception'
     - $ref: '#/shipment/customerFields'
-    - $ref: '#/shipment/assetPhysicalId'
+    - $ref: '#/shipment/gtxRequired'
     - $ref: '#/shipment/assetCustodianId'
     - $ref: '#/shipment/geofences'
 

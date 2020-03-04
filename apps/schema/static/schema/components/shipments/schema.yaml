@@ -77,7 +77,7 @@ attributes:
   - $ref: '#/shipment/delayed'
   - $ref: '#/shipment/expectedDelayHours'
   - $ref: '#/shipment/exception'
-  - $ref: '#/shipment/assetPhysicalId'
+  - $ref: '#/shipment/gtxRequired'
   - $ref: '#/shipment/assetCustodianId'
   - $ref: '#/shipment/geofences'
   - $ref: '#/shipment/contractVersion'
