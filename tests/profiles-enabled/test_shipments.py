@@ -69,10 +69,13 @@ class ShipmentAPITests(APITestCase):
         self.token3 = get_jwt(username='user3@shipchain.io', sub=OWNER_ID_3, organization_id=ORGANIZATION_ID)
         self.hashed_token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID, organization_id=ORGANIZATION_ID,
                                     background_data_hash_interval=25, manual_update_hash_interval=30)
+        self.gtx_token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID, organization_id=ORGANIZATION_ID,
+                                 features={'gtx': ['shipment_use']})
 
         self.user_1 = passive_credentials_auth(self.token)
         self.user_2 = passive_credentials_auth(self.token2)
         self.user_3 = passive_credentials_auth(self.token3)
+        self.gtx_user = passive_credentials_auth(self.gtx_token)
 
     def set_user(self, user, token=None):
         self.client.force_authenticate(user=user, token=token)
@@ -1309,6 +1312,67 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(shipment.background_data_hash_interval, 25)
         self.assertEqual(shipment.manual_update_hash_interval, 30)
 
+        # A user without `gtx.shipment_use` permission should not be able to set `gtx_required`
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+            body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+            body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+
+        gtx_post_data = json.loads(post_data)
+        gtx_post_data['data']['attributes']['gtx_required'] = True
+        gtx_post_data = json.dumps(gtx_post_data)
+
+        response = self.client.post(url, gtx_post_data, content_type='application/vnd.api+json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.json()['errors'][0]['detail'],
+                         'User does not have access to enable GTX for this shipment')
+
+        # A user with `gtx.shipment_use` permission should be able to set `gtx_required`
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+            body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+            body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+
+        self.set_user(self.gtx_user, self.gtx_token)
+        gtx_post_data = json.loads(post_data)
+        gtx_post_data['data']['attributes']['gtx_required'] = True
+        gtx_post_data = json.dumps(gtx_post_data)
+
+        response = self.client.post(url, gtx_post_data, content_type='application/vnd.api+json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.json()['data']['attributes']['gtx_required'], True)
+
+        # Cannot set asset_physical_id during shipment creation
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
+            body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+        httpretty.register_uri(
+            httpretty.GET,
+            f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{parameters['_storage_credentials_id']}/",
+            body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+
+        self.set_user(self.user_1, self.hashed_token)
+        asset_post_data = json.loads(post_data)
+        asset_post_data['data']['attributes']['asset_physical_id'] = random_id()
+        asset_post_data = json.dumps(asset_post_data)
+
+        response = self.client.post(url, asset_post_data, content_type='application/vnd.api+json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        response_data = response.json()['data']
+
+        shipment = Shipment.objects.get(id=response_data['id'])
+        self.assertIsNone(shipment.asset_physical_id)
+
     @httpretty.activate
     def test_organization_sharing(self):
         url = reverse('shipment-list', kwargs={'version': 'v1'})
@@ -1643,7 +1707,8 @@ class ShipmentAPITests(APITestCase):
                         "type": "Shipment",
                         "id": "<<_shipment_id>>",
                         "attributes": {
-                          "carriers_scac": "test_scac"
+                          "carriers_scac": "test_scac",
+                          "asset_physical_id": "asset_physical_id"
                         }
                       }
                     }
@@ -1690,6 +1755,34 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response_data['attributes']['carriers_scac'], parameters['_carriers_scac'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
         self.assertIsNotNone(response_data['meta']['async_job_id'])
+        # should not be able to update asset_physical_id
+        self.assertIsNone(response_data['attributes']['asset_physical_id'])
+
+        # Cannot update gtx_required if user does not have permission
+        self.set_user(self.user_1, self.hashed_token)
+        gtx_post_data = json.loads(post_data)
+        gtx_post_data['data']['attributes']['gtx_required'] = True
+        gtx_post_data = json.dumps(gtx_post_data)
+
+        response = self.client.patch(url, gtx_post_data, content_type='application/vnd.api+json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.json()['errors'][0]['detail'],
+                         'User does not have access to modify GTX for this shipment')
+
+        # Can update gtx_required if user has permission and not yet picked up
+        self.set_user(self.gtx_user, self.gtx_token)
+        response = self.client.patch(url, gtx_post_data, content_type='application/vnd.api+json')
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        response_data = response.json()['data']
+        self.assertTrue(response_data['attributes']['gtx_required'])
+
+        # Cannot update gtx_required if user has permission but state is beyond picked up
+        self.shipments[0].pick_up()
+        self.shipments[0].save()
+        response = self.client.patch(url, gtx_post_data, content_type='application/vnd.api+json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json()['errors'][0]['detail'],
+                         'Cannot modify GTX for a shipment in progress')
 
     @httpretty.activate
     def test_update_with_location(self):

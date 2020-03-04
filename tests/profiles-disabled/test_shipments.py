@@ -67,7 +67,8 @@ class ShipmentAPITests(APITestCase):
                           "carrier_wallet_id": "<<_carrier_wallet_id>>",
                           "shipper_wallet_id": "<<_shipper_wallet_id>>",
                           "storage_credentials_id": "<<_storage_credentials_id>>",
-                          "owner_id": "owner-id-1234"
+                          "owner_id": "owner-id-1234",
+                          "gtx_required": "true"
                         }
                       }
                     }
@@ -100,6 +101,8 @@ class ShipmentAPITests(APITestCase):
 
         response = self.client.post(url, post_data, content_type='application/vnd.api+json')
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        # Can set GTX Required when profiles is disabled
+        self.assertTrue(response.json()['data']['attributes']['gtx_required'])
 
     def test_shipment_create_with_location(self):
         parameters = {
