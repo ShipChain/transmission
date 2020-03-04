@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('tag_type', models.CharField(max_length=50, validators=[django.core.validators.RegexValidator(message='Space(s) not allowed in this field', regex='^\\S*$')])),
                 ('tag_value', models.CharField(max_length=50, validators=[django.core.validators.RegexValidator(message='Space(s) not allowed in this field', regex='^\\S*$')])),
-                ('user_id',models.UUIDField(null=False)),
+                ('owner_id',models.UUIDField(null=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('shipment', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shipments.Shipment', related_name='shipment_tags')),
             ],

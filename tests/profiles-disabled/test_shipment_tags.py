@@ -25,11 +25,11 @@ def shipment_tag_creation_data():
     return {
         'tag_type': '*Export-Shipment*',
         'tag_value': '-->Europe',
-        'user_id': USER_ID,
+        'owner_id': USER_ID,
     }
 
 @pytest.fixture
-def shipment_tag_creation_missing_user_id():
+def shipment_tag_creation_missing_owner_id():
     return {
         'tag_type': 'Destination',
         'tag_value': 'Toronto'
@@ -42,13 +42,13 @@ def entity_shipment_relationship(json_asserter, shipment):
 
 @pytest.mark.django_db
 def test_profiles_disabled_shipment_tag_creation(unauthenticated_api_client, shipment, shipment_tag_creation_data,
-                                                 shipment_tag_creation_missing_user_id, entity_shipment_relationship,
+                                                 shipment_tag_creation_missing_owner_id, entity_shipment_relationship,
                                                  json_asserter):
 
     url = reverse('shipment-tags-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
     # A request without user_id should fail
-    response = unauthenticated_api_client.post(url, shipment_tag_creation_missing_user_id, format='json')
+    response = unauthenticated_api_client.post(url, shipment_tag_creation_missing_owner_id, format='json')
     json_asserter.HTTP_400(response, error='This field is required.')
 
     response = unauthenticated_api_client.post(url, shipment_tag_creation_data, format='json')
@@ -57,6 +57,6 @@ def test_profiles_disabled_shipment_tag_creation(unauthenticated_api_client, shi
                                resource='ShipmentTag',
                                attributes={'tag_type': shipment_tag_creation_data['tag_type'],
                                            'tag_value': shipment_tag_creation_data['tag_value'],
-                                           'user_id': USER_ID},
+                                           'owner_id': USER_ID},
                                relationships={'shipment': entity_shipment_relationship})
                            )

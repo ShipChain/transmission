@@ -61,22 +61,17 @@ def space_in_tag_value_creation_data():
     }
 
 @pytest.fixture
-def entity_shipment_relationship(json_asserter, shipment):
-    return json_asserter.EntityRef(resource='Shipment', pk=shipment.id)
-
-
-@pytest.fixture
-def shipment_tags(user, shipment, second_shipment, shipment_tag_creation_data, shipment_tag_location):
+def shipment_tags(org_id, shipment, second_shipment, shipment_tag_creation_data, shipment_tag_location):
     tags = []
     tags.append(ShipmentTag.objects.create(tag_type=shipment_tag_creation_data['tag_type'],
                                            tag_value=shipment_tag_creation_data['tag_value'],
                                            shipment_id=shipment.id,
-                                           user_id=uuid.UUID(user.id)))
+                                           owner_id=uuid.UUID(org_id)))
 
     tags.append(ShipmentTag.objects.create(tag_type=shipment_tag_location['tag_type'],
                                            tag_value=shipment_tag_location['tag_value'],
                                            shipment_id=second_shipment.id,
-                                           user_id=uuid.UUID(user.id)))
+                                           owner_id=uuid.UUID(org_id)))
 
     return tags
 
@@ -118,7 +113,7 @@ def entity_second_shipment_tag_included(json_asserter, second_shipment, shipment
 
 
 @pytest.mark.django_db
-def test_org_user_shipment_tag(user, api_client, unauthenticated_api_client, shipment, shipment_tag_creation_data,
+def test_org_user_shipment_tag(org_id, api_client, unauthenticated_api_client, shipment, shipment_tag_creation_data,
                                missing_tag_type_creation_data, missing_tag_value_creation_data,
                                space_in_tag_type_creation_data, space_in_tag_value_creation_data,
                                entity_shipment_relationship, json_asserter):
@@ -152,7 +147,7 @@ def test_org_user_shipment_tag(user, api_client, unauthenticated_api_client, shi
                                resource='ShipmentTag',
                                attributes={'tag_type': shipment_tag_creation_data['tag_type'],
                                            'tag_value': shipment_tag_creation_data['tag_value'],
-                                           'user_id': user.id},
+                                           'owner_id': org_id},
                                relationships={'shipment': entity_shipment_relationship})
                            )
 
@@ -163,7 +158,7 @@ def test_org_user_shipment_tag(user, api_client, unauthenticated_api_client, shi
                                            f'`tag_value: {shipment_tag_creation_data["tag_value"]}`.')
 
 @pytest.mark.django_db
-def test_shipper_carrier_moderator_shipment_tag(user_2, user2_api_client, mocked_is_shipper, mocked_not_carrier,
+def test_shipper_carrier_moderator_shipment_tag(org2_id, user2_api_client, mocked_is_shipper, mocked_not_carrier,
                                                 mocked_not_moderator, shipment, shipment_tag_creation_data,
                                                 entity_shipment_relationship, json_asserter):
 
@@ -177,7 +172,7 @@ def test_shipper_carrier_moderator_shipment_tag(user_2, user2_api_client, mocked
                                resource='ShipmentTag',
                                attributes={'tag_type': shipment_tag_creation_data['tag_type'],
                                            'tag_value': shipment_tag_creation_data['tag_value'],
-                                           'user_id': user_2.id},
+                                           'owner_id': org2_id},
                                relationships={'shipment': entity_shipment_relationship})
                            )
 

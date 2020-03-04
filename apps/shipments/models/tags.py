@@ -29,7 +29,7 @@ class ShipmentTag(models.Model):
     tag_type = models.CharField(max_length=50, null=False, validators=[tag_field_regex_validator])
     tag_value = models.CharField(max_length=50, null=False, validators=[tag_field_regex_validator])
 
-    user_id = models.UUIDField(null=False)
+    owner_id = models.UUIDField(null=False)
 
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, null=False, related_name='shipment_tags')
 

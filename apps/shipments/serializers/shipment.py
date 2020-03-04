@@ -120,7 +120,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
     exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
-    shipment_tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True)
+    tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags')
 
     included_serializers = {
         'ship_from_location': LocationSerializer,
@@ -129,7 +129,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
         'final_destination_location': LocationSerializer,
         'load_data': LoadShipmentSerializer,
         'device': DeviceSerializer,
-        'shipment_tags': ShipmentTagSerializer,
+        'tags': ShipmentTagSerializer,
     }
 
     class Meta:
@@ -139,7 +139,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
-                              'final_destination_location', 'load_data', 'shipment_tags', ]
+                              'final_destination_location', 'load_data', 'tags', ]
 
     @property
     def user(self):

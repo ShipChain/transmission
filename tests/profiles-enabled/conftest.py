@@ -76,6 +76,11 @@ def gtx_user(gtx_token):
 
 
 @pytest.fixture(scope='session')
+def org_id(user):
+    return user.token.get('organization_id', None)
+
+
+@pytest.fixture(scope='session')
 def token2():
     return get_jwt(username='user2@shipchain.io',
                    sub=USER2_ID,
@@ -86,6 +91,11 @@ def token2():
 @pytest.fixture(scope='session')
 def user2(token2):
     return passive_credentials_auth(token2)
+
+
+@pytest.fixture(scope='session')
+def org2_id(user_2):
+    return user_2.token.get('organization_id', None)
 
 
 @pytest.fixture(scope='session')

@@ -156,8 +156,8 @@ shipmentTags:
   type: object
   description: Relations for this resource
   properties:
-    shipment_tags:
-      title: shipment_tags
+    tags:
+      title: tags
       type: object
       description: Tags associated with the Shipment
       properties:

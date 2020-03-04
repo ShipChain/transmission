@@ -15,8 +15,10 @@ limitations under the License.
 """
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from rest_framework_json_api import serializers
 
+from apps.permissions import get_owner_id
 from ..models import ShipmentTag
 
 
@@ -32,6 +34,20 @@ class ShipmentTagCreateSerializer(ShipmentTagSerializer):
     class Meta:
         model = ShipmentTag
         if settings.PROFILES_ENABLED:
-            exclude = ('shipment', 'user_id', )
+            exclude = ('shipment', 'owner_id', )
         else:
             exclude = ('shipment', )
+
+    def validate(self, attrs):
+
+        attrs['shipment_id'] = self.context['view'].kwargs.get('shipment_pk')
+        if settings.PROFILES_ENABLED:
+            attrs['owner_id'] = get_owner_id(self.context['request'])
+
+        try:
+            ShipmentTag(**attrs).validate_unique()
+        except ValidationError:
+            raise serializers.ValidationError(f'This shipment already has a tag with, `tag_type: {attrs["tag_type"]}` '
+                                              f'and `tag_value: {attrs["tag_value"]}`.')
+
+        return attrs
