@@ -26,6 +26,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
+from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
@@ -143,12 +144,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     @property
     def auth(self):
-        auth = self.user.token.token
-        try:
-            auth = auth.decode('utf8')
-        except (UnicodeDecodeError, AttributeError):
-            pass
-        return auth
+        return get_jwt_from_request(self.context['request'])
 
     def validate_geofences(self, geofences):
         for geofence in geofences:
