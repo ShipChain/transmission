@@ -737,8 +737,8 @@ category = "main"
 description = "A minimal JSON Web Token authentication plugin for Django REST Framework"
 name = "djangorestframework-simplejwt"
 optional = false
-python-versions = ">=3.6,<3.8"
-version = "4.3.0"
+python-versions = ">=3.6,<3.9"
+version = "4.4.0"
 
 [package.dependencies]
 django = "*"
@@ -753,9 +753,9 @@ python-jose = ["python-jose (3.0.0)"]
 test = ["cryptography", "pytest-cov", "pytest-django", "pytest-xdist", "pytest", "tox"]
 
 [package.source]
-reference = "3cecdfc8050b691e51e7d45229d8bd7c03a8d6c2"
+reference = "04a4f7f2e045ac4a49542b7e98350e66431adcf5"
 type = "git"
-url = "git://github.com/ShipChain/django-rest-framework-simplejwt.git"
+url = "git://github.com/davesque/django-rest-framework-simplejwt.git"
 [[package]]
 category = "dev"
 description = "A Python library for the Docker Engine API."
@@ -1485,7 +1485,7 @@ description = "C parser in Python"
 name = "pycparser"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "2.19"
+version = "2.20"
 
 [[package]]
 category = "dev"
@@ -2316,7 +2316,7 @@ test = ["zope.event"]
 testing = ["coverage", "nose", "zope.event"]
 
 [metadata]
-content-hash = "69ba44e238dd21b1cd0896b613bc1bb353c8c5221e365effd4d752eb042862e8"
+content-hash = "7c177d92b09d24394fb9abf5a4a43fd1364b96c91cbc526b139b760a218278a5"
 python-versions = "==3.6.9"
 
 [metadata.files]
@@ -3090,7 +3090,8 @@ pycodestyle = [
     {file = "pycodestyle-2.4.0.tar.gz", hash = "sha256:cbfca99bd594a10f674d0cd97a3d802a1fdef635d4361e1a2658de47ed261e3a"},
 ]
 pycparser = [
-    {file = "pycparser-2.19.tar.gz", hash = "sha256:a988718abfad80b6b157acce7bf130a30876d27603738ac39f140993246b25b3"},
+    {file = "pycparser-2.20-py2.py3-none-any.whl", hash = "sha256:7582ad22678f0fcd81102833f60ef8d0e57288b6b5fb00323d101be910e35705"},
+    {file = "pycparser-2.20.tar.gz", hash = "sha256:2d475327684562c3a96cc71adf7dc8c4f0565175cf86b6d7a404ff4c771f15f0"},
 ]
 pydocstyle = [
     {file = "pydocstyle-5.0.2-py3-none-any.whl", hash = "sha256:da7831660b7355307b32778c4a0dbfb137d89254ef31a2b2978f50fc0b4d7586"},

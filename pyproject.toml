@@ -46,7 +46,7 @@ django-simple-history = "~2.7.0"
 djangorestframework = "==3.10.3"
 djangorestframework-gis = "==0.14"
 djangorestframework-jsonapi = "~3.0"
-djangorestframework-simplejwt = {git = "git://github.com/ShipChain/django-rest-framework-simplejwt.git", rev = "3cecdfc8050b691e51e7d45229d8bd7c03a8d6c2"}
+djangorestframework-simplejwt = {git = "git://github.com/davesque/django-rest-framework-simplejwt.git", rev = "04a4f7f2e045ac4a49542b7e98350e66431adcf5"}
 geocoder = "==1.38.1"
 inflection = ">=0.3.1"
 influxdb = "==5.0.0"
