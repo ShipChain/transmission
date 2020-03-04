@@ -335,7 +335,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shipment
-        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval')
+        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
         meta_fields = ('async_job_id',)
         if settings.PROFILES_ENABLED:
             read_only_fields = ('owner_id',)

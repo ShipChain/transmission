@@ -1755,8 +1755,8 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(response_data['attributes']['carriers_scac'], parameters['_carriers_scac'])
         self.assertEqual(response_data['attributes']['vault_id'], parameters['_vault_id'])
         self.assertIsNotNone(response_data['meta']['async_job_id'])
-        # should not be able to update asset_physical_id
-        self.assertIsNone(response_data['attributes']['asset_physical_id'])
+        # asset_physical_id should not be in response
+        self.assertNotIn('asset_physical_id', response_data['attributes'])
 
         # Cannot update gtx_required if user does not have permission
         self.set_user(self.user_1, self.hashed_token)
