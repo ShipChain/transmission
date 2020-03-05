@@ -10,7 +10,7 @@ import shipchain_common.utils
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0009_add_shipment_assignee_field'),
+        ('shipments', '0010_gtx_required_field'),
     ]
 
     operations = [
