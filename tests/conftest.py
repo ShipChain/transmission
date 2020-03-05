@@ -97,8 +97,3 @@ def second_shipment(mocked_engine_rpc, mocked_iot_api):
                                    shipper_wallet_id=SHIPPER_ID,
                                    storage_credentials_id=random_id(),
                                    owner_id=USER_ID)
-
-
-@pytest.fixture
-def entity_ref_shipment(json_asserter, shipment):
-    return json_asserter.EntityRef(resource='Shipment', pk=shipment.id)

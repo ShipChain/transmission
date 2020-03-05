@@ -12,7 +12,12 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='shipmentnote',
+            name='organization_name',
+            field=models.CharField(max_length=80, null=True),
+        ),
+        migrations.AlterField(
+            model_name='shipmentnote',
             name='username',
-            field=models.CharField(max_length=250, null=True),
+            field=models.CharField(max_length=150, null=True),
         ),
     ]
