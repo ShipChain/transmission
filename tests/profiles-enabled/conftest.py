@@ -44,16 +44,28 @@ SHIPPER_ID = random_id()
 ORGANIZATION_ID = random_id()
 ORGANIZATION_2_ID = random_id()
 VAULT_ID = random_id()
+BASE_PERMISSIONS = ['user.perm_1', 'user.perm_2', 'user.perm_3']
+GTX_PERMISSIONS = ['user.perm_1', 'gtx.shipment_use', 'user.perm_3']
 
 
 @pytest.fixture(scope='session')
 def token():
-    return get_jwt(username='user1@shipchain.io', sub=USER_ID, organization_id=ORGANIZATION_ID)
+    return get_jwt(username='user1@shipchain.io', sub=USER_ID, organization_id=ORGANIZATION_ID, permissions=BASE_PERMISSIONS)
+
+
+@pytest.fixture(scope='session')
+def gtx_token():
+    return get_jwt(username='user1@shipchain.io', sub=USER_ID, organization_id=ORGANIZATION_ID, permissions=GTX_PERMISSIONS)
 
 
 @pytest.fixture(scope='session')
 def user(token):
     return passive_credentials_auth(token)
+
+
+@pytest.fixture(scope='session')
+def gtx_user(gtx_token):
+    return passive_credentials_auth(gtx_token)
 
 
 @pytest.fixture(scope='session')
@@ -80,6 +92,13 @@ def shipper_user(shipper_token):
 def api_client(user, token):
     client = APIClient()
     client.force_authenticate(user=user, token=token)
+    return client
+
+
+@pytest.fixture(scope='session')
+def gtx_api_client(gtx_user, gtx_token):
+    client = APIClient()
+    client.force_authenticate(user=gtx_user, token=gtx_token)
     return client
 
 

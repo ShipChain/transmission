@@ -22,9 +22,11 @@ from django.conf import settings
 from django.db import transaction
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
+from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
 from apps.shipments.models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
@@ -129,12 +131,20 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     class Meta:
         model = Shipment
-        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval')
+        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
         read_only_fields = ('owner_id', 'contract_version',) if settings.PROFILES_ENABLED else ('contract_version',)
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
                               'final_destination_location', 'load_data']
+
+    @property
+    def user(self):
+        return self.context['request'].user
+
+    @property
+    def auth(self):
+        return get_jwt_from_request(self.context['request'])
 
     def validate_geofences(self, geofences):
         for geofence in geofences:
@@ -168,9 +178,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             return Shipment.objects.create(**validated_data, **extra_args)
 
     def validate_device_id(self, device_id):
-        auth = self.context['auth']
-
-        device = Device.get_or_create_with_permission(auth, device_id)
+        device = Device.get_or_create_with_permission(self.auth, device_id)
         if hasattr(device, 'shipment'):
             if TransitState(device.shipment.state) == TransitState.IN_TRANSIT:
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
@@ -185,7 +193,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
     def validate_shipper_wallet_id(self, shipper_wallet_id):
         if settings.PROFILES_ENABLED:
             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/wallet/{shipper_wallet_id}/',
-                                                     headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
+                                                     headers={'Authorization': 'JWT {}'.format(self.auth)})
 
             if response.status_code != status.HTTP_200_OK:
                 raise serializers.ValidationError('User does not have access to this wallet in ShipChain Profiles')
@@ -196,13 +204,19 @@ class ShipmentCreateSerializer(ShipmentSerializer):
         if settings.PROFILES_ENABLED:
             response = settings.REQUESTS_SESSION.get(
                 f'{settings.PROFILES_URL}/api/v1/storage_credentials/{storage_credentials_id}/',
-                headers={'Authorization': 'JWT {}'.format(self.context['auth'])})
+                headers={'Authorization': 'JWT {}'.format(self.auth)})
 
             if response.status_code != status.HTTP_200_OK:
                 raise serializers.ValidationError(
                     'User does not have access to this storage credential in ShipChain Profiles')
 
         return storage_credentials_id
+
+    def validate_gtx_required(self, gtx_required):
+        if settings.PROFILES_ENABLED:
+            if gtx_required and not self.user.has_perm('gtx.shipment_use'):
+                raise PermissionDenied('User does not have access to enable GTX for this shipment')
+        return gtx_required
 
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
@@ -215,9 +229,10 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     class Meta:
         model = Shipment
-        exclude = (('owner_id', 'version', 'background_data_hash_interval', 'manual_update_hash_interval')
+        exclude = (('owner_id', 'version',
+                    'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
                    if settings.PROFILES_ENABLED else ('version', 'background_data_hash_interval',
-                                                      'manual_update_hash_interval'))
+                                                      'manual_update_hash_interval', 'asset_physical_id'))
         read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                             'storage_credentials_id', 'contract_version', 'state')
 
@@ -258,7 +273,6 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         return instance
 
     def validate_device_id(self, device_id):
-        auth = self.context['auth']
         if not device_id:
             if not self.instance.device:
                 return None
@@ -266,7 +280,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                 raise serializers.ValidationError('Cannot remove device from Shipment in progress')
             return None
 
-        device = Device.get_or_create_with_permission(auth, device_id)
+        device = Device.get_or_create_with_permission(self.auth, device_id)
 
         if hasattr(device, 'shipment'):
             if TransitState(device.shipment.state) == TransitState.IN_TRANSIT:
@@ -283,6 +297,19 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         if delivery_act <= datetime.now(timezone.utc):
             return delivery_act
         raise serializers.ValidationError('Cannot update Shipment with future delivery_act')
+
+    def validate_gtx_required(self, gtx_required):
+        if self.instance.gtx_required == gtx_required:
+            return gtx_required
+
+        if settings.PROFILES_ENABLED:
+            if (self.instance.gtx_required or gtx_required) and not self.user.has_perm('gtx.shipment_use'):
+                raise PermissionDenied('User does not have access to modify GTX for this shipment')
+
+        if TransitState(self.instance.state).value > TransitState.AWAITING_PICKUP.value:
+            raise serializers.ValidationError('Cannot modify GTX for a shipment in progress')
+
+        return gtx_required
 
 
 class ShipmentTxSerializer(serializers.ModelSerializer):
@@ -304,7 +331,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shipment
-        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval')
+        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
         meta_fields = ('async_job_id',)
         if settings.PROFILES_ENABLED:
             read_only_fields = ('owner_id',)
@@ -329,7 +356,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         exclude = ('owner_id', 'storage_credentials_id', 'background_data_hash_interval',
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id', 'manual_update_hash_interval',
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours',
-                   'geofences', 'assignee_id', )
+                   'geofences', 'assignee_id', 'gtx_required')
 
 
 class ShipmentOverviewSerializer(serializers.ModelSerializer):

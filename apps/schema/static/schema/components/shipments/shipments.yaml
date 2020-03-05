@@ -26,7 +26,6 @@ get:
   - $ref: 'parameters.yaml#/final_destination_location__state'
   - $ref: 'parameters.yaml#/final_destination_location__postal_code'
   - $ref: 'parameters.yaml#/final_destination_location__country'
-  - $ref: 'parameters.yaml#/asset_physical_id'
   - $ref: 'parameters.yaml#/asset_custodian_id'
   - $ref: 'parameters.yaml#/assignee_id'
   - $ref: 'parameters.yaml#/customer_fields__has_key'

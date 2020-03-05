@@ -12,7 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from datetime import datetime
-import hashlib
 
 import pytest
 import pytz
@@ -20,7 +19,7 @@ from dateutil.parser import parse as dt_parse
 from dateutil.relativedelta import relativedelta
 from rest_framework import status
 from rest_framework.reverse import reverse
-from shipchain_common.test_utils import datetimeAlmostEqual
+from shipchain_common.test_utils import datetimeAlmostEqual, AssertionHelper
 
 from apps.shipments.models import TransitState
 from apps.shipments.serializers import ActionType
@@ -74,6 +73,33 @@ def test_pickup(api_client, shipment):
     # Can't pickup when IN_TRANSIT
     response = api_client.post(url, data=action, format='json')
     assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+def test_pickup_with_gtx_required(api_client, shipment):
+    assert shipment.pickup_act is None
+    shipment.gtx_required = True
+    shipment.save()
+
+    url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
+
+    action = {
+        'action_type': ActionType.PICK_UP.name
+    }
+
+    # If gtx_required, pickup requires an asset_physical_id
+    response = api_client.post(url, data=action, format='json')
+    AssertionHelper.HTTP_403(response, error='In order to proceed with this shipment pick up, you need to provide a '
+                                             'value for the field [Shipment.asset_physical_id]')
+
+    action['asset_physical_id'] = 'nfc_tag'
+    response = api_client.post(url, data=action, format='json')
+    AssertionHelper.HTTP_200(response,
+                             entity_refs=AssertionHelper.EntityRef(
+                                 resource='Shipment',
+                                 pk=shipment.id,
+                                 attributes={'state': TransitState.IN_TRANSIT.name})
+                             )
 
 
 @pytest.mark.django_db
@@ -157,6 +183,48 @@ def test_dropoff(api_client, shipment):
 
 
 @pytest.mark.django_db
+def test_dropoff_asset_physical_id(api_client, shipment):
+    assert shipment.delivery_act is None
+
+    # Set NFC/Asset ID
+    super_secret_nfc_id = 'package123'
+
+    shipment.pick_up(asset_physical_id=super_secret_nfc_id)
+    shipment.save()
+
+    shipment.arrival()
+    shipment.save()
+
+    url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
+    action = {
+        'action_type': ActionType.DROP_OFF.name
+    }
+
+    # asset_physical_id set on instance but no raw_asset_physical_id should return error
+    response = api_client.post(url, data=action, format='json')
+    AssertionHelper.HTTP_403(response, error='Hash of asset tag does not match value specified in '
+                                             'Shipment.asset_physical_id')
+
+    action['raw_asset_physical_id'] = 'package987'
+
+    # asset_physical_id set on instance but incorrect raw_asset_physical_id should return error
+    response = api_client.post(url, data=action, format='json')
+    AssertionHelper.HTTP_403(response, error='Hash of asset tag does not match value specified in '
+                                             'Shipment.asset_physical_id')
+
+    action['raw_asset_physical_id'] = super_secret_nfc_id
+
+    # asset_physical_id set on instance and matching raw_asset_physical_id should succeed
+    response = api_client.post(url, data=action, format='json')
+    AssertionHelper.HTTP_200(response,
+                             entity_refs=AssertionHelper.EntityRef(
+                                 resource='Shipment',
+                                 pk=shipment.id,
+                                 attributes={'state': TransitState.DELIVERED.name})
+                             )
+
+
+@pytest.mark.django_db
 def test_readonly_state(api_client, shipment):
     assert TransitState(shipment.state) == TransitState.AWAITING_PICKUP
 
@@ -174,37 +242,3 @@ def test_shadow_state_updates(api_client, mocked_iot_api, shipment_with_device):
     shipment_with_device.save()
     call_count += 1  # Status should have been updated in the shadow
     assert call_count == mocked_iot_api.call_count
-
-
-@pytest.mark.django_db
-def test_dropoff_gtx(api_client, shipment):
-    assert shipment.delivery_act is None
-
-    # Set NFC/Asset ID
-    super_secret_nfc_id = 'package123'
-    shipment.asset_physical_id = hashlib.sha256(super_secret_nfc_id.encode()).hexdigest()
-    shipment.save()
-
-    shipment.pick_up()
-    shipment.save()
-
-    shipment.arrival()
-    shipment.save()
-
-    url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
-    action = {
-        'action_type': ActionType.DROP_OFF.name
-    }
-
-    response = api_client.post(url, data=action, format='json')
-    assert response.status_code == status.HTTP_403_FORBIDDEN  # No asset ID
-
-    action['raw_asset_physical_id'] = 'package987'
-
-    response = api_client.post(url, data=action, format='json')
-    assert response.status_code == status.HTTP_403_FORBIDDEN  # Invalid asset ID
-
-    action['raw_asset_physical_id'] = super_secret_nfc_id
-
-    response = api_client.post(url, data=action, format='json')
-    assert response.status_code == status.HTTP_200_OK

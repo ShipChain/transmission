@@ -36,6 +36,7 @@ class ShipmentActionRequestSerializer(serializers.Serializer):
     tracking_data = serializers.CharField(required=False, allow_null=True)
     document_id = serializers.CharField(required=False, allow_null=True)
     raw_asset_physical_id = serializers.CharField(required=False, allow_null=True)
+    asset_physical_id = serializers.CharField(required=False, allow_null=True)
 
     def validate_action_type(self, action_type):
         shipment = self.context['shipment']

@@ -18,7 +18,7 @@ def postprocess_postman(src_path, dest_path):
             item['request']['body']['formdata'][1]['value'] = '{{jwt_password}}'
             item['request']['body']['formdata'][2]['value'] = 892633
             item['request']['body']['formdata'][3]['value'] = 'password'
-            item['request']['body']['formdata'][4]['value'] = 'openid email'
+            item['request']['body']['formdata'][4]['value'] = 'openid email permissions'
             item['request']['body']['formdata'][5]['disabled'] = True
 
     data['event'] = [
@@ -55,7 +55,7 @@ def postprocess_postman(src_path, dest_path):
                     "description: {content:\"\", type:\"text/plain\"}},",
                     "                {key: \"grant_type\", value: 'password', disabled: false, "
                     "description: {content:\"\", type:\"text/plain\"}},",
-                    "                {key: \"scope\", value: 'openid email', disabled: false, "
+                    "                {key: \"scope\", value: 'openid email permissions', disabled: false, "
                     "description: {content:\"\", type:\"text/plain\"}},",
                     "            ]",
                     "        }",

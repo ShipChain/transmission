@@ -1672,7 +1672,7 @@
             "                {key: \"username\", value: usr, disabled: false, description: {content:\"\", type:\"text/plain\"}},",
             "                {key: \"password\", value: pwd, disabled: false, description: {content:\"\", type:\"text/plain\"}},",
             "                {key: \"grant_type\", value: 'password', disabled: false, description: {content:\"\", type:\"text/plain\"}},",
-            "                {key: \"scope\", value: 'openid email', disabled: false, description: {content:\"\", type:\"text/plain\"}},",
+            "                {key: \"scope\", value: 'openid email permissions', disabled: false, description: {content:\"\", type:\"text/plain\"}},",
             "            ]",
             "        }",
             "    }",
