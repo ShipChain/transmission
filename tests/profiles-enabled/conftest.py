@@ -109,15 +109,6 @@ def shipper_user(shipper_token):
     return passive_credentials_auth(shipper_token)
 
 
-class JsonAPIClient(APIClient):
-
-    def post(self, path, data=None, format='json', content_type=None, follow=False, **extra):
-        return super().post(path, data=data, format=format, content_type=content_type, follow=follow, **extra)
-
-    def patch(self, path, data=None, format='json', content_type=None, follow=False, **extra):
-        return super().patch(path, data=data, format=format, content_type=content_type, follow=follow, **extra)
-
-
 @pytest.fixture
 def user_alice_id():
     return random_id()
@@ -130,12 +121,12 @@ def user_bob_id():
 
 @pytest.fixture
 def no_user_api_client():
-    return JsonAPIClient()
+    return APIClient()
 
 
 @pytest.fixture
 def client_alice(user_alice_id):
-    api_client = JsonAPIClient()
+    api_client = APIClient()
     token = get_jwt(username='alice@shipchain.io', sub=user_alice_id, organization_id=random_id())
     api_client.force_authenticate(user=passive_credentials_auth(token), token=token)
     return api_client
@@ -143,7 +134,7 @@ def client_alice(user_alice_id):
 
 @pytest.fixture
 def client_bob(user_bob_id):
-    api_client = JsonAPIClient()
+    api_client = APIClient()
     token = get_jwt(username='bob@shipchain.io', sub=user_bob_id, organization_id=random_id())
     api_client.force_authenticate(user=passive_credentials_auth(token), token=token)
     return api_client
@@ -184,12 +175,14 @@ def mocked_is_shipper(shipper_user, http_pretty, shipment):
                              body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
     return shipper_user
 
+
 @pytest.fixture
 def mocked_storage_credential(http_pretty, shipment):
     http_pretty.register_uri(http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/"
                              f"{shipment.storage_credentials_id}/?is_active", body=json.dumps({'good': 'good'}),
                              status=status.HTTP_200_OK)
+
 
 @pytest.fixture
 def mocked_not_shipper(http_pretty, shipment):
