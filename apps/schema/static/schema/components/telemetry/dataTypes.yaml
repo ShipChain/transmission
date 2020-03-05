@@ -26,7 +26,8 @@ model:
 hardwareId:
   properties:
     hardware_id:
-      <<: *uuid
+      type: string
+      example: '28FF5DDC631603C7'
       title: hardware_id
       description: Sensor UUID associated with the telemetry data
 

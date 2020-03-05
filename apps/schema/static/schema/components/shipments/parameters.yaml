@@ -44,7 +44,6 @@ has_final_destination_location:
     type: boolean
     example: true
 
-
 ship_to_location__city:
   name: ship_to_location__city
   in: query
@@ -246,7 +245,8 @@ hardwareId:
   in: query
   description: hardware ID of the device sensor
   schema:
-    $ref: '#/dataTypes/uuid'
+    type: string
+    example: 28FF5DDC631603C7
 
 sensorId:
   required: false

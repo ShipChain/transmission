@@ -17,7 +17,7 @@ from string import Template
 
 from channels.db import database_sync_to_async
 from enumfields import Enum
-from rest_framework_json_api.renderers import JSONRenderer as JSON_VNDRenderer
+from rest_framework_json_api.renderers import JSONRenderer as JSONAPIRenderer
 from rest_framework.renderers import JSONRenderer
 
 from apps.authentication import AsyncJsonAuthConsumer
@@ -47,7 +47,7 @@ class AppsConsumer(AsyncJsonAuthConsumer):
         job = AsyncJob.objects.get(id=job_id)
         response = AsyncJobSerializer(job)
 
-        asyncjob_json = JSON_VNDRenderer().render(response.data, renderer_context={'view': JobsViewSet()}).decode()
+        asyncjob_json = JSONAPIRenderer().render(response.data, renderer_context={'view': JobsViewSet()}).decode()
         return Template('{"event": "$event", "data": $asyncjob}').substitute(
             event=EventTypes.asyncjob_update.name,
             asyncjob=asyncjob_json
@@ -63,7 +63,7 @@ class AppsConsumer(AsyncJsonAuthConsumer):
         response = ShipmentTxSerializer(shipment)
         response.instance.async_job_id = async_jobs.latest('created_at').id if async_jobs else None
 
-        shipment_json = JSON_VNDRenderer().render(response.data, renderer_context={'view': ShipmentViewSet()}).decode()
+        shipment_json = JSONAPIRenderer().render(response.data, renderer_context={'view': ShipmentViewSet()}).decode()
         return Template('{"event": "$event", "data": $shipment}').substitute(
             event=EventTypes.shipment_update.name,
             shipment=shipment_json,
