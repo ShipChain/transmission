@@ -43,8 +43,8 @@ def devices():
 @pytest.fixture
 def shipments_with_device(user, user2, devices, mocked_engine_rpc, mocked_iot_api):
     list_shipment = []
-    owner_id = user.token.payload['organization_id']
-    third_owner_id = user2.token.payload['organization_id']
+    owner_id = user.token.get('organization_id')
+    third_owner_id = user2.token.get('organization_id')
 
     for device in devices:
         list_shipment.append(Shipment.objects.create(vault_id=random_id(),

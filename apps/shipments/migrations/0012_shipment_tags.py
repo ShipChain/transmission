@@ -9,7 +9,7 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0009_add_shipment_assignee_field'),
+        ('shipments', '0011_add_shipmentnote_organization_name_username_fields'),
     ]
 
     operations = [

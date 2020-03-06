@@ -15,7 +15,7 @@ limitations under the License.
 """
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
 
 from apps.permissions import get_owner_id
@@ -30,24 +30,22 @@ class ShipmentTagSerializer(serializers.ModelSerializer):
 
 
 class ShipmentTagCreateSerializer(ShipmentTagSerializer):
+    shipment_id = serializers.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.initial_data['shipment_id'] = self.context['view'].kwargs['shipment_pk']
+
+        if settings.PROFILES_ENABLED:
+            self.initial_data['owner_id'] = get_owner_id(self.context['request'])
 
     class Meta:
         model = ShipmentTag
-        if settings.PROFILES_ENABLED:
-            exclude = ('shipment', 'owner_id', )
-        else:
-            exclude = ('shipment', )
-
-    def validate(self, attrs):
-
-        attrs['shipment_id'] = self.context['view'].kwargs.get('shipment_pk')
-        if settings.PROFILES_ENABLED:
-            attrs['owner_id'] = get_owner_id(self.context['request'])
-
-        try:
-            ShipmentTag(**attrs).validate_unique()
-        except ValidationError:
-            raise serializers.ValidationError(f'This shipment already has a tag with, `tag_type: {attrs["tag_type"]}` '
-                                              f'and `tag_value: {attrs["tag_value"]}`.')
-
-        return attrs
+        fields = ('owner_id', 'shipment_id', 'tag_type', 'tag_value', )
+        validators = [
+            UniqueTogetherValidator(
+                queryset=ShipmentTag.objects.all(),
+                fields=['shipment_id', 'tag_type', 'tag_value'],
+                message='This shipment already has a tag with the provided [tag_type] and [tag_value].'
+            )
+        ]

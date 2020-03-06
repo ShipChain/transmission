@@ -94,8 +94,8 @@ def user2(token2):
 
 
 @pytest.fixture(scope='session')
-def org2_id(user_2):
-    return user_2.token.get('organization_id', None)
+def org2_id(user2):
+    return user2.token.get('organization_id', None)
 
 
 @pytest.fixture(scope='session')

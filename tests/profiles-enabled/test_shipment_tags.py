@@ -16,6 +16,7 @@ import uuid
 
 import pytest
 from rest_framework.reverse import reverse
+from shipchain_common.test_utils import AssertionHelper
 
 from apps.shipments.models import ShipmentTag
 
@@ -76,148 +77,150 @@ def shipment_tags(org_id, shipment, second_shipment, shipment_tag_creation_data,
     return tags
 
 @pytest.fixture
-def entity_shipment_tagged(json_asserter, shipment, shipment_tags):
-    return json_asserter.EntityRef(resource='Shipment',
-                                   pk=shipment.id,
-                                   relationships={
-                                       'shipment_tags': json_asserter.EntityRef(
-                                           resource='ShipmentTag', pk=shipment_tags[0].id)}
-                                   )
+def entity_shipment_tagged(shipment, shipment_tags):
+    return AssertionHelper.EntityRef(resource='Shipment',
+                                     pk=shipment.id,
+                                     relationships={
+                                         'tags': AssertionHelper.EntityRef(
+                                             resource='ShipmentTag', pk=shipment_tags[0].id)
+                                     })
 
 @pytest.fixture
-def entity_second_shipment_tagged(json_asserter, second_shipment, shipment_tags):
-    return json_asserter.EntityRef(resource='Shipment',
-                                   pk=second_shipment.id,
-                                   relationships={
-                                       'shipment_tags': json_asserter.EntityRef(
-                                           resource='ShipmentTag', pk=shipment_tags[1].id)}
-                                   )
+def entity_second_shipment_tagged(second_shipment, shipment_tags):
+    return AssertionHelper.EntityRef(resource='Shipment',
+                                     pk=second_shipment.id,
+                                     relationships={
+                                         'tags': AssertionHelper.EntityRef(
+                                             resource='ShipmentTag', pk=shipment_tags[1].id)
+                                     })
 
 @pytest.fixture
-def entity_shipment_tag_included(json_asserter, shipment, shipment_tags, shipment_tag_creation_data):
-    return json_asserter.EntityRef(resource='ShipmentTag',
-                                   pk=str(shipment_tags[0].id),
-                                   attributes={
-                                       'tag_type': shipment_tag_creation_data['tag_type'],
-                                        'tag_value': shipment_tag_creation_data['tag_value']}
-                                   )
+def entity_shipment_tag_included(shipment_tags):
+    return AssertionHelper.EntityRef(resource='ShipmentTag',pk=str(shipment_tags[0].id),
+                                     attributes={
+                                         'tag_type': shipment_tags[0].tag_type,
+                                         'tag_value': shipment_tags[0].tag_value})
 
 @pytest.fixture
-def entity_second_shipment_tag_included(json_asserter, second_shipment, shipment_tags, shipment_tag_location):
-    return json_asserter.EntityRef(resource='ShipmentTag',
-                                   pk=str(shipment_tags[1].id),
-                                   attributes={
-                                       'tag_type': shipment_tag_location['tag_type'],
-                                        'tag_value': shipment_tag_location['tag_value']}
-                                   )
+def entity_second_shipment_tag_included(shipment_tags):
+    return AssertionHelper.EntityRef(resource='ShipmentTag',
+                                     pk=str(shipment_tags[1].id),
+                                     attributes={
+                                         'tag_type': shipment_tags[1].tag_type,
+                                         'tag_value': shipment_tags[1].tag_value})
 
 
 @pytest.mark.django_db
 def test_org_user_shipment_tag(org_id, api_client, unauthenticated_api_client, shipment, shipment_tag_creation_data,
                                missing_tag_type_creation_data, missing_tag_value_creation_data,
-                               space_in_tag_type_creation_data, space_in_tag_value_creation_data,
-                               entity_shipment_relationship, json_asserter):
+                               space_in_tag_type_creation_data, space_in_tag_value_creation_data):
 
     url = reverse('shipment-tags-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
     # An unauthenticated user cannot tag a shipment
     response = unauthenticated_api_client.post(url, shipment_tag_creation_data, format='json')
-    json_asserter.HTTP_403(response, error='You do not have permission to perform this action.')
+    AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
 
     # An org user cannot tag a shipment with missing tag_type in creation data
     response = api_client.post(url, missing_tag_type_creation_data, format='json')
-    json_asserter.HTTP_400(response, error='This field is required.')
+    AssertionHelper.HTTP_400(response, error='This field is required.')
 
     # An org user cannot tag a shipment with missing tag_value in creation data
     response = api_client.post(url, missing_tag_value_creation_data, format='json')
-    json_asserter.HTTP_400(response, error='This field is required.')
+    AssertionHelper.HTTP_400(response, error='This field is required.')
 
     # An org user cannot tag a shipment with space in tag_value field creation data
     response = api_client.post(url, space_in_tag_value_creation_data, format='json')
-    json_asserter.HTTP_400(response, error='Space(s) not allowed in this field')
+    AssertionHelper.HTTP_400(response, error='Space(s) not allowed in this field')
 
     # An org user cannot tag a shipment with space in tag_type field creation data
     response = api_client.post(url, space_in_tag_type_creation_data, format='json')
-    json_asserter.HTTP_400(response, error='Space(s) not allowed in this field')
+    AssertionHelper.HTTP_400(response, error='Space(s) not allowed in this field')
 
     # An org user with proper tag data definition, should tag a shipment
     response = api_client.post(url, shipment_tag_creation_data, format='json')
-    json_asserter.HTTP_201(response,
-                           entity_refs=json_asserter.EntityRef(
+    AssertionHelper.HTTP_201(response,
+                           entity_refs=AssertionHelper.EntityRef(
                                resource='ShipmentTag',
                                attributes={'tag_type': shipment_tag_creation_data['tag_type'],
                                            'tag_value': shipment_tag_creation_data['tag_value'],
                                            'owner_id': org_id},
-                               relationships={'shipment': entity_shipment_relationship})
+                               relationships={
+                                   'shipment': AssertionHelper.EntityRef(resource='Shipment', pk=shipment.id)
+                               })
                            )
 
     # Trying to tag a shipment with an existing (tag_type, tag_value) pair should fail
     response = api_client.post(url, shipment_tag_creation_data, format='json')
-    json_asserter.HTTP_400(response, error=f'This shipment already has a tag with, '
-                                           f'`tag_type: {shipment_tag_creation_data["tag_type"]}` and '
-                                           f'`tag_value: {shipment_tag_creation_data["tag_value"]}`.')
+    AssertionHelper.HTTP_400(response, error='This shipment already has a tag with the provided [tag_type] and [tag_value].')
 
 @pytest.mark.django_db
 def test_shipper_carrier_moderator_shipment_tag(org2_id, user2_api_client, mocked_is_shipper, mocked_not_carrier,
-                                                mocked_not_moderator, shipment, shipment_tag_creation_data,
-                                                entity_shipment_relationship, json_asserter):
+                                                mocked_not_moderator, shipment, shipment_tag_creation_data):
 
     url = reverse('shipment-tags-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
-    # User_2 does not belong to the shipment organization but is the shipment shipper.
+    # User2 does not belong to the shipment organization but is the shipment shipper.
     # he should be able to tag the shipment
     response = user2_api_client.post(url, shipment_tag_creation_data, format='json')
-    json_asserter.HTTP_201(response,
-                           entity_refs=json_asserter.EntityRef(
+    AssertionHelper.HTTP_201(response,
+                           entity_refs=AssertionHelper.EntityRef(
                                resource='ShipmentTag',
                                attributes={'tag_type': shipment_tag_creation_data['tag_type'],
                                            'tag_value': shipment_tag_creation_data['tag_value'],
                                            'owner_id': org2_id},
-                               relationships={'shipment': entity_shipment_relationship})
+                               relationships={
+                                   'shipment': AssertionHelper.EntityRef(resource='Shipment', pk=shipment.id)
+                               })
                            )
 
 @pytest.mark.django_db
 def test_authenticated_user_not_in_shipment_org(user2_api_client, mocked_not_shipper, mocked_not_carrier,
-                                                mocked_not_moderator, shipment, shipment_tag_creation_data,
-                                                json_asserter):
+                                                mocked_not_moderator, shipment, shipment_tag_creation_data):
 
     url = reverse('shipment-tags-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
-    # User_2 does not belong to the shipment organization and is neither shipper, carrier nor moderator.
+    # User2 does not belong to the shipment organization and is neither shipper, carrier nor moderator.
     # he should not be able to tag the shipment
     response = user2_api_client.post(url, shipment_tag_creation_data, format='json')
-    json_asserter.HTTP_403(response, error='You do not have permission to perform this action.')
+    AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
 
 @pytest.mark.django_db
 def test_list_tagged_shipments(api_client, shipment_tag_creation_data, shipment_tag_location, shipment_tags,
                                entity_shipment_tagged, entity_second_shipment_tagged, entity_shipment_tag_included,
-                               entity_second_shipment_tag_included, json_asserter):
+                               entity_second_shipment_tag_included):
 
     shipment_list_url = reverse('shipment-list', kwargs={'version': 'v1'})
 
     response = api_client.get(shipment_list_url)
-    json_asserter.HTTP_200(response,
-                           is_list=True,
-                           entity_refs=[entity_shipment_tagged, entity_second_shipment_tagged],
-                           included=[entity_shipment_tag_included, entity_second_shipment_tag_included])
+    AssertionHelper.HTTP_200(response,
+                             is_list=True,
+                             entity_refs=[
+                                 entity_shipment_tagged,
+                                 entity_second_shipment_tagged
+                             ],
+                             included=[
+                                 entity_shipment_tag_included,
+                                 entity_second_shipment_tag_included
+                             ])
 
     # Test case insensitive shipment filter by tag_type, should return one entity.
     response = api_client.get(f'{shipment_list_url}?tag_type={shipment_tag_creation_data["tag_type"].upper()}')
-    json_asserter.HTTP_200(response,
-                           is_list=True,
-                           entity_refs=entity_shipment_tagged,
-                           included=entity_shipment_tag_included)
+    AssertionHelper.HTTP_200(response,
+                             is_list=True,
+                             entity_refs=entity_shipment_tagged,
+                             included=entity_shipment_tag_included)
 
     # Test case insensitive shipment filter by tag_value, should return one entity.
     response = api_client.get(f'{shipment_list_url}?tag_value={shipment_tag_location["tag_value"].upper()}')
-    json_asserter.HTTP_200(response,
-                           is_list=True,
-                           entity_refs=entity_second_shipment_tagged,
-                           included=entity_second_shipment_tag_included)
+    AssertionHelper.HTTP_200(response,
+                             is_list=True,
+                             entity_refs=entity_second_shipment_tagged,
+                             included=entity_second_shipment_tag_included)
 
     # Test search shipment through tag fields, should return one entity.
     response = api_client.get(f'{shipment_list_url}?search={shipment_tag_location["tag_value"][:4].lower()}')
-    json_asserter.HTTP_200(response,
-                           is_list=True,
-                           entity_refs=entity_second_shipment_tagged,
-                           included=entity_second_shipment_tag_included)
+    AssertionHelper.HTTP_200(response,
+                             is_list=True,
+                             entity_refs=entity_second_shipment_tagged,
+                             included=entity_second_shipment_tag_included)
