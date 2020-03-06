@@ -10,7 +10,7 @@ attributes:
   allOf:
   - $ref: '#/tag/tagType'
   - $ref: '#/tag/tagValue'
-  - $ref: '#/tag/authorId'
+  - $ref: '#/tag/ownerId'
   - $ref: '#/dataTypes/createdAt'
 
 getResource:

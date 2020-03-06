@@ -34,10 +34,11 @@ class ShipmentTagCreateSerializer(ShipmentTagSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.initial_data['shipment_id'] = self.context['view'].kwargs['shipment_pk']
+        self.initial_data = self.initial_data.copy()
+        self.initial_data.update(shipment_id=self.context['view'].kwargs['shipment_pk'])
 
         if settings.PROFILES_ENABLED:
-            self.initial_data['owner_id'] = get_owner_id(self.context['request'])
+            self.initial_data.update(owner_id=get_owner_id(self.context['request']))
 
     class Meta:
         model = ShipmentTag

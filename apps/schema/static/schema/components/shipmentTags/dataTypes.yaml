@@ -1,12 +1,12 @@
 uuid: &uuid
   $ref: '../core/dataTypes.yaml#/uuid'
 
-authorId:
+ownerId:
   properties:
-    user_id:
+    owner_id:
       <<: *uuid
       title: user_id
-      description: User UUID of the tag author
+      description: User UUID of the Shipment owner
 
 tagType:
   properties:
