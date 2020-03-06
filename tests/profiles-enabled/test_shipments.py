@@ -55,7 +55,6 @@ LOCATION_POSTAL_CODE = '29600'
 NEXT_TOKEN = 'DummyIotNextToken'
 SHIPMENT_ID = '332dc6c8-b89e-449e-a802-0bfe760f83ff'
 VAULT_HASH = '0xe9f28cb025350ef700158eed9a5b617a4f4185b31de06864fd02d67c839df583'
-GTX_PERMISSIONS = ['user.perm_1', 'gtx.shipment_use', 'user.perm_3']
 
 mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
 google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
@@ -70,7 +69,7 @@ class ShipmentAPITests(APITestCase):
         self.token3 = get_jwt(username='user3@shipchain.io', sub=OWNER_ID_3, organization_id=ORGANIZATION_ID)
         self.hashed_token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID, organization_id=ORGANIZATION_ID,
                                     background_data_hash_interval=25, manual_update_hash_interval=30)
-        self.gtx_token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID, organization_id=ORGANIZATION_ID, permissions=GTX_PERMISSIONS,
+        self.gtx_token = get_jwt(username='user1@shipchain.io', sub=OWNER_ID, organization_id=ORGANIZATION_ID,
                                  features={'gtx': ['shipment_use']})
 
         self.user_1 = passive_credentials_auth(self.token)
