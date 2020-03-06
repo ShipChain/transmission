@@ -22,4 +22,12 @@ username:
       title: username
       description: Username of the shipment note author
       type: string
-      example: 'Alice [ShipChain]'
+      example: 'Alice'
+
+organizationName:
+  properties:
+    organization_name:
+      title: organization_name
+      description: Requester organization name
+      type: string
+      example: 'ShipChain'

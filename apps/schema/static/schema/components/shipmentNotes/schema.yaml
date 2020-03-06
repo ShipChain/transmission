@@ -9,6 +9,7 @@ attributes:
     - $ref: '#/note/message'
     - $ref: '#/note/authorId'
     - $ref: '#/note/username'
+    - $ref: '#/note/organizationName'
     - $ref: '#/dataTypes/createdAt'
 
 relationships:
