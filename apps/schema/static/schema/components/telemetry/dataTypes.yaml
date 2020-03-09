@@ -43,7 +43,7 @@ timestamp:
   properties:
     timestamp:
       title: timestamp
-      description: Timestamp of the telemetry fix (ISO 8601 format)
+      description: Timestamp of the telemetry sample (ISO 8601 format)
       type: string
       example: '2018-08-22T17:44:39.874352'
 
