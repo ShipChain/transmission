@@ -18,11 +18,13 @@ from datetime import datetime, timezone, timedelta
 import pytest
 from django.conf import settings as test_settings
 from moto import mock_iot
+from django.urls import reverse
+
 from rest_framework import status
 from rest_framework.request import ForcedAuthentication
 from rest_framework.test import APIClient
-from shipchain_common.test_utils import get_jwt
 from shipchain_common.utils import random_id
+from shipchain_common.test_utils import get_jwt, AssertionHelper
 
 from apps.authentication import passive_credentials_auth
 from apps.shipments.models import Shipment, Device, PermissionLink
@@ -169,6 +171,47 @@ def user2_api_client(user2, token2):
 
 
 @pytest.fixture
+def user_alice_id():
+    return random_id()
+
+
+@pytest.fixture
+def user_bob_id():
+    return random_id()
+
+
+@pytest.fixture
+def no_user_api_client():
+    return APIClient()
+
+
+@pytest.fixture
+def user_alice(user_alice_id):
+    return passive_credentials_auth(
+        get_jwt(username='alice@shipchain.io', sub=user_alice_id, organization_id=random_id()))
+
+
+@pytest.fixture
+def user_bob(user_bob_id):
+    return passive_credentials_auth(
+        get_jwt(username='bob@shipchain.io', sub=user_bob_id, organization_id=random_id()))
+
+
+@pytest.fixture
+def client_alice(user_alice):
+    api_client = APIClient()
+    api_client.force_authenticate(user=user_alice)
+    return api_client
+
+
+@pytest.fixture
+def client_bob(user_bob):
+    api_client = APIClient()
+    api_client.force_authenticate(user_bob)
+    return api_client
+
+
+@pytest.fixture
 def mocked_is_shipper(shipper_user, http_pretty, shipment):
     http_pretty.register_uri(http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.shipper_wallet_id}/?is_active",
@@ -276,7 +319,6 @@ def org2_shipment(mocked_engine_rpc, mocked_iot_api):
                                    storage_credentials_id=random_id(),
                                    owner_id=ORGANIZATION2_ID)
 
-
 @pytest.fixture
 def shipment_alice(mocked_engine_rpc, mocked_iot_api, user_alice_id):
     return Shipment.objects.create(vault_id=VAULT_ID,
@@ -284,6 +326,35 @@ def shipment_alice(mocked_engine_rpc, mocked_iot_api, user_alice_id):
                                    shipper_wallet_id=SHIPPER_ID,
                                    storage_credentials_id=SHIPPER_ID,
                                    owner_id=user_alice_id)
+
+
+@pytest.fixture
+def shipment_alice_two(mocked_engine_rpc, mocked_iot_api, user_alice_id):
+    return Shipment.objects.create(vault_id=VAULT_ID,
+                                   carrier_wallet_id=SHIPPER_ID,
+                                   shipper_wallet_id=SHIPPER_ID,
+                                   storage_credentials_id=SHIPPER_ID,
+                                   owner_id=user_alice_id)
+
+
+@pytest.fixture
+def url_shipment_alice(shipment_alice):
+    return reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_alice.id})
+
+
+@pytest.fixture
+def url_shipment_alice_two(shipment_alice_two):
+    return reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_alice_two.id})
+
+
+@pytest.fixture
+def entity_ref_shipment_alice(shipment_alice):
+    return AssertionHelper.EntityRef(resource='Shipment', pk=shipment_alice.id)
+
+
+@pytest.fixture
+def entity_ref_shipment_alice_two(shipment_alice_two):
+    return AssertionHelper.EntityRef(resource='Shipment', pk=shipment_alice_two.id)
 
 
 @pytest.fixture

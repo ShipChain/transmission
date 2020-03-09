@@ -18,7 +18,6 @@ import logging
 from datetime import datetime, timezone
 
 from django.db import models
-
 from shipchain_common.utils import random_id
 
 from .shipment import Shipment

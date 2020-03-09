@@ -99,6 +99,8 @@ if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
+    URL_SHORTENER_HOST = 't.shipchain.io/'
+    URL_SHORTENER_URL = f'https://{URL_SHORTENER_HOST}'
 
 else:
     DEBUG = os.environ.get('FORCE_DEBUG', True)
@@ -106,6 +108,8 @@ else:
     DEV_SECRET_KEY = 'devsecretkey' * 19  # noqa
     SECRET_KEY = os.environ.get('SECRET_KEY', DEV_SECRET_KEY)
     FRONTEND_DOMAIN = 'localhost:3000'
+    URL_SHORTENER_HOST = 'fglcol31yk.execute-api.us-east-1.amazonaws.com'
+    URL_SHORTENER_URL = f'https://{URL_SHORTENER_HOST}/test'
 
 # Application definition
 

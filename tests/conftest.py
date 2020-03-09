@@ -108,6 +108,7 @@ def boto():
     boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
     return boto3
 
+
 @pytest.fixture
 def entity_shipment_relationship(json_asserter, shipment):
     return json_asserter.EntityRef(resource='Shipment', pk=shipment.id)
