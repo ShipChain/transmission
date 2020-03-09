@@ -1,0 +1,27 @@
+createResource:
+  allOf:
+    - $ref: 'schema.yaml#/resource'
+    - properties:
+        attributes:
+          $ref: '#/createAttributes'
+
+createAttributes:
+  required:
+    - tag_type
+    - tag_value
+  allOf:
+    - $ref: '#/tag/tagType'
+    - $ref: '#/tag/tagValue'
+
+createRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/createResource'
+
+tag:
+  $ref: dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/requestBody.yaml

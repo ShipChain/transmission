@@ -75,7 +75,7 @@ ship_to_location__country:
   description: Returns shipments with associated ship_to_location country.
   schema:
     type: string
-    example: USA
+    example: US
 
 ship_from_location__city:
   name: ship_from_location__city
@@ -107,7 +107,7 @@ ship_from_location__country:
   description: Returns shipments with associated ship_from_location country.
   schema:
     type: string
-    example: USA
+    example: US
 
 final_destination_location__city:
   name: final_destination_location__city
@@ -139,7 +139,25 @@ final_destination_location__country:
   description: Returns shipments with associated final_destination_location country.
   schema:
     type: string
-    example: USA
+    example: US
+
+tag_type:
+  name: tag_type
+  in: query
+  description: >
+    Returns shipments for which an associated  ShipmentTag.tag_type field contains the string fragment provided. This lookup is case insensitive.
+  schema:
+    type: string
+    example: Export
+
+tag_value:
+  name: tag_value
+  in: query
+  description: >
+    Returns shipments for which an associated ShipmentTag.tag_value field contains the string fragment provided. This lookup is case insensitive.
+  schema:
+    type: string
+    example: Europe
 
 state:
   name: state

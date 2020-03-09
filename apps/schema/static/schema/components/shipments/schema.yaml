@@ -152,6 +152,33 @@ device:
     device:
       $ref: '#/shipment/device'
 
+shipmentTags:
+  type: object
+  description: Relations for this resource
+  properties:
+    tags:
+      title: tags
+      type: object
+      description: Tags associated with the Shipment
+      properties:
+        meta:
+          type: object
+          title: meta
+          properties:
+            count:
+              title: count
+              description: Number of Tags associated with the Shipment
+              type: number
+              format: integer
+              example: 3
+        data:
+          type: array
+          items:
+            type: object
+            allOf:
+              - $ref: '#/shipmentTag/resource'
+              - $ref: '#/dataTypes/resourceId'
+
 relationships:
   type: object
   description: Relations for this resource
@@ -162,6 +189,7 @@ relationships:
   - $ref: '#/finalDestinationLocation'
   - $ref: '#/billToLocation'
   - $ref: '#/device'
+  - $ref: '#/shipmentTags'
 
 createAttributes:
   allOf:
@@ -261,6 +289,7 @@ included:
     anyOf:
     - $ref: '#/loadShipment/includedResource'
     - $ref: '#/location/includedResource'
+    - $ref: '#/includedTagResource'
 
 listResponse:
   allOf:
@@ -272,6 +301,33 @@ listResponse:
           $ref: '#/getResource'
       included:
         $ref: '#/included'
+
+includedTagResource:
+  title: Shipment Tag
+  description: Tag associated to the resource
+  type: object
+  allOf:
+    - $ref: '#/dataTypes/resourceId'
+    - $ref: '#/shipmentTag/resource'
+    - properties:
+        attributes:
+          $ref: '#/shipmentTag/attributes'
+    - properties:
+        relationships:
+          $ref: '#/shipmentInRelationship'
+
+shipmentInRelationship:
+  type: object
+  description: Relationships for this resource
+  properties:
+    shipment:
+      type: object
+      description: Shipment associated with this resource
+      properties:
+        data:
+          allOf:
+            - $ref: '#/resource'
+            - $ref: '#/dataTypes/resourcePk'
 
 shipment:
   $ref: dataTypes.yaml
@@ -287,6 +343,9 @@ location:
 
 messageRef:
   $ref: ../messages/schema.yaml
+
+shipmentTag:
+  $ref:  ../shipmentTags/schema.yaml
 
 jsonApi:
   $ref: ../jsonApi/schema.yaml

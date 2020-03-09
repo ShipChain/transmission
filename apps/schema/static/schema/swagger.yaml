@@ -52,6 +52,9 @@ paths:
   /api/v1/shipments/{shipment_id}/notes/{shipment_note_id}:
     $ref: components/shipmentNotes/noteId.yaml
 
+  /api/v1/shipments/{shipment_id}/tags:
+    $ref: components/shipmentTags/tags.yaml
+
   /api/v1/shipments/overview:
     $ref: components/shipmentsOverview/status.yaml
 

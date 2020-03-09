@@ -48,6 +48,7 @@ nested_router.register(r'transactions', eth.TransactionViewSet, base_name='shipm
 nested_router.register(r'permission_links', shipments.PermissionLinkViewSet, base_name='shipment-permissions')
 nested_router.register(r'history', shipments.ShipmentHistoryListView, base_name='shipment-history')
 nested_router.register(r'notes', shipments.ShipmentNoteViewSet, base_name='shipment-notes')
+nested_router.register(r'tags', shipments.ShipmentTagViewSet, base_name='shipment-tags')
 
 urlpatterns = [
     url('health', management.health_check, name='health'),

@@ -64,6 +64,7 @@ shadowData
 shipmentId
 ShipmentImport
 ShipmentNote
+ShipmentTag
 subhouse
 
 TrackingData

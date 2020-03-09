@@ -76,6 +76,11 @@ def gtx_user(gtx_token):
 
 
 @pytest.fixture(scope='session')
+def org_id(user):
+    return user.token.get('organization_id', None)
+
+
+@pytest.fixture(scope='session')
 def token2():
     return get_jwt(username='user2@shipchain.io',
                    sub=USER2_ID,
@@ -86,6 +91,11 @@ def token2():
 @pytest.fixture(scope='session')
 def user2(token2):
     return passive_credentials_auth(token2)
+
+
+@pytest.fixture(scope='session')
+def org2_id(user2):
+    return user2.token.get('organization_id', None)
 
 
 @pytest.fixture(scope='session')
@@ -188,6 +198,15 @@ def shipment(mocked_engine_rpc, mocked_iot_api):
                                    shipper_wallet_id=SHIPPER_ID,
                                    storage_credentials_id=random_id(),
                                    owner_id=USER_ID)
+
+
+@pytest.fixture
+def second_shipment(mocked_engine_rpc, mocked_iot_api):
+    return Shipment.objects.create(vault_id=VAULT_ID,
+                                   carrier_wallet_id=random_id(),
+                                   shipper_wallet_id=SHIPPER_ID,
+                                   storage_credentials_id=random_id(),
+                                   owner_id=ORGANIZATION_ID)
 
 @pytest.fixture
 def org2_shipment(mocked_engine_rpc, mocked_iot_api):

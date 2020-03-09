@@ -179,7 +179,7 @@ class IsOwnerShipperCarrierModerator(IsShipmentOwnerMixin,
 
         permission_classes = (IsAuthenticated, ShipmentExists, HasViewSetActionPermissions, IsShipperCarrierModerator, )
 
-    The declaration order of these classes matter.
+    The declaration order of these classes matters.
 
     """
 

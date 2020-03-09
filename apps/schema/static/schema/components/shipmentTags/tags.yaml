@@ -1,0 +1,42 @@
+post:
+  summary: Create Shipment Tag
+  description: |
+    Create a new `ShipmentTag` linked to the shipment in path.
+
+  operationId: createShipmentTag
+  parameters:
+    - $ref: '../shipments/parameters.yaml#/path'
+  tags:
+    - Shipments
+  responses:
+    '201':
+      description: "Created"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/createResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+    '429':
+      description: "Too Many Requests"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/429'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: 'requestBody.yaml#/createRequest'
+      application/json:
+        schema:
+          allOf:
+            - $ref: 'requestBody.yaml#/createAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+            - $ref: 'requestBody.yaml#/createAttributes'
