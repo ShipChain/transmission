@@ -63,51 +63,21 @@ def space_in_tag_value_creation_data():
 
 @pytest.fixture
 def shipment_tags(org_id, shipment, second_shipment, shipment_tag_creation_data, shipment_tag_location):
-    tags = []
-    tags.append(ShipmentTag.objects.create(tag_type=shipment_tag_creation_data['tag_type'],
-                                           tag_value=shipment_tag_creation_data['tag_value'],
-                                           shipment_id=shipment.id,
-                                           owner_id=uuid.UUID(org_id)))
+    return [
+        ShipmentTag.objects.create(
+            tag_type=shipment_tag_creation_data['tag_type'],
+            tag_value=shipment_tag_creation_data['tag_value'],
+            shipment_id=shipment.id,
+            owner_id=uuid.UUID(org_id)
+        ),
 
-    tags.append(ShipmentTag.objects.create(tag_type=shipment_tag_location['tag_type'],
-                                           tag_value=shipment_tag_location['tag_value'],
-                                           shipment_id=second_shipment.id,
-                                           owner_id=uuid.UUID(org_id)))
-
-    return tags
-
-@pytest.fixture
-def entity_shipment_tagged(shipment, shipment_tags):
-    return AssertionHelper.EntityRef(resource='Shipment',
-                                     pk=shipment.id,
-                                     relationships={
-                                         'tags': AssertionHelper.EntityRef(
-                                             resource='ShipmentTag', pk=shipment_tags[0].id)
-                                     })
-
-@pytest.fixture
-def entity_second_shipment_tagged(second_shipment, shipment_tags):
-    return AssertionHelper.EntityRef(resource='Shipment',
-                                     pk=second_shipment.id,
-                                     relationships={
-                                         'tags': AssertionHelper.EntityRef(
-                                             resource='ShipmentTag', pk=shipment_tags[1].id)
-                                     })
-
-@pytest.fixture
-def entity_shipment_tag_included(shipment_tags):
-    return AssertionHelper.EntityRef(resource='ShipmentTag',pk=str(shipment_tags[0].id),
-                                     attributes={
-                                         'tag_type': shipment_tags[0].tag_type,
-                                         'tag_value': shipment_tags[0].tag_value})
-
-@pytest.fixture
-def entity_second_shipment_tag_included(shipment_tags):
-    return AssertionHelper.EntityRef(resource='ShipmentTag',
-                                     pk=str(shipment_tags[1].id),
-                                     attributes={
-                                         'tag_type': shipment_tags[1].tag_type,
-                                         'tag_value': shipment_tags[1].tag_value})
+        ShipmentTag.objects.create(
+            tag_type=shipment_tag_location['tag_type'],
+            tag_value=shipment_tag_location['tag_value'],
+            shipment_id=second_shipment.id,
+            owner_id=uuid.UUID(org_id)
+        ),
+    ]
 
 
 @pytest.mark.django_db
@@ -186,9 +156,8 @@ def test_authenticated_user_not_in_shipment_org(user2_api_client, mocked_not_shi
     AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
 
 @pytest.mark.django_db
-def test_list_tagged_shipments(api_client, shipment_tag_creation_data, shipment_tag_location, shipment_tags,
-                               entity_shipment_tagged, entity_second_shipment_tagged, entity_shipment_tag_included,
-                               entity_second_shipment_tag_included):
+def test_list_tagged_shipments(api_client, shipment_tag_creation_data, shipment_tag_location,
+                               shipment_tags, shipment, second_shipment):
 
     shipment_list_url = reverse('shipment-list', kwargs={'version': 'v1'})
 
@@ -196,31 +165,84 @@ def test_list_tagged_shipments(api_client, shipment_tag_creation_data, shipment_
     AssertionHelper.HTTP_200(response,
                              is_list=True,
                              entity_refs=[
-                                 entity_shipment_tagged,
-                                 entity_second_shipment_tagged
+                                 AssertionHelper.EntityRef(resource='Shipment',
+                                                           pk=shipment.id,
+                                                           relationships={
+                                                               'tags': AssertionHelper.EntityRef(
+                                                                   resource='ShipmentTag', pk=shipment_tags[0].id)
+                                                           }),
+                                 AssertionHelper.EntityRef(resource='Shipment',
+                                                           pk=second_shipment.id,
+                                                           relationships={
+                                                               'tags': AssertionHelper.EntityRef(
+                                                                   resource='ShipmentTag', pk=shipment_tags[1].id)
+                                                           })
                              ],
                              included=[
-                                 entity_shipment_tag_included,
-                                 entity_second_shipment_tag_included
+                                 AssertionHelper.EntityRef(resource='ShipmentTag',
+                                                           pk=str(shipment_tags[0].id),
+                                                           attributes={
+                                                               'tag_type': shipment_tags[0].tag_type,
+                                                               'tag_value': shipment_tags[0].tag_value
+                                                           }),
+                                 AssertionHelper.EntityRef(resource='ShipmentTag',
+                                                           pk=str(shipment_tags[1].id),
+                                                           attributes={
+                                                               'tag_type': shipment_tags[1].tag_type,
+                                                               'tag_value': shipment_tags[1].tag_value
+                                                           })
                              ])
 
     # Test case insensitive shipment filter by tag_type, should return one entity.
     response = api_client.get(f'{shipment_list_url}?tag_type={shipment_tag_creation_data["tag_type"].upper()}')
     AssertionHelper.HTTP_200(response,
                              is_list=True,
-                             entity_refs=entity_shipment_tagged,
-                             included=entity_shipment_tag_included)
+                             entity_refs=AssertionHelper.EntityRef(resource='Shipment',
+                                                                   pk=shipment.id,
+                                                                   relationships={
+                                                                      'tags': AssertionHelper.EntityRef(
+                                                                          resource='ShipmentTag', pk=shipment_tags[0].id)
+                                                                   }),
+                             included=AssertionHelper.EntityRef(resource='ShipmentTag',
+                                                                pk=str(shipment_tags[0].id),
+                                                                attributes={
+                                                                    'tag_type': shipment_tags[0].tag_type,
+                                                                    'tag_value': shipment_tags[0].tag_value
+                                                                })
+                             )
 
     # Test case insensitive shipment filter by tag_value, should return one entity.
     response = api_client.get(f'{shipment_list_url}?tag_value={shipment_tag_location["tag_value"].upper()}')
     AssertionHelper.HTTP_200(response,
                              is_list=True,
-                             entity_refs=entity_second_shipment_tagged,
-                             included=entity_second_shipment_tag_included)
+                             entity_refs=AssertionHelper.EntityRef(resource='Shipment',
+                                                                   pk=second_shipment.id,
+                                                                   relationships={
+                                                                      'tags': AssertionHelper.EntityRef(
+                                                                         resource='ShipmentTag', pk=shipment_tags[1].id)
+                                                                   }),
+                             included=AssertionHelper.EntityRef(resource='ShipmentTag',
+                                                                pk=str(shipment_tags[1].id),
+                                                                attributes={
+                                                                    'tag_type': shipment_tags[1].tag_type,
+                                                                    'tag_value': shipment_tags[1].tag_value
+                                                                })
+                             )
 
     # Test search shipment through tag fields, should return one entity.
     response = api_client.get(f'{shipment_list_url}?search={shipment_tag_location["tag_value"][:4].lower()}')
     AssertionHelper.HTTP_200(response,
                              is_list=True,
-                             entity_refs=entity_second_shipment_tagged,
-                             included=entity_second_shipment_tag_included)
+                             entity_refs=AssertionHelper.EntityRef(resource='Shipment',
+                                                                   pk=second_shipment.id,
+                                                                   relationships={
+                                                                      'tags': AssertionHelper.EntityRef(
+                                                                         resource='ShipmentTag', pk=shipment_tags[1].id)
+                                                                   }),
+                             included=AssertionHelper.EntityRef(resource='ShipmentTag',
+                                                                pk=str(shipment_tags[1].id),
+                                                                attributes={
+                                                                    'tag_type': shipment_tags[1].tag_type,
+                                                                    'tag_value': shipment_tags[1].tag_value
+                                                                })
+                             )
