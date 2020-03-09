@@ -32,8 +32,12 @@ PROFILES_WALLET_URL = f'{settings.PROFILES_URL}/api/v1/wallet'
 LOG = logging.getLogger('transmission')
 
 
+def request_is_authenticated(request):
+    return request.user.is_authenticated and settings.PROFILES_ENABLED
+
+
 def get_user(request):
-    if request.user.is_authenticated:
+    if request_is_authenticated(request):
         return request.user.id, request.user.token.get('organization_id', None)
     return None, None
 
@@ -57,6 +61,18 @@ def get_owner_id(request):
 def has_owner_access(request, obj):
     user_id, organization_id = get_user(request)
     return (organization_id and obj.owner_id == organization_id) or obj.owner_id == user_id
+
+
+def get_organization_name(request):
+    if request_is_authenticated(request):
+        return request.user.token.get('organization_name', None)
+    return None
+
+
+def get_requester_username(request):
+    if request_is_authenticated(request):
+        return request.user.username
+    return None
 
 
 def shipment_exists(shipment_id):

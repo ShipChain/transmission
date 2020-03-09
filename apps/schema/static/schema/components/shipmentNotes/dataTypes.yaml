@@ -15,3 +15,19 @@ message:
       description: Note message to be associated to the shipment
       type: string
       example: 'Special instruction for the shipment.'
+
+username:
+  properties:
+    username:
+      title: username
+      description: Username of the shipment note author
+      type: string
+      example: 'Alice'
+
+organizationName:
+  properties:
+    organization_name:
+      title: organization_name
+      description: Organization of the shipment note author
+      type: string
+      example: 'ShipChain'

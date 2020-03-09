@@ -58,10 +58,3 @@ class ShipmentNoteViewSet(mixins.ConfigurableCreateModelMixin,
 
     def get_queryset(self):
         return self.queryset.filter(shipment_id=self.kwargs['shipment_pk'])
-
-    def perform_create(self, serializer):
-        if settings.PROFILES_ENABLED:
-            created = serializer.save(user_id=self.request.user.id, shipment_id=self.kwargs['shipment_pk'])
-        else:
-            created = serializer.save(shipment_id=self.kwargs['shipment_pk'])
-        return created

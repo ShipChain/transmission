@@ -15,10 +15,9 @@
 
 import pytest
 
-from rest_framework import status
 from rest_framework.reverse import reverse
 from shipchain_common.utils import random_id
-from shipchain_common.test_utils import create_form_content
+from shipchain_common.test_utils import create_form_content, AssertionHelper
 
 
 USER_ID = random_id()
@@ -39,15 +38,20 @@ def test_create_shipment_note(unauthenticated_api_client, shipment):
 
     # An unauthenticated user cannot create a shipment note without specifying the user
     response = unauthenticated_api_client.post(url, {'message': MESSAGE}, format='json')
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    AssertionHelper.HTTP_400(response, error='This field is required.', pointer='user_id')
 
     # A shipment note cannot be created for a non existing shipment
     response = unauthenticated_api_client.post(bad_shipment_url, create_note_data, content_type=content_type)
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
 
     # An authenticated user with a specified user can create a shipment note
     response = unauthenticated_api_client.post(url, create_note_data, content_type=content_type)
-    assert response.status_code == status.HTTP_201_CREATED
-    note_data = response.json()['data']
-    assert len(note_data['attributes']['message']) == len(MESSAGE)
-    assert note_data['attributes']['user_id'] == USER_ID
+    AssertionHelper.HTTP_201(response,
+                           entity_refs=AssertionHelper.EntityRef(resource='ShipmentNote',
+                                                               attributes={
+                                                                   'message': MESSAGE,
+                                                                   'user_id': USER_ID,
+                                                                   'username': None},
+                                                               relationships={'shipment': AssertionHelper.EntityRef(
+                                                                   resource='Shipment', pk=shipment.id)})
+                           )

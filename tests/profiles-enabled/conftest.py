@@ -39,18 +39,25 @@ ForcedAuthentication.get_raw_token = fake_get_raw_token
 ForcedAuthentication.get_header = fake_get_header
 
 USER_ID = random_id()
-USER_2_ID = random_id()
+USER2_ID = random_id()
 SHIPPER_ID = random_id()
+ORGANIZATION2_SHIPPER_ID = random_id()
 ORGANIZATION_ID = random_id()
-ORGANIZATION_2_ID = random_id()
+ORGANIZATION2_ID = random_id()
 VAULT_ID = random_id()
+ORGANIZATION_NAME = 'ShipChain Test'
+ORGANIZATION2_NAME = 'Test Organization-2'
 BASE_PERMISSIONS = ['user.perm_1', 'user.perm_2', 'user.perm_3']
 GTX_PERMISSIONS = ['user.perm_1', 'gtx.shipment_use', 'user.perm_3']
 
 
 @pytest.fixture(scope='session')
 def token():
-    return get_jwt(username='user1@shipchain.io', sub=USER_ID, organization_id=ORGANIZATION_ID, permissions=BASE_PERMISSIONS)
+    return get_jwt(username='user1@shipchain.io',
+                   sub=USER_ID,
+                   organization_id=ORGANIZATION_ID,
+                   organization_name=ORGANIZATION_NAME,
+                   permissions=BASE_PERMISSIONS)
 
 
 @pytest.fixture(scope='session')
@@ -69,18 +76,21 @@ def gtx_user(gtx_token):
 
 
 @pytest.fixture(scope='session')
-def token_2():
-    return get_jwt(username='user2@shipchain.io', sub=USER_2_ID, organization_id=ORGANIZATION_2_ID)
+def token2():
+    return get_jwt(username='user2@shipchain.io',
+                   sub=USER2_ID,
+                   organization_id=ORGANIZATION2_ID,
+                   organization_name=ORGANIZATION2_NAME)
 
 
 @pytest.fixture(scope='session')
-def user_2(token_2):
-    return passive_credentials_auth(token_2)
+def user2(token2):
+    return passive_credentials_auth(token2)
 
 
 @pytest.fixture(scope='session')
 def shipper_token():
-    return get_jwt(username='shipper1@shipchain.io', sub=SHIPPER_ID, organization_id=ORGANIZATION_ID)
+    return get_jwt(username='shipper1@shipchain.io', sub=SHIPPER_ID)
 
 
 @pytest.fixture(scope='session')
@@ -110,9 +120,9 @@ def shipper_api_client(shipper_user, shipper_token):
 
 
 @pytest.fixture(scope='session')
-def user2_api_client(user_2, token_2):
+def user2_api_client(user2, token2):
     client = APIClient()
-    client.force_authenticate(user=user_2, token=token_2)
+    client.force_authenticate(user=user2, token=token2)
     return client
 
 
@@ -178,3 +188,11 @@ def shipment(mocked_engine_rpc, mocked_iot_api):
                                    shipper_wallet_id=SHIPPER_ID,
                                    storage_credentials_id=random_id(),
                                    owner_id=USER_ID)
+
+@pytest.fixture
+def org2_shipment(mocked_engine_rpc, mocked_iot_api):
+    return Shipment.objects.create(vault_id=VAULT_ID,
+                                   carrier_wallet_id=random_id(),
+                                   shipper_wallet_id=ORGANIZATION2_SHIPPER_ID,
+                                   storage_credentials_id=random_id(),
+                                   owner_id=ORGANIZATION2_ID)

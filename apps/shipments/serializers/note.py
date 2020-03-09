@@ -18,6 +18,7 @@ from django.conf import settings
 
 from rest_framework_json_api import serializers
 
+from apps.permissions import get_user, get_organization_name, get_requester_username
 from ..models import ShipmentNote
 
 
@@ -28,10 +29,20 @@ class ShipmentNoteSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ShipmentNoteCreateSerializer(serializers.ModelSerializer):
+class ShipmentNoteCreateSerializer(ShipmentNoteSerializer):
     class Meta:
         model = ShipmentNote
         if settings.PROFILES_ENABLED:
-            exclude = ('user_id', 'shipment', )
+            exclude = ('user_id', 'shipment', 'username', 'organization_name', )
         else:
             exclude = ('shipment', )
+
+    def create(self, validated_data):
+        validated_data['shipment_id'] = self.context['view'].kwargs['shipment_pk']
+
+        if settings.PROFILES_ENABLED:
+            validated_data['organization_name'] = get_organization_name(self.context['request'])
+            validated_data['user_id'] = get_user(self.context['request'])[0]
+            validated_data['username'] = get_requester_username(self.context['request']).split('@')[0]
+
+        return ShipmentNote.objects.create(**validated_data)
