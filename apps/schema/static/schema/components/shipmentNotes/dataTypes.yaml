@@ -28,6 +28,6 @@ organizationName:
   properties:
     organization_name:
       title: organization_name
-      description: Requester organization name
+      description: Organization of the shipment note author
       type: string
       example: 'ShipChain'
