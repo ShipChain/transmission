@@ -1,0 +1,56 @@
+uuid: &uuid
+  $ref: '../core/dataTypes.yaml#/uuid'
+
+sensorId:
+  properties:
+    sensor_id:
+      <<: *uuid
+      title: sensor_id
+      description: Sensor UUID associated with the telemetry data
+
+pk:
+  properties:
+    pk:
+      <<: *uuid
+      title: pk
+      description: ID of the telemetry data
+
+model:
+  properties:
+    model:
+      title: model
+      description: Resource of the telemetry data
+      type: string
+      example: 'shipments.telemetrydata'
+
+hardwareId:
+  properties:
+    hardware_id:
+      type: string
+      example: '28FF5DDC631603C7'
+      title: hardware_id
+      description: Sensor UUID associated with the telemetry data
+
+version:
+  properties:
+    version:
+      title: version
+      description: Version of the telemetry data format
+      type: string
+      example: '1.0.0'
+
+timestamp:
+  properties:
+    timestamp:
+      title: timestamp
+      description: Timestamp of the telemetry sample (ISO 8601 format)
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
+value:
+  properties:
+    value:
+      title: value
+      description: Value of the telemetry data
+      type: number
+      example: 924.53

@@ -158,7 +158,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework_json_api.renderers.JSONRenderer',
     ),
-    'TEST_REQUEST_DEFAULT_FORMAT': 'vnd.api+json',
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
     'COERCE_DECIMAL_TO_STRING': False,
 }

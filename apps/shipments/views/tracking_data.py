@@ -23,9 +23,9 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from ..models import Shipment
-from ..serializers import TrackingDataSerializer, UnvalidatedTrackingDataSerializer, TrackingDataToDbSerializer, \
-    PermissionLinkSerializer
-from ..tasks import tracking_data_update
+from ..serializers import SignedDevicePayloadSerializer, UnvalidatedDevicePayloadSerializer, \
+    PermissionLinkSerializer, TelemetryDataToDbSerializer, TrackingDataToDbSerializer
+from ..tasks import tracking_data_update, telemetry_data_update
 
 LOG = logging.getLogger('transmission')
 
@@ -34,11 +34,7 @@ class DeviceViewSet(viewsets.ViewSet):
     permission_classes = permissions.AllowAny
     serializer_class = PermissionLinkSerializer
 
-    @action(detail=True, methods=['post'], permission_classes=(permissions.AllowAny,))
-    def tracking(self, request, version, pk):
-        LOG.debug(f'Adding tracking data by device with id: {pk}.')
-        log_metric('transmission.info', tags={'method': 'devices.tracking', 'module': __name__})
-
+    def _validate_payload(self, request, pk):
         shipment = Shipment.objects.filter(device_id=pk).first()
 
         if not shipment:
@@ -46,19 +42,28 @@ class DeviceViewSet(viewsets.ViewSet):
             raise PermissionDenied('No shipment found associated to device.')
 
         data = request.data
-        serializer = (UnvalidatedTrackingDataSerializer if settings.ENVIRONMENT in ('LOCAL', 'INT')
-                      else TrackingDataSerializer)
+        serializer = (UnvalidatedDevicePayloadSerializer if settings.ENVIRONMENT in ('LOCAL', 'INT')
+                      else SignedDevicePayloadSerializer)
 
         if not isinstance(data, list):
-            LOG.debug(f'Adding tracking data for device: {pk} for shipment: {shipment.id}')
+            LOG.debug(f'Adding data for device: {pk} for shipment: {shipment.id}')
             serializer = serializer(data=data, context={'shipment': shipment})
             serializer.is_valid(raise_exception=True)
-            tracking_data = [serializer.validated_data]
+            payload = [serializer.validated_data]
         else:
-            LOG.debug(f'Adding bulk tracking data for device: {pk} shipment: {shipment.id}')
+            LOG.debug(f'Adding bulk data for device: {pk} shipment: {shipment.id}')
             serializer = serializer(data=data, context={'shipment': shipment}, many=True)
             serializer.is_valid(raise_exception=True)
-            tracking_data = serializer.validated_data
+            payload = serializer.validated_data
+
+        return shipment, payload
+
+    @action(detail=True, methods=['post'], permission_classes=(permissions.AllowAny,))
+    def tracking(self, request, version, pk):
+        LOG.debug(f'Adding tracking data by device with id: {pk}.')
+        log_metric('transmission.info', tags={'method': 'devices.tracking', 'module': __name__})
+
+        shipment, tracking_data = self._validate_payload(request, pk)
 
         for data in tracking_data:
             payload = data['payload']
@@ -71,5 +76,26 @@ class DeviceViewSet(viewsets.ViewSet):
                                                                                           'device': shipment.device})
             tracking_model_serializer.is_valid(raise_exception=True)
             tracking_model_serializer.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post'], permission_classes=(permissions.AllowAny,))
+    def telemetry(self, request, version, pk):
+        LOG.debug(f'Adding telemetry data by device with id: {pk}.')
+        log_metric('transmission.info', tags={'method': 'devices.telemetry', 'module': __name__})
+
+        shipment, telemetry_data = self._validate_payload(request, pk)
+
+        for data in telemetry_data:
+            payload = data['payload']
+
+            # Add telemetry data to shipment via Engine RPC
+            telemetry_data_update.delay(shipment.id, payload)
+
+            # Cache telemetry data to db
+            telemetry_model_serializer = TelemetryDataToDbSerializer(data=payload, context={'shipment': shipment,
+                                                                                            'device': shipment.device})
+            telemetry_model_serializer.is_valid(raise_exception=True)
+            telemetry_model_serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)

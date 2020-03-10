@@ -23,12 +23,13 @@ from channels.testing import WebsocketCommunicator
 from django.db import models
 from shipchain_common.test_utils import get_jwt
 from asynctest import patch
+from shipchain_common.utils import random_id
 
 from apps.consumers import EventTypes, AppsConsumer
 from apps.jobs.models import AsyncJob, MessageType
 from apps.jobs.signals import job_update
 from apps.routing import application
-from apps.shipments.models import Shipment, Device, TrackingData
+from apps.shipments.models import Shipment, Device, TrackingData, TelemetryData
 from apps.shipments.signals import shipment_post_save, shipment_job_update
 
 USER_ID = '00000000-0000-0000-0000-000000000009'
@@ -170,7 +171,7 @@ async def test_trackingdata_notification(communicator):
     await sync_to_async(models.signals.post_save.connect)(shipment_post_save, sender=Shipment,
                                                           dispatch_uid='shipment_post_save')
 
-    device = await sync_to_async(Device.objects.create)(id='FAKE_DEVICE_ID')
+    device = await sync_to_async(Device.objects.create)(id=random_id())
 
     tracking_data = await sync_to_async(TrackingData.objects.create)(
         id='FAKE_TRACKING_DATA_ID',
@@ -200,8 +201,7 @@ async def test_trackingdata_notification(communicator):
 
 
 @pytest.mark.asyncio
-@pytest.mark.django_db
-async def test_shipmentupdate_notification(communicator):
+async def test_telemetrydata_notification(communicator):
     # Disable Shipment post-save signal
     await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
 
@@ -211,6 +211,54 @@ async def test_shipmentupdate_notification(communicator):
         storage_credentials_id='FAKE_STORAGE_CREDENTIALS_ID',
         shipper_wallet_id='FAKE_SHIPPER_WALLET_ID',
         carrier_wallet_id='FAKE_CARRIER_WALLET_ID',
+        contract_version='1.0.0'
+    )
+
+    # Re-enable Shipment post-save signal
+    await sync_to_async(models.signals.post_save.connect)(shipment_post_save, sender=Shipment,
+                                                          dispatch_uid='shipment_post_save')
+
+    device = await sync_to_async(Device.objects.create)(id=random_id())
+
+    telemetry_id = random_id()
+    telemetry_data = await sync_to_async(TelemetryData.objects.create)(
+        id=telemetry_id,
+        device=device,
+        shipment=shipment,
+        hardware_id='hardware_id',
+        sensor_id='sensor_id',
+        value=867.5309,
+        version='1.1.0',
+        timestamp=datetime.datetime.now(datetime.timezone.utc)
+    )
+
+    response = await communicator.receive_json_from()
+    assert response['event'] == EventTypes.telemetrydata_update.name
+    assert response['data'] == {
+        'sensor_id': telemetry_data.sensor_id,
+        'timestamp': telemetry_data.timestamp.isoformat().replace('+00:00', 'Z'),
+        'hardware_id': telemetry_data.hardware_id,
+        'value': telemetry_data.value
+    }
+
+    t_data = await sync_to_async(TelemetryData.objects.get)(id=telemetry_id)
+    await sync_to_async(t_data.delete)()
+
+    await communicator.disconnect()
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_shipmentupdate_notification(communicator):
+    # Disable Shipment post-save signal
+    await sync_to_async(models.signals.post_save.disconnect)(sender=Shipment, dispatch_uid='shipment_post_save')
+
+    shipment, _ = await sync_to_async(Shipment.objects.get_or_create)(
+        id=random_id(),
+        owner_id=USER_ID,
+        storage_credentials_id=random_id(),
+        shipper_wallet_id=random_id(),
+        carrier_wallet_id=random_id(),
         contract_version='1.0.0'
     )
 

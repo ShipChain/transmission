@@ -70,12 +70,14 @@ class AsyncActionType(Enum):
     TRACKING = 1
     SHIPMENT = 2
     DOCUMENT = 3
+    TELEMETRY = 4
 
     class Labels:
         UNKNOWN = 'Unknown'
         TRACKING = 'Tracking Data'
         SHIPMENT = 'Shipment Update'
         DOCUMENT = 'Document Upload'
+        TELEMETRY = 'Telemetry Data'
 
 
 class AsyncAction(models.Model):

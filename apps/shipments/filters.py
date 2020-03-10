@@ -3,7 +3,7 @@ from django_filters import rest_framework as filters
 from rest_framework_json_api.serializers import ValidationError
 from shipchain_common.filters import filter_enum
 
-from .models import Shipment, TransitState
+from .models import Shipment, TransitState, TelemetryData
 
 SHIPMENT_STATE_CHOICES = tuple((m.name, m.value, ) for m in TransitState)
 
@@ -111,3 +111,12 @@ SHIPMENT_SEARCH_FIELDS = (
     'shipment_tags__tag_type',
     'shipment_tags__tag_value',
 )
+
+
+class TelemetryFilter(filters.filterset.FilterSet):
+    class Meta:
+        model = TelemetryData
+        fields = (
+            'sensor_id',
+            'hardware_id',
+        )

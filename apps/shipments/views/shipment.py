@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 import json
 import logging
 from string import Template
@@ -39,7 +38,8 @@ from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
 from ..geojson import render_filtered_point_features
 from ..models import Shipment, TrackingData, PermissionLink
 from ..permissions import IsOwnerOrShared, HasShipmentUpdatePermission
-from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, ShipmentTxSerializer
+from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, \
+    ShipmentTxSerializer
 
 LOG = logging.getLogger('transmission')
 
@@ -164,8 +164,8 @@ class ShipmentViewSet(ConfigurableModelViewSet):
     @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
     def tracking(self, request, version, pk):
         """
-                Retrieve tracking data from db
-                """
+        Retrieve tracking data from db
+        """
         LOG.debug(f'Retrieve tracking data for a shipment {pk}.')
         log_metric('transmission.info', tags={'method': 'shipments.tracking', 'module': __name__})
         shipment = Shipment.objects.get(pk=pk)

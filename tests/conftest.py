@@ -13,13 +13,11 @@
 #  limitations under the License.
 
 import pytest
-
 from rest_framework.test import APIClient
-from shipchain_common.utils import random_id
 from shipchain_common.test_utils import mocked_rpc_response
+from shipchain_common.utils import random_id
 
 from apps.shipments.models import Shipment, Device
-
 
 USER_ID = random_id()
 SHIPPER_ID = random_id()
@@ -97,6 +95,18 @@ def second_shipment(mocked_engine_rpc, mocked_iot_api):
                                    shipper_wallet_id=SHIPPER_ID,
                                    storage_credentials_id=random_id(),
                                    owner_id=USER_ID)
+
+
+@pytest.fixture(autouse=True)
+def enable_db_access_for_all_tests(db):
+    pass
+
+
+@pytest.fixture
+def boto():
+    import boto3
+    boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
+    return boto3
 
 @pytest.fixture
 def entity_shipment_relationship(json_asserter, shipment):

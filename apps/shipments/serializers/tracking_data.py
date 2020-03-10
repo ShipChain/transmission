@@ -34,7 +34,7 @@ from . import ShipmentSerializer
 LOG = logging.getLogger('transmission')
 
 
-class TrackingDataSerializer(serializers.Serializer):
+class SignedDevicePayloadSerializer(serializers.Serializer):
     payload = serializers.RegexField(r'^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$')
 
     def validate(self, attrs):  # noqa: MC0001
@@ -90,7 +90,7 @@ class TrackingDataSerializer(serializers.Serializer):
         return attrs
 
 
-class UnvalidatedTrackingDataSerializer(serializers.Serializer):
+class UnvalidatedDevicePayloadSerializer(serializers.Serializer):
     payload = serializers.JSONField()
 
     def validate(self, attrs):
@@ -103,22 +103,28 @@ class UnvalidatedTrackingDataSerializer(serializers.Serializer):
         return attrs
 
 
-class TrackingDataToDbSerializer(rest_serializers.ModelSerializer):
-    """
-    Serializer for tracking data to be cached in db
-    """
+class BaseDataToDbSerializer(rest_serializers.ModelSerializer):
     shipment = ShipmentSerializer(read_only=True)
 
     def __init__(self, *args, **kwargs):
-        # Flatten 'position' fields to the parent tracking data payload
-        kwargs['data'].update(kwargs['data'].pop('position'))
-
         # Ensure that the timestamps is valid
         try:
             kwargs['data']['timestamp'] = parse(kwargs['data']['timestamp'])
         except Exception as exception:
             raise exceptions.ValidationError(detail=f"Unable to parse tracking data timestamp in to datetime object: \
                                                     {exception}")
+
+        super().__init__(*args, **kwargs)
+
+
+class TrackingDataToDbSerializer(BaseDataToDbSerializer):
+    """
+    Serializer for tracking data to be cached in db
+    """
+    def __init__(self, *args, **kwargs):
+        if 'position' not in kwargs['data']:
+            raise exceptions.ValidationError(detail='Unable to find `position` field in body.')
+        kwargs['data'].update(kwargs['data'].pop('position'))
 
         super().__init__(*args, **kwargs)
 

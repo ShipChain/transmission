@@ -13,21 +13,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 from string import Template
 
 from channels.db import database_sync_to_async
 from enumfields import Enum
-from rest_framework_json_api.renderers import JSONRenderer
+from rest_framework_json_api.renderers import JSONRenderer as JSONAPIRenderer
+from rest_framework.renderers import JSONRenderer
 
 from apps.authentication import AsyncJsonAuthConsumer
 from apps.jobs.models import AsyncJob, JobState
 from apps.jobs.serializers import AsyncJobSerializer
 from apps.jobs.views import JobsViewSet
 from apps.shipments.geojson import render_point_feature
-from apps.shipments.models import Shipment, TrackingData
-from apps.shipments.serializers import ShipmentTxSerializer
-from apps.shipments.views import ShipmentViewSet
+from apps.shipments.models import Shipment, TrackingData, TelemetryData
+from apps.shipments.serializers import ShipmentTxSerializer, TelemetryResponseSerializer
+from apps.shipments.views import ShipmentViewSet, TelemetryViewSet
 
 
 class EventTypes(Enum):
@@ -35,6 +35,7 @@ class EventTypes(Enum):
     asyncjob_update = 1
     trackingdata_update = 2
     shipment_update = 3
+    telemetrydata_update = 4
 
 
 class AppsConsumer(AsyncJsonAuthConsumer):
@@ -46,7 +47,7 @@ class AppsConsumer(AsyncJsonAuthConsumer):
         job = AsyncJob.objects.get(id=job_id)
         response = AsyncJobSerializer(job)
 
-        asyncjob_json = JSONRenderer().render(response.data, renderer_context={'view': JobsViewSet()}).decode()
+        asyncjob_json = JSONAPIRenderer().render(response.data, renderer_context={'view': JobsViewSet()}).decode()
         return Template('{"event": "$event", "data": $asyncjob}').substitute(
             event=EventTypes.asyncjob_update.name,
             asyncjob=asyncjob_json
@@ -62,7 +63,7 @@ class AppsConsumer(AsyncJsonAuthConsumer):
         response = ShipmentTxSerializer(shipment)
         response.instance.async_job_id = async_jobs.latest('created_at').id if async_jobs else None
 
-        shipment_json = JSONRenderer().render(response.data, renderer_context={'view': ShipmentViewSet()}).decode()
+        shipment_json = JSONAPIRenderer().render(response.data, renderer_context={'view': ShipmentViewSet()}).decode()
         return Template('{"event": "$event", "data": $shipment}').substitute(
             event=EventTypes.shipment_update.name,
             shipment=shipment_json,
@@ -78,6 +79,20 @@ class AppsConsumer(AsyncJsonAuthConsumer):
             event=EventTypes.trackingdata_update.name,
             shipment_id=data.first().shipment_id,
             geojson=render_point_feature(data),
+        )
+
+    async def telemetry_data_save(self, event):
+        telemetry_data_json = await database_sync_to_async(self.render_async_telemetry_data)(event['telemetry_data_id'])
+        await self.send(telemetry_data_json)
+
+    def render_async_telemetry_data(self, data_id):
+        telemetry = TelemetryData.objects.filter(id=data_id).first()
+        response = TelemetryResponseSerializer(telemetry)
+        telemetry_json = JSONRenderer().render(response.data,
+                                               renderer_context={'view': TelemetryViewSet()}).decode()
+        return Template('{"event": "$event", "data": $telemetry}').substitute(
+            event=EventTypes.telemetrydata_update.name,
+            telemetry=telemetry_json,
         )
 
     async def receive_json(self, content, **kwargs):

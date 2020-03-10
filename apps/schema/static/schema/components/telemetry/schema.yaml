@@ -1,0 +1,16 @@
+responseBody:
+  type: array
+  items:
+    $ref: '#/fields'
+
+fields:
+  type: object
+  description: Telemetry data saved
+  allOf:
+    - $ref: '#/telemetry/sensorId'
+    - $ref: '#/telemetry/hardwareId'
+    - $ref: '#/telemetry/timestamp'
+    - $ref: '#/telemetry/value'
+
+telemetry:
+  $ref: dataTypes.yaml

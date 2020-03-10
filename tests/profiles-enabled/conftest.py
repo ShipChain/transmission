@@ -13,18 +13,19 @@
 #  limitations under the License.
 
 import json
+from datetime import datetime, timezone, timedelta
+
 import pytest
-
 from django.conf import settings as test_settings
-
+from moto import mock_iot
 from rest_framework import status
 from rest_framework.request import ForcedAuthentication
 from rest_framework.test import APIClient
-from shipchain_common.utils import random_id
 from shipchain_common.test_utils import get_jwt
+from shipchain_common.utils import random_id
 
 from apps.authentication import passive_credentials_auth
-from apps.shipments.models import Shipment
+from apps.shipments.models import Shipment, Device, PermissionLink
 
 
 def fake_get_raw_token(self, header):
@@ -108,6 +109,37 @@ def shipper_user(shipper_token):
     return passive_credentials_auth(shipper_token)
 
 
+@pytest.fixture
+def user_alice_id():
+    return random_id()
+
+
+@pytest.fixture
+def user_bob_id():
+    return random_id()
+
+
+@pytest.fixture
+def no_user_api_client():
+    return APIClient()
+
+
+@pytest.fixture
+def client_alice(user_alice_id):
+    api_client = APIClient()
+    token = get_jwt(username='alice@shipchain.io', sub=user_alice_id, organization_id=random_id())
+    api_client.force_authenticate(user=passive_credentials_auth(token), token=token)
+    return api_client
+
+
+@pytest.fixture
+def client_bob(user_bob_id):
+    api_client = APIClient()
+    token = get_jwt(username='bob@shipchain.io', sub=user_bob_id, organization_id=random_id())
+    api_client.force_authenticate(user=passive_credentials_auth(token), token=token)
+    return api_client
+
+
 @pytest.fixture(scope='session')
 def api_client(user, token):
     client = APIClient()
@@ -143,12 +175,14 @@ def mocked_is_shipper(shipper_user, http_pretty, shipment):
                              body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
     return shipper_user
 
+
 @pytest.fixture
 def mocked_storage_credential(http_pretty, shipment):
     http_pretty.register_uri(http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/"
                              f"{shipment.storage_credentials_id}/?is_active", body=json.dumps({'good': 'good'}),
                              status=status.HTTP_200_OK)
+
 
 @pytest.fixture
 def mocked_not_shipper(http_pretty, shipment):
@@ -169,6 +203,31 @@ def mocked_not_moderator(http_pretty, shipment):
     http_pretty.register_uri(http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.moderator_wallet_id}/?is_active",
                              body=json.dumps({'bad': 'bad'}), status=status.HTTP_403_FORBIDDEN)
+
+
+@pytest.fixture
+def mock_non_wallet_owner_calls(http_pretty):
+    wallet_url = f'{test_settings.PROFILES_URL}/api/v1/wallet/{SHIPPER_ID}/'
+    storage_credentials_url = f'{test_settings.PROFILES_URL}/api/v1/storage_credentials/{SHIPPER_ID}/'
+    http_pretty.register_uri(http_pretty.GET, wallet_url, status=status.HTTP_404_NOT_FOUND)
+    http_pretty.register_uri(http_pretty.GET, wallet_url, status=status.HTTP_404_NOT_FOUND)
+    http_pretty.register_uri(http_pretty.GET, storage_credentials_url, status=status.HTTP_404_NOT_FOUND)
+
+    return http_pretty
+
+
+@pytest.fixture
+def mock_successful_wallet_owner_calls(http_pretty):
+    wallet_url = f'{test_settings.PROFILES_URL}/api/v1/wallet/{SHIPPER_ID}/'
+    storage_credentials_url = f'{test_settings.PROFILES_URL}/api/v1/storage_credentials/{SHIPPER_ID}/'
+    http_pretty.register_uri(http_pretty.GET, wallet_url,
+                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+    http_pretty.register_uri(http_pretty.GET, wallet_url,
+                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+    http_pretty.register_uri(http_pretty.GET, storage_credentials_url,
+                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+
+    return http_pretty
 
 
 @pytest.fixture
@@ -194,9 +253,9 @@ def mocked_profiles(http_pretty):
 @pytest.fixture
 def shipment(mocked_engine_rpc, mocked_iot_api):
     return Shipment.objects.create(vault_id=VAULT_ID,
-                                   carrier_wallet_id=random_id(),
+                                   carrier_wallet_id=SHIPPER_ID,
                                    shipper_wallet_id=SHIPPER_ID,
-                                   storage_credentials_id=random_id(),
+                                   storage_credentials_id=SHIPPER_ID,
                                    owner_id=USER_ID)
 
 
@@ -208,6 +267,7 @@ def second_shipment(mocked_engine_rpc, mocked_iot_api):
                                    storage_credentials_id=random_id(),
                                    owner_id=ORGANIZATION_ID)
 
+
 @pytest.fixture
 def org2_shipment(mocked_engine_rpc, mocked_iot_api):
     return Shipment.objects.create(vault_id=VAULT_ID,
@@ -215,3 +275,63 @@ def org2_shipment(mocked_engine_rpc, mocked_iot_api):
                                    shipper_wallet_id=ORGANIZATION2_SHIPPER_ID,
                                    storage_credentials_id=random_id(),
                                    owner_id=ORGANIZATION2_ID)
+
+
+@pytest.fixture
+def shipment_alice(mocked_engine_rpc, mocked_iot_api, user_alice_id):
+    return Shipment.objects.create(vault_id=VAULT_ID,
+                                   carrier_wallet_id=SHIPPER_ID,
+                                   shipper_wallet_id=SHIPPER_ID,
+                                   storage_credentials_id=SHIPPER_ID,
+                                   owner_id=user_alice_id)
+
+
+@pytest.fixture
+@mock_iot
+def device(boto):
+    device_id = random_id()
+    # Create device 'thing'
+    iot = boto.client('iot', region_name='us-east-1')
+    iot.create_thing(
+        thingName=device_id
+    )
+
+    # Load device cert into AWS
+    with open('tests/data/cert.pem', 'r') as cert_file:
+        cert_pem = cert_file.read()
+    cert_response = iot.register_certificate(
+        certificatePem=cert_pem,
+        status='ACTIVE'
+    )
+    certificate_id = cert_response['certificateId']
+
+    return Device.objects.create(id=device_id, certificate_id=certificate_id)
+
+
+@pytest.fixture
+def shipment_alice_with_device(mocked_engine_rpc, mocked_iot_api, device, user_alice_id):
+    return Shipment.objects.create(vault_id=VAULT_ID,
+                                   carrier_wallet_id=SHIPPER_ID,
+                                   shipper_wallet_id=SHIPPER_ID,
+                                   storage_credentials_id=SHIPPER_ID,
+                                   owner_id=user_alice_id,
+                                   device=device)
+
+
+@pytest.fixture
+def permission_link_device_shipment(shipment_alice_with_device):
+    return PermissionLink.objects.create(
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        shipment=shipment_alice_with_device
+    )
+
+
+@pytest.fixture
+def device_alice_with_shipment(mocked_engine_rpc, mocked_iot_api, device, user_alice_id):
+    Shipment.objects.create(vault_id=VAULT_ID,
+                            carrier_wallet_id=SHIPPER_ID,
+                            shipper_wallet_id=SHIPPER_ID,
+                            storage_credentials_id=SHIPPER_ID,
+                            owner_id=user_alice_id,
+                            device=device)
+    return device
