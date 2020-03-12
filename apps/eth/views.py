@@ -9,6 +9,7 @@ from rest_framework import mixins, viewsets, parsers, status, renderers, permiss
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework_json_api import renderers as jsapi_renderers, serializers
+from rest_framework_json_api import views as jsapi_views
 from shipchain_common.authentication import EngineRequest, get_jwt_from_request
 from shipchain_common.exceptions import RPCError
 
@@ -75,22 +76,28 @@ class EventViewSet(mixins.CreateModelMixin,
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class TransactionViewSet(mixins.RetrieveModelMixin,
-                         mixins.ListModelMixin,
-                         viewsets.GenericViewSet):
+class TransactionViewSet(jsapi_views.PreloadIncludesMixin, jsapi_views.ReadOnlyModelViewSet):
     """
     Get tx details for a transaction hash
     """
     queryset = EthAction.objects.all()
+    select_for_includes = {
+        '__all__': ['async_job', 'transaction', 'transactionreceipt'],
+
+    }
+    prefetch_for_includes = {
+        '__all__': ['async_job__message_set', 'async_job__actions'],
+
+    }
     serializer_class = EthActionSerializer
     permission_classes = ((IsListenerOwner, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend,)
     ordering_fields = ('updated_at', 'created_at')
 
-    def get_queryset(self):
+    def get_queryset(self, *args, **kwargs):
         log_metric('transmission.info', tags={'method': 'transaction.get_queryset', 'module': __name__})
         LOG.debug('Getting tx details for a transaction hash.')
-        queryset = self.queryset
+        queryset = super().get_queryset(*args, **kwargs)
         if settings.PROFILES_ENABLED:
             if 'wallet_id' in self.request.query_params:
                 queryset = queryset.filter(Q(shipment__owner_id=get_owner_id(self.request)) |
