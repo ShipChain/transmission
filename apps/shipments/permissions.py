@@ -51,36 +51,47 @@ class IsAuthenticatedOrDevice(permissions.IsAuthenticated):
         return super(IsAuthenticatedOrDevice, self).has_permission(request, view)
 
 
-class IsOwnerOrShared(IsShipmentOwnerMixin,
+class BaseOwnerOrSharedPermission(IsShipmentOwnerMixin,
                       IsShipperMixin,
                       IsCarrierMixin,
                       IsModeratorMixin,
                       IsSharedShipmentMixin,
-                      permissions.BasePermission):
+                      permissions.IsAuthenticated):
+
+    def check_permissions(self, request, shipment, shipment_id, is_authenticated):
+        if shipment:
+            if is_authenticated:
+                return self.is_shipment_owner(request, shipment) or \
+                       self.has_valid_permission_link(request, shipment) or \
+                       self.has_shipper_permission(request, shipment) or \
+                       self.has_carrier_permission(request, shipment) or \
+                       self.has_moderator_permission(request, shipment)
+
+            return self.has_valid_permission_link(request, shipment)
+
+        if shipment_id:
+            return False
+
+        return is_authenticated
+
+
+class IsOwnerOrShared(BaseOwnerOrSharedPermission):
     """
     Custom permission to allow users with a unique link to access a shipment anonymously
     """
 
     def has_permission(self, request, view):
-        shipment_pk = view.kwargs.get('pk') or view.kwargs.get('shipment_pk')
-        permission_link = request.query_params.get('permission_link')
-        shipment = shipment_exists(shipment_pk)
+        is_authenticated = super().has_permission(request, view)
 
-        if permission_link and not shipment:
+        shipment_id = view.kwargs.get('pk') or view.kwargs.get('shipment_pk')
+        shipment = shipment_exists(shipment_id)
+
+        if request.query_params.get('permission_link') and not shipment:
             # Shipment accessible via permission link only on nested route
             return False
 
-        if shipment:
-            return self.is_shipment_owner(request, shipment) or \
-               self.has_valid_permission_link(request, shipment) or \
-               self.has_shipper_permission(request, shipment) or \
-               self.has_carrier_permission(request, shipment) or \
-               self.has_moderator_permission(request, shipment)
+        return self.check_permissions(request, shipment, shipment_id, is_authenticated)
 
-        if shipment_pk:
-            return False
-
-        return True
 
     def has_object_permission(self, request, view, obj):
         return self.is_shipment_owner(request, obj) or \
@@ -94,13 +105,16 @@ class HasShipmentUpdatePermission(IsShipmentOwnerMixin,
                                   IsShipperMixin,
                                   IsCarrierMixin,
                                   IsModeratorMixin,
-                                  permissions.BasePermission):
+                                  permissions.IsAuthenticated):
     """
     Custom permission to allow only Owners, Shipper, Carrier and Moderator
     to modify a shipment
     """
 
     def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+
         shipment_pk = view.kwargs.get('pk') or view.kwargs.get('shipment_pk')
         shipment = shipment_exists(shipment_pk)
 
@@ -116,32 +130,21 @@ class HasShipmentUpdatePermission(IsShipmentOwnerMixin,
         return False
 
 
-class IsListenerOwner(IsShipmentOwnerMixin,
-                      IsSharedShipmentMixin,
-                      IsShipperMixin,
-                      IsCarrierMixin,
-                      IsModeratorMixin,
-                      permissions.BasePermission):
+class IsListenerOwner(BaseOwnerOrSharedPermission):
     """
     Custom permission to only allow owners of an object to edit it
     """
 
     def has_permission(self, request, view):
+        is_authenticated = super().has_permission(request, view)
+
         shipment_id = view.kwargs.get('shipment_pk')
+        shipment = shipment_exists(shipment_id)
 
-        if shipment_id:
-            shipment = shipment_exists(shipment_id)
-            if not shipment:
-                return False
+        if shipment_id and not shipment:
+            return False
 
-            return self.is_shipment_owner(request, shipment) or \
-                self.has_valid_permission_link(request, shipment) or \
-                self.has_shipper_permission(request, shipment) or \
-                self.has_carrier_permission(request, shipment) or \
-                self.has_moderator_permission(request, shipment)
-
-        # Transactions are still accessible on their own endpoint
-        return request.user.is_authenticated
+        return self.check_permissions(request, shipment, shipment_id, is_authenticated)
 
     def has_object_permission(self, request, view, obj):
         # Permissions are allowed to anyone who owns a shipment listening to this job

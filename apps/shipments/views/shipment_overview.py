@@ -48,13 +48,15 @@ class ShipmentOverviewListView(ListAPIView):
 
     bbox_filter_field = 'point'
 
-    queryset = TrackingData.objects.filter(shipment__device_id__isnull=False)
-    shipment_queryset = Shipment.objects.filter(device_id__isnull=False)
+    tracking_data_queryset = TrackingData.objects.filter(shipment__device_id__isnull=False)
+    # The filterset_class and queryset objects should be of the same class instance
+    # to avoid assertion error to be raised by rest_framework.backends
+    queryset = Shipment.objects.filter(device_id__isnull=False)
 
     def filter_tracking_data_queryset(self, owner_id, queryset):
 
         # Shipment owner filter
-        shipment_queryset = self.shipment_queryset.filter(owner_id=owner_id)
+        shipment_queryset = self.get_queryset().filter(owner_id=owner_id)
 
         # Shipment fields filter
         shipment_queryset = self.filter_queryset(shipment_queryset)
@@ -82,7 +84,7 @@ class ShipmentOverviewListView(ListAPIView):
         param_serializer = QueryParamsSerializer(data=request.query_params)
         param_serializer.is_valid(raise_exception=True)
 
-        queryset = self.filter_tracking_data_queryset(owner_id, self.queryset)
+        queryset = self.filter_tracking_data_queryset(owner_id, self.tracking_data_queryset)
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request, view=self)
