@@ -110,6 +110,12 @@ class GeofenceListField(serializers.ListField):
         return super().to_internal_value(data)
 
 
+class FKShipmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Shipment
+        fields = ('id',)
+
+
 class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
     """
     Serializer for a shipment object

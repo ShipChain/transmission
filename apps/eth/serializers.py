@@ -3,6 +3,7 @@ from rest_framework_json_api import serializers
 from apps.eth.fields import HASH_REGEX
 from apps.eth.models import Event, EthAction, Transaction, TransactionReceipt
 from apps.jobs.serializers import AsyncJobSerializer
+from apps.shipments.serializers import FKShipmentSerializer
 
 
 class TransactionSerializer(serializers.ModelSerializer):
@@ -136,7 +137,8 @@ class EthActionSerializer(serializers.ModelSerializer):
     included_serializers = {
         'transaction': TransactionSerializer,
         'transaction_receipt': TransactionReceiptSerializer,
-        'async_job': AsyncJobSerializer
+        'async_job': AsyncJobSerializer,
+        'shipment': FKShipmentSerializer
     }
 
     class JSONAPIMeta:
