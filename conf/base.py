@@ -99,8 +99,8 @@ if ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV'):
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
-    URL_SHORTENER_HOST = 't.shipchain.io/'
-    URL_SHORTENER_URL = f'https://{URL_SHORTENER_HOST}'
+    URL_SHORTENER_HOST = 't.shipchain.io'
+    URL_SHORTENER_URL = f'https://{URL_SHORTENER_HOST}/'
 
 else:
     DEBUG = os.environ.get('FORCE_DEBUG', True)

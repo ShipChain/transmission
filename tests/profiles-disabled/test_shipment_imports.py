@@ -46,7 +46,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
             'owner_id': OWNER_ID,
         }
 
-        response = self.client.post(url, csv_file_data, format='json')
+        response = self.client.post(url, csv_file_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         data = response.json()['data']
         self.assertEqual(data['attributes']['upload_status'], 'PENDING')

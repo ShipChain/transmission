@@ -457,7 +457,7 @@ class DocumentAPITests(APITestCase):
             # The shipper should be able to upload a document
             # This is equivalently valid for carrier and moderator
             self.set_user(self.shipper_user)
-            response = self.client.post(url, file_data, format='json')
+            response = self.client.post(url, file_data)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             self.assertEqual(mock_is_shipper.call_count, 1)
             self.assertEqual(mock_is_carrier.call_count, 0)

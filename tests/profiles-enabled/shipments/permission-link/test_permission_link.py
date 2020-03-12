@@ -65,8 +65,8 @@ class TestPermissionLinkCreate:
 
         # TODO: Assert URL calls on httpretty
 
-    def test_can_create_with_permission(self, api_client, mock_successful_wallet_owner_calls):
-        response = api_client.post(self.url_permission_link_create, {'name': 'Permission Link Name'})
+    def test_can_create_with_permission(self, client_bob, mock_successful_wallet_owner_calls):
+        response = client_bob.post(self.url_permission_link_create, {'name': 'Permission Link Name'})
         AssertionHelper.HTTP_201(response,
                                  entity_refs=AssertionHelper.EntityRef(
                                      resource='PermissionLink',
@@ -105,12 +105,21 @@ class TestPermissionLinkCreate:
                                      relationships=self.shipment_alice_relationships
                                  ))
 
-    def test_permission_link_requires_aws(self, client_alice, mock_aws_failure):
+    def test_permission_link_does_not_require_aws(self, client_alice, mock_aws_failure, user_alice):
         response = client_alice.post(self.url_permission_link_create,
                                      {'name': 'Permission Link Name',
                                       'emails': ['test@example.com', 'guest@example.com']})
-        AssertionHelper.HTTP_500(response, error='Failure in AWS IoT Call')
-        assert len(mail.outbox) == 0
+        AssertionHelper.HTTP_201(response,
+                                 entity_refs=AssertionHelper.EntityRef(
+                                     resource='PermissionLink',
+                                     attributes={'name': 'Permission Link Name'},
+                                     relationships=self.shipment_alice_relationships
+                                 ))
+        assert len(mail.outbox) == 1
+        assert 'The ShipChain team' in str(mail.outbox[0].body)
+        assert user_alice.username in str(mail.outbox[0].body)
+        assert settings.URL_SHORTENER_URL not in str(mail.outbox[0].body)
+        assert user_alice.username in str(mail.outbox[0].subject)
 
         # TODO: Assert URL calls on httpretty
 
@@ -272,8 +281,8 @@ class TestPermissionDetail:
         response = client_alice.delete(url_permission_link_detail)
         AssertionHelper.HTTP_204(response)
 
-    def test_wallet_owners_can_delete(self, api_client, url_permission_link_detail, mock_successful_wallet_owner_calls):
-        response = api_client.delete(url_permission_link_detail)
+    def test_wallet_owners_can_delete(self, client_bob, url_permission_link_detail, mock_successful_wallet_owner_calls):
+        response = client_bob.delete(url_permission_link_detail)
         AssertionHelper.HTTP_204(response)
 
     def test_owner_cannot_retrieve(self, client_alice, url_permission_link_detail):
@@ -309,7 +318,7 @@ class TestPermissionList:
 
         assert PermissionLink.objects.filter(shipment=self.shipment_alice).count() == 2
 
-    def test_wallet_owner_can_list(self, api_client, mock_successful_wallet_owner_calls):
-        response = api_client.get(self.list_url)
+    def test_wallet_owner_can_list(self, client_bob, mock_successful_wallet_owner_calls):
+        response = client_bob.get(self.list_url)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_refs, is_list=True,
                                  count=PermissionLink.objects.filter(shipment=self.shipment_alice).count())

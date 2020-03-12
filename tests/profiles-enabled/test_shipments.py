@@ -458,7 +458,7 @@ class ShipmentAPITests(APITestCase):
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
 
             # Send tracking update
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
             # Tracking data in db
@@ -474,7 +474,7 @@ class ShipmentAPITests(APITestCase):
             track_dic2['timestamp'] = '2018-09-18T15:02:31.563847+00:00'
             signed_data2 = jws.sign(track_dic2, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
             list_payload = [{'payload': signed_data}, {'payload': signed_data2}]
-            response = self.client.post(url, list_payload, format='json')
+            response = self.client.post(url, list_payload)
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             self.assertEqual(TrackingData.objects.all().count(), 3)
 
@@ -493,7 +493,7 @@ class ShipmentAPITests(APITestCase):
             signed_data = jws.sign(track_dic_2, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
 
             # Send second tracking data
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             self.assertEqual(TrackingData.objects.all().count(), 4)
 
@@ -546,14 +546,14 @@ class ShipmentAPITests(APITestCase):
 
             # Certificate ID not in AWS
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': 'notarealcertificateid'}, algorithm='ES256')
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Signed by a different key
             with open('tests/data/eckey2.pem', 'r') as key_file:
                 bad_key = key_file.read()
             signed_data = jws.sign(track_dic, key=bad_key, headers={'kid': certificate_id}, algorithm='ES256')
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Data from a different device
@@ -572,40 +572,40 @@ class ShipmentAPITests(APITestCase):
             bad_url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': bad_device_id})
 
             signed_data = jws.sign(track_dic, key=bad_key, headers={'kid': bad_cert_id}, algorithm='ES256')
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Posting to a device not associated with a shipment should fail
-            response = self.client.post(bad_url, {'payload': signed_data}, format='json')
+            response = self.client.post(bad_url, {'payload': signed_data})
 
             # Invalid JWS
-            response = self.client.post(url, {'payload': {'this': 'is not a jws'}}, format='json')
+            response = self.client.post(url, {'payload': {'this': 'is not a jws'}})
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            response = self.client.post(url, {'payload': 'neither.is.this'}, format='json')
+            response = self.client.post(url, {'payload': 'neither.is.this'})
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            response = self.client.post(url, {'payload': 'or.this'}, format='json')
+            response = self.client.post(url, {'payload': 'or.this'})
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            response = self.client.post(url, {'payload': 'bm9ybm9ybm9y.aXNpc2lz.dGhpc3RoaXN0aGlz'}, format='json')
+            response = self.client.post(url, {'payload': 'bm9ybm9ybm9y.aXNpc2lz.dGhpc3RoaXN0aGlz'})
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
             # Certificate not ACTIVE
             iot.update_certificate(certificateId=certificate_id, newStatus='REVOKED')
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
             iot.update_certificate(certificateId=certificate_id, newStatus='ACTIVE')
 
             # Device not assigned to shipment
             Shipment.objects.filter(id=self.shipments[0].id).update(device_id=None)
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Assert that calls other than GET/POST fail
-            response = self.client.put(url, {'payload': signed_data}, format='json')
+            response = self.client.put(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
             # Assert that calls other than GET/POST fail
-            response = self.client.put(tracking_get_url, {'payload': signed_data}, format='json')
+            response = self.client.put(tracking_get_url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_shipment_update(self):
@@ -662,14 +662,14 @@ class ShipmentAPITests(APITestCase):
 
         self.set_user(self.user_1)
 
-        response = self.client.patch(url, shipment_customer_fields_1, format='json')
+        response = self.client.patch(url, shipment_customer_fields_1)
         self.assertTrue(response.status_code == status.HTTP_202_ACCEPTED)
         customer_fields = response.json()['data']['attributes']['customer_fields']
         self.assertEqual(customer_fields, shipment_customer_fields_1['customer_fields'])
 
         # An additionally added key to customer_field should be present in the customer_fields
         # and the response should preserve the previously added fields
-        response = self.client.patch(url, shipment_customer_fields_2, format='json')
+        response = self.client.patch(url, shipment_customer_fields_2)
         self.assertTrue(response.status_code == status.HTTP_202_ACCEPTED)
         customer_fields = response.json()['data']['attributes']['customer_fields']
         self.assertEqual(customer_fields['field_1'], shipment_customer_fields_2['customer_fields']['field_1'])
@@ -771,7 +771,7 @@ class ShipmentAPITests(APITestCase):
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': new_active_certificate}, algorithm='ES256')
 
             # Send tracking data
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             # The new certificate should be attached to the shipment's device
             device = self.shipments[0].device
@@ -814,7 +814,7 @@ class ShipmentAPITests(APITestCase):
                     mocked.return_value = mocked_rpc_response({'data': {
                         'shipmentId': 'dunno yet'
                     }})
-                    response = self.client.post(url, post_data, format='json')
+                    response = self.client.post(url, post_data)
                 self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
                 # The new certificate should be attached to the shipment's device
@@ -883,7 +883,7 @@ class ShipmentAPITests(APITestCase):
 
             # Every shipment created should have tow historical objects, one for the shipment
             # creation and one for shipment update with engine metadata.
-            response = self.client.post(url, create_shipment_data, format='json')
+            response = self.client.post(url, create_shipment_data)
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
             data = response.json()['data']
             shipment_id = data['id']
@@ -914,7 +914,7 @@ class ShipmentAPITests(APITestCase):
             url_patch = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
 
             # Existing shipment updated with new fields values should have history diff
-            response = self.client.patch(url_patch, update_shipment_data, format='json')
+            response = self.client.patch(url_patch, update_shipment_data)
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
             response = self.client.get(history_url)
@@ -1071,7 +1071,7 @@ class ShipmentAPITests(APITestCase):
                 }
             }
 
-            response = self.client.patch(url_patch, shipment_update_customer_fields, format='json')
+            response = self.client.patch(url_patch, shipment_update_customer_fields)
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
             self.assertEqual(response.json()['data']['attributes']['customer_fields'],
                              shipment_update_customer_fields['customer_fields'])
@@ -1086,7 +1086,7 @@ class ShipmentAPITests(APITestCase):
             # Ensure that a modified customer_fields is reflected in historical diff changes
             shipment_update_customer_fields['customer_fields']['custom_field_1'] = 'value one modified'
 
-            response = self.client.patch(url_patch, shipment_update_customer_fields, format='json')
+            response = self.client.patch(url_patch, shipment_update_customer_fields)
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
             self.assertEqual(response.json()['data']['attributes']['customer_fields'],
                              shipment_update_customer_fields['customer_fields'])
@@ -1105,7 +1105,7 @@ class ShipmentAPITests(APITestCase):
                 'action_type': 'Pick_up'
             }
 
-            response = self.client.post(shipment_action_url, shipment_action, format='json')
+            response = self.client.post(shipment_action_url, shipment_action)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
             self.assertEqual(data['attributes']['state'], 'IN_TRANSIT')
@@ -1412,7 +1412,7 @@ class ShipmentAPITests(APITestCase):
 
         # Create shipment with first user
         self.set_user(self.user_1, self.token)
-        response = self.client.post(url, post_data, format='json')
+        response = self.client.post(url, post_data)
 
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         shipment_id = response.json()['data']['id']
@@ -2062,7 +2062,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             mock_device.return_value = Device.objects.get_or_create(id=DEVICE_ID, defaults={'certificate_id': CERTIFICATE_ID})[0]
             mock_wallet_validation.return_value = SHIPPER_WALLET_ID
             mock_storage_validation.return_value = STORAGE_CRED_ID
-            response = self.client.post(url, post_data, format='json')
+            response = self.client.post(url, post_data)
             mock_device.assert_called()
             mock_wallet_validation.assert_called()
             mock_storage_validation.assert_called()
@@ -2076,7 +2076,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             if device_id:
                 mock_device.return_value = Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})[0]
 
-            response = self.client.patch(url, {'device_id': device_id}, format='json')
+            response = self.client.patch(url, {'device_id': device_id})
 
             if device_id:
                 mock_device.assert_called()
@@ -2167,7 +2167,7 @@ class ShipmentWithIoTAPITests(APITestCase):
                 },
                 'project': 'LOAD'
             }
-            response = self.client.post(url, data, format='json', X_NGINX_SOURCE='internal',
+            response = self.client.post(url, data, X_NGINX_SOURCE='internal',
                                         X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
             # Failing at shipment_post_save after device_id is updated
             assert response.status_code == status.HTTP_204_NO_CONTENT

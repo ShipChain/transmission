@@ -27,7 +27,7 @@ DEVICE_ID = random_id()
 
 
 @pytest.fixture(scope='session')
-def unauthenticated_api_client():
+def api_client():
     return APIClient()
 
 

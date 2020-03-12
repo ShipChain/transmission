@@ -68,7 +68,7 @@ class DocumentViewSetAPITests(APITestCase):
                 "success": True
             })
 
-            response = self.client.post(url, file_data, format='json')
+            response = self.client.post(url, file_data)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             data = response.json()['data']
             self.assertTrue(isinstance(data['meta']['presigned_s3']['fields'], dict))
@@ -79,5 +79,5 @@ class DocumentViewSetAPITests(APITestCase):
             # A request with an invalid shipment_id should fail
             bad_shipment_id = 'non-existing-shipment-in-db'
             bad_shipment_in_url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': bad_shipment_id})
-            response = self.client.post(bad_shipment_in_url, file_data, format='json')
+            response = self.client.post(bad_shipment_in_url, file_data)
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

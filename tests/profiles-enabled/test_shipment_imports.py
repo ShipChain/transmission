@@ -119,7 +119,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
         xlsx_file_data['processing_status'] = 'failed'
 
         # Unauthenticated user should fail
-        response = self.client.post(url, csv_file_data, format='json')
+        response = self.client.post(url, csv_file_data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
         self.set_user(self.user_1)
@@ -132,7 +132,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
 
             # --------------------- Upload csv file --------------------#
             # Authenticated request should succeed
-            response = self.client.post(url, csv_file_data, format='json')
+            response = self.client.post(url, csv_file_data)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             data = response.json()['data']
             self.assertEqual(data['attributes']['upload_status'], 'PENDING')
@@ -148,7 +148,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
             self.assertTrue(self.s3_object_exists(csv_obj.s3_key))
 
             # --------------------- Upload xls file --------------------#
-            response = self.client.post(url, xls_file_data, format='json')
+            response = self.client.post(url, xls_file_data)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             data = response.json()['data']
             # upload_status field is not configurable at creation
@@ -170,7 +170,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
             self.assertTrue(self.s3_object_exists(xls_obj.s3_key))
 
             # --------------------- Upload xlsx file --------------------#
-            response = self.client.post(url, xlsx_file_data, format='json')
+            response = self.client.post(url, xlsx_file_data)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             data = response.json()['data']
             self.assertEqual(data['attributes']['upload_status'], 'PENDING')
@@ -201,7 +201,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
                 }
             }
             csv_patch_url = f'{url}/{csv_obj.id}/'
-            response = self.client.patch(csv_patch_url, data=patch_csv_data, format='json')
+            response = self.client.patch(csv_patch_url, data=patch_csv_data)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
             # The file_type cannot change on patch
@@ -223,7 +223,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
 
             patch_csv_data['shipper_wallet_id'] = new_wallet_id
 
-            response = self.client.patch(csv_patch_url, data=patch_csv_data, format='json')
+            response = self.client.patch(csv_patch_url, data=patch_csv_data)
             self.assertEqual(mock_wallet_validation.call_count, 0)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
@@ -236,7 +236,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
             self.set_user(self.user_2)
 
             # user_2 can create an xls file object
-            response = self.client.post(url, xlsx_file_data, format='json')
+            response = self.client.post(url, xlsx_file_data)
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
             # user_2 cannot access a document object not owned
@@ -263,7 +263,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
             csv_file_data_without_shipper_wallet = copy.deepcopy(csv_file_data)
             csv_file_data_without_shipper_wallet.pop('shipper_wallet_id')
 
-            response = self.client.post(url, csv_file_data_without_shipper_wallet, format='json')
+            response = self.client.post(url, csv_file_data_without_shipper_wallet)
             self.assertEqual(mock_wallet_validation.call_count, 0)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -275,7 +275,7 @@ class ShipmentImportsViewSetAPITests(APITestCase):
             csv_file_data_with_invalid_shipper_wallet = copy.deepcopy(csv_file_data)
             csv_file_data_with_invalid_shipper_wallet['shipper_wallet_id'] = 'Non_Accessible_Wallet'
 
-            response = self.client.post(url, csv_file_data_with_invalid_shipper_wallet, format='json')
+            response = self.client.post(url, csv_file_data_with_invalid_shipper_wallet)
             self.assertEqual(mock_wallet_validation.call_count, 1)
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             data = response.json()['errors'][0]

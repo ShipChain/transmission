@@ -30,7 +30,7 @@ def permission_link_shipment_alice(shipment_alice):
 @pytest.fixture
 def permission_link_expired(shipment_alice):
     return PermissionLink.objects.create(shipment=shipment_alice, name="Alice Permission Link",
-                                         expiration_date=datetime.utcnow() - timedelta(days=1))
+                                         expiration_date=datetime.now(timezone.utc) - timedelta(days=1))
 
 
 @pytest.fixture
@@ -51,7 +51,7 @@ def entity_ref_permission_link_expired(permission_link_expired, entity_ref_shipm
     return AssertionHelper.EntityRef(resource='PermissionLink', pk=permission_link_expired.id,
                                      attributes={
                                          'name': permission_link_expired.name,
-                                         'expiration_date': permission_link_expired.expiration_date.isoformat() + 'Z'
+                                         'expiration_date': permission_link_expired.expiration_date.isoformat().replace('+00:00', 'Z')
                                      },
                                      relationships=[{'shipment': entity_ref_shipment_alice}])
 

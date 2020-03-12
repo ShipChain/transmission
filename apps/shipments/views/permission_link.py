@@ -20,6 +20,7 @@ from django.conf import settings
 from influxdb_metrics.loader import log_metric
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.response import Response
+from shipchain_common.exceptions import AWSIoTError
 from shipchain_common.utils import send_templated_email
 
 from apps.exceptions import UrlShortenerError
@@ -68,31 +69,29 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
 
         if settings.PROFILES_ENABLED and emails:
             LOG.debug(f'Emailing permission link: {permission_link.id}')
-            try:
-                link = f'{"https" if request.is_secure() else "http"}://{settings.FRONTEND_DOMAIN}/shipments/' \
-                       f'{shipment_id}/?permission_link={permission_link.id}'
-                if settings.IOT_THING_INTEGRATION:
-                    url_client = URLShortener()
-                    params = {
-                        'long_url': link,
-                        'expiration_date': (
-                            permission_link.expiration_date.isoformat() if permission_link.expiration_date else None)
-                    }
-
-                    link = url_client.get_shortened_link(params)
-
-                email_context = {
-                    'username': request.user.username,
-                    'link': link,
-                    'request': request
+            link = f'{"https" if request.is_secure() else "http"}://{settings.FRONTEND_DOMAIN}/shipments/' \
+                   f'{shipment_id}/?permission_link={permission_link.id}'
+            if settings.IOT_THING_INTEGRATION:
+                url_client = URLShortener()
+                params = {
+                    'long_url': link,
+                    'expiration_date': (
+                        permission_link.expiration_date.isoformat() if permission_link.expiration_date else None)
                 }
+                try:
+                    link = url_client.get_shortened_link(params)
+                except (UrlShortenerError, AWSIoTError) as exc:
+                    LOG.error(f'Error generating shortened link, raised error: {exc.detail}')
 
-                send_templated_email('email/shipment_link.html',
-                                     f'{request.user.username} shared a shipment details page with you.',
-                                     email_context,
-                                     emails)
-            except UrlShortenerError as exc:
-                permission_link.delete()
-                raise exc
+            email_context = {
+                'username': request.user.username,
+                'link': link,
+                'request': request
+            }
+
+            send_templated_email('email/shipment_link.html',
+                                 f'{request.user.username} shared a shipment details page with you.',
+                                 email_context,
+                                 emails)
 
         return Response(self.get_serializer(permission_link).data, status=status.HTTP_201_CREATED)

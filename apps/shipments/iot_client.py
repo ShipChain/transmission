@@ -46,6 +46,6 @@ class URLShortener(URLShortenerClient):
         url_response = self._post(payload=params)
 
         if 'short_id' not in url_response:
-            raise UrlShortenerError("Error generating short_url for Permission Link")
+            raise UrlShortenerError("Error generating short url for Permission Link")
 
         return f'{self.url}/{url_response["short_id"]}'
