@@ -19,30 +19,36 @@ from django.conf import settings
 from django.core import mail
 from django.urls import reverse
 from rest_framework import status
-from shipchain_common.test_utils import AssertionHelper, create_form_content
+from shipchain_common.test_utils import AssertionHelper, create_form_content, modified_http_pretty
 
 from apps.shipments.models import PermissionLink
 
 
 class TestPermissionLinkCreate:
     @pytest.fixture(autouse=True)
-    def set_up(self, shipment_alice, entity_ref_shipment_alice):
+    def set_up(self, shipment_alice, entity_ref_shipment_alice, successful_wallet_owner_calls_assertions,
+               nonsuccessful_wallet_owner_calls_assertions):
         self.url_permission_link_create = reverse('shipment-permissions-list',
                                                   kwargs={'version': 'v1', 'shipment_pk': shipment_alice.id})
         self.shipment_alice = shipment_alice
         self.shipment_alice_relationships = [{'shipment': entity_ref_shipment_alice}]
 
+        self.successful_wallet_owner_calls_assertions = successful_wallet_owner_calls_assertions
+        self.nonsuccessful_wallet_owner_calls_assertions = nonsuccessful_wallet_owner_calls_assertions
+
     @pytest.fixture
-    def mock_aws_failure(self, http_pretty):
-        http_pretty.register_uri(http_pretty.POST, settings.URL_SHORTENER_URL + '/',
+    def mock_aws_failure(self, mock_successful_wallet_owner_calls):
+        mock_successful_wallet_owner_calls.register_uri(mock_successful_wallet_owner_calls.POST,
+                                                        settings.URL_SHORTENER_URL + '/',
                                  status=status.HTTP_400_BAD_REQUEST,
                                  body=json.dumps({"message": "Failure in AWS IoT Call."}))
 
-        return http_pretty
+        return mock_successful_wallet_owner_calls
 
     @pytest.fixture
-    def mock_aws_success(self, http_pretty):
-        http_pretty.register_uri(http_pretty.POST, settings.URL_SHORTENER_URL + '/',
+    def mock_aws_success(self, mock_successful_wallet_owner_calls):
+        mock_successful_wallet_owner_calls.register_uri(mock_successful_wallet_owner_calls.POST,
+                                                        settings.URL_SHORTENER_URL + '/',
                                  status=status.HTTP_201_CREATED,
                                  body=json.dumps({
                                      "analytics": {
@@ -57,13 +63,12 @@ class TestPermissionLinkCreate:
                                      "ttl": 1579638816
                                  }))
 
-        return http_pretty
+        return mock_successful_wallet_owner_calls
 
-    def test_requires_access(self, api_client, mock_non_wallet_owner_calls):
+    def test_requires_access(self, api_client):
         response = api_client.post(self.url_permission_link_create, {'name': 'Permission Link Name'})
         AssertionHelper.HTTP_403(response)
-
-        # TODO: Assert URL calls on httpretty
+        # mock_non_wallet_owner_calls.assert_calls(self.nonsuccessful_wallet_owner_calls_assertions)
 
     def test_can_create_with_permission(self, client_bob, mock_successful_wallet_owner_calls):
         response = client_bob.post(self.url_permission_link_create, {'name': 'Permission Link Name'})
@@ -73,8 +78,7 @@ class TestPermissionLinkCreate:
                                      attributes={'name': 'Permission Link Name'},
                                      relationships=self.shipment_alice_relationships
                                  ))
-
-        # TODO: Assert URL calls on httpretty
+        mock_successful_wallet_owner_calls.assert_calls(self.successful_wallet_owner_calls_assertions)
 
     def test_owner_can_create(self, client_alice):
         response = client_alice.post(self.url_permission_link_create, {'name': 'Permission Link Name'})
@@ -121,7 +125,15 @@ class TestPermissionLinkCreate:
         assert settings.URL_SHORTENER_URL not in str(mail.outbox[0].body)
         assert user_alice.username in str(mail.outbox[0].subject)
 
-        # TODO: Assert URL calls on httpretty
+        pm_id = response.json()['data']['id']
+        mock_aws_failure.assert_calls([{
+            'path': '/test/',
+            'query': None,
+            'body': {
+                'long_url': f'http://localhost:3000/shipments/{self.shipment_alice.id}/?permission_link={pm_id}',
+                'expiration_date': None
+            },
+            'host': settings.URL_SHORTENER_HOST}])
 
     def test_permission_link_email_validation(self, client_alice):
         response = client_alice.post(self.url_permission_link_create,
@@ -146,7 +158,15 @@ class TestPermissionLinkCreate:
         assert user_alice.username in str(mail.outbox[0].body)
         assert user_alice.username in str(mail.outbox[0].subject)
 
-        # TODO: Assert URL calls on httpretty
+        pm_id = response.json()['data']['id']
+        mock_aws_success.assert_calls([{
+            'path': '/test/',
+            'query': None,
+            'body': {
+                'long_url': f'http://localhost:3000/shipments/{self.shipment_alice.id}/?permission_link={pm_id}',
+                'expiration_date': None
+            },
+            'host': settings.URL_SHORTENER_HOST}])
 
     def test_permission_link_email_send_with_expiration(self, client_alice, mock_aws_success, user_alice):
         response = client_alice.post(self.url_permission_link_create,
@@ -167,10 +187,17 @@ class TestPermissionLinkCreate:
         assert user_alice.username in str(mail.outbox[0].body)
         assert user_alice.username in str(mail.outbox[0].subject)
 
-        # TODO: Assert URL calls on httpretty
+        pm_id = response.json()['data']['id']
+        mock_aws_success.assert_calls([{
+            'path': '/test/',
+            'query': None,
+            'body': {
+                'long_url': f'http://localhost:3000/shipments/{self.shipment_alice.id}/?permission_link={pm_id}',
+                'expiration_date': (datetime.utcnow() + timedelta(days=1)).isoformat() + '+00:00'
+            },
+            'host': settings.URL_SHORTENER_HOST}])
 
-    def test_permission_link_email_wallet_owner(self, client_bob, mock_aws_success, user_bob,
-                                                mock_successful_wallet_owner_calls):
+    def test_permission_link_email_wallet_owner(self, client_bob, mock_aws_success, user_bob,):
         response = client_bob.post(self.url_permission_link_create,
                                      {'name': 'Permission Link Name',
                                       'emails': ['test@example.com', 'guest@example.com'],
@@ -183,13 +210,21 @@ class TestPermissionLinkCreate:
                                          'expiration_date': (datetime.utcnow() + timedelta(days=1)).isoformat() + 'Z'},
                                      relationships=self.shipment_alice_relationships
                                  ))
+        pm_id = response.json()['data']['id']
+        self.successful_wallet_owner_calls_assertions.append({
+            'path': '/test/',
+            'query': None,
+            'body': {
+                'long_url': f'http://localhost:3000/shipments/{self.shipment_alice.id}/?permission_link={pm_id}',
+                'expiration_date': (datetime.utcnow() + timedelta(days=1)).isoformat() + '+00:00'
+            },
+            'host': settings.URL_SHORTENER_HOST})
+        mock_aws_success.assert_calls(self.successful_wallet_owner_calls_assertions)
 
         assert len(mail.outbox) == 1
         assert 'The ShipChain team' in str(mail.outbox[0].body)
         assert user_bob.username in str(mail.outbox[0].body)
         assert user_bob.username in str(mail.outbox[0].subject)
-
-        # TODO: Assert URL calls on httpretty
 
     def test_permission_link_email_send_multiform(self, client_alice, mock_aws_success, user_alice):
         multi_form_data, content_type = create_form_content({'name': 'Permission Link Name',
@@ -207,13 +242,22 @@ class TestPermissionLinkCreate:
         assert user_alice.username in str(mail.outbox[0].body)
         assert user_alice.username in str(mail.outbox[0].subject)
 
-        # TODO: Assert URL calls on httpretty
+        pm_id = response.json()['data']['id']
+        mock_aws_success.assert_calls([{
+            'path': '/test/',
+            'query': None,
+            'body': {
+                'long_url': f'http://localhost:3000/shipments/{self.shipment_alice.id}/?permission_link={pm_id}',
+                'expiration_date': None
+            },
+            'host': settings.URL_SHORTENER_HOST}])
 
 
 class TestPermissionLinkShipmentAccess:
     @pytest.fixture(autouse=True)
     def set_up(self, entity_ref_shipment_alice, url_shipment_alice, permission_link_expired,
-               permission_link_shipment_alice, url_shipment_alice_two):
+               permission_link_shipment_alice, url_shipment_alice_two, successful_wallet_owner_calls_assertions,
+               nonsuccessful_wallet_owner_calls_assertions):
         self.entity_ref_shipment_alice = entity_ref_shipment_alice
         self.url_valid_permission = f'{url_shipment_alice}?permission_link={permission_link_shipment_alice.id}'
         self.url_expired_permission = f'{url_shipment_alice}?permission_link={permission_link_expired.id}'
@@ -221,11 +265,14 @@ class TestPermissionLinkShipmentAccess:
         self.url_shipment_list = f"{reverse('shipment-list', kwargs={'version': 'v1'})}" \
                                  f"?permission_link={permission_link_shipment_alice.id}"
 
+        self.successful_wallet_owner_calls_assertions = successful_wallet_owner_calls_assertions
+        self.nonsuccessful_wallet_owner_calls_assertions = nonsuccessful_wallet_owner_calls_assertions
+
     def test_can_access_without_ownership(self, api_client, mock_non_wallet_owner_calls):
         response = api_client.get(self.url_valid_permission)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_ref_shipment_alice)
 
-    def test_can_access_with_ownership(self, api_client, mock_successful_wallet_owner_calls):
+    def test_can_access_with_ownership(self, api_client):
         response = api_client.get(self.url_valid_permission)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_ref_shipment_alice)
 
@@ -237,25 +284,27 @@ class TestPermissionLinkShipmentAccess:
         response = client_alice.get(self.url_expired_permission)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_ref_shipment_alice)
 
-    def test_wallet_owner_access_expired_link(self, api_client, mock_successful_wallet_owner_calls):
+    def test_wallet_owner_access_expired_link(self, api_client, mock_successful_wallet_owner_calls, profiles_ids):
         response = api_client.get(self.url_expired_permission)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_ref_shipment_alice)
+        self.successful_wallet_owner_calls_assertions.append({
+            'host': settings.PROFILES_URL.replace('http://', ''),
+            'path': f'/api/v1/wallet/{profiles_ids["shipper_wallet_id"]}/'
+        })
+        mock_successful_wallet_owner_calls.assert_calls(self.successful_wallet_owner_calls_assertions)
 
     def test_non_owner_expired_link_fails(self, api_client, mock_non_wallet_owner_calls):
         response = api_client.get(self.url_expired_permission)
         AssertionHelper.HTTP_403(response)
+        mock_non_wallet_owner_calls.assert_calls(self.nonsuccessful_wallet_owner_calls_assertions)
 
-    def test_cannot_delete_with_permission_link(self, api_client, mock_non_wallet_owner_calls):
+    def test_cannot_delete_with_permission_link(self, api_client):
         response = api_client.delete(self.url_valid_permission)
         AssertionHelper.HTTP_403(response)
 
     def test_owner_can_delete_with_permission_link(self, client_alice):
         response = client_alice.delete(self.url_valid_permission)
         AssertionHelper.HTTP_204(response)
-
-    def test_cannot_update_with_permission_link(self, api_client, mock_non_wallet_owner_calls):
-        response = api_client.patch(self.url_valid_permission, {'carrier_scac': 'carrier_scac'})
-        AssertionHelper.HTTP_403(response)
 
     def test_owner_can_update_with_permission_link(self, client_alice):
         response = client_alice.patch(self.url_valid_permission, {'carriers_scac': 'carriers_scac'})
@@ -266,6 +315,7 @@ class TestPermissionLinkShipmentAccess:
     def test_requires_shipment_relationship(self, api_client, mock_non_wallet_owner_calls):
         response = api_client.get(self.url_wrong_permission)
         AssertionHelper.HTTP_403(response)
+        mock_non_wallet_owner_calls.assert_calls(self.nonsuccessful_wallet_owner_calls_assertions)
 
     def test_owner_wrong_permission(self, client_alice, entity_ref_shipment_alice_two):
         response = client_alice.get(self.url_wrong_permission)
@@ -281,9 +331,11 @@ class TestPermissionDetail:
         response = client_alice.delete(url_permission_link_detail)
         AssertionHelper.HTTP_204(response)
 
-    def test_wallet_owners_can_delete(self, client_bob, url_permission_link_detail, mock_successful_wallet_owner_calls):
+    def test_wallet_owners_can_delete(self, client_bob, url_permission_link_detail, mock_successful_wallet_owner_calls,
+                                      successful_wallet_owner_calls_assertions):
         response = client_bob.delete(url_permission_link_detail)
         AssertionHelper.HTTP_204(response)
+        mock_successful_wallet_owner_calls.assert_calls(successful_wallet_owner_calls_assertions)
 
     def test_owner_cannot_retrieve(self, client_alice, url_permission_link_detail):
         response = client_alice.get(url_permission_link_detail)
@@ -318,7 +370,9 @@ class TestPermissionList:
 
         assert PermissionLink.objects.filter(shipment=self.shipment_alice).count() == 2
 
-    def test_wallet_owner_can_list(self, client_bob, mock_successful_wallet_owner_calls):
+    def test_wallet_owner_can_list(self, client_bob, mock_successful_wallet_owner_calls,
+                                   successful_wallet_owner_calls_assertions):
         response = client_bob.get(self.list_url)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_refs, is_list=True,
                                  count=PermissionLink.objects.filter(shipment=self.shipment_alice).count())
+        mock_successful_wallet_owner_calls.assert_calls(successful_wallet_owner_calls_assertions)

@@ -20,10 +20,9 @@ from django.conf import settings
 from influxdb_metrics.loader import log_metric
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.response import Response
-from shipchain_common.exceptions import AWSIoTError
+from shipchain_common.exceptions import AWSIoTError, URLShortenerError
 from shipchain_common.utils import send_templated_email
 
-from apps.exceptions import UrlShortenerError
 from apps.permissions import ShipmentExists, IsOwnerShipperCarrierModerator
 from ..iot_client import URLShortener
 from ..models import PermissionLink
@@ -80,7 +79,7 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
                 }
                 try:
                     link = url_client.get_shortened_link(params)
-                except (UrlShortenerError, AWSIoTError) as exc:
+                except (URLShortenerError, AWSIoTError) as exc:
                     LOG.error(f'Error generating shortened link, raised error: {exc.detail}')
 
             email_context = {

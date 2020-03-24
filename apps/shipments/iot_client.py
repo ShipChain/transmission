@@ -18,10 +18,8 @@ import logging
 
 from influxdb_metrics.loader import log_metric
 from shipchain_common.aws import URLShortenerClient
-from shipchain_common.exceptions import AWSIoTError
+from shipchain_common.exceptions import AWSIoTError, URLShortenerError
 from shipchain_common.iot import AWSIoTClient
-
-from ..exceptions import UrlShortenerError
 
 LOG = logging.getLogger('transmission')
 
@@ -46,6 +44,6 @@ class URLShortener(URLShortenerClient):
         url_response = self._post(payload=params)
 
         if 'short_id' not in url_response:
-            raise UrlShortenerError("Error generating short url for Permission Link")
+            raise URLShortenerError("Error generating short url for Permission Link")
 
         return f'{self.url}/{url_response["short_id"]}'

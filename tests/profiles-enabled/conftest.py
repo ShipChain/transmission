@@ -23,7 +23,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.request import ForcedAuthentication
 from rest_framework.test import APIClient
-from shipchain_common.test_utils import get_jwt, AssertionHelper
+from shipchain_common.test_utils import get_jwt, AssertionHelper, modified_http_pretty
 from shipchain_common.utils import random_id
 
 from apps.authentication import passive_credentials_auth
@@ -179,31 +179,60 @@ def mocked_not_moderator(http_pretty, shipment):
 
 
 @pytest.fixture
-def mock_non_wallet_owner_calls(http_pretty, profiles_ids):
-    wallet_url = f'{test_settings.PROFILES_URL}/api/v1/wallet/'
-    storage_credentials_url = f'{test_settings.PROFILES_URL}/api/v1/storage_credentials/' \
-                              f'{profiles_ids["storage_credentials_id"]}/'
-    http_pretty.register_uri(http_pretty.GET, wallet_url + profiles_ids["shipper_wallet_id"] + "/",
-                             status=status.HTTP_404_NOT_FOUND)
-    http_pretty.register_uri(http_pretty.GET, wallet_url + profiles_ids["carrier_wallet_id"] + "/",
-                             status=status.HTTP_404_NOT_FOUND)
-    http_pretty.register_uri(http_pretty.GET, storage_credentials_url, status=status.HTTP_404_NOT_FOUND)
-
-    return http_pretty
+def nonsuccessful_wallet_owner_calls_assertions(profiles_ids):
+    return [
+        {
+            'path': f'/api/v1/wallet/{profiles_ids["shipper_wallet_id"]}/',
+            'body': '',
+            'host': test_settings.PROFILES_URL.replace('http://', ''),
+        }, {
+            'path': f'/api/v1/wallet/{profiles_ids["carrier_wallet_id"]}/',
+            'body': '',
+            'host': test_settings.PROFILES_URL.replace('http://', ''),
+        },
+    ]
 
 
 @pytest.fixture
-def mock_successful_wallet_owner_calls(http_pretty, profiles_ids):
+def mock_non_wallet_owner_calls(modified_http_pretty, profiles_ids):
+    wallet_url = f'{test_settings.PROFILES_URL}/api/v1/wallet/'
+    storage_credentials_url = f'{test_settings.PROFILES_URL}/api/v1/storage_credentials/' \
+                              f'{profiles_ids["storage_credentials_id"]}/'
+    modified_http_pretty.register_uri(modified_http_pretty.GET, wallet_url + profiles_ids["shipper_wallet_id"] + "/",
+                                      status=status.HTTP_404_NOT_FOUND)
+    modified_http_pretty.register_uri(modified_http_pretty.GET, wallet_url + profiles_ids["carrier_wallet_id"] + "/",
+                                      status=status.HTTP_404_NOT_FOUND)
+    modified_http_pretty.register_uri(modified_http_pretty.GET, storage_credentials_url,
+                                      status=status.HTTP_404_NOT_FOUND)
+
+    return modified_http_pretty
+
+
+@pytest.fixture
+def successful_wallet_owner_calls_assertions(profiles_ids):
+    return [
+        {
+            'path': f'/api/v1/wallet/{profiles_ids["shipper_wallet_id"]}/',
+            'body': '',
+            'host': test_settings.PROFILES_URL.replace('http://', ''),
+        },
+    ]
+
+
+@pytest.fixture
+def mock_successful_wallet_owner_calls(modified_http_pretty, profiles_ids):
     wallet_url = f'{test_settings.PROFILES_URL}/api/v1/wallet/'
     storage_credentials_url = f'{test_settings.PROFILES_URL}/api/v1/storage_credentials/' \
                               f'{profiles_ids["storage_credentials_id"]}/?is_active'
-    http_pretty.register_uri(http_pretty.GET, f'{wallet_url}{profiles_ids["shipper_wallet_id"]}/?is_active',
-                             status=status.HTTP_200_OK)
-    http_pretty.register_uri(http_pretty.GET, f'{wallet_url}{profiles_ids["carrier_wallet_id"]}/?is_active',
-                             status=status.HTTP_200_OK)
-    http_pretty.register_uri(http_pretty.GET, storage_credentials_url, status=status.HTTP_200_OK)
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
+                                      f'{wallet_url}{profiles_ids["shipper_wallet_id"]}/?is_active',
+                                      status=status.HTTP_200_OK)
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
+                                      f'{wallet_url}{profiles_ids["carrier_wallet_id"]}/?is_active',
+                                      status=status.HTTP_200_OK)
+    modified_http_pretty.register_uri(modified_http_pretty.GET, storage_credentials_url, status=status.HTTP_200_OK)
 
-    return http_pretty
+    return modified_http_pretty
 
 
 @pytest.fixture
