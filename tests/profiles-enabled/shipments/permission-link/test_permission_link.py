@@ -39,29 +39,29 @@ class TestPermissionLinkCreate:
     @pytest.fixture
     def mock_aws_failure(self, mock_successful_wallet_owner_calls):
         mock_successful_wallet_owner_calls.register_uri(mock_successful_wallet_owner_calls.POST,
-                                                        settings.URL_SHORTENER_URL + '/',
-                                 status=status.HTTP_400_BAD_REQUEST,
-                                 body=json.dumps({"message": "Failure in AWS IoT Call."}))
+                                                        f'{settings.URL_SHORTENER_URL}/',
+                                                        status=status.HTTP_400_BAD_REQUEST,
+                                                        body=json.dumps({"message": "Failure in AWS IoT Call."}))
 
         return mock_successful_wallet_owner_calls
 
     @pytest.fixture
     def mock_aws_success(self, mock_successful_wallet_owner_calls):
         mock_successful_wallet_owner_calls.register_uri(mock_successful_wallet_owner_calls.POST,
-                                                        settings.URL_SHORTENER_URL + '/',
-                                 status=status.HTTP_201_CREATED,
-                                 body=json.dumps({
-                                     "analytics": {
-                                         "user_agent": "PostmanRuntime/7.17.1",
-                                         "source_ip": "000.000.00.000, 11.11.11.111",
-                                         "xray_trace_id": "Root=1-435345"
-                                     },
-                                     "created_at": "2020-01-14T20:33:36.423300+0000",
-                                     "long_url": "https://www.exampleofaverylongurl.com",
-                                     "short_id": "d5a4d80195",
-                                     "short_url": f"{settings.URL_SHORTENER_URL}/d5a4d80195",
-                                     "ttl": 1579638816
-                                 }))
+                                                        f'{settings.URL_SHORTENER_URL}/',
+                                                        status=status.HTTP_201_CREATED,
+                                                        body=json.dumps({
+                                                            "analytics": {
+                                                                "user_agent": "PostmanRuntime/7.17.1",
+                                                                "source_ip": "000.000.00.000, 11.11.11.111",
+                                                                "xray_trace_id": "Root=1-435345"
+                                                            },
+                                                            "created_at": "2020-01-14T20:33:36.423300+0000",
+                                                            "long_url": "https://www.exampleofaverylongurl.com",
+                                                            "short_id": "d5a4d80195",
+                                                            "short_url": f"{settings.URL_SHORTENER_URL}/d5a4d80195",
+                                                            "ttl": 1579638816
+                                                        }))
 
         return mock_successful_wallet_owner_calls
 

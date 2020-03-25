@@ -77,6 +77,11 @@ def client_alice(user_alice):
 
 
 @pytest.fixture
+def org_id_alice():
+    return ORGANIZATION_ALICE_ID
+
+
+@pytest.fixture
 def user_bob_id():
     return random_id()
 
@@ -89,6 +94,11 @@ def user_bob(user_bob_id):
                 organization_id=ORGANIZATION_BOB_ID,
                 organization_name=ORGANIZATION2_NAME
                 ))
+
+
+@pytest.fixture
+def org_id_bob():
+    return ORGANIZATION_BOB_ID
 
 
 @pytest.fixture
@@ -264,7 +274,7 @@ def second_shipment(mocked_engine_rpc, mocked_iot_api):
                                    carrier_wallet_id=random_id(),
                                    shipper_wallet_id=SHIPPER_ID,
                                    storage_credentials_id=random_id(),
-                                   owner_id=ORGANIZATION_ID)
+                                   owner_id=ORGANIZATION_ALICE_ID)
 
 
 @pytest.fixture
@@ -337,11 +347,11 @@ def device(boto):
 
 
 @pytest.fixture
-def shipment_alice_with_device(mocked_engine_rpc, mocked_iot_api, device, user_alice_id):
+def shipment_alice_with_device(mocked_engine_rpc, mocked_iot_api, device, user_alice_id, profiles_ids):
     return Shipment.objects.create(vault_id=VAULT_ID,
-                                   carrier_wallet_id=SHIPPER_ID,
-                                   shipper_wallet_id=SHIPPER_ID,
-                                   storage_credentials_id=SHIPPER_ID,
+                                   carrier_wallet_id=profiles_ids['carrier_wallet_id'],
+                                   shipper_wallet_id=profiles_ids['shipper_wallet_id'],
+                                   storage_credentials_id=profiles_ids['storage_credentials_id'],
                                    owner_id=user_alice_id,
                                    device=device)
 
@@ -355,11 +365,11 @@ def permission_link_device_shipment(shipment_alice_with_device):
 
 
 @pytest.fixture
-def device_alice_with_shipment(mocked_engine_rpc, mocked_iot_api, device, user_alice_id):
+def device_alice_with_shipment(mocked_engine_rpc, mocked_iot_api, device, user_alice_id, profiles_ids):
     Shipment.objects.create(vault_id=VAULT_ID,
-                            carrier_wallet_id=SHIPPER_ID,
-                            shipper_wallet_id=SHIPPER_ID,
-                            storage_credentials_id=SHIPPER_ID,
+                            carrier_wallet_id=profiles_ids['carrier_wallet_id'],
+                            shipper_wallet_id=profiles_ids['shipper_wallet_id'],
+                            storage_credentials_id=profiles_ids['storage_credentials_id'],
                             owner_id=user_alice_id,
                             device=device)
     return device
