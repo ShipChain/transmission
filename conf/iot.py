@@ -19,7 +19,6 @@ from .base import ENVIRONMENT
 # IoT Thing <-> Device Settings
 IOT_THING_INTEGRATION = ENVIRONMENT in ('PROD', 'DEMO', 'STAGE', 'DEV')
 IOT_AWS_HOST = os.environ.get('IOT_AWS_HOST', None)
-URL_SHORTENER_URL = os.environ.get('URL_SHORTENER_URL', None)
 IOT_GATEWAY_STAGE = ENVIRONMENT.lower()
 if ENVIRONMENT.lower() == 'local':
     IOT_GATEWAY_STAGE = 'test'

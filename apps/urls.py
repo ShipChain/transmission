@@ -63,7 +63,7 @@ urlpatterns = [
     url(f'{API_PREFIX[1:]}/devices/status/', shipments.ShipmentOverviewListView.as_view(), name='devices-status'),
     url(f'{API_PREFIX[1:]}/shipments/overview/', shipments.ShipmentOverviewListView.as_view(),
         name='shipments-overview'),
-    url(f'{API_PREFIX[1:]}/shipments/(?P<shipment_pk>[0-9a-f-]+)/actions/',
+    url(f'{API_PREFIX[1:]}/shipments/(?P<shipment_pk>[0-9a-f-]+)/actions',
         shipments.ShipmentActionsView.as_view(), name='shipment-actions'),
 ]
 urlpatterns += router.urls

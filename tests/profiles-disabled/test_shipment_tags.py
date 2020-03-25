@@ -41,17 +41,17 @@ def entity_shipment_relationship(json_asserter, shipment):
 
 
 @pytest.mark.django_db
-def test_profiles_disabled_shipment_tag_creation(unauthenticated_api_client, shipment, shipment_tag_creation_data,
+def test_profiles_disabled_shipment_tag_creation(api_client, shipment, shipment_tag_creation_data,
                                                  shipment_tag_creation_missing_owner_id, entity_shipment_relationship,
                                                  json_asserter):
 
     url = reverse('shipment-tags-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
     # A request without user_id should fail
-    response = unauthenticated_api_client.post(url, shipment_tag_creation_missing_owner_id, format='json')
+    response = api_client.post(url, shipment_tag_creation_missing_owner_id)
     json_asserter.HTTP_400(response, error='This field is required.')
 
-    response = unauthenticated_api_client.post(url, shipment_tag_creation_data, format='json')
+    response = api_client.post(url, shipment_tag_creation_data)
     json_asserter.HTTP_201(response,
                            entity_refs=json_asserter.EntityRef(
                                resource='ShipmentTag',

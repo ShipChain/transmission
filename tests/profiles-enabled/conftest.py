@@ -13,15 +13,17 @@
 #  limitations under the License.
 
 import json
+
 from datetime import datetime, timezone, timedelta
 
 import pytest
 from django.conf import settings as test_settings
 from moto import mock_iot
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.request import ForcedAuthentication
 from rest_framework.test import APIClient
-from shipchain_common.test_utils import get_jwt
+from shipchain_common.test_utils import get_jwt, AssertionHelper, modified_http_pretty
 from shipchain_common.utils import random_id
 
 from apps.authentication import passive_credentials_auth
@@ -39,74 +41,15 @@ def fake_get_header(self, request):
 ForcedAuthentication.get_raw_token = fake_get_raw_token
 ForcedAuthentication.get_header = fake_get_header
 
-USER_ID = random_id()
-USER2_ID = random_id()
 SHIPPER_ID = random_id()
-ORGANIZATION2_SHIPPER_ID = random_id()
-ORGANIZATION_ID = random_id()
-ORGANIZATION2_ID = random_id()
+ORGANIZATION_ALICE_ID = random_id()
+ORGANIZATION_BOB_ID = random_id()
+ORGANIZATION_BOB_SHIPPER_ID = random_id()
 VAULT_ID = random_id()
 ORGANIZATION_NAME = 'ShipChain Test'
 ORGANIZATION2_NAME = 'Test Organization-2'
 BASE_PERMISSIONS = ['user.perm_1', 'user.perm_2', 'user.perm_3']
 GTX_PERMISSIONS = ['user.perm_1', 'gtx.shipment_use', 'user.perm_3']
-
-
-@pytest.fixture(scope='session')
-def token():
-    return get_jwt(username='user1@shipchain.io',
-                   sub=USER_ID,
-                   organization_id=ORGANIZATION_ID,
-                   organization_name=ORGANIZATION_NAME,
-                   permissions=BASE_PERMISSIONS)
-
-
-@pytest.fixture(scope='session')
-def gtx_token():
-    return get_jwt(username='user1@shipchain.io', sub=USER_ID, organization_id=ORGANIZATION_ID, permissions=GTX_PERMISSIONS)
-
-
-@pytest.fixture(scope='session')
-def user(token):
-    return passive_credentials_auth(token)
-
-
-@pytest.fixture(scope='session')
-def gtx_user(gtx_token):
-    return passive_credentials_auth(gtx_token)
-
-
-@pytest.fixture(scope='session')
-def org_id(user):
-    return user.token.get('organization_id', None)
-
-
-@pytest.fixture(scope='session')
-def token2():
-    return get_jwt(username='user2@shipchain.io',
-                   sub=USER2_ID,
-                   organization_id=ORGANIZATION2_ID,
-                   organization_name=ORGANIZATION2_NAME)
-
-
-@pytest.fixture(scope='session')
-def user2(token2):
-    return passive_credentials_auth(token2)
-
-
-@pytest.fixture(scope='session')
-def org2_id(user2):
-    return user2.token.get('organization_id', None)
-
-
-@pytest.fixture(scope='session')
-def shipper_token():
-    return get_jwt(username='shipper1@shipchain.io', sub=SHIPPER_ID)
-
-
-@pytest.fixture(scope='session')
-def shipper_user(shipper_token):
-    return passive_credentials_auth(shipper_token)
 
 
 @pytest.fixture
@@ -115,36 +58,74 @@ def user_alice_id():
 
 
 @pytest.fixture
+def user_alice(user_alice_id):
+    return passive_credentials_auth(
+        get_jwt(
+            username='alice@shipchain.io',
+            sub=user_alice_id,
+            organization_id=ORGANIZATION_ALICE_ID,
+            organization_name=ORGANIZATION_NAME,
+            permissions=BASE_PERMISSIONS
+        ))
+
+
+@pytest.fixture
+def client_alice(user_alice):
+    api_client = APIClient()
+    api_client.force_authenticate(user_alice)
+    return api_client
+
+
+@pytest.fixture
+def org_id_alice():
+    return ORGANIZATION_ALICE_ID
+
+
+@pytest.fixture
 def user_bob_id():
     return random_id()
 
 
 @pytest.fixture
-def no_user_api_client():
-    return APIClient()
+def user_bob(user_bob_id):
+    return passive_credentials_auth(
+        get_jwt(username='bob@shipchain.io',
+                sub=user_bob_id,
+                organization_id=ORGANIZATION_BOB_ID,
+                organization_name=ORGANIZATION2_NAME
+                ))
 
 
 @pytest.fixture
-def client_alice(user_alice_id):
-    api_client = APIClient()
-    token = get_jwt(username='alice@shipchain.io', sub=user_alice_id, organization_id=random_id())
-    api_client.force_authenticate(user=passive_credentials_auth(token), token=token)
-    return api_client
+def org_id_bob():
+    return ORGANIZATION_BOB_ID
 
 
 @pytest.fixture
-def client_bob(user_bob_id):
+def client_bob(user_bob):
     api_client = APIClient()
-    token = get_jwt(username='bob@shipchain.io', sub=user_bob_id, organization_id=random_id())
-    api_client.force_authenticate(user=passive_credentials_auth(token), token=token)
+    api_client.force_authenticate(user_bob)
     return api_client
 
 
 @pytest.fixture(scope='session')
-def api_client(user, token):
-    client = APIClient()
-    client.force_authenticate(user=user, token=token)
-    return client
+def user_gtx_alice(user_alice_id):
+    return passive_credentials_auth(
+        get_jwt(username='user1@shipchain.io',
+                sub=user_alice_id,
+                organization_id=ORGANIZATION_ALICE_ID,
+                permissions=GTX_PERMISSIONS
+                ))
+
+
+@pytest.fixture(scope='session')
+def gtx_user(gtx_token):
+    return passive_credentials_auth(gtx_token)
+
+
+@pytest.fixture(scope='session')
+def shipper_user():
+    return passive_credentials_auth(get_jwt(username='shipper1@shipchain.io', sub=SHIPPER_ID))
 
 
 @pytest.fixture(scope='session')
@@ -155,17 +136,19 @@ def gtx_api_client(gtx_user, gtx_token):
 
 
 @pytest.fixture(scope='session')
-def shipper_api_client(shipper_user, shipper_token):
+def shipper_api_client(shipper_user):
     client = APIClient()
-    client.force_authenticate(user=shipper_user, token=shipper_token)
+    client.force_authenticate(shipper_user)
     return client
 
 
-@pytest.fixture(scope='session')
-def user2_api_client(user2, token2):
-    client = APIClient()
-    client.force_authenticate(user=user2, token=token2)
-    return client
+@pytest.fixture
+def profiles_ids():
+    return {
+        "shipper_wallet_id": random_id(),
+        "carrier_wallet_id": random_id(),
+        "storage_credentials_id": random_id()
+    }
 
 
 @pytest.fixture
@@ -206,38 +189,64 @@ def mocked_not_moderator(http_pretty, shipment):
 
 
 @pytest.fixture
-def mock_non_wallet_owner_calls(http_pretty):
-    wallet_url = f'{test_settings.PROFILES_URL}/api/v1/wallet/{SHIPPER_ID}/'
-    storage_credentials_url = f'{test_settings.PROFILES_URL}/api/v1/storage_credentials/{SHIPPER_ID}/'
-    http_pretty.register_uri(http_pretty.GET, wallet_url, status=status.HTTP_404_NOT_FOUND)
-    http_pretty.register_uri(http_pretty.GET, wallet_url, status=status.HTTP_404_NOT_FOUND)
-    http_pretty.register_uri(http_pretty.GET, storage_credentials_url, status=status.HTTP_404_NOT_FOUND)
-
-    return http_pretty
-
-
-@pytest.fixture
-def mock_successful_wallet_owner_calls(http_pretty):
-    wallet_url = f'{test_settings.PROFILES_URL}/api/v1/wallet/{SHIPPER_ID}/'
-    storage_credentials_url = f'{test_settings.PROFILES_URL}/api/v1/storage_credentials/{SHIPPER_ID}/'
-    http_pretty.register_uri(http_pretty.GET, wallet_url,
-                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-    http_pretty.register_uri(http_pretty.GET, wallet_url,
-                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-    http_pretty.register_uri(http_pretty.GET, storage_credentials_url,
-                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-
-    return http_pretty
+def nonsuccessful_wallet_owner_calls_assertions(profiles_ids):
+    return [
+        {
+            'path': f'/api/v1/wallet/{profiles_ids["shipper_wallet_id"]}/',
+            'body': '',
+            'host': test_settings.PROFILES_URL.replace('http://', ''),
+        }, {
+            'path': f'/api/v1/wallet/{profiles_ids["carrier_wallet_id"]}/',
+            'body': '',
+            'host': test_settings.PROFILES_URL.replace('http://', ''),
+        },
+    ]
 
 
 @pytest.fixture
-def mocked_profiles(http_pretty):
-    profiles_ids = {
-        "shipper_wallet_id": random_id(),
-        "carrier_wallet_id": random_id(),
-        "storage_credentials_id": random_id()
-    }
+def mock_non_wallet_owner_calls(modified_http_pretty, profiles_ids):
+    wallet_url = f'{test_settings.PROFILES_URL}/api/v1/wallet/'
+    storage_credentials_url = f'{test_settings.PROFILES_URL}/api/v1/storage_credentials/' \
+                              f'{profiles_ids["storage_credentials_id"]}/'
+    modified_http_pretty.register_uri(modified_http_pretty.GET, wallet_url + profiles_ids["shipper_wallet_id"] + "/",
+                                      status=status.HTTP_404_NOT_FOUND)
+    modified_http_pretty.register_uri(modified_http_pretty.GET, wallet_url + profiles_ids["carrier_wallet_id"] + "/",
+                                      status=status.HTTP_404_NOT_FOUND)
+    modified_http_pretty.register_uri(modified_http_pretty.GET, storage_credentials_url,
+                                      status=status.HTTP_404_NOT_FOUND)
 
+    return modified_http_pretty
+
+
+@pytest.fixture
+def successful_wallet_owner_calls_assertions(profiles_ids):
+    return [
+        {
+            'path': f'/api/v1/wallet/{profiles_ids["shipper_wallet_id"]}/',
+            'body': '',
+            'host': test_settings.PROFILES_URL.replace('http://', ''),
+        },
+    ]
+
+
+@pytest.fixture
+def mock_successful_wallet_owner_calls(modified_http_pretty, profiles_ids):
+    wallet_url = f'{test_settings.PROFILES_URL}/api/v1/wallet/'
+    storage_credentials_url = f'{test_settings.PROFILES_URL}/api/v1/storage_credentials/' \
+                              f'{profiles_ids["storage_credentials_id"]}/?is_active'
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
+                                      f'{wallet_url}{profiles_ids["shipper_wallet_id"]}/?is_active',
+                                      status=status.HTTP_200_OK)
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
+                                      f'{wallet_url}{profiles_ids["carrier_wallet_id"]}/?is_active',
+                                      status=status.HTTP_200_OK)
+    modified_http_pretty.register_uri(modified_http_pretty.GET, storage_credentials_url, status=status.HTTP_200_OK)
+
+    return modified_http_pretty
+
+
+@pytest.fixture
+def mocked_profiles(http_pretty, profiles_ids):
     http_pretty.register_uri(http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['shipper_wallet_id']}/",
                              body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
@@ -251,12 +260,12 @@ def mocked_profiles(http_pretty):
 
 
 @pytest.fixture
-def shipment(mocked_engine_rpc, mocked_iot_api):
+def shipment(mocked_engine_rpc, mocked_iot_api, user_alice_id, profiles_ids):
     return Shipment.objects.create(vault_id=VAULT_ID,
-                                   carrier_wallet_id=SHIPPER_ID,
-                                   shipper_wallet_id=SHIPPER_ID,
-                                   storage_credentials_id=SHIPPER_ID,
-                                   owner_id=USER_ID)
+                                   carrier_wallet_id=profiles_ids['carrier_wallet_id'],
+                                   shipper_wallet_id=profiles_ids['shipper_wallet_id'],
+                                   storage_credentials_id=profiles_ids['storage_credentials_id'],
+                                   owner_id=user_alice_id)
 
 
 @pytest.fixture
@@ -265,25 +274,54 @@ def second_shipment(mocked_engine_rpc, mocked_iot_api):
                                    carrier_wallet_id=random_id(),
                                    shipper_wallet_id=SHIPPER_ID,
                                    storage_credentials_id=random_id(),
-                                   owner_id=ORGANIZATION_ID)
+                                   owner_id=ORGANIZATION_ALICE_ID)
 
 
 @pytest.fixture
 def org2_shipment(mocked_engine_rpc, mocked_iot_api):
     return Shipment.objects.create(vault_id=VAULT_ID,
                                    carrier_wallet_id=random_id(),
-                                   shipper_wallet_id=ORGANIZATION2_SHIPPER_ID,
+                                   shipper_wallet_id=ORGANIZATION_BOB_SHIPPER_ID,
                                    storage_credentials_id=random_id(),
-                                   owner_id=ORGANIZATION2_ID)
+                                   owner_id=ORGANIZATION_BOB_ID)
 
 
 @pytest.fixture
-def shipment_alice(mocked_engine_rpc, mocked_iot_api, user_alice_id):
+def shipment_alice(mocked_engine_rpc, mocked_iot_api, user_alice_id, profiles_ids):
     return Shipment.objects.create(vault_id=VAULT_ID,
-                                   carrier_wallet_id=SHIPPER_ID,
-                                   shipper_wallet_id=SHIPPER_ID,
-                                   storage_credentials_id=SHIPPER_ID,
+                                   carrier_wallet_id=profiles_ids["carrier_wallet_id"],
+                                   shipper_wallet_id=profiles_ids["shipper_wallet_id"],
+                                   storage_credentials_id=profiles_ids["storage_credentials_id"],
                                    owner_id=user_alice_id)
+
+
+@pytest.fixture
+def shipment_alice_two(mocked_engine_rpc, mocked_iot_api, user_alice_id, profiles_ids):
+    return Shipment.objects.create(vault_id=VAULT_ID,
+                                   carrier_wallet_id=profiles_ids["carrier_wallet_id"],
+                                   shipper_wallet_id=profiles_ids["shipper_wallet_id"],
+                                   storage_credentials_id=profiles_ids["storage_credentials_id"],
+                                   owner_id=user_alice_id)
+
+
+@pytest.fixture
+def url_shipment_alice(shipment_alice):
+    return reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_alice.id})
+
+
+@pytest.fixture
+def url_shipment_alice_two(shipment_alice_two):
+    return reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_alice_two.id})
+
+
+@pytest.fixture
+def entity_ref_shipment_alice(shipment_alice):
+    return AssertionHelper.EntityRef(resource='Shipment', pk=shipment_alice.id)
+
+
+@pytest.fixture
+def entity_ref_shipment_alice_two(shipment_alice_two):
+    return AssertionHelper.EntityRef(resource='Shipment', pk=shipment_alice_two.id)
 
 
 @pytest.fixture
@@ -309,11 +347,11 @@ def device(boto):
 
 
 @pytest.fixture
-def shipment_alice_with_device(mocked_engine_rpc, mocked_iot_api, device, user_alice_id):
+def shipment_alice_with_device(mocked_engine_rpc, mocked_iot_api, device, user_alice_id, profiles_ids):
     return Shipment.objects.create(vault_id=VAULT_ID,
-                                   carrier_wallet_id=SHIPPER_ID,
-                                   shipper_wallet_id=SHIPPER_ID,
-                                   storage_credentials_id=SHIPPER_ID,
+                                   carrier_wallet_id=profiles_ids['carrier_wallet_id'],
+                                   shipper_wallet_id=profiles_ids['shipper_wallet_id'],
+                                   storage_credentials_id=profiles_ids['storage_credentials_id'],
                                    owner_id=user_alice_id,
                                    device=device)
 
@@ -327,11 +365,11 @@ def permission_link_device_shipment(shipment_alice_with_device):
 
 
 @pytest.fixture
-def device_alice_with_shipment(mocked_engine_rpc, mocked_iot_api, device, user_alice_id):
+def device_alice_with_shipment(mocked_engine_rpc, mocked_iot_api, device, user_alice_id, profiles_ids):
     Shipment.objects.create(vault_id=VAULT_ID,
-                            carrier_wallet_id=SHIPPER_ID,
-                            shipper_wallet_id=SHIPPER_ID,
-                            storage_credentials_id=SHIPPER_ID,
+                            carrier_wallet_id=profiles_ids['carrier_wallet_id'],
+                            shipper_wallet_id=profiles_ids['shipper_wallet_id'],
+                            storage_credentials_id=profiles_ids['storage_credentials_id'],
                             owner_id=user_alice_id,
                             device=device)
     return device

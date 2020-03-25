@@ -17,6 +17,7 @@ import pytest
 from django.urls import reverse
 from mock import patch
 from rest_framework import status
+from shipchain_common.test_utils import AssertionHelper
 
 from apps.eth.models import Event, EthAction
 
@@ -81,7 +82,7 @@ def mock_event_signal(mocker):
 
 
 @pytest.mark.django_db
-def test_event_update(api_client, shipment, contract_event, mock_event_signal):
+def test_event_update(client_alice, shipment, contract_event, mock_event_signal):
     url = reverse('event-list', kwargs={'version': 'v1'})
     # Create EthAction so events don't get ignored
     EthAction.objects.create(transaction_hash=contract_event['transactionHash'],
@@ -98,54 +99,54 @@ def test_event_update(api_client, shipment, contract_event, mock_event_signal):
         'project': 'LOAD'
     }
 
-    response = api_client.post(url, data, format='json')
+    response = client_alice.post(url, data)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     # Set NGINX headers for engine auth
-    response = api_client.post(url, data, format='json', X_NGINX_SOURCE='internal',
-                               X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client_alice.post(url, data, X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                 X_SSL_CLIENT_DN='/CN=engine.test-internal')
+    AssertionHelper.HTTP_204(response)
 
     # Test idempotency of Events
     num_events = Event.objects.count()
-    response = api_client.post(url, data, format='json', X_NGINX_SOURCE='internal',
-                               X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client_alice.post(url, data, X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                 X_SSL_CLIENT_DN='/CN=engine.test-internal')
+    AssertionHelper.HTTP_204(response)
     assert Event.objects.count() == num_events
 
-    response = api_client.post(url, data_batched, format='json', X_NGINX_SOURCE='internal',
-                               X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client_alice.post(url, data_batched, X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                 X_SSL_CLIENT_DN='/CN=engine.test-internal')
+    AssertionHelper.HTTP_204(response)
     assert Event.objects.count() == num_events
 
     # Events should be idempotent by transactionHash and logIndex
     data['events']['blockNumber'] = 9999
-    response = api_client.post(url, data, format='json', X_NGINX_SOURCE='internal',
-                               X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client_alice.post(url, data, X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                 X_SSL_CLIENT_DN='/CN=engine.test-internal')
+    AssertionHelper.HTTP_204(response)
     assert Event.objects.count() == num_events
 
     data['events']['logIndex'] = 1
-    response = api_client.post(url, data, format='json', X_NGINX_SOURCE='internal',
-                               X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    response = client_alice.post(url, data, X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                 X_SSL_CLIENT_DN='/CN=engine.test-internal')
+    AssertionHelper.HTTP_204(response)
     assert Event.objects.count() == (num_events + 1)
 
 
 @pytest.mark.django_db
-def test_event_transfer(api_client, token_event):
+def test_event_transfer(client_alice, token_event):
     url = reverse('event-list', kwargs={'version': 'v1'})
     data = {
         'events': token_event,
         'project': 'ShipToken'
     }
-    response = api_client.post(url, data, format='json')
+    response = client_alice.post(url, data)
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
     with patch('apps.eth.views.log_metric') as mocked:
         # Set NGINX headers for engine auth
-        response = api_client.post(url, data, format='json', X_NGINX_SOURCE='internal',
-                                   X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
-        assert response.status_code == status.HTTP_204_NO_CONTENT
+        response = client_alice.post(url, data, X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                     X_SSL_CLIENT_DN='/CN=engine.test-internal')
+        AssertionHelper.HTTP_204(response)
 
         assert mocked.call_count == 2

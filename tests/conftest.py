@@ -27,7 +27,7 @@ DEVICE_ID = random_id()
 
 
 @pytest.fixture(scope='session')
-def unauthenticated_api_client():
+def api_client():
     return APIClient()
 
 
@@ -107,6 +107,7 @@ def boto():
     import boto3
     boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
     return boto3
+
 
 @pytest.fixture
 def entity_shipment_relationship(json_asserter, shipment):

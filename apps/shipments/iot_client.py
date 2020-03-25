@@ -17,7 +17,8 @@ limitations under the License.
 import logging
 
 from influxdb_metrics.loader import log_metric
-from shipchain_common.exceptions import AWSIoTError
+from shipchain_common.aws import URLShortenerClient
+from shipchain_common.exceptions import AWSIoTError, URLShortenerError
 from shipchain_common.iot import AWSIoTClient
 
 LOG = logging.getLogger('transmission')
@@ -36,3 +37,13 @@ class DeviceAWSIoTClient(AWSIoTClient):
             raise AWSIoTError("Error in response from AWS IoT")
 
         return iot_shadow['data']
+
+
+class URLShortener(URLShortenerClient):
+    def get_shortened_link(self, params):
+        url_response = self._post(payload=params)
+
+        if 'short_id' not in url_response:
+            raise URLShortenerError("Error generating short url for Permission Link")
+
+        return f'{self.url}/{url_response["short_id"]}'

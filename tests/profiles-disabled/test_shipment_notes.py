@@ -28,7 +28,7 @@ MESSAGE = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusm
 
 
 @pytest.mark.django_db
-def test_create_shipment_note(unauthenticated_api_client, shipment):
+def test_create_shipment_note(api_client, shipment):
     url = reverse('shipment-notes-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
     bad_shipment_url = reverse('shipment-notes-list', kwargs={'version': 'v1', 'shipment_pk': random_id()})
 
@@ -37,21 +37,27 @@ def test_create_shipment_note(unauthenticated_api_client, shipment):
         'user_id': USER_ID})
 
     # An unauthenticated user cannot create a shipment note without specifying the user
-    response = unauthenticated_api_client.post(url, {'message': MESSAGE}, format='json')
+    response = api_client.post(url, {'message': MESSAGE})
     AssertionHelper.HTTP_400(response, error='This field is required.', pointer='user_id')
 
     # A shipment note cannot be created for a non existing shipment
-    response = unauthenticated_api_client.post(bad_shipment_url, create_note_data, content_type=content_type)
+    response = api_client.post(bad_shipment_url, create_note_data, content_type=content_type)
     AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
 
     # An authenticated user with a specified user can create a shipment note
-    response = unauthenticated_api_client.post(url, create_note_data, content_type=content_type)
+    response = api_client.post(url, create_note_data, content_type=content_type)
     AssertionHelper.HTTP_201(response,
-                           entity_refs=AssertionHelper.EntityRef(resource='ShipmentNote',
-                                                               attributes={
-                                                                   'message': MESSAGE,
-                                                                   'user_id': USER_ID,
-                                                                   'username': None},
-                                                               relationships={'shipment': AssertionHelper.EntityRef(
-                                                                   resource='Shipment', pk=shipment.id)})
-                           )
+                             entity_refs=AssertionHelper.EntityRef(
+                                 resource='ShipmentNote',
+                                 attributes={
+                                     'message': MESSAGE,
+                                     'user_id': USER_ID,
+                                     'username': None
+                                 },
+                                 relationships={
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment.id
+                                     )
+                                 })
+                             )

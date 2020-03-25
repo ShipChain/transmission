@@ -1,15 +1,14 @@
-import copy
 import json
-import re
-import random
-import pytz
+from datetime import datetime, timezone, timedelta
 from unittest import mock
 
-import requests
 import boto3
-import httpretty
+import copy
 import geocoder
-from datetime import datetime, timezone, timedelta
+import httpretty
+import re
+import requests
+from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
 from dateutil import parser
 from django.conf import settings as test_settings
 from django.core import mail
@@ -19,17 +18,13 @@ from moto import mock_iot
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, force_authenticate, APIClient
+from shipchain_common.test_utils import replace_variables_in_string, create_form_content, mocked_rpc_response, \
+    get_jwt, GeoCoderResponse
 
 from apps.authentication import passive_credentials_auth
 from apps.eth.models import EthAction
-from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
-from shipchain_common.test_utils import replace_variables_in_string, create_form_content, mocked_rpc_response, \
-    random_timestamp, random_location, get_jwt, GeoCoderResponse
-from shipchain_common.utils import random_id
-
-from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
+from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink, random_id
 from apps.shipments.rpc import Load110RPCClient
-from apps.shipments.iot_client import DeviceAWSIoTClient
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
 
@@ -463,7 +458,7 @@ class ShipmentAPITests(APITestCase):
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
 
             # Send tracking update
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
             # Tracking data in db
@@ -479,7 +474,7 @@ class ShipmentAPITests(APITestCase):
             track_dic2['timestamp'] = '2018-09-18T15:02:31.563847+00:00'
             signed_data2 = jws.sign(track_dic2, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
             list_payload = [{'payload': signed_data}, {'payload': signed_data2}]
-            response = self.client.post(url, list_payload, format='json')
+            response = self.client.post(url, list_payload)
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             self.assertEqual(TrackingData.objects.all().count(), 3)
 
@@ -498,7 +493,7 @@ class ShipmentAPITests(APITestCase):
             signed_data = jws.sign(track_dic_2, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
 
             # Send second tracking data
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             self.assertEqual(TrackingData.objects.all().count(), 4)
 
@@ -551,14 +546,14 @@ class ShipmentAPITests(APITestCase):
 
             # Certificate ID not in AWS
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': 'notarealcertificateid'}, algorithm='ES256')
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Signed by a different key
             with open('tests/data/eckey2.pem', 'r') as key_file:
                 bad_key = key_file.read()
             signed_data = jws.sign(track_dic, key=bad_key, headers={'kid': certificate_id}, algorithm='ES256')
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Data from a different device
@@ -577,40 +572,40 @@ class ShipmentAPITests(APITestCase):
             bad_url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': bad_device_id})
 
             signed_data = jws.sign(track_dic, key=bad_key, headers={'kid': bad_cert_id}, algorithm='ES256')
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Posting to a device not associated with a shipment should fail
-            response = self.client.post(bad_url, {'payload': signed_data}, format='json')
+            response = self.client.post(bad_url, {'payload': signed_data})
 
             # Invalid JWS
-            response = self.client.post(url, {'payload': {'this': 'is not a jws'}}, format='json')
+            response = self.client.post(url, {'payload': {'this': 'is not a jws'}})
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            response = self.client.post(url, {'payload': 'neither.is.this'}, format='json')
+            response = self.client.post(url, {'payload': 'neither.is.this'})
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            response = self.client.post(url, {'payload': 'or.this'}, format='json')
+            response = self.client.post(url, {'payload': 'or.this'})
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            response = self.client.post(url, {'payload': 'bm9ybm9ybm9y.aXNpc2lz.dGhpc3RoaXN0aGlz'}, format='json')
+            response = self.client.post(url, {'payload': 'bm9ybm9ybm9y.aXNpc2lz.dGhpc3RoaXN0aGlz'})
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
             # Certificate not ACTIVE
             iot.update_certificate(certificateId=certificate_id, newStatus='REVOKED')
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': certificate_id}, algorithm='ES256')
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
             iot.update_certificate(certificateId=certificate_id, newStatus='ACTIVE')
 
             # Device not assigned to shipment
             Shipment.objects.filter(id=self.shipments[0].id).update(device_id=None)
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
             # Assert that calls other than GET/POST fail
-            response = self.client.put(url, {'payload': signed_data}, format='json')
+            response = self.client.put(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
             # Assert that calls other than GET/POST fail
-            response = self.client.put(tracking_get_url, {'payload': signed_data}, format='json')
+            response = self.client.put(tracking_get_url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_shipment_update(self):
@@ -667,14 +662,14 @@ class ShipmentAPITests(APITestCase):
 
         self.set_user(self.user_1)
 
-        response = self.client.patch(url, shipment_customer_fields_1, format='json')
+        response = self.client.patch(url, shipment_customer_fields_1)
         self.assertTrue(response.status_code == status.HTTP_202_ACCEPTED)
         customer_fields = response.json()['data']['attributes']['customer_fields']
         self.assertEqual(customer_fields, shipment_customer_fields_1['customer_fields'])
 
         # An additionally added key to customer_field should be present in the customer_fields
         # and the response should preserve the previously added fields
-        response = self.client.patch(url, shipment_customer_fields_2, format='json')
+        response = self.client.patch(url, shipment_customer_fields_2)
         self.assertTrue(response.status_code == status.HTTP_202_ACCEPTED)
         customer_fields = response.json()['data']['attributes']['customer_fields']
         self.assertEqual(customer_fields['field_1'], shipment_customer_fields_2['customer_fields']['field_1'])
@@ -776,7 +771,7 @@ class ShipmentAPITests(APITestCase):
             signed_data = jws.sign(track_dic, key=key_pem, headers={'kid': new_active_certificate}, algorithm='ES256')
 
             # Send tracking data
-            response = self.client.post(url, {'payload': signed_data}, format='json')
+            response = self.client.post(url, {'payload': signed_data})
             self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             # The new certificate should be attached to the shipment's device
             device = self.shipments[0].device
@@ -819,7 +814,7 @@ class ShipmentAPITests(APITestCase):
                     mocked.return_value = mocked_rpc_response({'data': {
                         'shipmentId': 'dunno yet'
                     }})
-                    response = self.client.post(url, post_data, format='json')
+                    response = self.client.post(url, post_data)
                 self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
                 # The new certificate should be attached to the shipment's device
@@ -888,7 +883,7 @@ class ShipmentAPITests(APITestCase):
 
             # Every shipment created should have tow historical objects, one for the shipment
             # creation and one for shipment update with engine metadata.
-            response = self.client.post(url, create_shipment_data, format='json')
+            response = self.client.post(url, create_shipment_data)
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
             data = response.json()['data']
             shipment_id = data['id']
@@ -919,7 +914,7 @@ class ShipmentAPITests(APITestCase):
             url_patch = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_id})
 
             # Existing shipment updated with new fields values should have history diff
-            response = self.client.patch(url_patch, update_shipment_data, format='json')
+            response = self.client.patch(url_patch, update_shipment_data)
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
             response = self.client.get(history_url)
@@ -1076,7 +1071,7 @@ class ShipmentAPITests(APITestCase):
                 }
             }
 
-            response = self.client.patch(url_patch, shipment_update_customer_fields, format='json')
+            response = self.client.patch(url_patch, shipment_update_customer_fields)
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
             self.assertEqual(response.json()['data']['attributes']['customer_fields'],
                              shipment_update_customer_fields['customer_fields'])
@@ -1091,7 +1086,7 @@ class ShipmentAPITests(APITestCase):
             # Ensure that a modified customer_fields is reflected in historical diff changes
             shipment_update_customer_fields['customer_fields']['custom_field_1'] = 'value one modified'
 
-            response = self.client.patch(url_patch, shipment_update_customer_fields, format='json')
+            response = self.client.patch(url_patch, shipment_update_customer_fields)
             self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
             self.assertEqual(response.json()['data']['attributes']['customer_fields'],
                              shipment_update_customer_fields['customer_fields'])
@@ -1110,7 +1105,7 @@ class ShipmentAPITests(APITestCase):
                 'action_type': 'Pick_up'
             }
 
-            response = self.client.post(shipment_action_url, shipment_action, format='json')
+            response = self.client.post(shipment_action_url, shipment_action)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             data = response.json()['data']
             self.assertEqual(data['attributes']['state'], 'IN_TRANSIT')
@@ -1417,7 +1412,7 @@ class ShipmentAPITests(APITestCase):
 
         # Create shipment with first user
         self.set_user(self.user_1, self.token)
-        response = self.client.post(url, post_data, format='json')
+        response = self.client.post(url, post_data)
 
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         shipment_id = response.json()['data']['id']
@@ -1952,262 +1947,6 @@ class ShipmentAPITests(APITestCase):
         self.assertEqual(ship_to_location.name, parameters['_ship_to_location_name'])
         self.assertEqual(ship_to_location.geometry.coords, (23.0, 12.0))
 
-    @httpretty.activate
-    def test_permission_link(self):
-        httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{CARRIER_WALLET_ID}/?is_active",
-                               body=json.dumps({'good': 'good'}), status=status.HTTP_404_NOT_FOUND)
-        httpretty.register_uri(httpretty.GET,
-                               f"{test_settings.PROFILES_URL}/api/v1/wallet/{SHIPPER_WALLET_ID}/?is_active",
-                               body=json.dumps({'good': 'good'}), status=status.HTTP_404_NOT_FOUND)
-
-        self.create_shipment()
-        url = reverse('shipment-permissions-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
-        url_shipment_list = reverse('shipment-list', kwargs={'version': 'v1'})
-
-        today = datetime.now(timezone.utc)
-        yesterday = today + timedelta(days=-1)
-        tomorrow = today + timedelta(days=1)
-
-        valid_permission_no_exp, content_type = create_form_content({
-            'name': 'test'
-        })
-
-        valid_permission_past_exp, content_type = create_form_content({
-            'name': 'test',
-            'expiration_date': yesterday.isoformat()
-        })
-
-        valid_permission_with_exp, content_type = create_form_content({
-            'name': 'test',
-            'expiration_date': tomorrow.isoformat()
-        })
-
-        shipment_update_info, content_type = create_form_content({
-            'carrier_scac': 'test'
-        })
-
-        valid_permission_id_past_exp = PermissionLink.objects.create(name='test', shipment_id=self.shipments[0].id,
-                                                                     expiration_date=yesterday).id
-
-        # Unauthenticated request should fail with 403
-        response = self.client.post(url, valid_permission_no_exp, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        self.set_user(self.user_1)
-
-        # Authenticated request should succeed
-        response = self.client.post(url, valid_permission_no_exp, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        response_json = response.json()
-        self.assertEqual(response_json['data']['attributes']['shipment_id'], self.shipments[0].id)
-        self.assertIsNone(response_json['data']['attributes']['expiration_date'])
-        valid_permission_id = response_json['data']['id']
-
-        # Authenticated request should fail with a date time prior to the moment
-        response = self.client.post(url, valid_permission_past_exp, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        # Authenticated request should succeed
-        response = self.client.post(url, valid_permission_with_exp, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        response_json = response.json()
-        self.assertEqual(response_json['data']['attributes']['shipment_id'], self.shipments[0].id)
-        self.assertTrue(datetime.now(timezone.utc) < parser.parse(response_json['data']['attributes']['expiration_date']))
-        valid_permission_id_with_exp = response_json['data']['id']
-
-        # The shipment owner can access permission links related to that shipment
-        response = self.client.get(url)
-        response_json = response.json()
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_json['data']), 3)
-
-        # Another user with valid permission should be able to access that shipment only with permission link
-        shipment_url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[0].id})
-        other_shipment_url = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': self.shipments[1].id})
-
-        # The primary user with an invalid/expired code should still succeed
-        response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_past_exp}')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        response = self.client.get(shipment_url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        self.set_user(self.user_2)
-
-        # A tier authenticated user(not shipment owner) cannot access
-        # the permission link objects of a shipment not owned
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # An authenticated user without permission link should not have access
-        response = self.client.get(shipment_url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # Shipments with permission links can only be accessible via shipments-detail endpoint
-        # not shipments-list response status should be 403
-        response = self.client.get(f'{url_shipment_list}?permission_link={valid_permission_id_with_exp}')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id}')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        # Assert that users cannot update or delete shipments when using a permission link
-        response = self.client.patch(f'{shipment_url}?permission_link={valid_permission_id}',
-                                     shipment_update_info, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # Assert that users cannot update or delete shipments when using a permission link
-        response = self.client.delete(f'{shipment_url}?permission_link={valid_permission_id}')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # Assert that users cannot access shipment with expired date but can before expiration date
-        response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_past_exp}')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # Assert that users cannot access shipment with expired permission date but can before expiration date
-        response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_with_exp}')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        # Can only access shipment with permission link associated
-        response = self.client.get(f'{other_shipment_url}?permission_link={valid_permission_id}')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # An invalid code should result in a 403
-        response = self.client.get(f'{shipment_url}?permission_link={self.shipments[0].id}')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # Assert that users with empty permission link cannot access shipment
-        response = self.client.get(f'{shipment_url}?permission_link=')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # Assert that a tier user with valid permission cannot modify a shipment
-        response = self.client.patch(f'{shipment_url}?permission_link={valid_permission_id_with_exp}',
-                                     shipment_update_info, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # Cannot make a permission link to a shipment not owned
-        response = self.client.post(url, valid_permission_with_exp, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # Assert owner can delete their permission link
-        self.set_user(self.user_1)
-        response = self.client.delete(f'{url}/{valid_permission_id}/', valid_permission_with_exp,
-                                      content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(PermissionLink.objects.all().count(), 2)
-
-        # Assert that a non authenticated user can view the shipment
-        self.set_user(None)
-        response = self.client.get(f'{shipment_url}?permission_link={valid_permission_id_with_exp}')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        # Assert that an anonymous user with valid permission cannot modified a shipment
-        response = self.client.patch(f'{shipment_url}?permission_link={valid_permission_id_with_exp}',
-                                     shipment_update_info, content_type=content_type)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # An anonymous user cannot access a shipment's permission links
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # An anonymous user cannot access the shipment-list with a valid permission link
-        response = self.client.get(f'{url_shipment_list}?permission_link={valid_permission_id_with_exp}')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_permission_link_email(self):
-        with mock.patch.object(requests.Session, 'post') as mock_method:
-            mock_method.return_value = mocked_rpc_response({
-                "jsonrpc": "2.0",
-                "result": {
-                    "success": True,
-                    "vault_id": "TEST_VAULT_ID"
-                }
-            })
-            self.create_shipment()
-
-        url = reverse('shipment-permissions-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})
-
-        today = datetime.now(timezone.utc)
-        yesterday = today + timedelta(days=-1)
-        tomorrow = today + timedelta(days=1)
-        outbox = mail.outbox
-
-        email_data = {
-            'name': 'Email Permission link',
-            "emails": ["test@example.com", "guest@shipchain.io", ]
-        }
-
-        multi_form_email_data, content_type = create_form_content({
-            'name': 'Email Permission link',
-            "emails": ["test@example.com", "guest@shipchain.io", ]
-        })
-        # user_1 is the shipment owner he should be able to share the email the shipment details page
-        self.set_user(self.user_1)
-
-        # A request with an expiration date prior to the moment of the request should fail
-        email_data['expiration_date'] = yesterday.isoformat()
-        response = self.client.post(url, email_data, format='json')
-        self.assertTrue(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(len(outbox), 0)
-
-        # A request with an invalid email address should fail
-        response = self.client.post(url, {'name': 'Bad Email', 'emails': ['bad@email.1', ]}, format='json')
-        self.assertTrue(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(len(outbox), 0)
-
-        # A valid request without any email should succeed without sending any email
-        response = self.client.post(url, {'name': 'Bad Email', 'emails': []}, format='json')
-        self.assertTrue(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(len(outbox), 0)
-
-        # Assert that email can be sent via Multiform data
-        response = self.client.post(url, multi_form_email_data, content_type=content_type)
-        self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(len(outbox), 1)
-        self.assertTrue('The ShipChain team' in str(outbox[0].body))
-        self.assertTrue(self.user_1.username in str(outbox[0].body))
-        self.assertTrue(self.user_1.username in str(outbox[0].subject))
-
-        # A request with an expiration date in the future should succeed
-        email_data['expiration_date'] = tomorrow.isoformat()
-        response = self.client.post(url, email_data, format='json')
-        self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(len(outbox), 2)
-        self.assertTrue('The ShipChain team' in str(outbox[1].body))
-        self.assertTrue(self.user_1.username in str(outbox[1].body))
-        self.assertTrue(self.user_1.username in str(outbox[1].subject))
-
-        # A request without expiration date should succeed
-        email_data.pop('expiration_date')
-        response = self.client.post(url, email_data, format='json')
-        self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(len(outbox), 3)
-        self.assertTrue('The ShipChain team' in str(outbox[2].body))
-        self.assertTrue(self.user_1.username in str(outbox[2].body))
-        self.assertTrue(self.user_1.username in str(outbox[2].subject))
-
-        # -------------------- Permissions test -------------------#
-        self.set_user(None)
-        # An unauthenticated user should fail, with 403 status code
-        response = self.client.post(url, email_data, format='json')
-        self.assertTrue(response.status_code, status.HTTP_403_FORBIDDEN)
-
-        # A shipment shipper, carrier, moderator should succeed sharing a shipment via email
-        with mock.patch('apps.permissions.IsShipperMixin.has_shipper_permission') as mock_carrier, \
-                mock.patch('apps.permissions.IsCarrierMixin.has_carrier_permission') as mock_shipper:
-            mock_carrier.return_value = True
-            mock_shipper.return_value = False
-
-            # user_2 is the shipment carrier and should succeed sharing the shipment via email
-            self.set_user(self.user_2)
-            response = self.client.post(url, email_data, format='json')
-            self.assertTrue(response.status_code, status.HTTP_204_NO_CONTENT)
-            self.assertEqual(len(outbox), 4)
-            self.assertTrue('The ShipChain team' in str(outbox[3].body))
-            self.assertTrue(self.user_2.username in str(outbox[3].body))
-            self.assertTrue(self.user_2.username in str(outbox[3].subject))
-
 
 class TrackingDataAPITests(APITestCase):
     def setUp(self):
@@ -2323,7 +2062,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             mock_device.return_value = Device.objects.get_or_create(id=DEVICE_ID, defaults={'certificate_id': CERTIFICATE_ID})[0]
             mock_wallet_validation.return_value = SHIPPER_WALLET_ID
             mock_storage_validation.return_value = STORAGE_CRED_ID
-            response = self.client.post(url, post_data, format='json')
+            response = self.client.post(url, post_data)
             mock_device.assert_called()
             mock_wallet_validation.assert_called()
             mock_storage_validation.assert_called()
@@ -2337,7 +2076,7 @@ class ShipmentWithIoTAPITests(APITestCase):
             if device_id:
                 mock_device.return_value = Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})[0]
 
-            response = self.client.patch(url, {'device_id': device_id}, format='json')
+            response = self.client.patch(url, {'device_id': device_id})
 
             if device_id:
                 mock_device.assert_called()
@@ -2428,7 +2167,7 @@ class ShipmentWithIoTAPITests(APITestCase):
                 },
                 'project': 'LOAD'
             }
-            response = self.client.post(url, data, format='json', X_NGINX_SOURCE='internal',
+            response = self.client.post(url, data, X_NGINX_SOURCE='internal',
                                         X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=engine.test-internal')
             # Failing at shipment_post_save after device_id is updated
             assert response.status_code == status.HTTP_204_NO_CONTENT
