@@ -272,7 +272,7 @@ class TestPermissionLinkShipmentAccess:
         response = api_client.get(self.url_valid_permission)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_ref_shipment_alice)
 
-    def test_can_access_with_ownership(self, api_client):
+    def test_can_access_without_jwt(self, api_client):
         response = api_client.get(self.url_valid_permission)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_ref_shipment_alice)
 
@@ -284,8 +284,8 @@ class TestPermissionLinkShipmentAccess:
         response = client_alice.get(self.url_expired_permission)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_ref_shipment_alice)
 
-    def test_wallet_owner_access_expired_link(self, api_client, mock_successful_wallet_owner_calls, profiles_ids):
-        response = api_client.get(self.url_expired_permission)
+    def test_wallet_owner_access_expired_link(self, client_bob, mock_successful_wallet_owner_calls, profiles_ids):
+        response = client_bob.get(self.url_expired_permission)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_ref_shipment_alice)
         self.successful_wallet_owner_calls_assertions.append({
             'host': settings.PROFILES_URL.replace('http://', ''),
@@ -293,13 +293,13 @@ class TestPermissionLinkShipmentAccess:
         })
         mock_successful_wallet_owner_calls.assert_calls(self.successful_wallet_owner_calls_assertions)
 
-    def test_non_owner_expired_link_fails(self, api_client, mock_non_wallet_owner_calls):
-        response = api_client.get(self.url_expired_permission)
+    def test_non_owner_expired_link_fails(self, client_bob, mock_non_wallet_owner_calls):
+        response = client_bob.get(self.url_expired_permission)
         AssertionHelper.HTTP_403(response)
         mock_non_wallet_owner_calls.assert_calls(self.nonsuccessful_wallet_owner_calls_assertions)
 
-    def test_cannot_delete_with_permission_link(self, api_client):
-        response = api_client.delete(self.url_valid_permission)
+    def test_cannot_delete_with_permission_link(self, client_bob):
+        response = client_bob.delete(self.url_valid_permission)
         AssertionHelper.HTTP_403(response)
 
     def test_owner_can_delete_with_permission_link(self, client_alice):
@@ -312,8 +312,8 @@ class TestPermissionLinkShipmentAccess:
 
         AssertionHelper.HTTP_202(response, entity_refs=self.entity_ref_shipment_alice)
 
-    def test_requires_shipment_relationship(self, api_client, mock_non_wallet_owner_calls):
-        response = api_client.get(self.url_wrong_permission)
+    def test_requires_shipment_relationship(self, client_bob, mock_non_wallet_owner_calls):
+        response = client_bob.get(self.url_wrong_permission)
         AssertionHelper.HTTP_403(response)
         mock_non_wallet_owner_calls.assert_calls(self.nonsuccessful_wallet_owner_calls_assertions)
 
