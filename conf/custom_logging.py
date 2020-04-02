@@ -7,8 +7,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'celery-style': {
-            'format': "[user:%(user_id)s Org:%(organization_id)s %(asctime)s: %(levelname)s/%(processName)s "
-                      "%(filename)s:%(lineno)d] %(message)s",
+            'format': "[%(asctime)s: %(levelname)s/%(processName)s %(filename)s:%(lineno)d] %(message)s",
         },
         'logstash-style': {
             '()': 'logstash_formatter.LogstashFormatter',
@@ -70,6 +69,10 @@ if PROFILES_ENABLED:
 
     # Loggers config
     LOGGING['loggers']['transmission']['filters'].extend(['user_id', 'organization_id'])
+
+    # Add User/Organization to logs:
+    LOGGING['formatters']['celery-style']['format'] = f"[user:%(user_id)s org:%(organization_id)s " \
+                                                      f"{LOGGING['formatters']['celery-style']['format'][1:]}"
 
 
 if BOTO3_SESSION:
