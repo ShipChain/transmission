@@ -37,7 +37,7 @@ def mocked_engine_rpc(mocker):
     mocker.patch('apps.shipments.rpc.Load110RPCClient.add_shipment_data', return_value={'hash': TRANSACTION_HASH})
     mocked_cst = mocker.patch('apps.shipments.rpc.Load110RPCClient.create_shipment_transaction',
                               return_value=('version', {}))
-    mocked_cst.__qualname__ = 'ShipmentRPCClient.create_shipment_transaction'
+    mocked_cst.__qualname__ = 'Load110RPCClient.create_shipment_transaction'
     mocker.patch('apps.shipments.rpc.Load110RPCClient.sign_transaction', return_value=('version', {}))
     mocked_uvht = mocker.patch('apps.shipments.rpc.Load110RPCClient.set_vault_hash_tx', return_value={})
     mocked_uvht.__qualname__ = 'ShipmentRPCClient.set_vault_hash_tx'

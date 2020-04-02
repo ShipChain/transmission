@@ -7,7 +7,7 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIClient
 from shipchain_common.test_utils import create_form_content, mocked_rpc_response
 
-from apps.shipments.rpc import ShipmentRPCClient
+from apps.shipments.rpc import ShipmentRPCClient, Load110RPCClient
 from apps.shipments.models import Location, Shipment
 
 
@@ -75,12 +75,12 @@ class ShipmentAPITests(APITestCase):
                 '''
 
         # Mock RPC calls
-        mock_shipment_rpc_client = ShipmentRPCClient
+        mock_shipment_rpc_client = Load110RPCClient
 
         mock_shipment_rpc_client.create_vault = mock.Mock(return_value=(parameters['_vault_id'], parameters['_vault_uri']))
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
         mock_shipment_rpc_client.create_shipment_transaction = mock.Mock(return_value=('version', {}))
-        mock_shipment_rpc_client.create_shipment_transaction.__qualname__ = 'ShipmentRPCClient.create_shipment_transaction'
+        mock_shipment_rpc_client.create_shipment_transaction.__qualname__ = 'Load110RPCClient.create_shipment_transaction'
         mock_shipment_rpc_client.sign_transaction = mock.Mock(return_value=({}, 'txHash'))
         mock_shipment_rpc_client.update_vault_hash_transaction = mock.Mock(return_value=({}))
         mock_shipment_rpc_client.update_vault_hash_transaction.__qualname__ = 'ShipmentRPCClient.set_vault_hash_tx'
@@ -116,12 +116,12 @@ class ShipmentAPITests(APITestCase):
         }
 
         # Mock RPC calls
-        mock_shipment_rpc_client = ShipmentRPCClient
+        mock_shipment_rpc_client = Load110RPCClient
 
         mock_shipment_rpc_client.create_vault = mock.Mock(return_value=(parameters['_vault_id'], parameters['_vault_uri']))
         mock_shipment_rpc_client.add_shipment_data = mock.Mock(return_value={'hash': 'txHash'})
         mock_shipment_rpc_client.create_shipment_transaction = mock.Mock(return_value=('version', {}))
-        mock_shipment_rpc_client.create_shipment_transaction.__qualname__ = 'ShipmentRPCClient.create_shipment_transaction'
+        mock_shipment_rpc_client.create_shipment_transaction.__qualname__ = 'Load110RPCClient.create_shipment_transaction'
         mock_shipment_rpc_client.sign_transaction = mock.Mock(return_value=({}, 'txHash'))
         mock_shipment_rpc_client.update_vault_hash_transaction = mock.Mock(return_value=({}))
         mock_shipment_rpc_client.update_vault_hash_transaction.__qualname__ = 'ShipmentRPCClient.set_vault_hash_tx'

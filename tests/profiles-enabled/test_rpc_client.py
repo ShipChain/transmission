@@ -151,52 +151,6 @@ class TestShipmentRPCClient(TestCase):
             vault_signed = rpc_client.add_tracking_data(STORAGE_CRED_ID, SHIPPER_WALLET_ID, CARRIER_WALLET_ID, '{}')
             self.assertEqual(vault_signed, SHIPPER_WALLET_ID)
 
-    def test_create_shipment_transaction(self):
-
-        rpc_client = ShipmentRPCClient()
-
-        # Error response from RPC Server should return server detail in exception
-        with mock.patch.object(requests.Session, 'post') as mock_method:
-            mock_method.return_value = mocked_rpc_response({
-                "error": {
-                    "code": 1337,
-                    "message": "Error from RPC Server",
-                },
-            })
-            try:
-                rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID)
-                self.fail("Should have thrown RPC Error")
-            except RPCError as rpc_error:
-                self.assertEqual(rpc_error.status_code, 500)
-                self.assertEqual(rpc_error.detail, 'Error from RPC Server')
-
-            mock_method.return_value = mocked_rpc_response({
-                "result": {
-                    "code": 1337,
-                    "message": "Error from RPC Server",
-                },
-            })
-            try:
-                rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID)
-                self.fail("Should have thrown RPC Error")
-            except RPCError as rpc_error:
-                self.assertEqual(rpc_error.status_code, 500)
-                self.assertEqual(rpc_error.detail, 'Invalid response from Engine')
-
-            mock_method.return_value = mocked_rpc_response({
-                "jsonrpc": "2.0",
-                "result": {
-                    "success": True,
-                    "transaction": SHIPPER_WALLET_ID,
-                    "contractVersion": "v1"
-                },
-                "id": 0
-            })
-
-            contractVersion, transaction = rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID)
-            self.assertEqual(contractVersion, "v1")
-            self.assertEqual(transaction, SHIPPER_WALLET_ID)
-
     def test_get_tracking_data(self):
 
         rpc_client = ShipmentRPCClient()
@@ -247,6 +201,53 @@ class TestShipmentRPCClient(TestCase):
 
 
 class TestLoad110RPCClient(TestCase):
+
+    def test_create_shipment_transaction(self):
+
+        rpc_client = Load110RPCClient()
+
+        # Error response from RPC Server should return server detail in exception
+        with mock.patch.object(requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "error": {
+                    "code": 1337,
+                    "message": "Error from RPC Server",
+                },
+            })
+            try:
+                rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID)
+                # self.fail("Should have thrown RPC Error")
+            except RPCError as rpc_error:
+                self.assertEqual(rpc_error.status_code, 500)
+                self.assertEqual(rpc_error.detail, 'Error from RPC Server')
+
+            mock_method.return_value = mocked_rpc_response({
+                "result": {
+                    "code": 1337,
+                    "message": "Error from RPC Server",
+                },
+            })
+            try:
+                rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID)
+                # self.fail("Should have thrown RPC Error")
+            except RPCError as rpc_error:
+                self.assertEqual(rpc_error.status_code, 500)
+                self.assertEqual(rpc_error.detail, 'Invalid response from Engine')
+
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "transaction": SHIPPER_WALLET_ID,
+                    "contractVersion": "v1"
+                },
+                "id": 0
+            })
+
+            contractVersion, transaction = rpc_client.create_shipment_transaction(STORAGE_CRED_ID, SHIPPER_WALLET_ID)
+            self.assertEqual(contractVersion, "v1")
+            self.assertEqual(transaction, SHIPPER_WALLET_ID)
+
     def test_set_vault_hash_tx(self):
 
         rpc_client = Load110RPCClient()
