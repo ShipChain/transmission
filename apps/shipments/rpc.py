@@ -158,13 +158,11 @@ class Load110RPCClient(ShipmentRPCClient):
             f'shipper_wallet_id {shipper_wallet_id}, and shipment_id {shipment_id}.')
         log_metric('transmission.info', tags={'method': 'shipment_rpcclient.create_shipment_transaction',
                                               'module': __name__})
-        LOG.info('In create shipment transaction')
 
         result = self.call('load.1.1.0.create_shipment_tx', {
             "senderWallet": shipper_wallet_id,
             "shipmentUuid": shipment_id
         })
-        LOG.info(result)
 
         if 'success' in result and result['success']:
             if 'transaction' in result and 'contractVersion' in result:
