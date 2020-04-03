@@ -26,6 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOAD_VERSION = '1.1.0'
 SHIPTOKEN_VERSION = '1.0.0'
 
+GTX_VALIDATION_URL = 'https://shipchain.acm.gtxcorp.net/validate'
 ENGINE_RPC_URL = os.environ.get('ENGINE_RPC_URL', "http://engine-rpc:2000/")
 INTERNAL_URL = os.environ.get('INTERNAL_URL', 'http://transmission-runserver:8000')
 PROFILES_URL = os.environ.get('PROFILES_URL')

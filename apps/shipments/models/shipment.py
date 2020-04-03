@@ -17,6 +17,14 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import hashlib
+
+import boto3
+import requests
+from botocore.exceptions import ClientError
+
+import geocoder
+from geocoder.keys import mapbox_access_token
+
 import pytz
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField, ArrayField
@@ -28,6 +36,7 @@ from enumfields import EnumField
 from influxdb_metrics.loader import log_metric
 from rest_framework.exceptions import PermissionDenied
 from shipchain_common.utils import random_id
+from urllib3.exceptions import NewConnectionError
 
 from apps.eth.fields import AddressField, HashField
 from apps.jobs.models import AsyncJob, JobState
@@ -78,6 +87,12 @@ class ExceptionType(Enum):
     NONE = 0
     CUSTOMS_HOLD = 1
     DOCUMENTATION_ERROR = 2
+
+
+class GTXValidation(Enum):
+    NOT_APPLICABLE = 0
+    VALIDATION_FAILED = 1
+    VALIDATED = 2
 
 
 class Shipment(AnonymousHistoricalMixin, models.Model):
@@ -192,6 +207,9 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     gtx_required = models.BooleanField(default=False)
     asset_physical_id = models.CharField(null=True, max_length=255)
     asset_custodian_id = models.CharField(null=True, max_length=36)
+
+    gtx_validation = EnumIntegerField(enum=GTXValidation, default=GTXValidation.NOT_APPLICABLE)
+    gtx_validation_timestamp = models.DateTimeField(blank=True, null=True)
 
     geofences = ArrayField(models.CharField(null=True, max_length=36), blank=True, null=True)
 
@@ -343,6 +361,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
         if asset_physical_id:
             self.asset_physical_id = hashlib.sha256(asset_physical_id.encode()).hexdigest()
+            self.validate_gtx()
 
         self.pickup_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
 
@@ -367,6 +386,24 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                        f"specified in Shipment.asset_physical_id")
 
         self.delivery_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
+
+    def validate_gtx(self):
+        validation_status = GTXValidation.VALIDATION_FAILED
+        try:
+            response = requests.post(settings.GTX_VALIDATION_URL,
+                                     {'asset_physical_id': self.asset_physical_id, 'shipment_id': self.id})
+            if response.ok:
+                validation_status = GTXValidation.VALIDATED
+            else:
+                LOG.info(f'Invalid response from GTX, returned with status {response.status_code}')
+        except NewConnectionError:
+            LOG.info('Connection to GTX failed')
+
+        self.set_gtx_validation(validation_status)
+
+    def set_gtx_validation(self, validation):
+        self.gtx_validation = validation
+        self.gtx_validation_timestamp = datetime.now()
 
     # Defaults
     FUNDING_TYPE = FundingType.NO_FUNDING.value
