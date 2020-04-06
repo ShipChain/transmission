@@ -50,9 +50,6 @@ services:
       - psql
       - redis_db
       - minio
-    volumes:
-      - ../:/app
-      - ./django/pip.cache:/build/pip.volume
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - ENV
