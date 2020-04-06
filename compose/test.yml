@@ -1,0 +1,39 @@
+version: '3.4'
+services:
+
+  runserver:
+    build:
+      context: ../
+      target: local
+    image: transmission-django-dev
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    ports:
+      - "8000:8000"
+    networks:
+      default:
+        aliases:
+          - transmission-runserver
+      portal:
+        aliases:
+          - transmission-runserver
+    links:
+      - psql
+      - redis_db
+      - minio
+    volumes:
+      - ../:/app
+      - ./django/pip.cache:/build/pip.volume
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - ENV
+      - SECRET_KEY
+      - SERVICE=runserver
+      - REDIS_URL
+      - ENGINE_RPC_URL=http://engine-rpc:2000
+      - INTERNAL_URL=http://transmission-runserver:8000
+      - PROFILES_URL #http://profiles-runserver:8000
+      - ELASTICSEARCH_URL
+      - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
+      - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
+      - LOG_LEVEL
+      - FORCE_DEBUG
