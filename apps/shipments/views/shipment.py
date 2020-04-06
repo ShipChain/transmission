@@ -37,7 +37,7 @@ from apps.permissions import owner_access_filter, get_owner_id, IsOwner, Shipmen
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
 from ..geojson import render_filtered_point_features
 from ..models import Shipment, TrackingData, PermissionLink
-from ..permissions import IsOwnerOrShared, HasShipmentUpdatePermission
+from ..permissions import IsOwnerOrShared, IsOwnerShipperCarrierModerator
 from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, \
     ShipmentTxSerializer
 
@@ -47,7 +47,7 @@ LOG = logging.getLogger('transmission')
 UPDATE_PERMISSION_CLASSES = (
     (HasViewSetActionPermissions,
      ShipmentExists,
-     HasShipmentUpdatePermission, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
+     IsOwnerShipperCarrierModerator,) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
 )
 
 RETRIEVE_PERMISSION_CLASSES = (

@@ -20,7 +20,7 @@ from shipchain_common import mixins
 from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
 
-from apps.permissions import ShipmentExists, IsOwnerShipperCarrierModerator
+from apps.permissions import ShipmentExists, IsNestedOwnerShipperCarrierModerator
 from ..models import ShipmentTag
 from ..serializers import ShipmentTagSerializer, ShipmentTagCreateSerializer
 
@@ -36,7 +36,7 @@ class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
         (permissions.IsAuthenticated,
          ShipmentExists,
          HasViewSetActionPermissions,
-         IsOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED else
+         IsNestedOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED else
         (permissions.AllowAny, ShipmentExists, )
     )
 

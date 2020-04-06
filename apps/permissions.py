@@ -18,7 +18,6 @@ import logging
 
 from django.db.models import Q
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import permissions, status
 from shipchain_common.authentication import get_jwt_from_request
@@ -80,12 +79,7 @@ def shipment_exists(shipment_id):
     Check whether a shipment_id included in a nested route exists.
     Returns False if it isn't otherwise returns the Shipment object
     """
-    try:
-        shipment_obj = Shipment.objects.get(pk=shipment_id)
-    except ObjectDoesNotExist:
-        return False
-
-    return shipment_obj
+    return Shipment.objects.filter(id=shipment_id).first()
 
 
 class IsOwner(permissions.BasePermission):
@@ -160,11 +154,11 @@ class IsModeratorMixin:
         return False
 
 
-class IsOwnerShipperCarrierModerator(IsShipmentOwnerMixin,
-                                     IsCarrierMixin,
-                                     IsModeratorMixin,
-                                     IsShipperMixin,
-                                     permissions.BasePermission):
+class IsNestedOwnerShipperCarrierModerator(IsShipmentOwnerMixin,
+                                           IsCarrierMixin,
+                                           IsModeratorMixin,
+                                           IsShipperMixin,
+                                           permissions.BasePermission):
     """
     Custom permission to only allow owner, shipper, moderator and carrier
     access to a shipment object on a nested route

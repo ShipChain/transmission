@@ -287,10 +287,6 @@ class TestPermissionLinkShipmentAccess:
     def test_wallet_owner_access_expired_link(self, client_bob, mock_successful_wallet_owner_calls, profiles_ids):
         response = client_bob.get(self.url_expired_permission)
         AssertionHelper.HTTP_200(response, entity_refs=self.entity_ref_shipment_alice)
-        self.successful_wallet_owner_calls_assertions.append({
-            'host': settings.PROFILES_URL.replace('http://', ''),
-            'path': f'/api/v1/wallet/{profiles_ids["shipper_wallet_id"]}/'
-        })
         mock_successful_wallet_owner_calls.assert_calls(self.successful_wallet_owner_calls_assertions)
 
     def test_non_owner_expired_link_fails(self, client_bob, mock_non_wallet_owner_calls):
@@ -314,8 +310,7 @@ class TestPermissionLinkShipmentAccess:
 
     def test_requires_shipment_relationship(self, client_bob, mock_non_wallet_owner_calls):
         response = client_bob.get(self.url_wrong_permission)
-        AssertionHelper.HTTP_403(response)
-        mock_non_wallet_owner_calls.assert_calls(self.nonsuccessful_wallet_owner_calls_assertions)
+        AssertionHelper.HTTP_404(response)
 
     def test_owner_wrong_permission(self, client_alice, entity_ref_shipment_alice_two):
         response = client_alice.get(self.url_wrong_permission)
