@@ -215,9 +215,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'apps.wsgi.application'
 ASGI_APPLICATION = 'apps.routing.application'
 
-TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
-TEST_OUTPUT_DIR = 'test-results/unittest/results.xml'
-
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
