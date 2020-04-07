@@ -11,4 +11,8 @@ cp $PROJECT_DIR/.githooks/* $PROJECT_DIR/.git/hooks/
 [[ -z "$COMPOSE_PROJECT" ]] && COMPOSE_PROJECT=$(basename $PROJECT_DIR)
 [[ -z "$ROLE" ]] && ROLE=dev
 
-docker-compose -p $COMPOSE_PROJECT -f compose/base-services.yml -f compose/$ROLE.yml "$@"
+COMPOUND_COMPOSE=""
+if [ "$ROLE" != "int" ]; then
+    COMPOUND_COMPOSE="-f compose/base-services.yml"
+fi
+docker-compose -p $COMPOSE_PROJECT $COMPOUND_COMPOSE -f compose/$ROLE.yml "$@"
