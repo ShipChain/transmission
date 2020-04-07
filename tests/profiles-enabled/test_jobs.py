@@ -111,11 +111,11 @@ class JobsAPITests(APITestCase):
                                                        shipment=shipment))
 
     def create_shipment(self):
-        mock_shipment_rpc = Load110RPCClient
-
-        mock_shipment_rpc.create_vault = mock.Mock(return_value=(VAULT_ID, 's3://bucket/' + VAULT_ID))
-
-        with mock.patch.object(requests.Session, 'post') as mock_method:
+        with mock.patch.object(requests.Session, 'post') as mock_method, \
+                mock.patch('apps.shipments.rpc.ShipmentRPCClient.create_vault') as create_vault, \
+                mock.patch('apps.shipments.rpc.Load110RPCClient.add_shipment_data') as add_shipment_data:
+            add_shipment_data.return_value = {'hash': 'txHash'}
+            create_vault.return_value = (VAULT_ID, 's3://bucket/' + VAULT_ID)
             mock_method.return_value = mocked_rpc_response({
                 "vault_id": VAULT_ID
             })
@@ -187,7 +187,6 @@ class JobsAPITests(APITestCase):
         async_job = AsyncJob.objects.get(pk=self.async_jobs[1].id)
         self.assertEqual(async_job.state, JobState.FAILED)
 
-
     @mock_iot
     def test_add_jobs_message_success(self):
         """
@@ -212,7 +211,6 @@ class JobsAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         async_job = AsyncJob.objects.get(pk=async_job.id)
         self.assertEqual(async_job.state, JobState.COMPLETE)
-
 
     @mock_iot
     def test_add_jobs_message_idempotency(self):
