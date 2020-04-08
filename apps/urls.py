@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.conf.urls import url
+from django.urls import re_path
 from django.contrib import admin
 from django.views.generic import TemplateView
 from rest_framework.urlpatterns import format_suffix_patterns
@@ -52,19 +52,15 @@ nested_router.register(r'tags', shipments.ShipmentTagViewSet, base_name='shipmen
 nested_router.register(r'telemetry', shipments.TelemetryViewSet, base_name='shipment-telemetry')
 
 urlpatterns = [
-    url('health', management.health_check, name='health'),
-    url(
-        r'(^(api/v1/schema)|^$)',
-        TemplateView.as_view(template_name='apidoc.html'),
-        name='api_schema'
-    ),
-    url(r'^admin/', admin.site.urls),
-    url(f'{API_PREFIX[1:]}/documents/events', documents.S3Events.as_view(), name='document-events'),
-    url(f'{API_PREFIX[1:]}/devices/status/', shipments.ShipmentOverviewListView.as_view(), name='devices-status'),
-    url(f'{API_PREFIX[1:]}/shipments/overview/', shipments.ShipmentOverviewListView.as_view(),
-        name='shipments-overview'),
-    url(f'{API_PREFIX[1:]}/shipments/(?P<shipment_pk>[0-9a-f-]+)/actions',
-        shipments.ShipmentActionsView.as_view(), name='shipment-actions'),
+    re_path('health/?$', management.health_check, name='health'),
+    re_path(r'(^(api/v1/schema)|^$)', TemplateView.as_view(template_name='apidoc.html'), name='api_schema'),
+    re_path(r'^admin/', admin.site.urls),
+    re_path(f'{API_PREFIX[1:]}/documents/events/?$', documents.S3Events.as_view(), name='document-events'),
+    re_path(f'{API_PREFIX[1:]}/devices/status/?$', shipments.ShipmentOverviewListView.as_view(), name='devices-status'),
+    re_path(f'{API_PREFIX[1:]}/shipments/overview/?$', shipments.ShipmentOverviewListView.as_view(),
+            name='shipments-overview'),
+    re_path(f'{API_PREFIX[1:]}/shipments/(?P<shipment_pk>[0-9a-f-]+)/actions/?$',
+            shipments.ShipmentActionsView.as_view(), name='shipment-actions'),
 ]
 urlpatterns += router.urls
 

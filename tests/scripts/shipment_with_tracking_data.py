@@ -106,10 +106,10 @@ def create_shipment(shipment_url, shipment_fields, jwt):
     return response
 
 
-def perform_shipment_action(action_url, jwt):
+def perform_shipment_action(action_url, jwt, action_type):
     from apps.shipments.serializers import ActionType
 
-    response = requests.post(action_url, data={'action_type': ActionType.PICK_UP.name},
+    response = requests.post(action_url, data={'action_type': getattr(ActionType, action_type.upper()).name},
                              headers={'Authorization': f'JWT {jwt}'})
     if response.status_code == status.HTTP_200_OK:
         response = response.json()['data']
@@ -191,6 +191,7 @@ if __name__ == '__main__':
     }
 
     bbox = [float(item) for item in arguments.bbox.split(',')]
+    delivery_action_type = True
 
     for num in range(0, arguments.shipment_number):
 
@@ -204,7 +205,14 @@ if __name__ == '__main__':
         shipment_action_url = f'{schema}://{arguments.transmission_host}/api/v1/shipments/' \
                               f'{shipment_id}/actions/'
 
-        perform_shipment_action(shipment_action_url, jwt_session())
+        perform_shipment_action(shipment_action_url, jwt_session(), 'pick_up')
+
+        if delivery_action_type:
+            perform_shipment_action(shipment_action_url, jwt_session(), 'arrival')
+            perform_shipment_action(shipment_action_url, jwt_session(), 'drop_off')
+            delivery_action_type = False
+        else:
+            delivery_action_type = True
 
         add_tracking_data_url = f'{schema}://{arguments.transmission_host}/api/v1/devices/{device_id}/tracking'
 

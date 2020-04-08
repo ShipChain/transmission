@@ -29,7 +29,7 @@ from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericVi
 
 from apps.authentication import DocsLambdaRequest
 from apps.jobs.models import AsyncActionType
-from apps.permissions import get_owner_id, ShipmentExists, IsOwnerShipperCarrierModerator
+from apps.permissions import get_owner_id, ShipmentExists, IsNestedOwnerShipperCarrierModerator
 from apps.utils import UploadStatus
 from .filters import DocumentFilterSet
 from .models import Document
@@ -53,7 +53,7 @@ class DocumentViewSet(mixins.ConfigurableCreateModelMixin,
         (permissions.IsAuthenticated,
          ShipmentExists,
          HasViewSetActionPermissions,
-         IsOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED
+         IsNestedOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED
         else (permissions.AllowAny, ShipmentExists, )
     )
 

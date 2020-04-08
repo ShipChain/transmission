@@ -23,7 +23,7 @@ from rest_framework.response import Response
 from shipchain_common.exceptions import AWSIoTError, URLShortenerError
 from shipchain_common.utils import send_templated_email
 
-from apps.permissions import ShipmentExists, IsOwnerShipperCarrierModerator
+from apps.permissions import ShipmentExists, IsNestedOwnerShipperCarrierModerator
 from ..iot_client import URLShortener
 from ..models import PermissionLink
 from ..serializers import PermissionLinkSerializer, PermissionLinkCreateSerializer
@@ -40,7 +40,7 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
     permission_classes = (
         (permissions.IsAuthenticated,
          ShipmentExists,
-         IsOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED
+         IsNestedOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED
         else (permissions.AllowAny, ShipmentExists, )
     )
     serializer_class = PermissionLinkSerializer

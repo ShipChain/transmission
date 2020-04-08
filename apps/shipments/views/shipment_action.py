@@ -22,7 +22,7 @@ from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.permissions import ShipmentExists, IsOwnerShipperCarrierModerator
+from apps.permissions import ShipmentExists, IsNestedOwnerShipperCarrierModerator
 from ..models import Shipment
 from ..serializers import ShipmentSerializer, ShipmentActionRequestSerializer
 
@@ -34,7 +34,7 @@ class ShipmentActionsView(APIView):
     permission_classes = (
         (permissions.IsAuthenticated,
          ShipmentExists,
-         IsOwnerShipperCarrierModerator,) if settings.PROFILES_ENABLED
+         IsNestedOwnerShipperCarrierModerator,) if settings.PROFILES_ENABLED
         else (permissions.AllowAny, ShipmentExists,)
     )
 
