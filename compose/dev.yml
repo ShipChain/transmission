@@ -2,39 +2,15 @@ version: '3.4'
 services:
 
   minio:
-    image: minio/minio
-    ports:
-    - "9090:9000"
-    expose:
-      - '9000'
     volumes:
     - /data/shipchain/transmission/minio/data:/data
     - /data/shipchain/transmission/minio/config:/root/.minio
-    environment:
-    - MINIO_ACCESS_KEY=TEST-DEV-KEY
-    - MINIO_SECRET_KEY=NON-TRIVIAL-SECRETKEY
-    - MINIO_DOMAIN=minio
-    command: server /data --address minio:9000
 
   redis_db:
-    image: redis
-    expose:
-      - '6379'
     volumes:
       - /data/shipchain/transmission/redis:/data
-    command: >
-      --requirepass redis_pass --appendonly yes
 
   psql:
-    ports:
-      - "5432:5432"
-    image: shipchain/postgis:9.6-2.4
-    environment:
-      - POSTGRES_USER=transmission
-      - POSTGRES_PASS=transmission
-      - POSTGRES_HOST=psql
-      - POSTGRES_DBNAME=transmission
-      - ALLOW_IP_RANGE=0.0.0.0/0
     volumes:
       - /data/shipchain/transmission/postgresql:/var/lib/postgresql
 
@@ -151,6 +127,3 @@ services:
     links:
       - celery
       - redis_db
-networks:
-  portal:
-    external: true

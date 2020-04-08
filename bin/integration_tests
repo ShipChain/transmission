@@ -4,13 +4,16 @@ set -e
 
 cd "${0%/*}/.."
 
+# Always run dc down regardless of success/failure
+trap 'bin/dc down' EXIT
+
 docker build --target deploy --tag transmission-django .
 
 export ROLE=int
 
 bin/dc build
 
-bin/dc up -d
+bin/dc up -d --remove-orphans
 
 bin/dc exec profiles-django /wait-for-it.sh localhost:8000 -t 120
 
