@@ -3,7 +3,7 @@ from django_filters import rest_framework as filters
 from rest_framework_json_api.serializers import ValidationError
 from shipchain_common.filters import filter_enum
 
-from .models import Shipment, TransitState, TelemetryData
+from .models import Shipment, TransitState, TelemetryData, TrackingData
 
 SHIPMENT_STATE_CHOICES = tuple((m.name, m.value, ) for m in TransitState)
 
@@ -21,7 +21,9 @@ def filter_state(queryset, _, value):
         enum_values.append(enum_value.value)
 
     if issubclass(queryset.model, Shipment):
-        queryset = queryset.filter(**{'state__in': enum_values})
+        queryset = queryset.filter(state__in=enum_values)
+    else:
+        queryset = queryset.filter(shipment__state__in=enum_values)
 
     return queryset
 
@@ -79,6 +81,29 @@ class ShipmentFilter(filters.filterset.FilterSet):
             'asset_physical_id',
             'asset_custodian_id'
         )
+
+
+class ShipmentOverviewFilter(ShipmentFilter):
+    shipment__has_ship_from_location = filters.BooleanFilter(field_name='shipment__ship_from_location',
+                                                             lookup_expr='isnull', exclude=True)
+    shipment__has_ship_to_location = filters.BooleanFilter(field_name='shipment__ship_to_location',
+                                                           lookup_expr='isnull', exclude=True)
+    shipment__has_final_destination_location = filters.BooleanFilter(
+        field_name='shipment__final_destination_location', lookup_expr='isnull', exclude=True)
+    shipment__state = CustomMultipleChoiceFilter(field_name='shipment__state', method=filter_state,
+                                                 choices=SHIPMENT_STATE_CHOICES)
+    shipment__exception = filters.CharFilter(field_name='shipment__exception', method=filter_enum)
+    shipment__assignee_id = filters.UUIDFilter(field_name='shipment__assignee_id')
+
+    # Tag filter fields
+    shipment__tag_type = filters.CharFilter(field_name='shipment__shipment_tags__tag_type', lookup_expr='icontains',
+                                            distinct=True)
+    shipment__tag_value = filters.CharFilter(field_name='shipment__shipment_tags__tag_value', lookup_expr='icontains',
+                                             distinct=True)
+
+    class Meta:
+        model = TrackingData
+        fields = tuple([f'shipment__{field}' for field in ShipmentFilter.Meta.fields])
 
 
 SHIPMENT_SEARCH_FIELDS = (

@@ -52,14 +52,13 @@ nested_router.register(r'tags', shipments.ShipmentTagViewSet, base_name='shipmen
 nested_router.register(r'telemetry', shipments.TelemetryViewSet, base_name='shipment-telemetry')
 
 urlpatterns = [
-    re_path('health/?$', management.health_check, name='health'),
+    re_path('health/?', management.health_check, name='health'),
     re_path(r'(^(api/v1/schema)|^$)', TemplateView.as_view(template_name='apidoc.html'), name='api_schema'),
     re_path(r'^admin/', admin.site.urls),
     re_path(f'{API_PREFIX[1:]}/documents/events/?$', documents.S3Events.as_view(), name='document-events'),
-    re_path(f'{API_PREFIX[1:]}/devices/status/?$', shipments.ShipmentOverviewListView.as_view(), name='devices-status'),
     re_path(f'{API_PREFIX[1:]}/shipments/overview/?$', shipments.ShipmentOverviewListView.as_view(),
-            name='shipments-overview'),
-    re_path(f'{API_PREFIX[1:]}/shipments/(?P<shipment_pk>[0-9a-f-]+)/actions/?$',
+            name='shipment-overview'),
+    re_path(f'{API_PREFIX[1:]}/shipments/(?P<shipment_pk>[0-9a-f-]+)/actions/?',
             shipments.ShipmentActionsView.as_view(), name='shipment-actions'),
 ]
 urlpatterns += router.urls

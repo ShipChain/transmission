@@ -57,7 +57,7 @@ class QueryParamsSerializer(serializers.Serializer):
         return None
 
 
-class ShipmentLocationSerializer(serializers.ModelSerializer):
+class TrackingOverviewSerializer(serializers.ModelSerializer):
     point = serializers.SerializerMethodField()
 
     class Meta:
