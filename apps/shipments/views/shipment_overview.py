@@ -16,13 +16,16 @@ limitations under the License.
 
 import logging
 
+from collections import OrderedDict
 from django.conf import settings
 from django.db.models import Max, OuterRef, Subquery
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions
 from rest_framework.generics import ListAPIView
 from rest_framework_gis.filters import InBBoxFilter
+from rest_framework_json_api import utils
 from rest_framework_json_api import views as jsapi_views
+from rest_framework_json_api.renderers import JSONRenderer
 
 from apps.permissions import get_owner_id
 from ..serializers import QueryParamsSerializer, TrackingOverviewSerializer
@@ -30,6 +33,38 @@ from ..models import TrackingData
 from ..filters import ShipmentOverviewFilter, SHIPMENT_SEARCH_FIELDS
 
 LOG = logging.getLogger('transmission')
+
+
+class JSONAPIGeojsonRenderer(JSONRenderer):
+    # Class that allows a nested serializer to be specified in attributes. For rendering `point` as GeoJSON.
+    @classmethod
+    def extract_attributes(cls, fields, resource):
+        """
+                Builds the `attributes` object of the JSON API resource object.
+                """
+        data = OrderedDict()
+        for field_name, _ in iter(fields.items()):
+            # ID is always provided in the root of JSON API so remove it from attributes
+            if field_name == 'id':
+                continue
+            # don't output a key for write only fields
+            if fields[field_name].write_only:
+                continue
+
+            # Skip read_only attribute fields when `resource` is an empty
+            # serializer. Prevents the "Raw Data" form of the browsable API
+            # from rendering `"foo": null` for read only fields
+            try:
+                resource[field_name]
+            except KeyError:
+                if fields[field_name].read_only:
+                    continue
+
+            data.update({
+                field_name: resource.get(field_name)
+            })
+
+        return utils.format_field_names(data)
 
 
 class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
@@ -43,6 +78,7 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
 
     serializer_class = TrackingOverviewSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    renderer_classes = (JSONAPIGeojsonRenderer,)
 
     filter_backends = (InBBoxFilter, filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     bbox_filter_field = 'point'
