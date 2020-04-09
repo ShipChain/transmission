@@ -275,7 +275,7 @@ def test_latest_tracking(client_alice, tracking_data, shipment_tracking_data):
                                      'properties': {
                                          'source': data_point.source,
                                          'uncertainty': data_point.uncertainty,
-                                         'time': f'{data_point.timestamp.isoformat()[:-3]}Z'
+                                         'time': f'{data_point.timestamp.isoformat()}Z'
                                     }
                                  }}
                              ))
