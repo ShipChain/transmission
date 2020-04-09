@@ -37,6 +37,9 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
                                jsapi_views.RelatedMixin,
                                ListAPIView):
     queryset = TrackingData.objects.all()
+    select_for_includes = {
+        '__all__': ['shipment']
+    }
 
     serializer_class = TrackingOverviewSerializer
     permission_classes = (permissions.IsAuthenticated,)

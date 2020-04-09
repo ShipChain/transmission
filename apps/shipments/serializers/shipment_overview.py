@@ -18,7 +18,7 @@ import json
 from rest_framework import exceptions
 from rest_framework_json_api import serializers
 
-from ..models import TrackingData
+from ..models import TrackingData, Device
 from ..geojson import SingleFeatureTrackingDataSerializer
 from ..serializers import ShipmentOverviewSerializer
 
@@ -57,6 +57,12 @@ class QueryParamsSerializer(serializers.Serializer):
         return None
 
 
+class FKDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = ('id',)
+
+
 class TrackingOverviewSerializer(serializers.ModelSerializer):
     point = serializers.SerializerMethodField()
 
@@ -69,6 +75,7 @@ class TrackingOverviewSerializer(serializers.ModelSerializer):
 
     included_serializers = {
         'shipment': ShipmentOverviewSerializer,
+        'device': FKDeviceSerializer
     }
 
     def get_point(self, obj):
