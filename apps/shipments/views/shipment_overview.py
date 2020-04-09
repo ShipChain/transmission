@@ -37,11 +37,16 @@ LOG = logging.getLogger('transmission')
 
 class JSONAPIGeojsonRenderer(JSONRenderer):
     # Class that allows a nested serializer to be specified in attributes. For rendering `point` as GeoJSON.
+    # (This allows us to render TrackingOverviewGeojsonSerializer as a JSON API attribute on TrackingOverviewSerializer)
+
+    # Exact copy of django-rest-framework-json-api JSONRenderer with the following lines removed from extract_attributes
+    # https://github.com/django-json-api/django-rest-framework-json-api/blob/9d42d9b7018b08e2df399e598d75f057676b3870/re
+    # st_framework_json_api/renderers.py#L62-L66
     @classmethod
     def extract_attributes(cls, fields, resource):
         """
-                Builds the `attributes` object of the JSON API resource object.
-                """
+        Builds the `attributes` object of the JSON API resource object.
+        """
         data = OrderedDict()
         for field_name, _ in iter(fields.items()):
             # ID is always provided in the root of JSON API so remove it from attributes
