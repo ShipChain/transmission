@@ -63,8 +63,8 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
         # Get latest tracking point for each shipment
         # Borrowed subquery example from https://stackoverflow.com/a/43926433
         queryset = queryset.filter(id=Subquery(
-            TrackingData.objects.filter(shipment=OuterRef('shipment'))
-            .values('shipment').annotate(latest_tracking=Max('created_at')).values('id')[:1]
+            TrackingData.objects.filter(shipment=OuterRef('shipment')).order_by('-timestamp')
+            .values('shipment').annotate(latest_tracking=Max('timestamp')).values('id')[:1]
         ))
 
         if settings.PROFILES_ENABLED:

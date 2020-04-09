@@ -176,7 +176,7 @@ def test_filter_shipment_device_location(client_alice, shipment_tracking_data, j
     response = client_alice.get(in_bbox_url)
     response_data = response.json()
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True)
-    assert response_data['meta']['pagination']['count'] == len(shipment_tracking_data)
+    assert response_data['meta']['pagination']['count'] == NUM_DEVICES - 2
 
     in_transit_url = f'{url}?state={TransitState.IN_TRANSIT.name.lower()}'
 
@@ -248,3 +248,34 @@ def test_bbox_param(client_alice, shipment_tracking_data):
 
     response = client_alice.get(good_in_bbox_url)
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True)
+
+
+@pytest.mark.django_db
+def test_latest_tracking(client_alice, tracking_data, shipment_tracking_data):
+    shipment = shipment_tracking_data[0]
+    data_point = TrackingData(**tracking_data[0][0])
+    data_point.shipment = shipment
+    data_point.device = shipment.device
+    data_point.timestamp = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+    data_point.save()
+    url = reverse('shipment-overview', kwargs={'version': 'v1'})
+    response = client_alice.get(url)
+
+    # Ensure that 'latest' tracking data is included in the response
+    AssertionHelper.HTTP_200(response, vnd=True, is_list=True,
+                             entity_refs=AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 pk=data_point.id,
+                                 attributes={'point': {
+                                     'type': 'Feature',
+                                     'geometry': {
+                                         'type': 'Point',
+                                         'coordinates': [data_point.point.x, data_point.point.y]
+                                     },
+                                     'properties': {
+                                         'source': data_point.source,
+                                         'uncertainty': data_point.uncertainty,
+                                         'time': f'{data_point.timestamp.isoformat()[:-3]}Z'
+                                    }
+                                 }}
+                             ))
