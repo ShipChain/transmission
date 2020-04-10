@@ -176,6 +176,15 @@ exception:
     enum: [NONE, CUSTOMS_HOLD, DOCUMENTATION_ERROR]
     example: CUSTOMS_HOLD
 
+gtxValidation:
+  name: gtx_validation
+  in: query
+  description: Returns shipments with the provided gtx_validation status.
+  schema:
+    type: string
+    enum: [NOT_APPLICABLE, VALIDATION_FAILED, VALIDATED]
+    example: VALIDATION_FAILED
+
 delayed:
   name: delayed
   in: query

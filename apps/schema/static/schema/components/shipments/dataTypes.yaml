@@ -594,6 +594,23 @@ gtxRequired:
       type: boolean
       example: true
 
+gtxValidation:
+  properties:
+    gtx_validation:
+      title: gtx_validation
+      description: Enum regarding GTX validation after pickup
+      type: string
+      enum: [NOT_APPLICABLE, VALIDATION_FAILED, VALIDATED]
+      example: NOT_APPLICABLE
+
+gtxValidationTimestamp:
+  properties:
+    gtx_validation:
+      title: gtx_validation_timestamp
+      description: Timestamp of GTX validation check
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
 assetPhysicalId:
   properties:
     asset_physical_id:

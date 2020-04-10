@@ -396,14 +396,11 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                 validation_status = GTXValidation.VALIDATED
             else:
                 LOG.info(f'Invalid response from GTX, returned with status {response.status_code}')
-        except NewConnectionError:
-            LOG.info('Connection to GTX failed')
+        except requests.exceptions.ConnectionError:
+            LOG.warning('Connection to GTX failed')
 
-        self.set_gtx_validation(validation_status)
-
-    def set_gtx_validation(self, validation):
-        self.gtx_validation = validation
-        self.gtx_validation_timestamp = datetime.now()
+        self.gtx_validation = validation_status
+        self.gtx_validation_timestamp = datetime.now(timezone.utc)
 
     # Defaults
     FUNDING_TYPE = FundingType.NO_FUNDING.value

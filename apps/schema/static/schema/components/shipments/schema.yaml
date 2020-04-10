@@ -263,6 +263,8 @@ createAttributes:
   - $ref: '#/shipment/isHazmat'
   - $ref: '#/shipment/exception'
   - $ref: '#/shipment/contractVersion'
+  - $ref: '#/shipment/gtxValidation'
+  - $ref: '#/shipment/gtxValidationTimestamp'
 
 createResource:
   allOf:
