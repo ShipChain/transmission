@@ -13,13 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import json
 
 from rest_framework import exceptions
 from rest_framework_json_api import serializers
+from rest_framework_gis import serializers as geo_serializers
 
-from ..models import TrackingData
-from ..geojson import SingleFeatureTrackingDataSerializer
+from ..models import TrackingData, Device
 from ..serializers import ShipmentOverviewSerializer
 
 
@@ -57,8 +56,21 @@ class QueryParamsSerializer(serializers.Serializer):
         return None
 
 
-class ShipmentLocationSerializer(serializers.ModelSerializer):
-    point = serializers.SerializerMethodField()
+class FKDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Device
+        fields = ('id',)
+
+
+class TrackingOverviewGeojsonSerializer(geo_serializers.GeoFeatureModelSerializer):
+    class Meta:
+        model = TrackingData
+        fields = ('uncertainty', 'source', 'time')
+        geo_field = 'point'
+
+
+class TrackingOverviewSerializer(serializers.ModelSerializer):
+    point = TrackingOverviewGeojsonSerializer(source='*')
 
     class Meta:
         model = TrackingData
@@ -69,11 +81,5 @@ class ShipmentLocationSerializer(serializers.ModelSerializer):
 
     included_serializers = {
         'shipment': ShipmentOverviewSerializer,
+        'device': FKDeviceSerializer
     }
-
-    def get_point(self, obj):
-        return json.loads(SingleFeatureTrackingDataSerializer().serialize(
-            obj,
-            geometry_field='point',
-            fields=('uncertainty', 'source', 'time')
-        ))
