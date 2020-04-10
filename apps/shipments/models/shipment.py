@@ -36,7 +36,6 @@ from enumfields import EnumField
 from influxdb_metrics.loader import log_metric
 from rest_framework.exceptions import PermissionDenied
 from shipchain_common.utils import random_id
-from urllib3.exceptions import NewConnectionError
 
 from apps.eth.fields import AddressField, HashField
 from apps.jobs.models import AsyncJob, JobState
