@@ -45,9 +45,11 @@ class ShipmentHistoryListView(viewsets.GenericViewSet):
         LOG.debug(f'Listing shipment history for shipment with id: {kwargs["shipment_pk"]}.')
         log_metric('transmission.info', tags={'method': 'shipment.history', 'module': __name__})
 
-        shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
+        queryset = Shipment.history.select_related(
+            'device', 'ship_from_location', 'ship_to_location', 'final_destination_location', 'bill_to_location'
+        ).filter(id=kwargs['shipment_pk'])
 
-        serializer = ChangesDiffSerializer(shipment.history.all(), request, kwargs['shipment_pk'])
+        serializer = ChangesDiffSerializer(queryset, request, kwargs['shipment_pk'])
 
         queryset = serializer.filter_queryset(serializer.historical_queryset)
 

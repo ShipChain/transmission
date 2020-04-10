@@ -79,7 +79,7 @@ def shipment_exists(shipment_id):
     Check whether a shipment_id included in a nested route exists.
     Returns False if it isn't otherwise returns the Shipment object
     """
-    return Shipment.objects.filter(id=shipment_id).first()
+    return Shipment.objects.filter(id=shipment_id).count()
 
 
 class IsOwner(permissions.BasePermission):
