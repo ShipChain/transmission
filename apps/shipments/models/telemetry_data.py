@@ -26,7 +26,7 @@ class TelemetryData(models.Model):
     device = models.ForeignKey(Device, on_delete=models.DO_NOTHING)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
 
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(db_index=True)
     hardware_id = models.CharField(max_length=255)
     sensor_id = models.CharField(max_length=36)
     value = models.FloatField()

@@ -198,6 +198,11 @@ class TxmHistoricalRecords(HistoricalRecords):
             using=using,
         )
 
+    def get_extra_fields(self, model, fields):
+        extra_fields = super().get_extra_fields(model, fields)
+        extra_fields['history_date'] = models.DateTimeField(db_index=True)
+        return extra_fields
+
 
 class AnonymousHistoricalMixin:
     @classmethod

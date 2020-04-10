@@ -33,10 +33,10 @@ class TrackingData(models.Model):
     source = models.CharField(max_length=36)
     uncertainty = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], null=True, blank=True)
     speed = models.FloatField(validators=[MinValueValidator(0)], null=True, blank=True)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(db_index=True)
     time = AliasField(db_column='timestamp')
     version = models.CharField(max_length=36)
-    point = GeometryField()
+    point = GeometryField(spatial_index=True)
 
     class Meta:
         ordering = ('timestamp',)
