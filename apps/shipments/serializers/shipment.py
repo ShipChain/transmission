@@ -18,6 +18,7 @@ import json
 from collections import OrderedDict
 from datetime import datetime, timezone
 
+import requests
 from django.conf import settings
 from django.db import transaction
 from enumfields.drf.serializers import EnumSupportSerializerMixin
@@ -255,6 +256,16 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                 raise PermissionDenied('User does not have access to enable GTX for this shipment')
         return gtx_required
 
+    def validate_aftership_tracking(self, aftership_tracking):
+        response = requests.post(f'{settings.AFTERSHIP_URL}couriers/detect',
+                                 headers={'Content-Type': 'application/json',
+                                          'aftership-api-key': settings.AFTERSHIP_API_KEY},
+                                 data=json.dumps({'tracking': {'tracking_number': aftership_tracking}}))
+        if not response.ok:
+            raise serializers.ValidationError('Invalid aftership_tracking supplied')
+
+        return aftership_tracking
+
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
     device_id = serializers.CharField(max_length=36, allow_null=True)
@@ -266,10 +277,11 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     class Meta:
         model = Shipment
-        exclude = (('owner_id', 'version',
+        exclude = (('owner_id', 'version', 'aftership_tracking',
                     'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
                    if settings.PROFILES_ENABLED else ('version', 'background_data_hash_interval',
-                                                      'manual_update_hash_interval', 'asset_physical_id'))
+                                                      'aftership_tracking', 'manual_update_hash_interval',
+                                                      'asset_physical_id'))
         read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                             'storage_credentials_id', 'contract_version', 'state')
 
@@ -396,7 +408,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         exclude = ('owner_id', 'storage_credentials_id', 'background_data_hash_interval',
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id', 'manual_update_hash_interval',
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours',
-                   'geofences', 'assignee_id', 'gtx_required')
+                   'geofences', 'assignee_id', 'gtx_required', 'aftership_tracking')
 
 
 class ShipmentOverviewSerializer(serializers.ModelSerializer):

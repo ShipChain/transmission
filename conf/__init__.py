@@ -15,3 +15,5 @@ from .iot import *
 from .simple_history import *
 
 from .custom_logging import *
+
+from .third_party_integrations import *

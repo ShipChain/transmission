@@ -81,6 +81,7 @@ attributes:
   - $ref: '#/shipment/assetCustodianId'
   - $ref: '#/shipment/geofences'
   - $ref: '#/shipment/contractVersion'
+  - $ref: '#/shipment/aftershipTracking'
 
 meta:
   allOf:

@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 import logging
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -341,6 +340,8 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     geofences = ArrayField(models.CharField(null=True, max_length=36), blank=True, null=True)
 
     customer_fields = JSONField(blank=True, null=True)
+
+    aftership_tracking = models.CharField(null=True, max_length=100)
 
     # Model's history tracking definition
     history = TxmHistoricalRecords()

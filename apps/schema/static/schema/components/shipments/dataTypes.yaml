@@ -578,6 +578,14 @@ exception:
       enum: [NONE, CUSTOMS_HOLD, DOCUMENTATION_ERROR]
       example: NONE
 
+aftershipTracking:
+  properties:
+    aftership_tracking:
+      title: aftership_tracking
+      description: Tracking number for aftership tracking
+      type: string
+      example: '906587618687'
+
 gtxRequired:
   properties:
     gtx_required:

@@ -1,5 +1,7 @@
+import json
 import logging
 
+import requests
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
@@ -8,8 +10,9 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from fancy_cache.memory import find_urls
 from fieldsignals import post_save_changed
+from rest_framework.exceptions import ValidationError
 from rest_framework.reverse import reverse
-from shipchain_common.exceptions import AWSIoTError
+from shipchain_common.exceptions import AWSIoTError, Custom500Error
 
 from apps.eth.models import TransactionReceipt
 from apps.eth.signals import event_update
@@ -69,6 +72,31 @@ def shipment_post_save(sender, **kwargs):
                                     contracted_amount=Shipment.SHIPMENT_AMOUNT)
 
         instance.anonymous_historical_change(vault_id=vault_id, vault_uri=vault_uri)
+
+        if instance.aftership_tracking and settings.IOT_THING_INTEGRATION:
+            response = requests.post(f'{settings.AFTERSHIP_URL}trackings',
+                                     headers={'Content-Type': 'application/json',
+                                              'aftership-api-key': settings.AFTERSHIP_API_KEY},
+                                     data=json.dumps({'tracking': {'tracking_number': instance.aftership_tracking}}))
+            if not response.ok:
+                raise ValidationError('Aftership tracking supplied is already in use')
+            try:
+                settings.BOTO3_SESSION.client('sns').publish(
+                    TopicArn=settings.TOPIC_ARN,
+                    Message=json.dumps({
+                        'owner_id': instance.owner_id,
+                        'aftership_id': response.json()['data']['tracking']['id'],
+                        'shipment_id': instance.id
+                    }),
+                    MessageAttributes={
+                        'event_type': {
+                            'DataType': 'String',
+                            'StringValue': 'aftership_quickadd'
+                        }
+                    }
+                )
+            except settings.BOTO3_SESSION.client('sns').exceptions.NotFoundException:
+                raise Custom500Error('Error publishing to SNS Topic')
 
         shipment_iot_fields_changed(Shipment, instance, {
             Shipment.device.field: (None, instance.device_id),
