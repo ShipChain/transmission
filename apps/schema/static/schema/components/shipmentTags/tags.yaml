@@ -7,7 +7,7 @@ post:
   parameters:
     - $ref: '../shipments/parameters.yaml#/path'
   tags:
-    - Shipments
+    - Shipment Tags
   responses:
     '201':
       description: "Created"

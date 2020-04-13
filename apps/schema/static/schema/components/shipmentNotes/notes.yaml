@@ -10,9 +10,8 @@ get:
     - $ref: './parameters.yaml#/ordering'
     - $ref: './parameters.yaml#/authorId'
     - $ref: '../shipments/parameters.yaml#/path'
-
   tags:
-  - Shipments
+  - Notes
   responses:
     '200':
       description: "Success"
@@ -36,7 +35,7 @@ post:
   parameters:
     - $ref: '../shipments/parameters.yaml#/path'
   tags:
-    - Shipments
+    - Notes
   responses:
     '201':
       description: "Created"

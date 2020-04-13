@@ -7,7 +7,7 @@ get:
     - $ref: 'parameters.yaml#/path'
     - $ref: '../shipments/parameters.yaml#/path'
   tags:
-    - Shipments
+    - Notes
   responses:
     '200':
       description: "Success"

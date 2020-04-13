@@ -11,7 +11,7 @@ get:
     - $ref: 'parameters.yaml#/path'
     - $ref: '../transactions/parameters.yaml#/include_async_job_action'
   tags:
-    - Shipments
+    - Additional Shipment Details
   responses:
     '200':
       description: "Success"

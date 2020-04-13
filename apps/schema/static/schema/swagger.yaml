@@ -56,17 +56,20 @@ paths:
   /api/v1/shipments/{shipment_id}/tags:
     $ref: components/shipmentTags/tags.yaml
 
+  /api/v1/shipments/{shipment_id}/tags/{shipment_tag_id}:
+    $ref: components/shipmentTags/tagsId.yaml
+
   /api/v1/shipments/overview:
     $ref: components/shipmentsOverview/status.yaml
-
-  /api/v1/shipments/{shipment_id}/transactions:
-    $ref: components/shipments/transactions.yaml
 
   /api/v1/shipments/{shipment_id}/permission_links:
     $ref: components/permissionLinks/permissionLinks.yaml
 
   /api/v1/shipments/{shipment_id}/permission_links/{permission_link_id}:
     $ref: components/permissionLinks/permissionLinksId.yaml
+
+  /api/v1/shipments/{shipment_id}/transactions:
+    $ref: components/shipments/transactions.yaml
 
   /api/v1/shipments/{shipment_id}/tracking:
     $ref: components/shipments/tracking.yaml
@@ -105,9 +108,32 @@ components:
   securitySchemes:
     $ref: components/securitySchemes.yaml
 
+x-tagGroups:
+  - name: Shipment Management
+    tags:
+      - Additional Shipment Details
+      - Shipments
+      - Shipment Tags
+      - Notes
+      - Permission Links
+  - name: Imports
+    tags:
+      - Imports
+  - name: Documents
+    tags:
+      - Documents
+  - name: AsyncJobs
+    tags:
+      - AsyncJobs
+  - name: Transactions
+    tags:
+      - Transactions
 security:
 - JWT: []
 tags:
+- name: Additional Shipment Details
+  description: >
+    These are additional details that a shipment will have
 - name: AsyncJobs
   description: >
     AsyncJobs model an asynchronous interaction with ShipChain Engine. They also contain references to the state of an associated Ethereum Transaction.
@@ -117,6 +143,15 @@ tags:
 - name: Imports
   description: >
     Imports are entities that allow creation or import of Transmission objects from external sources within ShipChain Transmission service.
+- name: Notes
+  description: >
+    Notes allow for larger descriptions/details to be added to shipments
+- name: Permission Links
+  description: >
+    Permission Links are entities that allow for retrieval of shipments by non-authorized or non-owner users
+- name: Shipment Tags
+  description: >
+    Shipment Tags are a way to allow for easier filtering for shipments
 - name: Shipments
   description: >
     Shipments are the core entity in the ShipChain Transmission service. This is a collection of endpoints related to managing shipments.
