@@ -22,10 +22,12 @@ from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericVi
 
 from apps.permissions import ShipmentExists, IsNestedOwnerShipperCarrierModerator
 from ..models import ShipmentTag
-from ..serializers import ShipmentTagSerializer, ShipmentTagCreateSerializer
+from ..serializers import ShipmentTagSerializer, ShipmentTagCreateSerializer, ShipmentTagUpdateSerializer
 
 
 class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
+                         mixins.ConfigurableDestroyModelMixin,
+                         mixins.ConfigurableUpdateModelMixin,
                          ConfigurableGenericViewSet):
 
     queryset = ShipmentTag.objects.all()
@@ -43,5 +45,8 @@ class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
     configuration = {
         'create': ActionConfiguration(
             request_serializer=ShipmentTagCreateSerializer,
+        ),
+        'update': ActionConfiguration(
+            request_serializer=ShipmentTagUpdateSerializer,
         ),
     }
