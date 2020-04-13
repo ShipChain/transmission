@@ -18,7 +18,6 @@ import logging
 
 from collections import OrderedDict
 from django.conf import settings
-from django.db.models import Max, OuterRef, Subquery
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions
 from rest_framework.generics import ListAPIView
@@ -105,11 +104,10 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
         queryset = super().get_queryset(*args, **kwargs)
 
         # Get latest tracking point for each shipment
-        # Borrowed subquery example from https://stackoverflow.com/a/43926433
-        queryset = queryset.filter(id=Subquery(
-            TrackingData.objects.filter(shipment=OuterRef('shipment')).order_by('-timestamp')
-            .values('shipment').annotate(latest_tracking=Max('timestamp')).values('id')[:1]
-        ))
+        queryset = queryset.filter(id__in=TrackingData.objects
+                                   .order_by('shipment_id', '-timestamp')
+                                   .distinct('shipment_id')
+                                   .values('id'))
 
         if settings.PROFILES_ENABLED:
             # Filter by owner

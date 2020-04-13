@@ -117,7 +117,7 @@ def shipment_tracking_data(shipments_with_device, tracking_data):
     shipment = shipments_with_device[NUM_DEVICES-1]
     device = shipment.device
     for out_of_bbox_data in tracking_data[1]:
-        out_of_bbox_data['timestamp'] = datetime.datetime.utcnow()
+        out_of_bbox_data['timestamp'] = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
         out_of_bbox_data['device'] = device
         out_of_bbox_data['shipment'] = shipment
         TrackingData.objects.create(**out_of_bbox_data)
@@ -134,7 +134,7 @@ def test_owner_shipment_device_location(client_alice, api_client, shipment_track
     AssertionHelper.HTTP_403(response)
 
     # An authenticated user can list only the shipments
-    # he owns with reported tracking data. In this case exactly (NUM_DEVICES - 2)
+    # he owns with reported tracking data. In this case exactly (NUM_DEVICES - 1)
     response = client_alice.get(url)
     response_data = response.json()
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True)
@@ -172,7 +172,7 @@ def test_filter_shipment_device_location(client_alice, shipment_tracking_data, j
 
     in_bbox_url = f'{url}?in_bbox={",".join([str(x) for x in BBOX])}'
 
-    # The primary user has exactly (NUM_DEVICES - 3) inside Bbox
+    # The primary user has exactly (NUM_DEVICES - 2) inside Bbox
     response = client_alice.get(in_bbox_url)
     response_data = response.json()
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True)
@@ -238,7 +238,6 @@ def test_bbox_param(client_alice, shipment_tracking_data):
     bad_in_bbox_url_2 = f'{url}?in_bbox={",".join([str(x) for x in BBOX[0:2]])}'
 
     good_in_bbox_url = f'{url}?in_bbox={",".join([str(x) for x in BBOX])}'
-
 
     response = client_alice.get(bad_in_bbox_url_1)
     AssertionHelper.HTTP_400(response)
