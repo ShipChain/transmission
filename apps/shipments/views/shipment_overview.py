@@ -111,7 +111,7 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
 
         if settings.PROFILES_ENABLED:
             # Filter by owner
-            queryset.filter(shipment__owner_id=get_owner_id(self.request))
+            queryset = queryset.filter(shipment__owner_id=get_owner_id(self.request))
 
         return queryset
 

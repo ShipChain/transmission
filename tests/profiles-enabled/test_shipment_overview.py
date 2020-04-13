@@ -134,12 +134,12 @@ def test_owner_shipment_device_location(client_alice, api_client, shipment_track
     AssertionHelper.HTTP_403(response)
 
     # An authenticated user can list only the shipments
-    # he owns with reported tracking data. In this case exactly (NUM_DEVICES - 1)
+    # he owns with reported tracking data. In this case exactly (NUM_DEVICES - 2)
     response = client_alice.get(url)
     response_data = response.json()
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True)
-    assert response_data['meta']['pagination']['count'] == len(shipment_tracking_data)
-    assert len(response_data['included']) == NUM_DEVICES - 1
+    assert response_data['meta']['pagination']['count'] == len(shipment_tracking_data) - 1
+    assert len(response_data['included']) == NUM_DEVICES - 2
 
 
 @pytest.mark.django_db
@@ -172,11 +172,11 @@ def test_filter_shipment_device_location(client_alice, shipment_tracking_data, j
 
     in_bbox_url = f'{url}?in_bbox={",".join([str(x) for x in BBOX])}'
 
-    # The primary user has exactly (NUM_DEVICES - 2) inside Bbox
+    # The primary user has exactly (NUM_DEVICES - 3) inside Bbox
     response = client_alice.get(in_bbox_url)
     response_data = response.json()
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True)
-    assert response_data['meta']['pagination']['count'] == NUM_DEVICES - 2
+    assert response_data['meta']['pagination']['count'] == NUM_DEVICES - 3
 
     in_transit_url = f'{url}?state={TransitState.IN_TRANSIT.name.lower()}'
 
