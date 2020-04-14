@@ -17,6 +17,8 @@ services:
 
   psql:
     image: circleci/postgres:11.1-alpine-postgis-ram
+    tmpfs:
+      - /dev/shm/pgdata/data
     expose:
       - '5432'
     networks:
