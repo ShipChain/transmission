@@ -44,6 +44,8 @@ services:
 
   engine_psql:
     image: circleci/postgres:10.10-alpine-ram
+    tmpfs:
+      - /dev/shm/pgdata/data
     expose:
       - 5432
     environment:
