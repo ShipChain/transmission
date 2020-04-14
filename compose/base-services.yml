@@ -23,7 +23,7 @@ services:
   psql:
     ports:
       - "5432:5432"
-    image: shipchain/postgis:9.6-2.4
+    image: kartoza/postgis:11.0-2.5
     environment:
       - POSTGRES_USER=transmission
       - POSTGRES_PASS=transmission
