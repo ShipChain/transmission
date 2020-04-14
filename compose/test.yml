@@ -3,8 +3,6 @@ services:
   psql:
     environment:
       - PGDATA=/dev/shm/pgdata/data
-      # https://www.postgresql.org/docs/11/non-durability.html
-      - EXTRA_CONF=fsync = off\nsynchronous_commit = off\nfull_page_writes = off
     tmpfs:
       - /dev/shm/pgdata/data
 

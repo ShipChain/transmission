@@ -31,49 +31,40 @@ services:
       GETH_VERBOSITY: 1
 
   profiles_psql:
-    image: kartoza/postgis:11.0-2.5
+    image: circleci/postgres:10.10-alpine-postgis-ram
+    tmpfs:
+      - /dev/shm/pgdata/data
     expose:
       - 5432
     environment:
       POSTGRES_USER: profiles
       POSTGRES_PASS: profiles
       POSTGRES_HOST: profiles_psql
-      POSTGRES_DBNAME: profiles
-      ALLOW_IP_RANGE: 0.0.0.0/0
-      PGDATA: /dev/shm/pgdata/data
-      # https://www.postgresql.org/docs/11/non-durability.html
-      EXTRA_CONF: fsync = off\nsynchronous_commit = off\nfull_page_writes = off\nbgwriter_lru_maxpages = 0
-    tmpfs:
-      - /dev/shm/pgdata/data
+      POSTGRES_DB: profiles
 
   engine_psql:
-    image: sameersbn/postgresql:9.6-2
+    image: circleci/postgres:10.10-alpine-ram
     expose:
       - 5432
     environment:
-      DB_NAME: engine
-      DB_PASS: engine
-      DB_USER: engine
-      DB_EXTENSION: '"uuid-ossp"'
+      POSTGRES_USER: engine
+      POSTGRES_PASS: engine
+      POSTGRES_DB: engine
 
   transmission_psql:
     expose:
       - 5432
-    image: kartoza/postgis:11.0-2.5
+    image: circleci/postgres:10.10-alpine-postgis-ram
+    tmpfs:
+      - /dev/shm/pgdata/data
     environment:
       - POSTGRES_USER=transmission
       - POSTGRES_PASS=transmission
       - POSTGRES_HOST=transmission_psql
       - POSTGRES_DB=transmission
-      - ALLOW_IP_RANGE=0.0.0.0/0
-      - PGDATA=/dev/shm/pgdata/data
-      # https://www.postgresql.org/docs/11/non-durability.html
-      - EXTRA_CONF=fsync = off\nsynchronous_commit = off\nfull_page_writes = off\nbgwriter_lru_maxpages = 0
-    tmpfs:
-      - /dev/shm/pgdata/data
 
   redis_db:
-    image: redis
+    image: circleci/redis:alpine
     tmpfs:
       - /data
     expose:

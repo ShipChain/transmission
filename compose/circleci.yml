@@ -17,7 +17,7 @@ services:
       --requirepass redis_pass
 
   psql:
-    image: circleci/postgres:11.1-alpine-postgis-ram
+    image: circleci/postgres:10.10-alpine-postgis-ram
     tmpfs:
       - /dev/shm/pgdata/data
     expose:
@@ -29,7 +29,6 @@ services:
       - POSTGRES_PASS=transmission
       - POSTGRES_HOST=psql
       - POSTGRES_DB=transmission
-      - ALLOW_IP_RANGE=0.0.0.0/0
 
   runserver:
     build:
