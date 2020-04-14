@@ -69,8 +69,8 @@ services:
       - PGDATA=/dev/shm/pgdata/data
       # https://www.postgresql.org/docs/11/non-durability.html
       - EXTRA_CONF=fsync = off\nsynchronous_commit = off\nfull_page_writes = off\nbgwriter_lru_maxpages = 0
-      tmpfs:
-        - /dev/shm/pgdata/data
+    tmpfs:
+      - /dev/shm/pgdata/data
 
   redis_db:
     image: redis
