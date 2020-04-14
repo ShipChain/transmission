@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.6'
 services:
 
   minio:
@@ -8,10 +8,11 @@ services:
       - portal
 
   redis_db:
+    image: circleci/redis:alpine
     networks:
       - portal
-    volumes:
-      - /data/shipchain/transmission/redis:/data
+    tmpfs:
+      - /data
     command: >
       --requirepass redis_pass
 

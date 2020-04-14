@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.6'
 services:
   newman:
     image: postman/newman
@@ -40,6 +40,11 @@ services:
       POSTGRES_HOST: profiles_psql
       POSTGRES_DBNAME: profiles
       ALLOW_IP_RANGE: 0.0.0.0/0
+      PGDATA: /dev/shm/pgdata/data
+      # https://www.postgresql.org/docs/11/non-durability.html
+      EXTRA_CONF: fsync = off\nsynchronous_commit = off\nfull_page_writes = off\nbgwriter_lru_maxpages = 0
+    tmpfs:
+      - /dev/shm/pgdata/data
 
   engine_psql:
     image: sameersbn/postgresql:9.6-2
@@ -61,9 +66,16 @@ services:
       - POSTGRES_HOST=transmission_psql
       - POSTGRES_DB=transmission
       - ALLOW_IP_RANGE=0.0.0.0/0
+      - PGDATA=/dev/shm/pgdata/data
+      # https://www.postgresql.org/docs/11/non-durability.html
+      - EXTRA_CONF=fsync = off\nsynchronous_commit = off\nfull_page_writes = off\nbgwriter_lru_maxpages = 0
+      tmpfs:
+        - /dev/shm/pgdata/data
 
   redis_db:
     image: redis
+    tmpfs:
+      - /data
     expose:
       - 6379
     command: >
