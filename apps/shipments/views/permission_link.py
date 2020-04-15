@@ -49,6 +49,12 @@ class PermissionLinkViewSet(mixins.CreateModelMixin,
     def get_queryset(self):
         return self.queryset.filter(shipment_id=self.kwargs['shipment_pk'])
 
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        # Disable GZipMiddleware for this endpoint to avoid any potential for a BREACH attack
+        response['Content-Encoding'] = 'identity'
+        return response
+
     def create(self, request, *args, **kwargs):
         """
         Creates a link to grant permission to read shipments
