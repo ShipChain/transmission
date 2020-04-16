@@ -14,18 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import logging
+from json.decoder import JSONDecodeError
 
+import requests
 from django.conf import settings
 from influxdb_metrics.loader import log_metric
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+from shipchain_common.exceptions import Custom500Error
 
-from ..models import Shipment
-from ..serializers import SignedDevicePayloadSerializer, UnvalidatedDevicePayloadSerializer, \
+from apps.shipments.models import Shipment
+from apps.shipments.permissions import IsDeviceOwnerOrShared
+from apps.shipments.serializers import SignedDevicePayloadSerializer, UnvalidatedDevicePayloadSerializer, \
     PermissionLinkSerializer, TelemetryDataToDbSerializer, TrackingDataToDbSerializer
-from ..tasks import tracking_data_update, telemetry_data_update
+from apps.shipments.tasks import tracking_data_update, telemetry_data_update
 
 LOG = logging.getLogger('transmission')
 
@@ -99,3 +104,36 @@ class DeviceViewSet(viewsets.ViewSet):
             telemetry_model_serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SensorViewset(mixins.ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = (IsDeviceOwnerOrShared,)
+
+    renderer_classes = (JSONRenderer,)
+
+    def get_serializer_class(self):
+        pass
+
+    def list(self, request, *args, **kwargs):
+        pk = self.kwargs['device_pk']
+        LOG.debug(f'Retrieving sensors for device with id: {pk}.')
+        log_metric('transmission.info', tags={'method': 'devices.sensors', 'module': __name__})
+
+        response = requests.get(
+            f'{settings.PROFILES_URL}/api/v1/device/{pk}/sensor',
+            params=request.query_params.dict()
+        )
+
+        try:
+            response_json = response.json()
+        except JSONDecodeError:
+            raise Custom500Error(detail="Invalid response returned from profiles.", status_code=503)
+
+        if response.status_code == 200:
+            links = {}
+            for key, value in response_json['links'].items():
+                links[key] = value.replace(settings.PROFILES_URL, settings.INTERNAL_URL) if value else value
+
+            response_json['links'] = links
+
+        return Response(data=response_json, status=response.status_code)

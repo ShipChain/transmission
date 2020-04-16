@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 from rest_framework import permissions
 
 from apps.permissions import IsShipmentOwnerMixin, IsShipperMixin, IsModeratorMixin, IsCarrierMixin
@@ -25,17 +25,12 @@ class IsSharedShipmentMixin:
 
     @staticmethod
     def has_valid_permission_link(request, shipment):
-        permission_link = request.query_params.get('permission_link')
+        permission_link = PermissionLink.objects.filter(pk=request.query_params.get('permission_link')).first()
         if permission_link:
-            try:
-                permission_obj = PermissionLink.objects.get(pk=permission_link)
-            except ObjectDoesNotExist:
+            if not permission_link.is_valid:
                 return False
 
-            if not permission_obj.is_valid:
-                return False
-
-            return shipment.id == permission_obj.shipment.id
+            return shipment.id == permission_link.shipment.id
         return False
 
 
@@ -82,6 +77,35 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
            self.has_shipper_permission(request, obj) or \
            self.has_carrier_permission(request, obj) or \
            self.has_moderator_permission(request, obj)
+
+
+class IsDeviceOwnerOrShared(IsShipmentOwnerMixin,
+                            IsShipperMixin,
+                            IsCarrierMixin,
+                            IsModeratorMixin,
+                            IsSharedShipmentMixin,
+                            permissions.IsAuthenticated):
+
+    def has_permission(self, request, view):
+        if not settings.PROFILES_ENABLED:
+            return False
+
+        shipment = Shipment.objects.filter(device_id=view.kwargs.get('device_pk')).first()
+        if not shipment:
+            return False
+
+        # If nested route, we need to call has_object_permission on the Shipment
+        is_authenticated = super().has_permission(request, view)
+        has_valid_permission_link = self.has_valid_permission_link(request, shipment)
+
+        if not is_authenticated and not has_valid_permission_link:
+            # Unauthenticated requests must have a permission_link
+            return False
+
+        return shipment and (self.is_shipment_owner(request, shipment) or has_valid_permission_link or
+                             self.has_shipper_permission(request, shipment) or
+                             self.has_carrier_permission(request, shipment) or
+                             self.has_moderator_permission(request, shipment))
 
 
 class IsOwnerShipperCarrierModerator(IsShipmentOwnerMixin,

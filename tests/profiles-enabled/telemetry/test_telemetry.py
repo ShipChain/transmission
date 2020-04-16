@@ -18,15 +18,14 @@ def add_telemetry_data_to_shipment(telemetry_data, shipment):
 @mock_iot
 class TestPostTelemetryData:
     @pytest.fixture(autouse=True)
-    def set_up(self, device_alice_with_shipment, create_signed_telemetry_post):
-        self.telemetry_url = reverse('device-telemetry', kwargs={'version': 'v1', 'pk': device_alice_with_shipment.id})
+    def set_up(self, shipment_alice_with_device, create_signed_telemetry_post):
+        self.telemetry_url = reverse('device-telemetry',
+                                     kwargs={'version': 'v1', 'pk': shipment_alice_with_device.device.id})
         self.random_telemetry_url = reverse('device-telemetry', kwargs={'version': 'v1', 'pk': random_id()})
 
     def test_unsigned_data_fails(self, api_client, create_unsigned_telemetry_post):
         response = api_client.post(self.telemetry_url, create_unsigned_telemetry_post)
-        AssertionHelper.HTTP_400(response,
-                                 error="This value does not match the required pattern.",
-                                 pointer='payload')
+        AssertionHelper.HTTP_400(response, error="This value does not match the required pattern.", pointer='payload')
 
     def test_signed_data_succeeds(self, api_client, create_signed_telemetry_post):
         response = api_client.post(self.telemetry_url, create_signed_telemetry_post)

@@ -381,11 +381,8 @@ def permission_link_device_shipment(shipment_alice_with_device):
 
 
 @pytest.fixture
-def device_alice_with_shipment(mocked_engine_rpc, mocked_iot_api, device, user_alice_id, profiles_ids):
-    Shipment.objects.create(vault_id=VAULT_ID,
-                            carrier_wallet_id=profiles_ids['carrier_wallet_id'],
-                            shipper_wallet_id=profiles_ids['shipper_wallet_id'],
-                            storage_credentials_id=profiles_ids['storage_credentials_id'],
-                            owner_id=user_alice_id,
-                            device=device)
-    return device
+def permission_link_device_shipment_expired(shipment_alice_with_device):
+    return PermissionLink.objects.create(
+        expiration_date=datetime.now(timezone.utc) - timedelta(days=1),
+        shipment=shipment_alice_with_device
+    )
