@@ -111,11 +111,14 @@ components:
 x-tagGroups:
   - name: Shipment Management
     tags:
-      - Additional Shipment Details
       - Shipments
       - Shipment Tags
       - Notes
       - Permission Links
+      - Additional Shipment Details
+  - name: Devices
+    tags:
+      - Devices
   - name: Imports
     tags:
       - Imports
@@ -131,9 +134,6 @@ x-tagGroups:
 security:
 - JWT: []
 tags:
-- name: Additional Shipment Details
-  description: >
-    These are additional details that a shipment will have
 - name: AsyncJobs
   description: >
     AsyncJobs model an asynchronous interaction with ShipChain Engine. They also contain references to the state of an associated Ethereum Transaction.
@@ -145,13 +145,19 @@ tags:
     Imports are entities that allow creation or import of Transmission objects from external sources within ShipChain Transmission service.
 - name: Notes
   description: >
-    Notes allow for larger descriptions/details to be added to shipments
+    Notes allow for a timestamped comment to be added to a shipment
 - name: Permission Links
   description: >
-    Permission Links are entities that allow for retrieval of shipments by non-authorized or non-owner users
+    Permission Links are entities that allow for retrieval of shipment data by unauthenticated or non-owner users
 - name: Shipment Tags
   description: >
-    Shipment Tags are a way to allow for easier filtering for shipments
+    Shipment Tags are a mechanism to allow for easier filtering of shipments
+- name: Additional Shipment Details
+  description: >
+    These endpoints contain additional details about a shipment, such as transmission, telemetry, history and transactions
+- name: Devices
+  description: >
+    These handle the posting of telemetry and tracking data from devices for shipments
 - name: Shipments
   description: >
     Shipments are the core entity in the ShipChain Transmission service. This is a collection of endpoints related to managing shipments.
