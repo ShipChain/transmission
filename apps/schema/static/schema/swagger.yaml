@@ -68,6 +68,9 @@ paths:
   /api/v1/shipments/{shipment_id}/permission_links/{permission_link_id}:
     $ref: components/permissionLinks/permissionLinksId.yaml
 
+  /api/v1/shipments/{shipment_id}/sensors:
+    $ref: components/sensors/sensor.yaml
+
   /api/v1/shipments/{shipment_id}/transactions:
     $ref: components/shipments/transactions.yaml
 

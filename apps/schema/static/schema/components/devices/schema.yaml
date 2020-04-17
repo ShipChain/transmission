@@ -3,3 +3,15 @@ deviceResource:
     type:
       description: device
       example: device
+
+relatedDevice:
+  properties:
+    data:
+      title: data
+      type: object
+      allOf:
+        - $ref: '#/deviceResource'
+        - $ref: '#/dataTypes/resourcePk'
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml

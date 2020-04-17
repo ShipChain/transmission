@@ -185,7 +185,7 @@ delayed:
     example: true
 
 permissionLinkId:
-  name: permission_link_id
+  name: permission_link
   in: query
   description: When included and valid, a permission link parameter provides unauthenticated read-only access to a shipment.
   schema:
@@ -195,7 +195,7 @@ permissionLinkPath:
   required: true
   name: permission_link_id
   in: path
-  description: When included and valid, a permission link parameter provides unauthenticated read-only access to a shipment.
+  description: Id of the Permission Link.
   schema:
     $ref: '#/dataTypes/uuid'
 
