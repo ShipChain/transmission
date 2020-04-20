@@ -221,18 +221,9 @@ def test_shipper_carrier_moderator_shipment_tag(org_id_bob, client_bob, mocked_i
     url = reverse('shipment-tags-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
     # User2 does not belong to the shipment organization but is the shipment shipper.
-    # he should be able to tag the shipment
+    # he should be not able to tag the shipment
     response = client_bob.post(url, shipment_tag_creation_data)
-    AssertionHelper.HTTP_201(response,
-                           entity_refs=AssertionHelper.EntityRef(
-                               resource='ShipmentTag',
-                               attributes={'tag_type': shipment_tag_creation_data['tag_type'],
-                                           'tag_value': shipment_tag_creation_data['tag_value'],
-                                           'owner_id': org_id_bob},
-                               relationships={
-                                   'shipment': AssertionHelper.EntityRef(resource='Shipment', pk=shipment.id)
-                               })
-                           )
+    AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
 
 
 @pytest.mark.django_db
