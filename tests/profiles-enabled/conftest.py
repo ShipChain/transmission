@@ -230,6 +230,22 @@ def successful_wallet_owner_calls_assertions(profiles_ids):
 
 
 @pytest.fixture
+def successful_shipment_create_profiles_assertions(profiles_ids):
+    return [
+        {
+            'path': f'/api/v1/storage_credentials/{profiles_ids["storage_credentials_id"]}/',
+            'body': '',
+            'host': test_settings.PROFILES_URL.replace('http://', ''),
+        },
+        {
+            'path': f'/api/v1/wallet/{profiles_ids["shipper_wallet_id"]}/',
+            'body': '',
+            'host': test_settings.PROFILES_URL.replace('http://', ''),
+        },
+    ]
+
+
+@pytest.fixture
 def mock_successful_wallet_owner_calls(modified_http_pretty, profiles_ids):
     wallet_url = f'{test_settings.PROFILES_URL}/api/v1/wallet/'
     storage_credentials_url = f'{test_settings.PROFILES_URL}/api/v1/storage_credentials/' \

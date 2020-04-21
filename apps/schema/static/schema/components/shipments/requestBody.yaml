@@ -82,6 +82,7 @@ createAttributes:
   - $ref: '#/shipment/gtxRequired'
   - $ref: '#/shipment/assetCustodianId'
   - $ref: '#/shipment/geofences'
+  - $ref: '#/shipment/tags'
 
 patchAttributes:
   allOf:

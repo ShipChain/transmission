@@ -601,6 +601,21 @@ assetCustodianId:
       title: asset_custodian_id
       description: The User ID of the current asset custodian
 
+tags:
+  properties:
+    tags:
+      title: tags
+      description: Tags for additional filtering on a shipment
+      type: array
+      items:
+        type: object
+        description: Tag Value and Type
+        properties:
+          tag_value:
+            $ref: '../shipmentTags/dataTypes.yaml#/tagValue/properties/tag_value'
+          tag_type:
+            $ref: '../shipmentTags/dataTypes.yaml#/tagType/properties/tag_type'
+
 geofences:
   properties:
     geofences:
