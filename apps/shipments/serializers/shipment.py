@@ -26,7 +26,6 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import ResourceRelatedField
 from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
@@ -173,7 +172,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
     final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
     tags = serializers.ListField(
-        child=serializers.DictField(child=serializers.CharField(max_length=50))
+        child=serializers.DictField(child=serializers.CharField(max_length=50)),
+        required=False
     )
 
     def create(self, validated_data):
