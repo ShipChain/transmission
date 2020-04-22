@@ -188,28 +188,29 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             if 'device' in self.context:
                 extra_args['device'] = self.context['device']
 
-            if 'tags' in validated_data:
-                shipment_tags = validated_data.pop('tags')
-                shipment = Shipment.objects.create(**validated_data, **extra_args)
-                for shipment_tag in shipment_tags:
-                    ShipmentTag.objects.create(
-                        tag_type=shipment_tag['tag_type'],
-                        tag_value=shipment_tag['tag_value'],
-                        shipment_id=shipment.id,
-                        owner_id=shipment.owner_id
-                    )
-            else:
-                shipment = Shipment.objects.create(**validated_data, **extra_args)
+            shipment_tags = validated_data.pop('tags', [])
+            shipment = Shipment.objects.create(**validated_data, **extra_args)
+
+            for shipment_tag in shipment_tags:
+                ShipmentTag.objects.create(
+                    tag_type=shipment_tag['tag_type'],
+                    tag_value=shipment_tag['tag_value'],
+                    shipment_id=shipment.id,
+                    owner_id=shipment.owner_id
+                )
 
             return shipment
 
     def validate_tags(self, tags):
-        if len(tags) != len([set(t) for t in {tuple(d.items()) for d in tags}]):
-            raise serializers.ValidationError('Tags field cannot contain duplicates')
-
+        tag_list = []
         for tag_dict in tags:
             if 'tag_value' not in tag_dict or 'tag_type' not in tag_dict:
                 raise serializers.ValidationError('Tags items must contain `tag_value` and `tag_type`.')
+
+            tag_list.append(tuple(tag_dict.items()))
+
+        if len(tags) != len(set(tag_list)):
+            raise serializers.ValidationError('Tags field cannot contain duplicates')
 
         return tags
 
