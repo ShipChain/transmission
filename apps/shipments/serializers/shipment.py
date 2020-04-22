@@ -202,12 +202,12 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             return shipment
 
     def validate_tags(self, tags):
-        tag_list = []
+        tag_list = set()
         for tag_dict in tags:
             if 'tag_value' not in tag_dict or 'tag_type' not in tag_dict:
                 raise serializers.ValidationError('Tags items must contain `tag_value` and `tag_type`.')
 
-            tag_list.append(tuple(tag_dict.items()))
+            tag_list.add(tuple(tag_dict.items()))
 
         if len(tags) != len(set(tag_list)):
             raise serializers.ValidationError('Tags field cannot contain duplicates')
