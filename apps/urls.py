@@ -51,10 +51,6 @@ nested_shipment.register(r'notes', shipments.ShipmentNoteViewSet, base_name='shi
 nested_shipment.register(r'tags', shipments.ShipmentTagViewSet, base_name='shipment-tags')
 nested_shipment.register(r'telemetry', shipments.TelemetryViewSet, base_name='shipment-telemetry')
 
-# Device's nested routes definition
-nested_devices = OptionalSlashNested(router, f'{API_PREFIX[1:]}/devices', lookup='device')
-nested_devices.register(r'sensors', shipments.SensorViewset, base_name='device-sensor')
-
 urlpatterns = [
     re_path('health/?$', management.health_check, name='health'),
     re_path(r'(^(api/v1/schema)|^$)', TemplateView.as_view(template_name='apidoc.html'), name='api_schema'),
@@ -64,11 +60,12 @@ urlpatterns = [
             name='shipment-overview'),
     re_path(f'{API_PREFIX[1:]}/shipments/(?P<shipment_pk>[0-9a-f-]+)/actions/?$',
             shipments.ShipmentActionsView.as_view(), name='shipment-actions'),
+    re_path(f'{API_PREFIX[1:]}/devices/(?P<device_pk>[0-9a-f-]+)/sensors/?$',
+            shipments.SensorViewset.as_view(), name='device-sensor'),
 ]
 urlpatterns += router.urls
 
 urlpatterns += nested_shipment.urls
-urlpatterns += nested_devices.urls
 
 urlpatterns = format_suffix_patterns(urlpatterns)
 

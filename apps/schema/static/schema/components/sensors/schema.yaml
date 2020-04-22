@@ -42,18 +42,6 @@ getResponse:
       data:
         $ref: '#/getResource'
 
-#getResponseInclude:
-#  title: Sensor retrieval with included Device
-#  allOf:
-#  - $ref: '#/jsonApi/data'
-#  - properties:
-#      data:
-#        $ref: '#/getResource'
-#      included:
-#        title: Device associated with sensor
-#        items:
-#          $ref: '#/device/getResource'
-
 listResponse:
   title: Default Sensor List
   allOf:
@@ -63,20 +51,6 @@ listResponse:
       data:
         items:
           $ref: '#/getResource'
-
-#listResponseInclude:
-#  title: Sensor List with included Device
-#  allOf:
-#  - $ref: '#/jsonApi/dataArray'
-#  - $ref: '#/jsonApi/linksAndMeta'
-#  - properties:
-#      data:
-#        items:
-#          $ref: '#/getResource'
-#      included:
-#        title: Device associated with sensors
-#        items:
-#          $ref: '#/device/getResource'
 
 dataTypes:
   $ref: ../core/dataTypes.yaml

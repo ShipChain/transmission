@@ -57,6 +57,7 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
         is_authenticated = super().has_permission(request, view)
         has_permission_link = request.query_params.get('permission_link')
         nested_shipment = view.kwargs.get('shipment_pk')
+        nested_device = view.kwargs.get('device_pk')
 
         if not is_authenticated and not has_permission_link:
             # Unauthenticated requests must have a permission_link
@@ -65,8 +66,16 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
         if nested_shipment:
             # Nested routes do not call has_object_permission for the parent Shipment,
             # so we must check object permissions here
-            shipment = Shipment.objects.get(id=view.kwargs.get('shipment_pk'))
+            shipment = Shipment.objects.get(id=nested_shipment)
             return self.has_object_permission(request, view, shipment)
+
+        if nested_device:
+            # Nested device routes need to be ensured that they have a shipment associated with the device
+            if not settings.PROFILES_ENABLED:
+                return False
+
+            shipment = Shipment.objects.filter(device_id=view.kwargs.get('device_pk')).first()
+            return shipment and self.has_object_permission(request, view, shipment)
 
         # Not nested, has_object_permission will handle the permission link check
         return is_authenticated or has_permission_link
@@ -77,35 +86,6 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
            self.has_shipper_permission(request, obj) or \
            self.has_carrier_permission(request, obj) or \
            self.has_moderator_permission(request, obj)
-
-
-class IsDeviceOwnerOrShared(IsShipmentOwnerMixin,
-                            IsShipperMixin,
-                            IsCarrierMixin,
-                            IsModeratorMixin,
-                            IsSharedShipmentMixin,
-                            permissions.IsAuthenticated):
-
-    def has_permission(self, request, view):
-        if not settings.PROFILES_ENABLED:
-            return False
-
-        shipment = Shipment.objects.filter(device_id=view.kwargs.get('device_pk')).first()
-        if not shipment:
-            return False
-
-        # If nested route, we need to call has_object_permission on the Shipment
-        is_authenticated = super().has_permission(request, view)
-        has_valid_permission_link = self.has_valid_permission_link(request, shipment)
-
-        if not is_authenticated and not has_valid_permission_link:
-            # Unauthenticated requests must have a permission_link
-            return False
-
-        return shipment and (self.is_shipment_owner(request, shipment) or has_valid_permission_link or
-                             self.has_shipper_permission(request, shipment) or
-                             self.has_carrier_permission(request, shipment) or
-                             self.has_moderator_permission(request, shipment))
 
 
 class IsOwnerShipperCarrierModerator(IsShipmentOwnerMixin,

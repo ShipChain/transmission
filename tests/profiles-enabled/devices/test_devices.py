@@ -59,7 +59,7 @@ class TestSensorsWithShipmentList:
     def set_up(self, device, shipment_alice_with_device):
         self.device = device
         self.shipment_alice_with_device = shipment_alice_with_device
-        self.url = reverse('device-sensor-list', kwargs={'version': 'v1', 'device_pk': device.id})
+        self.url = reverse('device-sensor', kwargs={'version': 'v1', 'device_pk': device.id})
 
     def test_unauthenticated_user_fails(self, api_client):
         response = api_client.get(self.url)
@@ -91,9 +91,11 @@ class TestSensorsWithShipmentList:
         AssertionHelper.HTTP_403(response, vnd=False, error='You do not have permission to perform this action.')
         mock_non_wallet_owner_calls.assert_calls(nonsuccessful_wallet_owner_calls_assertions)
 
-    def test_expired_permission_link_fails(self, api_client, permission_link_device_shipment_expired):
+    def test_expired_permission_link_fails(self, api_client, permission_link_device_shipment_expired,
+                                           mock_non_wallet_owner_calls, nonsuccessful_wallet_owner_calls_assertions):
         response = api_client.get(f'{self.url}?permission_link={permission_link_device_shipment_expired.id}')
         AssertionHelper.HTTP_403(response, vnd=False, error='You do not have permission to perform this action.')
+        mock_non_wallet_owner_calls.assert_calls(nonsuccessful_wallet_owner_calls_assertions)
 
     def test_permission_link_succeeds(self, api_client, mocked_sensors_success, permission_link_device_shipment):
         response = api_client.get(f'{self.url}?permission_link={permission_link_device_shipment.id}')
