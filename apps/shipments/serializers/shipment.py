@@ -258,11 +258,10 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
     def validate_aftership_tracking(self, aftership_tracking):
         response = requests.post(f'{settings.AFTERSHIP_URL}couriers/detect',
-                                 headers={'Content-Type': 'application/json',
-                                          'aftership-api-key': settings.AFTERSHIP_API_KEY},
-                                 data=json.dumps({'tracking': {'tracking_number': aftership_tracking}}))
+                                 headers={'aftership-api-key': settings.AFTERSHIP_API_KEY},
+                                 json={'tracking': {'tracking_number': aftership_tracking}})
         if not response.ok:
-            raise serializers.ValidationError('Invalid aftership_tracking supplied')
+            raise serializers.ValidationError('Invalid aftership_tracking value')
 
         return aftership_tracking
 

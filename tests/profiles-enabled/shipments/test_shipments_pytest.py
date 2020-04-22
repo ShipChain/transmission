@@ -54,7 +54,7 @@ class TestShipmentAftershipQuickadd:
         mock_sns().start()
         import boto3
         settings.BOTO3_SESSION = boto3.Session(region_name='us-east-1')
-        settings.TOPIC_ARN = settings.BOTO3_SESSION.client('sns').create_topic(Name='transmission-events-test')['TopicArn']
+        settings.SNS_ARN = settings.BOTO3_SESSION.client('sns').create_topic(Name='transmission-events-test')['TopicArn']
 
     @pytest.fixture
     def assertions_aftership_validation(self, assertions_shipment_create_profile_ids):
@@ -85,17 +85,11 @@ class TestShipmentAftershipQuickadd:
 
     def test_quickadd_create_fail(self, client_alice, mock_aftership_create_fail, assertions_create_tracking):
         response = client_alice.post(self.create_url, self.base_create_attributes)
-        AssertionHelper.HTTP_400(response, error='Aftership tracking supplied is already in use')
+        AssertionHelper.HTTP_400(response, error='Supplied tracking number has already been imported into Aftership')
         mock_aftership_create_fail.assert_calls(assertions_create_tracking)
 
     def test_quickadd_validation_fail(self, client_alice, mock_aftership_validation_failure,
                                       assertions_aftership_validation):
         response = client_alice.post(self.create_url, self.base_create_attributes)
-        AssertionHelper.HTTP_400(response, error='Invalid aftership_tracking supplied')
+        AssertionHelper.HTTP_400(response, error='Invalid aftership_tracking value')
         mock_aftership_validation_failure.assert_calls(assertions_aftership_validation)
-
-    def test_sqs_fail(self, client_alice, mock_aftership_create_success, assertions_create_tracking):
-        settings.TOPIC_ARN = 'different_arn'
-        response = client_alice.post(self.create_url, self.base_create_attributes)
-        AssertionHelper.HTTP_500(response, error='Error publishing to SNS Topic')
-        mock_aftership_create_success.assert_calls(assertions_create_tracking)

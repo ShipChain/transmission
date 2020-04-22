@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0013_telemetrydata'),
+        ('shipments', '0014_add_indexes'),
     ]
 
     operations = [
