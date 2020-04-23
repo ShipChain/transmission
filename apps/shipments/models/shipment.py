@@ -18,6 +18,8 @@ from datetime import datetime, timedelta, timezone
 
 import hashlib
 
+import celery
+
 import boto3
 import requests
 from botocore.exceptions import ClientError
@@ -360,7 +362,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
         if asset_physical_id:
             self.asset_physical_id = hashlib.sha256(asset_physical_id.encode()).hexdigest()
-            self.validate_gtx()
+            celery.current_app.send_task('apps.shipments.tasks.gtx_validation_task', task_id=self.id, countdown=60)
 
         self.pickup_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
 

@@ -20,10 +20,10 @@ from dateutil.parser import parse as dt_parse
 from dateutil.relativedelta import relativedelta
 from rest_framework import status
 from rest_framework.reverse import reverse
-from shipchain_common.test_utils import datetimeAlmostEqual, AssertionHelper, modified_http_pretty
+from shipchain_common.test_utils import datetimeAlmostEqual, AssertionHelper
 
 from django.conf import settings
-from apps.shipments.models import TransitState, GTXValidation
+from apps.shipments.models import TransitState
 from apps.shipments.serializers import ActionType
 
 
@@ -95,9 +95,7 @@ def test_pickup(client_alice, shipment):
 
 
 @pytest.mark.django_db
-def test_pickup_with_gtx_required(client_alice, shipment, modified_http_pretty, gtx_validation_assertion):
-    modified_http_pretty.register_uri(modified_http_pretty.POST, settings.GTX_VALIDATION_URL)
-
+def test_pickup_with_gtx_required(client_alice, shipment):
     assert shipment.pickup_act is None
     shipment.gtx_required = True
     shipment.save()
@@ -119,44 +117,8 @@ def test_pickup_with_gtx_required(client_alice, shipment, modified_http_pretty, 
                              entity_refs=AssertionHelper.EntityRef(
                                  resource='Shipment',
                                  pk=shipment.id,
-                                 attributes={'state': TransitState.IN_TRANSIT.name,
-                                             'gtx_validation': GTXValidation.VALIDATED.name})
+                                 attributes={'state': TransitState.IN_TRANSIT.name})
                              )
-
-    modified_http_pretty.assert_calls(gtx_validation_assertion)
-
-
-@pytest.mark.django_db
-def test_pickup_doesnt_require_gtx(client_alice, shipment, modified_http_pretty, gtx_validation_assertion):
-    modified_http_pretty.register_uri(modified_http_pretty.POST, settings.GTX_VALIDATION_URL,
-                                      status=status.HTTP_403_FORBIDDEN)
-
-    assert shipment.pickup_act is None
-    shipment.gtx_required = True
-    shipment.save()
-
-    url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
-
-    action = {
-        'action_type': ActionType.PICK_UP.name
-    }
-
-    # If gtx_required, pickup requires an asset_physical_id
-    response = client_alice.post(url, data=action)
-    AssertionHelper.HTTP_403(response, error='In order to proceed with this shipment pick up, you need to provide a '
-                                             'value for the field [Shipment.asset_physical_id]')
-
-    action['asset_physical_id'] = 'nfc_tag'
-    response = client_alice.post(url, data=action)
-    AssertionHelper.HTTP_200(response,
-                             entity_refs=AssertionHelper.EntityRef(
-                                 resource='Shipment',
-                                 pk=shipment.id,
-                                 attributes={'state': TransitState.IN_TRANSIT.name,
-                                             'gtx_validation': GTXValidation.VALIDATION_FAILED.name})
-                             )
-
-    modified_http_pretty.assert_calls(gtx_validation_assertion)
 
 
 @pytest.mark.django_db
