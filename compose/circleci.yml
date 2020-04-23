@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.6'
 services:
 
   minio:
@@ -8,15 +8,18 @@ services:
       - portal
 
   redis_db:
+    image: circleci/redis:alpine
     networks:
       - portal
-    volumes:
-      - /data/shipchain/transmission/redis:/data
+    tmpfs:
+      - /data
     command: >
       --requirepass redis_pass
 
   psql:
-    image: circleci/postgres:9.6-alpine-postgis
+    image: circleci/postgres:10.10-alpine-postgis-ram
+    tmpfs:
+      - /dev/shm/pgdata/data
     expose:
       - '5432'
     networks:
@@ -26,7 +29,6 @@ services:
       - POSTGRES_PASS=transmission
       - POSTGRES_HOST=psql
       - POSTGRES_DB=transmission
-      - ALLOW_IP_RANGE=0.0.0.0/0
 
   runserver:
     build:

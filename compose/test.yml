@@ -1,5 +1,14 @@
-version: '3.4'
+version: '3.6'
 services:
+  psql:
+    environment:
+      - PGDATA=/dev/shm/pgdata/data
+    tmpfs:
+      - /dev/shm/pgdata/data
+
+  redis_db:
+    tmpfs:
+      - /data
 
   runserver:
     build:

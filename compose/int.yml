@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.6'
 services:
   newman:
     image: postman/newman
@@ -31,39 +31,44 @@ services:
       GETH_VERBOSITY: 1
 
   profiles_psql:
-    image: shipchain/postgis:9.6-2.4
+    image: circleci/postgres:10.10-alpine-postgis-ram
+    tmpfs:
+      - /dev/shm/pgdata/data
     expose:
       - 5432
     environment:
       POSTGRES_USER: profiles
       POSTGRES_PASS: profiles
       POSTGRES_HOST: profiles_psql
-      POSTGRES_DBNAME: profiles
-      ALLOW_IP_RANGE: 0.0.0.0/0
+      POSTGRES_DB: profiles
 
   engine_psql:
-    image: sameersbn/postgresql:9.6-2
+    image: circleci/postgres:10.10-alpine-ram
+    tmpfs:
+      - /dev/shm/pgdata/data
     expose:
       - 5432
     environment:
-      DB_NAME: engine
-      DB_PASS: engine
-      DB_USER: engine
-      DB_EXTENSION: '"uuid-ossp"'
+      POSTGRES_USER: engine
+      POSTGRES_PASS: engine
+      POSTGRES_DB: engine
 
   transmission_psql:
     expose:
       - 5432
-    image: circleci/postgres:9.6-alpine-postgis
+    image: circleci/postgres:10.10-alpine-postgis-ram
+    tmpfs:
+      - /dev/shm/pgdata/data
     environment:
       - POSTGRES_USER=transmission
       - POSTGRES_PASS=transmission
       - POSTGRES_HOST=transmission_psql
       - POSTGRES_DB=transmission
-      - ALLOW_IP_RANGE=0.0.0.0/0
 
   redis_db:
-    image: redis
+    image: circleci/redis:alpine
+    tmpfs:
+      - /data
     expose:
       - 6379
     command: >
