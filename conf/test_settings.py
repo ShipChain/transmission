@@ -1,5 +1,5 @@
 from cryptography.hazmat.primitives.asymmetric import rsa
-
+from moto.iam.models import ACCOUNT_ID
 
 from conf import *
 
@@ -20,6 +20,8 @@ IOT_THING_INTEGRATION = True
 IOT_AWS_HOST = 'not-really-aws.com'
 IOT_GATEWAY_STAGE = 'test'
 IOT_DEVICES_PAGE_SIZE = 5
+
+SNS_ARN = f"arn:aws:sns:us-east-1:{ACCOUNT_ID}:transmission-events-test"
 
 # datetimeAlmostEqual threshold configuration parameter
 MILLISECONDS_THRESHOLD = 500

@@ -54,7 +54,8 @@ class TestShipmentAftershipQuickadd:
         mock_sns().start()
         import boto3
         settings.BOTO3_SESSION = boto3.Session(region_name='us-east-1')
-        settings.SNS_ARN = settings.BOTO3_SESSION.client('sns').create_topic(Name='transmission-events-test')['TopicArn']
+        settings.SNS_CLIENT = settings.BOTO3_SESSION.client('sns')
+        settings.SNS_CLIENT.create_topic(Name='transmission-events-test')
 
     @pytest.fixture
     def assertions_aftership_validation(self, assertions_shipment_create_profile_ids):

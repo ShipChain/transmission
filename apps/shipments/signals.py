@@ -95,6 +95,10 @@ def shipment_post_save(sender, **kwargs):
             "shipment_id": instance.id
         })
 
+    # Publish SNS message on any Shipment create/update
+    if settings.SNS_CLIENT:
+        SNSClient().shipment_update(instance)
+
 
 @receiver(post_save, sender=LoadShipment, dispatch_uid='loadshipment_post_save')
 def loadshipment_post_save(sender, **kwargs):
@@ -157,7 +161,7 @@ def telemetrydata_post_save(sender, **kwargs):
 @receiver(post_save_changed, sender=Shipment, fields=['aftership_tracking'],
           dispatch_uid='shipment_aftership_tracking_changed')
 def shipment_aftership_tracking_changed(sender, instance, changed_fields, **kwargs):
-    if instance.aftership_tracking and settings.IOT_THING_INTEGRATION:
+    if instance.aftership_tracking and settings.SNS_CLIENT:
         response = requests.post(f'{settings.AFTERSHIP_URL}trackings',
                                  json={'tracking': {'tracking_number': instance.aftership_tracking}},
                                  headers={'aftership-api-key': settings.AFTERSHIP_API_KEY})

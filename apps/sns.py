@@ -8,7 +8,7 @@ class SNSClient:
         SHIPMENT_UPDATE = 'ShipmentUpdate'
 
     def _publish(self, message_type, **kwargs):
-        settings.BOTO3_SESSION.client('sns').publish(
+        settings.SNS_CLIENT.publish(
             TopicArn=settings.SNS_ARN,
             Message=json.dumps(kwargs),
             MessageAttributes={
@@ -22,9 +22,9 @@ class SNSClient:
     def aftership_tracking_update(self, shipment, aftership_id):
         self._publish(
             SNSClient.MessageType.AFTERSHIP_UPDATE,
-            owner_id=shipment.owner_id,
-            aftership_id=aftership_id,
-            shipment_id=shipment.id
+            ownerId=shipment.owner_id,
+            aftershipTrackingId=aftership_id,
+            shipmentId=shipment.id
         )
 
     def shipment_update(self, shipment):
