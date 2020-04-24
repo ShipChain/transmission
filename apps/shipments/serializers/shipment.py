@@ -209,7 +209,7 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
             tag_list.add(tuple(tag_dict.items()))
 
-        if len(tags) != len(set(tag_list)):
+        if len(tags) != len(tag_list):
             raise serializers.ValidationError('Tags field cannot contain duplicates')
 
         return tags
