@@ -58,13 +58,13 @@ class TestShipmentAftershipQuickadd:
         settings.SNS_CLIENT.create_topic(Name='transmission-events-test')
 
     @pytest.fixture
-    def assertions_aftership_validation(self, assertions_shipment_create_profile_ids):
-        assertions_shipment_create_profile_ids.append({
+    def assertions_aftership_validation(self, successful_shipment_create_profiles_assertions):
+        successful_shipment_create_profiles_assertions.append({
                 'host': settings.AFTERSHIP_URL.replace('/v4/', ''),
                 'path': '/v4/couriers/detect',
                 'body': {'tracking': {'tracking_number': self.base_create_attributes['aftership_tracking']}}
             })
-        return assertions_shipment_create_profile_ids
+        return successful_shipment_create_profiles_assertions
 
     @pytest.fixture
     def assertions_create_tracking(self, assertions_aftership_validation):
