@@ -1,5 +1,6 @@
 import logging
 
+import requests
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
@@ -8,6 +9,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from fancy_cache.memory import find_urls
 from fieldsignals import post_save_changed
+from rest_framework.exceptions import ValidationError
 from rest_framework.reverse import reverse
 from shipchain_common.exceptions import AWSIoTError
 
@@ -15,6 +17,7 @@ from apps.eth.models import TransactionReceipt
 from apps.eth.signals import event_update
 from apps.jobs.models import JobState, MessageType, AsyncJob, AsyncActionType
 from apps.jobs.signals import job_update
+from apps.sns import SNSClient
 from .events import LoadEventHandler
 from .iot_client import DeviceAWSIoTClient
 from .models import Shipment, LoadShipment, Location, TrackingData, TransitState, TelemetryData
@@ -70,6 +73,10 @@ def shipment_post_save(sender, **kwargs):
 
         instance.anonymous_historical_change(vault_id=vault_id, vault_uri=vault_uri)
 
+        shipment_aftership_tracking_changed(Shipment, instance, {
+            Shipment._meta.get_field('aftership_tracking'): (None, instance.aftership_tracking)
+        })
+
         shipment_iot_fields_changed(Shipment, instance, {
             Shipment.device.field: (None, instance.device_id),
             Shipment.state.field: (None, instance.state)
@@ -87,6 +94,10 @@ def shipment_post_save(sender, **kwargs):
             "type": "shipments.update",
             "shipment_id": instance.id
         })
+
+    # Publish SNS message on any Shipment create/update
+    if settings.SNS_CLIENT:
+        SNSClient().shipment_update(instance)
 
 
 @receiver(post_save, sender=LoadShipment, dispatch_uid='loadshipment_post_save')
@@ -145,6 +156,19 @@ def telemetrydata_post_save(sender, **kwargs):
     # Notify websocket channel
     async_to_sync(channel_layer.group_send)(instance.shipment.owner_id,
                                             {"type": "telemetry_data.save", "telemetry_data_id": instance.id})
+
+
+@receiver(post_save_changed, sender=Shipment, fields=['aftership_tracking'],
+          dispatch_uid='shipment_aftership_tracking_changed')
+def shipment_aftership_tracking_changed(sender, instance, changed_fields, **kwargs):
+    if instance.aftership_tracking and settings.SNS_CLIENT:
+        response = requests.post(f'{settings.AFTERSHIP_URL}trackings',
+                                 json={'tracking': {'tracking_number': instance.aftership_tracking}},
+                                 headers={'aftership-api-key': settings.AFTERSHIP_API_KEY})
+        if not response.ok:
+            raise ValidationError('Supplied tracking number has already been imported into Aftership')
+
+        SNSClient().aftership_tracking_update(instance, response.json()['data']['tracking']['id'])
 
 
 @receiver(post_save_changed, sender=Shipment, fields=['device', 'state', 'geofences'],
