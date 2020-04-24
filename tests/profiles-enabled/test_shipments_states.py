@@ -18,12 +18,11 @@ import pytest
 import pytz
 from dateutil.parser import parse as dt_parse
 from dateutil.relativedelta import relativedelta
-from rest_framework import status
 from rest_framework.reverse import reverse
 from shipchain_common.test_utils import datetimeAlmostEqual, AssertionHelper
 
 from django.conf import settings
-from apps.shipments.models import TransitState
+from apps.shipments.models import TransitState, GTXValidation
 from apps.shipments.serializers import ActionType
 
 
@@ -32,7 +31,7 @@ def gtx_validation_assertion(shipment):
     return [{"host": settings.GTX_VALIDATION_URL.replace('/validate', ''),
              "path": "/validate",
              "body": {"shipment_id": shipment.id,
-                      "asset_physical_id": hashlib.sha256('nfc_tag'.encode()).hexdigest()}}]
+                      "asset_physical_id": 'nfc_tag'}}]
 
 
 @pytest.mark.django_db
@@ -119,6 +118,37 @@ def test_pickup_with_gtx_required(client_alice, shipment):
                                  pk=shipment.id,
                                  attributes={'state': TransitState.IN_TRANSIT.name})
                              )
+
+
+class TestGTXValidation:
+    @pytest.fixture
+    def gtx_shipment(self, shipment):
+        assert shipment.pickup_act is None
+        shipment.gtx_required = True
+        shipment.asset_physical_id = 'nfc_tag'
+        shipment.save()
+        return shipment
+
+    def test_gtx(self, client_alice, gtx_shipment, modified_http_pretty, gtx_validation_assertion):
+        modified_http_pretty.register_uri(modified_http_pretty.POST, settings.GTX_VALIDATION_URL)
+
+        gtx_shipment.validate_gtx()
+        gtx_shipment.save()
+
+        modified_http_pretty.assert_calls(gtx_validation_assertion)
+        gtx_shipment.refresh_from_db(fields=('gtx_validation',))
+        assert gtx_shipment.gtx_validation == GTXValidation.VALIDATED
+
+    def test_gtx_fail(self, client_alice, gtx_shipment, modified_http_pretty, gtx_validation_assertion):
+        modified_http_pretty.register_uri(modified_http_pretty.POST, settings.GTX_VALIDATION_URL,
+                                          status=404)
+
+        gtx_shipment.validate_gtx()
+        gtx_shipment.save()
+
+        modified_http_pretty.assert_calls(gtx_validation_assertion)
+        gtx_shipment.refresh_from_db(fields=('gtx_validation',))
+        assert gtx_shipment.gtx_validation == GTXValidation.VALIDATION_FAILED
 
 
 @pytest.mark.django_db
