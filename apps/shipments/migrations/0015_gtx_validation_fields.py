@@ -8,7 +8,7 @@ import enumfields.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0013_telemetrydata'),
+        ('shipments', '0014_add_indexes'),
     ]
 
     operations = [

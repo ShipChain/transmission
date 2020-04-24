@@ -362,7 +362,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
         if asset_physical_id:
             self.asset_physical_id = hashlib.sha256(asset_physical_id.encode()).hexdigest()
-            celery.current_app.send_task('apps.shipments.tasks.gtx_validation_task', task_id=self.id, countdown=60)
+            celery.current_app.send_task('apps.shipments.tasks.gtx_validation_task', args=[self.id])
 
         self.pickup_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
 

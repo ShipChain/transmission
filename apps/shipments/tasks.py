@@ -49,8 +49,8 @@ def telemetry_data_update(self, shipment_id, payload):
 
 
 @shared_task(bind=True)
-def gtx_validation_task(self):
+def gtx_validation_task(self, shipment_id):
     log_metric('transmission.info', tags={'method': 'shipments_tasks.gtx_validation', 'module': __name__})
-    shipment = Shipment.objects.get(id=self.request.id)
+    shipment = Shipment.objects.get(id=shipment_id)
     shipment.validate_gtx()
     shipment.save()
