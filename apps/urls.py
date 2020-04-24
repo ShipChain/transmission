@@ -61,7 +61,7 @@ urlpatterns = [
     re_path(f'{API_PREFIX[1:]}/shipments/(?P<shipment_pk>[0-9a-f-]+)/actions/?$',
             shipments.ShipmentActionsView.as_view(), name='shipment-actions'),
     re_path(f'{API_PREFIX[1:]}/devices/(?P<device_pk>[0-9a-f-]+)/sensors/?$',
-            shipments.SensorViewset.as_view(), name='device-sensor'),
+            shipments.SensorViewset.as_view(), name='device-sensors'),
 ]
 urlpatterns += router.urls
 

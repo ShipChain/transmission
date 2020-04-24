@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from django.conf import settings
 from rest_framework import permissions
 
 from apps.permissions import IsShipmentOwnerMixin, IsShipperMixin, IsModeratorMixin, IsCarrierMixin
@@ -71,10 +70,7 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
 
         if nested_device:
             # Nested device routes need to be ensured that they have a shipment associated with the device
-            if not settings.PROFILES_ENABLED:
-                return False
-
-            shipment = Shipment.objects.filter(device_id=view.kwargs.get('device_pk')).first()
+            shipment = Shipment.objects.filter(device_id=nested_device).first()
             return shipment and self.has_object_permission(request, view, shipment)
 
         # Not nested, has_object_permission will handle the permission link check

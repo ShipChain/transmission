@@ -21,7 +21,7 @@ from django.conf import settings
 from influxdb_metrics.loader import log_metric
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, MethodNotAllowed
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -108,7 +108,7 @@ class DeviceViewSet(viewsets.ViewSet):
 
 
 class SensorViewset(APIView):
-    permission_classes = (IsOwnerOrShared,)
+    permission_classes = ((IsOwnerOrShared, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
 
     renderer_classes = (JSONRenderer,)
 
@@ -119,6 +119,9 @@ class SensorViewset(APIView):
         pk = self.kwargs['device_pk']
         LOG.debug(f'Retrieving sensors for device with id: {pk}.')
         log_metric('transmission.info', tags={'method': 'devices.sensors', 'module': __name__})
+
+        if not settings.PROFILES_ENABLED:
+            raise MethodNotAllowed('sensors', detail='Unable to list sensors when not profiles is not enabled.')
 
         try:
             response = requests.get(

@@ -59,7 +59,7 @@ class TestSensorsWithShipmentList:
     def set_up(self, device, shipment_alice_with_device):
         self.device = device
         self.shipment_alice_with_device = shipment_alice_with_device
-        self.url = reverse('device-sensor', kwargs={'version': 'v1', 'device_pk': device.id})
+        self.url = reverse('device-sensors', kwargs={'version': 'v1', 'device_pk': device.id})
 
     def test_unauthenticated_user_fails(self, api_client):
         response = api_client.get(self.url)
