@@ -20,6 +20,24 @@ createRequest:
         data:
           $ref: '#/createResource'
 
+updateResource:
+  allOf:
+    - $ref: 'schema.yaml#/resource'
+    - properties:
+        attributes:
+          $ref: '#/updateAttributes'
+
+updateAttributes:
+  allOf:
+    - $ref: '#/tag/tagType'
+
+updateRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/updateResource'
+
 tag:
   $ref: dataTypes.yaml
 

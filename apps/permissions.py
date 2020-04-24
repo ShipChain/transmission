@@ -154,6 +154,16 @@ class IsModeratorMixin:
         return False
 
 
+class IsNestedOwner(IsShipmentOwnerMixin, permissions.BasePermission):
+    """
+    Custom permission to only allow the owner access to a shipment object in a nested route
+    """
+    def has_permission(self, request, view):
+        shipment = Shipment.objects.get(id=view.kwargs.get('shipment_pk'))
+
+        return self.is_shipment_owner(request, shipment)
+
+
 class IsNestedOwnerShipperCarrierModerator(IsShipmentOwnerMixin,
                                            IsCarrierMixin,
                                            IsModeratorMixin,

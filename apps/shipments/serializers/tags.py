@@ -50,3 +50,17 @@ class ShipmentTagCreateSerializer(ShipmentTagSerializer):
                 message='This shipment already has a tag with the provided [tag_type] and [tag_value].'
             )
         ]
+
+
+class ShipmentTagUpdateSerializer(ShipmentTagSerializer):
+
+    class Meta:
+        model = ShipmentTag
+        fields = ('tag_value',)
+        validators = [
+            UniqueTogetherValidator(
+                queryset=ShipmentTag.objects.all(),
+                fields=['shipment_id', 'tag_type', 'tag_value'],
+                message='This shipment already has a tag with the provided [tag_type] and [tag_value].'
+            )
+        ]

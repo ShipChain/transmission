@@ -30,7 +30,7 @@ from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
 from ..models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
-    ExceptionType, TransitState
+    ExceptionType, TransitState, ShipmentTag
 from .tags import ShipmentTagSerializer
 
 
@@ -171,6 +171,10 @@ class ShipmentCreateSerializer(ShipmentSerializer):
     bill_to_location = LocationSerializer(required=False)
     final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
+    tags = serializers.ListField(
+        child=serializers.DictField(child=serializers.CharField(max_length=50)),
+        required=False
+    )
 
     def create(self, validated_data):
         extra_args = {}
@@ -184,7 +188,31 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             if 'device' in self.context:
                 extra_args['device'] = self.context['device']
 
-            return Shipment.objects.create(**validated_data, **extra_args)
+            shipment_tags = validated_data.pop('tags', [])
+            shipment = Shipment.objects.create(**validated_data, **extra_args)
+
+            for shipment_tag in shipment_tags:
+                ShipmentTag.objects.create(
+                    tag_type=shipment_tag['tag_type'],
+                    tag_value=shipment_tag['tag_value'],
+                    shipment_id=shipment.id,
+                    owner_id=shipment.owner_id
+                )
+
+            return shipment
+
+    def validate_tags(self, tags):
+        tag_list = set()
+        for tag_dict in tags:
+            if 'tag_value' not in tag_dict or 'tag_type' not in tag_dict:
+                raise serializers.ValidationError('Tags items must contain `tag_value` and `tag_type`.')
+
+            tag_list.add(tuple(tag_dict.items()))
+
+        if len(tags) != len(tag_list):
+            raise serializers.ValidationError('Tags field cannot contain duplicates')
+
+        return tags
 
     def validate_device_id(self, device_id):
         device = Device.get_or_create_with_permission(self.auth, device_id)
@@ -329,13 +357,16 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     state = UpperEnumField(TransitState, ints_as_names=True)
     exception = UpperEnumField(ExceptionType, ints_as_names=True)
 
+    tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags')
+
     included_serializers = {
         'ship_from_location': LocationSerializer,
         'ship_to_location': LocationSerializer,
         'bill_to_location': LocationSerializer,
         'final_destination_location': LocationSerializer,
         'load_data': LoadShipmentSerializer,
-        'device': DeviceSerializer
+        'device': DeviceSerializer,
+        'tags': ShipmentTagSerializer,
     }
 
     class Meta:
@@ -347,7 +378,7 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
-                              'final_destination_location', 'load_data']
+                              'final_destination_location', 'load_data', 'tags']
 
 
 class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):

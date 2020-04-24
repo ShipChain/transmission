@@ -1,0 +1,10 @@
+path:
+  required: true
+  name: shipment_tag_id
+  in: path
+  description: ID of the Shipment Tag
+  schema:
+    $ref: '#/dataTypes/uuid'
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml

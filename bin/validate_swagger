@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+
+bin/speccy
+
+bin/openapi_spellcheck
+
+bin/swagger_to_postman

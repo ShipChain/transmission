@@ -8,7 +8,7 @@ get:
    - $ref: '../core/parameters.yaml#/page_size'
    - $ref: '../shipments/parameters.yaml#/path'
   tags:
-    - Shipments
+    - Permission Links
   responses:
     '200':
       description: "Success"
@@ -33,7 +33,7 @@ post:
   parameters:
    - $ref: '../shipments/parameters.yaml#/path'
   tags:
-    - Shipments
+    - Permission Links
   responses:
     '201':
       description: "Created"

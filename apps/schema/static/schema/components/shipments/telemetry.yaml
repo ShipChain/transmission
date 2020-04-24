@@ -8,7 +8,7 @@ get:
   - $ref: 'parameters.yaml#/sensorId'
   - $ref: 'parameters.yaml#/hardwareId'
   tags:
-  - Shipments
+  - Additional Shipment Details
   responses:
     '200':
       description: "Success"

@@ -6,7 +6,7 @@ get:
   parameters:
   - $ref: 'parameters.yaml#/path'
   tags:
-  - Shipments
+  - Additional Shipment Details
   responses:
     '200':
       description: "Success"

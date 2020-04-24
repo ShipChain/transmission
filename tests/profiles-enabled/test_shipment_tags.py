@@ -28,6 +28,7 @@ def shipment_tag_creation_data():
         'tag_value': '-->Europe'
     }
 
+
 @pytest.fixture
 def shipment_tag_location():
     return {
@@ -35,11 +36,13 @@ def shipment_tag_location():
         'tag_value': 'Toronto'
     }
 
+
 @pytest.fixture
 def missing_tag_type_creation_data():
     return {
         'tag_value': '-->Europe'
     }
+
 
 @pytest.fixture
 def missing_tag_value_creation_data():
@@ -55,12 +58,14 @@ def space_in_tag_type_creation_data():
         'tag_value': '-->Europe'
     }
 
+
 @pytest.fixture
 def space_in_tag_value_creation_data():
     return {
         'tag_type': '*Export-Shipment*',
         'tag_value': 'United Kingdom'
     }
+
 
 @pytest.fixture
 def shipment_tags(org_id_alice, shipment, second_shipment, shipment_tag_creation_data, shipment_tag_location):
@@ -79,6 +84,153 @@ def shipment_tags(org_id_alice, shipment, second_shipment, shipment_tag_creation
             owner_id=uuid.UUID(org_id_alice)
         ),
     ]
+
+
+class TestShipmentTagOnCreate:
+    url = reverse('shipment-list', kwargs={'version': 'v1'})
+
+    @pytest.fixture(autouse=True)
+    def set_up(self, mock_successful_wallet_owner_calls, profiles_ids):
+        self.wallet_mocking = mock_successful_wallet_owner_calls
+        self.base_call = profiles_ids
+
+    def test_create_requires_uniqueness(self, client_alice):
+        self.base_call['tags'] = [
+            {
+                'tag_value': 'tag_value',
+                'tag_type': 'tag_type'
+            },
+            {
+                'tag_value': 'tag_value',
+                'tag_type': 'tag_type'
+            }
+        ]
+        response = client_alice.post(self.url, self.base_call)
+        AssertionHelper.HTTP_400(response, 'Tags field cannot contain duplicates')
+
+    def test_create_requires_fields(self, client_alice):
+        self.base_call['tags'] = [
+            {
+                'tag_type': 'tag_type'
+            },
+        ]
+        response = client_alice.post(self.url, self.base_call)
+        AssertionHelper.HTTP_400(response, 'Tags items must contain `tag_value` and `tag_type`.')
+
+        self.base_call['tags'] = [
+            {
+                'tag_value': 'tag_value'
+            },
+        ]
+        response = client_alice.post(self.url, self.base_call)
+        AssertionHelper.HTTP_400(response, 'Tags items must contain `tag_value` and `tag_type`.')
+
+    def test_can_create(self, client_alice, mocked_engine_rpc):
+        self.base_call['tags'] = [
+            {
+                'tag_value': 'tag_value',
+                'tag_type': 'tag_type'
+            }, {
+                'tag_value': 'tag_value_two',
+                'tag_type': 'tag_type'
+            },
+        ]
+        response = client_alice.post(self.url, self.base_call)
+        AssertionHelper.HTTP_202(response, included=[
+            AssertionHelper.EntityRef(resource='ShipmentTag',
+                                      attributes={
+                                          'tag_type': 'tag_type',
+                                          'tag_value': 'tag_value'
+                                      }),
+            AssertionHelper.EntityRef(resource='ShipmentTag',
+                                      attributes={
+                                          'tag_type': 'tag_type',
+                                          'tag_value': 'tag_value_two'
+                                      })
+        ])
+
+
+class TestShipmentTagUpdate:
+    @pytest.fixture(autouse=True)
+    def set_up(self, shipment_tags, nonsuccessful_wallet_owner_calls_assertions):
+        self.shipment_tags = shipment_tags
+        self.nonsuccessful_wallet_owner_calls_assertions = nonsuccessful_wallet_owner_calls_assertions
+        for tag in shipment_tags:
+            setattr(self, f'url_{tag.tag_type}', reverse(
+                'shipment-tags-detail',
+                kwargs={'version': 'v1', 'shipment_pk': tag.shipment.id, 'pk': tag.id}
+            ))
+
+    def test_update_requires_authentication(self, api_client, mock_non_wallet_owner_calls):
+        response = api_client.patch(getattr(self, f'url_{self.shipment_tags[0].tag_type}'), {
+            'tag_value': 'new tag value'
+        })
+        AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
+
+    def test_owner_can_update(self, client_alice, org_id_alice):
+        response = client_alice.patch(getattr(self, f'url_{self.shipment_tags[0].tag_type}'), {
+            'tag_value': 'new_tag_value'
+        })
+        AssertionHelper.HTTP_200(response,
+                                 entity_refs=AssertionHelper.EntityRef(
+                                     resource='ShipmentTag',
+                                     attributes={'tag_type': self.shipment_tags[0].tag_type,
+                                                 'tag_value': 'new_tag_value',
+                                                 'owner_id': org_id_alice},
+                                     relationships={
+                                         'shipment': AssertionHelper.EntityRef(resource='Shipment',
+                                                                               pk=self.shipment_tags[0].shipment.id)
+                                     })
+                                 )
+
+    def test_cannot_update_tag_type(self, client_alice, org_id_alice):
+        response = client_alice.patch(getattr(self, f'url_{self.shipment_tags[0].tag_type}'), {
+            'tag_type': 'new_tag_type'
+        })
+        AssertionHelper.HTTP_200(response,
+                                 entity_refs=AssertionHelper.EntityRef(
+                                     resource='ShipmentTag',
+                                     attributes={'tag_type': self.shipment_tags[0].tag_type,
+                                                 'tag_value': self.shipment_tags[0].tag_value,
+                                                 'owner_id': org_id_alice},
+                                     relationships={
+                                         'shipment': AssertionHelper.EntityRef(resource='Shipment',
+                                                                               pk=self.shipment_tags[0].shipment.id)
+                                     })
+                                 )
+
+    def test_tag_value_uniqueness(self, client_alice, org_id_alice, shipment):
+        ShipmentTag.objects.create(
+            tag_type=self.shipment_tags[0].tag_type,
+            tag_value=self.shipment_tags[1].tag_value,
+            shipment_id=shipment.id,
+            owner_id=uuid.UUID(org_id_alice)
+        ),
+        response = client_alice.patch(getattr(self, f'url_{self.shipment_tags[0].tag_type}'), {
+            'tag_value': self.shipment_tags[1].tag_value
+        })
+        AssertionHelper.HTTP_400(response,
+                                 'This shipment already has a tag with the provided [tag_type] and [tag_value].')
+
+
+class TestShipmentTagDeletion:
+    @pytest.fixture(autouse=True)
+    def set_up(self, shipment_tags, nonsuccessful_wallet_owner_calls_assertions):
+        self.shipment_tags = shipment_tags
+        self.nonsuccessful_wallet_owner_calls_assertions = nonsuccessful_wallet_owner_calls_assertions
+        for tag in shipment_tags:
+            setattr(self, f'url_{tag.tag_type}', reverse(
+                'shipment-tags-detail',
+                kwargs={'version': 'v1', 'shipment_pk': tag.shipment.id, 'pk': tag.id}
+            ))
+
+    def test_deletion_requires_authentication(self, api_client, mock_non_wallet_owner_calls):
+        response = api_client.delete(getattr(self, f'url_{self.shipment_tags[0].tag_type}'))
+        AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
+
+    def test_owner_can_update(self, client_alice, org_id_alice):
+        response = client_alice.delete(getattr(self, f'url_{self.shipment_tags[0].tag_type}'))
+        AssertionHelper.HTTP_204(response)
 
 
 @pytest.mark.django_db
@@ -133,18 +285,9 @@ def test_shipper_carrier_moderator_shipment_tag(org_id_bob, client_bob, mocked_i
     url = reverse('shipment-tags-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
     # User2 does not belong to the shipment organization but is the shipment shipper.
-    # he should be able to tag the shipment
+    # he should be not able to tag the shipment
     response = client_bob.post(url, shipment_tag_creation_data)
-    AssertionHelper.HTTP_201(response,
-                           entity_refs=AssertionHelper.EntityRef(
-                               resource='ShipmentTag',
-                               attributes={'tag_type': shipment_tag_creation_data['tag_type'],
-                                           'tag_value': shipment_tag_creation_data['tag_value'],
-                                           'owner_id': org_id_bob},
-                               relationships={
-                                   'shipment': AssertionHelper.EntityRef(resource='Shipment', pk=shipment.id)
-                               })
-                           )
+    AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
 
 
 @pytest.mark.django_db

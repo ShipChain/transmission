@@ -10,7 +10,7 @@ get:
     - $ref: 'parameters.yaml#/historyDateLessThan'
     - $ref: 'parameters.yaml#/historyDateGreaterThan'
   tags:
-    - Shipments
+    - Additional Shipment Details
   responses:
     '200':
       description: "Success"

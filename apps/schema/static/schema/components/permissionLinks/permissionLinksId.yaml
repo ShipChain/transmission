@@ -7,7 +7,7 @@ delete:
   - $ref: '../shipments/parameters.yaml#/path'
   - $ref: '../shipments/parameters.yaml#/permissionLinkPath'
   tags:
-  - Shipments
+  - Permission Links
   responses:
     '204':
       description: "Success"

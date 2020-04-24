@@ -20,12 +20,14 @@ from shipchain_common import mixins
 from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
 
-from apps.permissions import ShipmentExists, IsNestedOwnerShipperCarrierModerator
+from apps.permissions import ShipmentExists, IsNestedOwner
 from ..models import ShipmentTag
-from ..serializers import ShipmentTagSerializer, ShipmentTagCreateSerializer
+from ..serializers import ShipmentTagSerializer, ShipmentTagCreateSerializer, ShipmentTagUpdateSerializer
 
 
 class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
+                         mixins.ConfigurableDestroyModelMixin,
+                         mixins.ConfigurableUpdateModelMixin,
                          ConfigurableGenericViewSet):
 
     queryset = ShipmentTag.objects.all()
@@ -36,12 +38,15 @@ class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
         (permissions.IsAuthenticated,
          ShipmentExists,
          HasViewSetActionPermissions,
-         IsNestedOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED else
+         IsNestedOwner, ) if settings.PROFILES_ENABLED else
         (permissions.AllowAny, ShipmentExists, )
     )
 
     configuration = {
         'create': ActionConfiguration(
             request_serializer=ShipmentTagCreateSerializer,
+        ),
+        'update': ActionConfiguration(
+            request_serializer=ShipmentTagUpdateSerializer,
         ),
     }
