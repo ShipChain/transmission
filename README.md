@@ -6,6 +6,8 @@
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![Code style: prospector](https://img.shields.io/badge/code_style-prospector-ff69b4.svg?style=svg)](https://github.com/PyCQA/prospector)
 [![Chat](https://img.shields.io/badge/gitter-ShipChain/lobby-green.svg)](https://gitter.im/ShipChain/Lobby)
+[![PyUp](https://pyup.io/repos/github/ShipChain/transmission/shield.svg)](https://pyup.io/repos/github/ShipChain/transmission)
+
 
 # ShipChain Transmission Project
 
