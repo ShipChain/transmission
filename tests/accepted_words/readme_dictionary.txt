@@ -34,10 +34,13 @@ pyproject
 md
 mvc
 
+pyup
+
 rds
 readme
 redis
 repo
+repos
 runserver
 
 semver
