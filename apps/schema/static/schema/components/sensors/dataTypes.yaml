@@ -1,0 +1,33 @@
+uuid: &uuid
+  $ref: '../core/dataTypes.yaml#/uuid'
+
+id:
+  properties:
+    sensor_id:
+      <<: *uuid
+      title: sensor_id
+      description: Sensor ID
+
+name:
+  properties:
+    name:
+      title: name
+      description: Name of Telemetry Data, unique per device
+      type: string
+      example: Engine Temperature
+
+units:
+  properties:
+    units:
+      title: units
+      description: Units being reported by sensor
+      type: string
+      example: degF
+
+hardwareId:
+  properties:
+    hardware_id:
+      title: hardware_id
+      description: Hardware ID for the Sensor, unique per device
+      type: string
+      example: ABC-123

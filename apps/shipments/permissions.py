@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import permissions
 
 from apps.permissions import IsShipmentOwnerMixin, IsShipperMixin, IsModeratorMixin, IsCarrierMixin
@@ -25,17 +24,12 @@ class IsSharedShipmentMixin:
 
     @staticmethod
     def has_valid_permission_link(request, shipment):
-        permission_link = request.query_params.get('permission_link')
+        permission_link = PermissionLink.objects.filter(pk=request.query_params.get('permission_link')).first()
         if permission_link:
-            try:
-                permission_obj = PermissionLink.objects.get(pk=permission_link)
-            except ObjectDoesNotExist:
+            if not permission_link.is_valid:
                 return False
 
-            if not permission_obj.is_valid:
-                return False
-
-            return shipment.id == permission_obj.shipment.id
+            return shipment.id == permission_link.shipment.id
         return False
 
 
@@ -62,6 +56,7 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
         is_authenticated = super().has_permission(request, view)
         has_permission_link = request.query_params.get('permission_link')
         nested_shipment = view.kwargs.get('shipment_pk')
+        nested_device = view.kwargs.get('device_pk')
 
         if not is_authenticated and not has_permission_link:
             # Unauthenticated requests must have a permission_link
@@ -70,8 +65,13 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
         if nested_shipment:
             # Nested routes do not call has_object_permission for the parent Shipment,
             # so we must check object permissions here
-            shipment = Shipment.objects.get(id=view.kwargs.get('shipment_pk'))
+            shipment = Shipment.objects.get(id=nested_shipment)
             return self.has_object_permission(request, view, shipment)
+
+        if nested_device:
+            # Nested device routes need to be ensured that they have a shipment associated with the device
+            shipment = Shipment.objects.filter(device_id=nested_device).first()
+            return shipment and self.has_object_permission(request, view, shipment)
 
         # Not nested, has_object_permission will handle the permission link check
         return is_authenticated or has_permission_link

@@ -1,0 +1,65 @@
+resource:
+  properties:
+    type:
+      example: Sensor
+
+attributes:
+  allOf:
+  - $ref: '#/dataTypes/createdAt'
+  - $ref: '#/dataTypes/modifiedAt'
+  - $ref: '#/sensor/name'
+  - $ref: '#/sensor/hardwareId'
+  - $ref: '#/sensor/units'
+
+relationships:
+  type: object
+  description: Relations for this resource
+  allOf:
+    - $ref: '#/relatedDevice'
+
+relatedDevice:
+  title: device
+  type: object
+  description: Device associated with this sensor
+  properties:
+    device:
+      $ref: '#/device/relatedDevice'
+
+getResource:
+  allOf:
+  - $ref: '#/resource'
+  - properties:
+      attributes:
+        $ref: '#/attributes'
+      relationships:
+        $ref: '#/relationships'
+
+getResponse:
+  title: Default Sensor retrieval
+  allOf:
+  - $ref: '#/jsonApi/data'
+  - properties:
+      data:
+        $ref: '#/getResource'
+
+listResponse:
+  title: Default Sensor List
+  allOf:
+  - $ref: '#/jsonApi/dataArray'
+  - $ref: '#/jsonApi/linksAndMeta'
+  - properties:
+      data:
+        items:
+          $ref: '#/getResource'
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml
+
+device:
+  $ref: ../devices/schema.yaml
+
+sensor:
+  $ref: dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/schema.yaml

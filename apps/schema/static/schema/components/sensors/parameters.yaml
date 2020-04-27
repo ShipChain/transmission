@@ -1,0 +1,59 @@
+hardwareId:
+  name: hardware_id
+  in: query
+  description: Search for sensor with specific Hardware ID
+  required: false
+  schema:
+    type: string
+    format: format
+    example: abc-123
+
+name:
+  name: name
+  in: query
+  description: Search for sensor with specific name
+  required: false
+  schema:
+    type: string
+    format: format
+    example: Temperature Sensor
+
+units:
+  name: units
+  in: query
+  description: Search for sensor with specific units
+  required: false
+  schema:
+    type: string
+    format: format
+    example: Metres
+
+search:
+  name: search
+  in: query
+  description: Search for sensors with specific name, hardware_id or units
+  required: false
+  schema:
+    type: string
+    format: format
+    example: Nickname
+
+include:
+  name: include
+  in: query
+  description: Include device associated with sensor in response
+  required: false
+  schema:
+    type: string
+    format: format
+    example: device
+
+
+sensor:
+  path:
+    required: true
+    name: sensor_id
+    in: path
+    description: ID of the Sensor
+    schema:
+      $ref: '../core/dataTypes.yaml#/uuid'

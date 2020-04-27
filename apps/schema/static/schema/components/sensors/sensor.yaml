@@ -1,0 +1,31 @@
+get:
+  summary: List sensors
+  description: |
+    Get an array of `Sensor` objects associated with the `Device` ordered by the `Sensor.created_at` date.
+
+    Sensors units can be of any type of unit supplied by [Pint](https://github.com/hgrecco/pint/blob/master/pint/default_en.txt).
+  operationId: listSensors
+  parameters:
+  - $ref: '../core/parameters.yaml#/page'
+  - $ref: '../core/parameters.yaml#/page_size'
+  - $ref: '../devices/parameters.yaml#/path'
+  - $ref: '../shipments/parameters.yaml#/permissionLinkId'
+  - $ref: 'parameters.yaml#/search'
+  - $ref: 'parameters.yaml#/hardwareId'
+  - $ref: 'parameters.yaml#/name'
+  - $ref: 'parameters.yaml#/units'
+  tags:
+  - Devices
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/listResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'

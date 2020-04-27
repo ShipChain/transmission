@@ -42,14 +42,14 @@ router.register(f'{API_PREFIX[1:]}/devices', shipments.DeviceViewSet, base_name=
 router.register(f'{API_PREFIX[1:]}/imports/shipments', imports_app.ShipmentImportsViewSet, base_name='import-shipments')
 
 # Shipment's nested routes definition
-nested_router = OptionalSlashNested(router, f'{API_PREFIX[1:]}/shipments', lookup='shipment')
-nested_router.register(r'documents', documents.DocumentViewSet, base_name='shipment-documents')
-nested_router.register(r'transactions', eth.TransactionViewSet, base_name='shipment-transactions')
-nested_router.register(r'permission_links', shipments.PermissionLinkViewSet, base_name='shipment-permissions')
-nested_router.register(r'history', shipments.ShipmentHistoryListView, base_name='shipment-history')
-nested_router.register(r'notes', shipments.ShipmentNoteViewSet, base_name='shipment-notes')
-nested_router.register(r'tags', shipments.ShipmentTagViewSet, base_name='shipment-tags')
-nested_router.register(r'telemetry', shipments.TelemetryViewSet, base_name='shipment-telemetry')
+nested_shipment = OptionalSlashNested(router, f'{API_PREFIX[1:]}/shipments', lookup='shipment')
+nested_shipment.register(r'documents', documents.DocumentViewSet, base_name='shipment-documents')
+nested_shipment.register(r'transactions', eth.TransactionViewSet, base_name='shipment-transactions')
+nested_shipment.register(r'permission_links', shipments.PermissionLinkViewSet, base_name='shipment-permissions')
+nested_shipment.register(r'history', shipments.ShipmentHistoryListView, base_name='shipment-history')
+nested_shipment.register(r'notes', shipments.ShipmentNoteViewSet, base_name='shipment-notes')
+nested_shipment.register(r'tags', shipments.ShipmentTagViewSet, base_name='shipment-tags')
+nested_shipment.register(r'telemetry', shipments.TelemetryViewSet, base_name='shipment-telemetry')
 
 urlpatterns = [
     re_path('health/?$', management.health_check, name='health'),
@@ -60,10 +60,12 @@ urlpatterns = [
             name='shipment-overview'),
     re_path(f'{API_PREFIX[1:]}/shipments/(?P<shipment_pk>[0-9a-f-]+)/actions/?$',
             shipments.ShipmentActionsView.as_view(), name='shipment-actions'),
+    re_path(f'{API_PREFIX[1:]}/devices/(?P<device_pk>[0-9a-f-]+)/sensors/?$',
+            shipments.SensorViewset.as_view(), name='device-sensors'),
 ]
 urlpatterns += router.urls
 
-urlpatterns += nested_router.urls
+urlpatterns += nested_shipment.urls
 
 urlpatterns = format_suffix_patterns(urlpatterns)
 

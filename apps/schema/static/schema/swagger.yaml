@@ -92,6 +92,9 @@ paths:
   /api/v1/transactions/{transaction_hash}:
     $ref: components/transactions/transactionHash.yaml
 
+  /api/v1/devices/{device_id}/sensors:
+    $ref: components/sensors/sensor.yaml
+
   /api/v1/devices/{device_id}/tracking:
     $ref: components/devices/deviceTracking.yaml
 

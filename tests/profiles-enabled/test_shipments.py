@@ -18,12 +18,13 @@ from moto import mock_iot
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, force_authenticate, APIClient
+from shipchain_common.utils import random_id
 from shipchain_common.test_utils import replace_variables_in_string, create_form_content, mocked_rpc_response, \
     get_jwt, GeoCoderResponse
 
 from apps.authentication import passive_credentials_auth
 from apps.eth.models import EthAction
-from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink, random_id
+from apps.shipments.models import Shipment, Location, Device, TrackingData, PermissionLink
 from apps.shipments.rpc import Load110RPCClient
 
 boto3.setup_default_session()  # https://github.com/spulec/moto/issues/1926
@@ -832,7 +833,7 @@ class ShipmentAPITests(APITestCase):
         return [item[field_name] for item in changes_list]
 
     @mock_iot
-    @mock.patch('apps.shipments.models.shipment.mapbox_access_token', return_value='TEST_ACCESS_KEYS')
+    @mock.patch('apps.shipments.models.location.mapbox_access_token', return_value='TEST_ACCESS_KEYS')
     def test_shipment_history(self, mock_mapbox):
 
         history = Shipment.history.all()

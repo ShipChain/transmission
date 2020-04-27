@@ -63,6 +63,15 @@ updatedAt:
       format: date-time
       example: '2018-06-18T14:54:56.652732Z'
 
+modifiedAt:
+  properties:
+    modified_at:
+      title: modified_at
+      description: Date/time of last resource modification
+      type: string
+      format: date-time
+      example: '2018-06-18T14:54:56.652732Z'
+
 resourcePk:
   properties:
     id:

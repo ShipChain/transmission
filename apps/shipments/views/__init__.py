@@ -5,5 +5,5 @@ from .shipment import *
 from .shipment_action import *
 from .shipment_overview import *
 from .tags import *
-from .tracking_data import *
+from .device import DeviceViewSet, SensorViewset
 from .telemetry import TelemetryViewSet
