@@ -46,3 +46,11 @@ def telemetry_data_update(self, shipment_id, payload):
                             rate_limit=shipment.background_data_hash_interval,
                             action_type=AsyncActionType.TELEMETRY,
                             use_updated_by=False)
+
+
+@shared_task(bind=True)
+def gtx_validation_task(self, shipment_id):
+    log_metric('transmission.info', tags={'method': 'shipments_tasks.gtx_validation', 'module': __name__})
+    shipment = Shipment.objects.get(id=shipment_id)
+    shipment.validate_gtx()
+    shipment.save()

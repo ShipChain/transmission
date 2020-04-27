@@ -31,7 +31,7 @@ from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
 from ..models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
-    ExceptionType, TransitState, ShipmentTag
+    ExceptionType, TransitState, GTXValidation, ShipmentTag
 from .tags import ShipmentTagSerializer
 
 
@@ -127,6 +127,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
     exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
+    gtx_validation = UpperEnumField(GTXValidation, lenient=True, ints_as_names=True, required=False)
     tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags')
 
     included_serializers = {
@@ -382,7 +383,8 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shipment
-        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
+        exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id',
+                   'gtx_validation', 'gtx_validation_timestamp')
         meta_fields = ('async_job_id',)
         if settings.PROFILES_ENABLED:
             read_only_fields = ('owner_id',)
@@ -407,7 +409,8 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
         exclude = ('owner_id', 'storage_credentials_id', 'background_data_hash_interval',
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id', 'manual_update_hash_interval',
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours',
-                   'geofences', 'assignee_id', 'gtx_required', 'aftership_tracking')
+                   'geofences', 'assignee_id', 'gtx_required', 'gtx_validation', 'gtx_validation_timestamp',
+                   'aftership_tracking')
 
 
 class ShipmentOverviewSerializer(serializers.ModelSerializer):
