@@ -20,12 +20,7 @@ import hashlib
 
 import celery
 
-import boto3
 import requests
-from botocore.exceptions import ClientError
-
-import geocoder
-from geocoder.keys import mapbox_access_token
 
 import pytz
 from django.conf import settings
