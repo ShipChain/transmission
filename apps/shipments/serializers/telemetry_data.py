@@ -39,6 +39,9 @@ class TelemetryResponseSerializer(serializers.ModelSerializer):
     """
     Serializer for telemetry data consumer
     """
+    timestamp = serializers.DateTimeField(source='window')
+    value = serializers.FloatField(source='aggregate_value')
+
     class Meta:
         model = TelemetryData
-        fields = ('sensor_id', 'timestamp', 'hardware_id', 'value')
+        fields = ('sensor_id', 'timestamp', 'value')

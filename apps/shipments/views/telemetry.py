@@ -56,20 +56,16 @@ class TelemetryViewSet(mixins.ListModelMixin,
         if aggregate not in Aggregates.__members__:
             raise ValidationError(f'Invalid aggregrate supplied should be in: {Aggregates.__members__}')
 
-        # method = Aggregates[aggregate].value
+        method = Aggregates[aggregate].value
 
         queryset = queryset.annotate(
-            avg_telemetry=Window(
-                # expression=method('value'),
-                expression=Avg('value'),
-                partition_by=[F('sensor_id'),
-                              functions.TruncHour('timestamp'),
-                              functions.Cast(functions.ExtractMinute('timestamp') / 5, IntegerField())
-                              ],
-                order_by=F('timestamp').desc(),
-                # partition_by=[F('sensor_id')]
-            )
-        )
+            window=functions.TruncHour('timestamp')  # Adds a column 'window' that is a truncated timestamp
+        ).values(
+            'sensor_id', 'window'  # Adds a GROUP BY for sensor_id/window
+        ).annotate(
+            aggregate_value=method('value')  # Calls aggregation function for sensor_id/window group
+        ).order_by('window')  # Clears default ordering, see:
+        # https://docs.djangoproject.com/en/2.2/topics/db/aggregation/#interaction-with-default-ordering-or-order-by
 
         return queryset
 
