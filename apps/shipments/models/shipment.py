@@ -100,9 +100,9 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     vault_id = models.CharField(null=True, max_length=36)
     vault_uri = models.CharField(null=True, max_length=255)
     device = models.OneToOneField(Device, on_delete=models.PROTECT, null=True)
-    shipper_wallet_id = models.CharField(null=False, max_length=36)
-    carrier_wallet_id = models.CharField(null=False, max_length=36)
-    moderator_wallet_id = models.CharField(null=True, max_length=36)
+    shipper_wallet_id = models.CharField(null=False, max_length=36, db_index=True)
+    carrier_wallet_id = models.CharField(null=False, max_length=36, db_index=True)
+    moderator_wallet_id = models.CharField(null=True, max_length=36, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -118,7 +118,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
         ordering = ('created_at',)
 
     # Protected Fields
-    state = FSMIntegerField(default=TransitState.AWAITING_PICKUP.value, protected=True)
+    state = FSMIntegerField(default=TransitState.AWAITING_PICKUP.value, protected=True, db_index=True)
     delayed = models.BooleanField(default=False, editable=False)
     expected_delay_hours = models.IntegerField(default=0, editable=False)
     exception = EnumIntegerField(enum=ExceptionType, default=ExceptionType.NONE)
