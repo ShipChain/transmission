@@ -15,15 +15,19 @@ limitations under the License.
 """
 from datetime import datetime, timezone
 
+from django.db.models.aggregates import Avg, Count, Max, Min, StdDev, Sum, Variance
+from django.db.models import Window, RowRange, F, ValueRange, functions, IntegerField
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
 from fancy_cache import cache_page
 from rest_framework import permissions, filters, mixins, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from apps.permissions import ShipmentExists
+from apps.utils import Aggregates
 from ..filters import TelemetryFilter
 from ..models import Shipment, TelemetryData
 from ..permissions import IsOwnerOrShared
@@ -48,6 +52,27 @@ class TelemetryViewSet(mixins.ListModelMixin,
 
     renderer_classes = (JSONRenderer,)
 
+    def _aggregrate_queryset(self, queryset, aggregate):
+        if aggregate not in Aggregates.__members__:
+            raise ValidationError(f'Invalid aggregrate supplied should be in: {Aggregates.__members__}')
+
+        method = Aggregates[aggregate].value
+
+        queryset = queryset.annotate(
+            avg_telemetry=Window(
+                # expression=method('value'),
+                expression=Avg('value'),
+                partition_by=[F('sensor_id'),
+                              functions.TruncHour('timestamp'),
+                              functions.Cast(functions.ExtractMinute('timestamp') / 5, IntegerField())
+                              ],
+                order_by=F('timestamp').desc(),
+                # partition_by=[F('sensor_id')]
+            )
+        )
+
+        return queryset
+
     def get_queryset(self):
         shipment = Shipment.objects.get(pk=self.kwargs['shipment_pk'])
 
@@ -56,9 +81,16 @@ class TelemetryViewSet(mixins.ListModelMixin,
 
         return self.queryset.filter(shipment=shipment, timestamp__range=(begin, end))
 
-    @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
+    # @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+
+        aggregate = request.query_params.get('aggregate', None)
+        print(request.query_params)
+        print(f'Aggregrate: {aggregate}')
+
+        if aggregate:
+            queryset = self._aggregrate_queryset(queryset, aggregate, )
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

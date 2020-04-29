@@ -146,9 +146,14 @@ SHIPMENT_ORDERING_FIELDS = (
 
 
 class TelemetryFilter(filters.filterset.FilterSet):
+    timestamp_gte = filters.IsoDateTimeFilter(field_name="timestamp", lookup_expr='gte')
+    timestamp_lte = filters.IsoDateTimeFilter(field_name="timestamp", lookup_expr='lte', )
+
     class Meta:
         model = TelemetryData
         fields = (
             'sensor_id',
             'hardware_id',
+            'timestamp_gte',
+            'timestamp_lte',
         )

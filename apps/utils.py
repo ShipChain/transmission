@@ -1,3 +1,5 @@
+from django.db.models.aggregates import Avg, Count, Max, Min, StdDev, Sum, Variance
+from functools import partial
 from enumfields import Enum
 
 from django.conf import settings
@@ -82,6 +84,16 @@ class UploadStatus(Enum):
         PENDING = 'PENDING'
         COMPLETE = 'COMPLETE'
         FAILED = 'FAILED'
+
+
+class Aggregates(Enum):
+    Avg = partial(Avg)
+    Count = partial(Count)
+    Max = partial(Max)
+    Min = partial(Min)
+    StdDev = partial(StdDev)
+    Sum = partial(Sum)
+    Variance = partial(Variance)
 
 
 def retrieve_profiles_wallet_ids(request):
