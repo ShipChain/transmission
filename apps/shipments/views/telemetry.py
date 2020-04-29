@@ -15,12 +15,12 @@ limitations under the License.
 """
 from datetime import datetime, timezone
 
-from django.db.models.aggregates import Avg, Count, Max, Min, StdDev, Sum, Variance
-from django.db.models import Window, RowRange, F, ValueRange, functions, IntegerField
+from django.db.models.aggregates import Avg
+from django.db.models import Window, F, functions, IntegerField
 from django.conf import settings
-from django.utils.decorators import method_decorator
+# from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
-from fancy_cache import cache_page
+# from fancy_cache import cache_page
 from rest_framework import permissions, filters, mixins, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.renderers import JSONRenderer
@@ -56,7 +56,7 @@ class TelemetryViewSet(mixins.ListModelMixin,
         if aggregate not in Aggregates.__members__:
             raise ValidationError(f'Invalid aggregrate supplied should be in: {Aggregates.__members__}')
 
-        method = Aggregates[aggregate].value
+        # method = Aggregates[aggregate].value
 
         queryset = queryset.annotate(
             avg_telemetry=Window(

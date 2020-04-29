@@ -1,8 +1,8 @@
-from django.db.models.aggregates import Avg, Count, Max, Min, StdDev, Sum, Variance
 from functools import partial
 from enumfields import Enum
 
 from django.conf import settings
+from django.db.models.aggregates import Avg, Count, Max, Min, StdDev, Sum, Variance
 
 from rest_framework import exceptions
 from shipchain_common.authentication import get_jwt_from_request
@@ -87,13 +87,13 @@ class UploadStatus(Enum):
 
 
 class Aggregates(Enum):
-    Avg = partial(Avg)
-    Count = partial(Count)
-    Max = partial(Max)
-    Min = partial(Min)
-    StdDev = partial(StdDev)
-    Sum = partial(Sum)
-    Variance = partial(Variance)
+    average = partial(Avg)
+    count = partial(Count)
+    max = partial(Max)
+    min = partial(Min)
+    stddev = partial(StdDev)
+    sum = partial(Sum)
+    variance = partial(Variance)
 
 
 def retrieve_profiles_wallet_ids(request):
