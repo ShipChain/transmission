@@ -20,7 +20,7 @@ from rest_framework.reverse import reverse
 from shipchain_common.test_utils import AssertionHelper
 from shipchain_common.utils import random_id
 
-from apps.shipments.models import Shipment, Device, Location, TrackingData, TransitState
+from apps.shipments.models import Shipment, Device, Location, TrackingData, TransitState, PermissionLink
 from apps.shipments.serializers import ActionType
 
 BBOX = [-90.90, 30.90, -78.80, 36.80]
@@ -137,9 +137,39 @@ def test_owner_shipment_device_location(client_alice, api_client, shipment_track
     # he owns with reported tracking data. In this case exactly (NUM_DEVICES - 2)
     response = client_alice.get(url)
     response_data = response.json()
-    AssertionHelper.HTTP_200(response, vnd=True, is_list=True)
-    assert response_data['meta']['pagination']['count'] == len(shipment_tracking_data) - 1
+    AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=len(shipment_tracking_data) - 1)
     assert len(response_data['included']) == NUM_DEVICES - 2
+
+
+@pytest.mark.django_db
+def test_permission_link_shipment_device_location(client_bob, shipment_tracking_data):
+    url = reverse('shipment-overview', kwargs={'version': 'v1'})
+
+    # An authenticated user can list only the shipments
+    # he owns with reported tracking data. In this case exactly 0
+    response = client_bob.get(url)
+    AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=1)
+
+    assert len(response.json()['included']) == 1
+
+    # Valid permission links should succeed
+    permission_link = PermissionLink.objects.create(shipment=shipment_tracking_data[0])
+
+    response = client_bob.get(f'{url}?permission_link={permission_link.id}')
+    AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=2)
+
+    assert len(response.json()['included']) == 2
+
+    # Invalid permission links should fail
+    permission_link = PermissionLink.objects.create(
+        shipment=shipment_tracking_data[0],
+        expiration_date=datetime.datetime.utcnow() - datetime.timedelta(days=1)
+    )
+
+    response = client_bob.get(f'{url}?permission_link={permission_link.id}')
+    AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=1)
+
+    assert len(response.json()['included']) == 1
 
 
 @pytest.mark.django_db

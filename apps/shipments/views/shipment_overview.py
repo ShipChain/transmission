@@ -18,6 +18,7 @@ import logging
 
 from collections import OrderedDict
 from django.conf import settings
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions
 from rest_framework.generics import ListAPIView
@@ -28,7 +29,7 @@ from rest_framework_json_api.renderers import JSONRenderer
 
 from apps.permissions import get_owner_id
 from ..serializers import QueryParamsSerializer, TrackingOverviewSerializer
-from ..models import TrackingData
+from ..models import TrackingData, PermissionLink
 from ..filters import ShipmentOverviewFilter, SHIPMENT_SEARCH_FIELDS
 
 LOG = logging.getLogger('transmission')
@@ -110,8 +111,14 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
                                    .values('id'))
 
         if settings.PROFILES_ENABLED:
-            # Filter by owner
-            queryset = queryset.filter(shipment__owner_id=get_owner_id(self.request))
+            queryset_filter = Q(shipment__owner_id=get_owner_id(self.request))
+            permission_link_id = self.request.query_params.get('shipment__permission_link')
+            permission_link = PermissionLink.objects.filter(id=permission_link_id).first()
+            if permission_link and permission_link.is_valid:
+                queryset_filter = queryset_filter | Q(shipment_id=permission_link.shipment_id)
+
+            # Filter by owner or permission link's shipment id
+            queryset = queryset.filter(queryset_filter)
 
         return queryset
 
