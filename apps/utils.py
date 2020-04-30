@@ -2,7 +2,8 @@ from functools import partial
 from enumfields import Enum
 
 from django.conf import settings
-from django.db.models.aggregates import Avg, Count, Max, Min, StdDev, Sum, Variance
+from django.db.models.aggregates import Avg, Max, Min
+from django.db.models.functions import TruncMinute, TruncHour, TruncDay
 
 from rest_framework import exceptions
 from shipchain_common.authentication import get_jwt_from_request
@@ -88,12 +89,14 @@ class UploadStatus(Enum):
 
 class Aggregates(Enum):
     average = partial(Avg)
-    count = partial(Count)
-    max = partial(Max)
-    min = partial(Min)
-    stddev = partial(StdDev)
-    sum = partial(Sum)
-    variance = partial(Variance)
+    maximum = partial(Max)
+    minimum = partial(Min)
+
+
+class TimeTrunc(Enum):
+    minutes = partial(TruncMinute)
+    hours = partial(TruncHour)
+    days = partial(TruncDay)
 
 
 def retrieve_profiles_wallet_ids(request):

@@ -19,6 +19,7 @@ from shipchain_common.test_utils import AssertionHelper
 from shipchain_common.utils import random_id
 
 from apps.shipments.models import TelemetryData
+from apps.utils import Aggregates, TimeTrunc
 
 
 def add_telemetry_data_to_shipment(telemetry_data, shipment):
@@ -130,6 +131,48 @@ class TestRetrieveTelemetryData:
         self.unsigned_telemetry.pop('version')
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
         assert self.unsigned_telemetry['hardware_id'] != unsigned_telemetry_different_hardware['hardware_id']
+        assert len(response.json()) == 1
+
+    def test_aggregrate_requirements(self, client_alice):
+        response = client_alice.get(f'{self.telemetry_url}?aggregate=NOT_AN_AGGREGRATE')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()[0] == f'Invalid aggregrate supplied should be in: {list(Aggregates.__members__.keys())}'
+
+        response = client_alice.get(f'{self.telemetry_url}?aggregate={Aggregates.average.name}')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()[0] == f'Invalid trunc supplied should be in: {list(TimeTrunc.__members__.keys())}'
+
+    def test_aggregrate_success(self, client_alice, unsigned_telemetry_different_sensor):
+        response = client_alice.get(
+            f'{self.telemetry_url}?aggregate={Aggregates.average.name}&trunc={TimeTrunc.minutes.name}')
+        AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes={
+            'value': self.unsigned_telemetry['value']
+        })
+        assert len(response.json()) == 1
+
+        self.unsigned_telemetry['value'] = 20
+        add_telemetry_data_to_shipment([self.unsigned_telemetry],
+                                       self.shipment_alice_with_device)
+        response = client_alice.get(
+            f'{self.telemetry_url}?aggregate={Aggregates.average.name}&trunc={TimeTrunc.minutes.name}')
+        self.unsigned_telemetry['value'] = 15
+        AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes={
+            'value': self.unsigned_telemetry['value']
+        })
+        assert len(response.json()) == 1
+
+        response = client_alice.get(
+            f'{self.telemetry_url}?aggregate={Aggregates.minimum.name}&trunc={TimeTrunc.minutes.name}')
+        AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes={
+            'value': 10
+        })
+        assert len(response.json()) == 1
+        response = client_alice.get(
+            f'{self.telemetry_url}?aggregate={Aggregates.maximum.name}&trunc={TimeTrunc.minutes.name}')
+        self.unsigned_telemetry['value'] = 20
+        AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes={
+            'value': self.unsigned_telemetry['value']
+        })
         assert len(response.json()) == 1
 
     def test_permission_link_succeeds(self, api_client, permission_link_device_shipment):

@@ -7,6 +7,10 @@ get:
   - $ref: 'parameters.yaml#/path'
   - $ref: 'parameters.yaml#/sensorId'
   - $ref: 'parameters.yaml#/hardwareId'
+  - $ref: 'parameters.yaml#/timestampLte'
+  - $ref: 'parameters.yaml#/timestampGte'
+  - $ref: 'parameters.yaml#/aggregrate'
+  - $ref: 'parameters.yaml#/trunc'
   tags:
   - Additional Shipment Details
   responses:

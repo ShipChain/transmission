@@ -15,23 +15,21 @@ limitations under the License.
 """
 from datetime import datetime, timezone
 
-from django.db.models.aggregates import Avg
-from django.db.models import Window, F, functions, IntegerField
 from django.conf import settings
-# from django.utils.decorators import method_decorator
+from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
-# from fancy_cache import cache_page
+from fancy_cache import cache_page
 from rest_framework import permissions, filters, mixins, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from apps.permissions import ShipmentExists
-from apps.utils import Aggregates
+from apps.utils import Aggregates, TimeTrunc
 from ..filters import TelemetryFilter
 from ..models import Shipment, TelemetryData
 from ..permissions import IsOwnerOrShared
-from ..serializers import TelemetryResponseSerializer
+from ..serializers import TelemetryResponseSerializer, TelemetryResponseAggregrateSerializer
 
 
 class TelemetryViewSet(mixins.ListModelMixin,
@@ -52,16 +50,23 @@ class TelemetryViewSet(mixins.ListModelMixin,
 
     renderer_classes = (JSONRenderer,)
 
+    def _truncate_time(self):
+        segment = self.request.query_params.get('trunc')
+        if not segment or segment not in TimeTrunc.__members__:
+            raise ValidationError(f'Invalid trunc supplied should be in: {list(TimeTrunc.__members__.keys())}')
+
+        return TimeTrunc[segment].value('timestamp')
+
     def _aggregrate_queryset(self, queryset, aggregate):
         if aggregate not in Aggregates.__members__:
-            raise ValidationError(f'Invalid aggregrate supplied should be in: {Aggregates.__members__}')
+            raise ValidationError(f'Invalid aggregrate supplied should be in: {list(Aggregates.__members__.keys())}')
 
         method = Aggregates[aggregate].value
 
         queryset = queryset.annotate(
-            window=functions.TruncHour('timestamp')  # Adds a column 'window' that is a truncated timestamp
+            window=self._truncate_time()  # Adds a column 'window' that is a truncated timestamp
         ).values(
-            'sensor_id', 'window'  # Adds a GROUP BY for sensor_id/window
+            'sensor_id', 'hardware_id', 'window'  # Adds a GROUP BY for sensor_id/hardware_id/window
         ).annotate(
             aggregate_value=method('value')  # Calls aggregation function for sensor_id/window group
         ).order_by('window')  # Clears default ordering, see:
@@ -77,16 +82,15 @@ class TelemetryViewSet(mixins.ListModelMixin,
 
         return self.queryset.filter(shipment=shipment, timestamp__range=(begin, end))
 
-    # @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
+    @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
         aggregate = request.query_params.get('aggregate', None)
-        print(request.query_params)
-        print(f'Aggregrate: {aggregate}')
 
         if aggregate:
             queryset = self._aggregrate_queryset(queryset, aggregate, )
+            self.serializer_class = TelemetryResponseAggregrateSerializer
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
