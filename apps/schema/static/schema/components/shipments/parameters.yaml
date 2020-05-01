@@ -299,9 +299,9 @@ aggregrate:
     example: average
 
 
-trunc:
+per:
   required: false
-  name: trunc
+  name: per
   in: query
   description: Truncation of telemetry data
   schema:

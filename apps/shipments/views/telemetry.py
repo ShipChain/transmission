@@ -51,9 +51,9 @@ class TelemetryViewSet(mixins.ListModelMixin,
     renderer_classes = (JSONRenderer,)
 
     def _truncate_time(self):
-        segment = self.request.query_params.get('trunc')
+        segment = self.request.query_params.get('per')
         if not segment or segment not in TimeTrunc.__members__:
-            raise ValidationError(f'Invalid trunc supplied should be in: {list(TimeTrunc.__members__.keys())}')
+            raise ValidationError(f'Invalid time selector supplied, should be in: {list(TimeTrunc.__members__.keys())}')
 
         return TimeTrunc[segment].value('timestamp')
 

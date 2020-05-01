@@ -140,11 +140,12 @@ class TestRetrieveTelemetryData:
 
         response = client_alice.get(f'{self.telemetry_url}?aggregate={Aggregates.average.name}')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()[0] == f'Invalid trunc supplied should be in: {list(TimeTrunc.__members__.keys())}'
+        assert response.json()[0] == \
+               f'Invalid time selector supplied, should be in: {list(TimeTrunc.__members__.keys())}'
 
     def test_aggregrate_success(self, client_alice, unsigned_telemetry_different_sensor):
         response = client_alice.get(
-            f'{self.telemetry_url}?aggregate={Aggregates.average.name}&trunc={TimeTrunc.minutes.name}')
+            f'{self.telemetry_url}?aggregate={Aggregates.average.name}&per={TimeTrunc.minutes.name}')
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes={
             'value': self.unsigned_telemetry['value']
         })
@@ -154,7 +155,7 @@ class TestRetrieveTelemetryData:
         add_telemetry_data_to_shipment([self.unsigned_telemetry],
                                        self.shipment_alice_with_device)
         response = client_alice.get(
-            f'{self.telemetry_url}?aggregate={Aggregates.average.name}&trunc={TimeTrunc.minutes.name}')
+            f'{self.telemetry_url}?aggregate={Aggregates.average.name}&per={TimeTrunc.minutes.name}')
         self.unsigned_telemetry['value'] = 15
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes={
             'value': self.unsigned_telemetry['value']
@@ -162,13 +163,13 @@ class TestRetrieveTelemetryData:
         assert len(response.json()) == 1
 
         response = client_alice.get(
-            f'{self.telemetry_url}?aggregate={Aggregates.minimum.name}&trunc={TimeTrunc.minutes.name}')
+            f'{self.telemetry_url}?aggregate={Aggregates.minimum.name}&per={TimeTrunc.minutes.name}')
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes={
             'value': 10
         })
         assert len(response.json()) == 1
         response = client_alice.get(
-            f'{self.telemetry_url}?aggregate={Aggregates.maximum.name}&trunc={TimeTrunc.minutes.name}')
+            f'{self.telemetry_url}?aggregate={Aggregates.maximum.name}&per={TimeTrunc.minutes.name}')
         self.unsigned_telemetry['value'] = 20
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes={
             'value': self.unsigned_telemetry['value']

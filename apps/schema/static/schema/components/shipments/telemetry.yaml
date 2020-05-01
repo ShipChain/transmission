@@ -10,7 +10,7 @@ get:
   - $ref: 'parameters.yaml#/timestampLte'
   - $ref: 'parameters.yaml#/timestampGte'
   - $ref: 'parameters.yaml#/aggregrate'
-  - $ref: 'parameters.yaml#/trunc'
+  - $ref: 'parameters.yaml#/per'
   tags:
   - Additional Shipment Details
   responses:
