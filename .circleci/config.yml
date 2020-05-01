@@ -33,7 +33,7 @@ jobs:
       - run:
           name: Package safety check
           command: |
-            bin/dc exec -T runserver safety check
+            bin/dc exec -T runserver safety check -i 38224
       - run:
           name: PEP8 Lint check
           command: |

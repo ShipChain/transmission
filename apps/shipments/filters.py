@@ -2,7 +2,6 @@ from django.forms.fields import MultipleChoiceField
 from django_filters import rest_framework as filters
 from rest_framework_json_api.serializers import ValidationError
 from shipchain_common.filters import filter_enum
-
 from .models import Shipment, TransitState, TelemetryData, TrackingData
 
 SHIPMENT_STATE_CHOICES = tuple((m.name, m.value, ) for m in TransitState)
@@ -136,6 +135,13 @@ SHIPMENT_SEARCH_FIELDS = (
     'final_destination_location__contact_email',
     'shipment_tags__tag_type',
     'shipment_tags__tag_value',
+)
+
+SHIPMENT_ORDERING_FIELDS = (
+    'updated_at',
+    'created_at',
+    'pickup_est',
+    'delivery_est'
 )
 
 

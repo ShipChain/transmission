@@ -30,7 +30,7 @@ from rest_framework_json_api.renderers import JSONRenderer
 from apps.permissions import get_owner_id
 from ..serializers import QueryParamsSerializer, TrackingOverviewSerializer
 from ..models import TrackingData, PermissionLink
-from ..filters import ShipmentOverviewFilter, SHIPMENT_SEARCH_FIELDS
+from ..filters import ShipmentOverviewFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 
 LOG = logging.getLogger('transmission')
 
@@ -88,7 +88,7 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
     filter_backends = (InBBoxFilter, filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     bbox_filter_field = 'point'
     search_fields = tuple([f'shipment__{field}' for field in SHIPMENT_SEARCH_FIELDS])
-    ordering_fields = ('shipment__created_at', )
+    ordering_fields = tuple([f'shipment__{field}' for field in SHIPMENT_ORDERING_FIELDS])
     filterset_class = ShipmentOverviewFilter
 
     def dispatch(self, request, *args, **kwargs):
@@ -96,8 +96,12 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
         request.GET._mutable = True  # Make query_params mutable
         for param in dict(request.GET):
             # Prepend non-trackingdata search/filter/order query params with 'shipment__' to properly query relation
-            if param not in ('search', 'in_bbox',) and request.GET.getlist(param):
+            if param not in ('search', 'in_bbox', 'ordering') and request.GET.getlist(param):
                 request.GET.setlist(f'shipment__{param}', request.GET.pop(param))
+            elif param in ('ordering',) and request.GET.getlist(param):
+                request.GET.setlist(param,
+                                    [f'-shipment__{ship_ordering.replace("-", "")}' if '-' in ship_ordering else
+                                     f'shipment__{ship_ordering}' for ship_ordering in request.GET.getlist(param)])
         request.GET._mutable = False  # Make query_params immutable
         return super().dispatch(request, *args, **kwargs)
 

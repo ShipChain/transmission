@@ -34,7 +34,7 @@ from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelView
 
 from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
-from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS
+from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 from ..geojson import render_filtered_point_features
 from ..models import Shipment, TrackingData, PermissionLink
 from ..permissions import IsOwnerOrShared, IsOwnerShipperCarrierModerator
@@ -77,7 +77,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
 
     search_fields = SHIPMENT_SEARCH_FIELDS
 
-    ordering_fields = ('updated_at', 'created_at', 'pickup_est', 'delivery_est')
+    ordering_fields = SHIPMENT_ORDERING_FIELDS
 
     http_method_names = ['get', 'post', 'delete', 'patch']
 

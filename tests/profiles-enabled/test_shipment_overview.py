@@ -171,6 +171,97 @@ def test_permission_link_shipment_device_location(client_bob, shipment_tracking_
 
     assert len(response.json()['included']) == 1
 
+def test_ordering(client_alice, api_client, shipment_tracking_data):
+    url = reverse('shipment-overview', kwargs={'version': 'v1'})
+
+    response = client_alice.get(f'{url}?ordering=-created_at')
+    AssertionHelper.HTTP_200(response, vnd=True, is_list=True, check_ordering=True,
+                             entity_refs=[AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 relationships=[{
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment_tracking_data[5].id
+                                     )
+                                 }]
+                             ), AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 relationships=[{
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment_tracking_data[3].id
+                                     )
+                                 }]
+                             ), AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 relationships=[{
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment_tracking_data[2].id
+                                     )
+                                 }]
+                             ), AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 relationships=[{
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment_tracking_data[1].id
+                                     )
+                                 }]
+                             ), AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 relationships=[{
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment_tracking_data[0].id
+                                     )
+                                 }]
+                             )])
+
+    response = client_alice.get(f'{url}?ordering=created_at')
+    AssertionHelper.HTTP_200(response, vnd=True, is_list=True, check_ordering=True,
+                             entity_refs=[AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 relationships=[{
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment_tracking_data[0].id
+                                     )
+                                 }]
+                             ), AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 relationships=[{
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment_tracking_data[1].id
+                                     )
+                                 }]
+                             ), AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 relationships=[{
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment_tracking_data[2].id
+                                     )
+                                 }]
+                             ), AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 relationships=[{
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment_tracking_data[3].id
+                                     )
+                                 }]
+                             ), AssertionHelper.EntityRef(
+                                 resource='TrackingData',
+                                 relationships=[{
+                                     'shipment': AssertionHelper.EntityRef(
+                                         resource='Shipment',
+                                         pk=shipment_tracking_data[5].id
+                                     )
+                                 }]
+                             )])
+
 
 @pytest.mark.django_db
 def test_filter_shipment_device_location(client_alice, shipment_tracking_data, json_asserter):
