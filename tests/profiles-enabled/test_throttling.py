@@ -67,7 +67,9 @@ class ShipmentAPITests(APITestCase):
               }
             }
         '''
-
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet",
+                               body=json.dumps({'data': []}), status=status.HTTP_200_OK)
         httpretty.register_uri(httpretty.GET,
                                f"{test_settings.PROFILES_URL}/api/v1/wallet/{parameters['_shipper_wallet_id']}/",
                                body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)

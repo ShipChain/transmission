@@ -303,8 +303,8 @@ def test_authenticated_user_not_in_shipment_org(client_bob, mocked_not_shipper, 
 
 
 @pytest.mark.django_db
-def test_list_tagged_shipments(client_alice, shipment_tag_creation_data, shipment_tag_location,
-                               shipment_tags, shipment, second_shipment):
+def test_list_tagged_shipments(client_alice, shipment_tag_creation_data, shipment_tag_location, shipment_tags,
+                               shipment, second_shipment, mocked_profiles_wallet_list):
 
     shipment_list_url = reverse('shipment-list', kwargs={'version': 'v1'})
 

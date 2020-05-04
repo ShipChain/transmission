@@ -12,15 +12,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import random
 import datetime
+import json
 
 import pytest
+import random
+from django.conf import settings
+from rest_framework import status
 from rest_framework.reverse import reverse
 from shipchain_common.test_utils import AssertionHelper
 from shipchain_common.utils import random_id
 
-from apps.shipments.models import Shipment, Device, Location, TrackingData, TransitState, PermissionLink
+from apps.shipments.models import Shipment, Device, Location, TrackingData, TransitState
 from apps.shipments.serializers import ActionType
 
 BBOX = [-90.90, 30.90, -78.80, 36.80]
@@ -42,15 +45,15 @@ def devices():
 
 
 @pytest.fixture
-def shipments_with_device(user_alice, user_bob, devices, mocked_engine_rpc, mocked_iot_api):
+def shipments_with_device(user_alice, user_bob, devices, mocked_engine_rpc, mocked_iot_api, profiles_ids):
     list_shipment = []
     owner_id = user_alice.token.payload['organization_id']
     third_owner_id = user_bob.token.payload['organization_id']
 
     for device in devices:
         list_shipment.append(Shipment.objects.create(vault_id=random_id(),
-                                                     carrier_wallet_id=random_id(),
-                                                     shipper_wallet_id=random_id(),
+                                                     carrier_wallet_id=profiles_ids['carrier_wallet_id'],
+                                                     shipper_wallet_id=profiles_ids['shipper_wallet_id'],
                                                      storage_credentials_id=random_id(),
                                                      device=device,
                                                      owner_id=owner_id))
@@ -126,7 +129,7 @@ def shipment_tracking_data(shipments_with_device, tracking_data):
 
 
 @pytest.mark.django_db
-def test_owner_shipment_device_location(client_alice, api_client, shipment_tracking_data):
+def test_owner_shipment_device_location(client_alice, api_client, shipment_tracking_data, mocked_profiles_wallet_list):
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
 
     # An unauthenticated request should with 403 status code
@@ -142,36 +145,28 @@ def test_owner_shipment_device_location(client_alice, api_client, shipment_track
 
 
 @pytest.mark.django_db
-def test_permission_link_shipment_device_location(client_bob, shipment_tracking_data):
+def test_wallet_owner_retrieval(client_bob, api_client, shipment_tracking_data, modified_http_pretty, profiles_ids):
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
+                                      f"{settings.PROFILES_URL}/api/v1/wallet",
+                                      body=json.dumps({'data': []}), status=status.HTTP_200_OK)
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
 
-    # An authenticated user can list only the shipments
-    # he owns with reported tracking data. In this case exactly 0
     response = client_bob.get(url)
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=1)
 
-    assert len(response.json()['included']) == 1
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
+                                      f"{settings.PROFILES_URL}/api/v1/wallet",
+                                      body=json.dumps({'data': [
+                                          {'id': profiles_ids['carrier_wallet_id']},
+                                          {'id': profiles_ids['shipper_wallet_id']},
+                                      ]}), status=status.HTTP_200_OK)
 
-    # Valid permission links should succeed
-    permission_link = PermissionLink.objects.create(shipment=shipment_tracking_data[0])
+    response = client_bob.get(url)
+    AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=len(shipment_tracking_data))
+    assert len(response.json()['included']) == NUM_DEVICES - 1
 
-    response = client_bob.get(f'{url}?permission_link={permission_link.id}')
-    AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=2)
 
-    assert len(response.json()['included']) == 2
-
-    # Invalid permission links should fail
-    permission_link = PermissionLink.objects.create(
-        shipment=shipment_tracking_data[0],
-        expiration_date=datetime.datetime.utcnow() - datetime.timedelta(days=1)
-    )
-
-    response = client_bob.get(f'{url}?permission_link={permission_link.id}')
-    AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=1)
-
-    assert len(response.json()['included']) == 1
-
-def test_ordering(client_alice, api_client, shipment_tracking_data):
+def test_ordering(client_alice, api_client, shipment_tracking_data, mocked_profiles_wallet_list):
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
 
     response = client_alice.get(f'{url}?ordering=-created_at')
@@ -264,7 +259,8 @@ def test_ordering(client_alice, api_client, shipment_tracking_data):
 
 
 @pytest.mark.django_db
-def test_filter_shipment_device_location(client_alice, shipment_tracking_data, json_asserter):
+def test_filter_shipment_device_location(client_alice, shipment_tracking_data, json_asserter,
+                                         mocked_profiles_wallet_list):
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
 
     shipment_action_url = reverse('shipment-actions',
@@ -349,7 +345,7 @@ def test_filter_shipment_device_location(client_alice, shipment_tracking_data, j
 
 
 @pytest.mark.django_db
-def test_bbox_param(client_alice, shipment_tracking_data):
+def test_bbox_param(client_alice, shipment_tracking_data, mocked_profiles_wallet_list):
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
 
     bbox_reversed = BBOX.copy()
@@ -371,7 +367,7 @@ def test_bbox_param(client_alice, shipment_tracking_data):
 
 
 @pytest.mark.django_db
-def test_latest_tracking(client_alice, tracking_data, shipment_tracking_data):
+def test_latest_tracking(client_alice, tracking_data, shipment_tracking_data, mocked_profiles_wallet_list):
     shipment = shipment_tracking_data[0]
     data_point = TrackingData(**tracking_data[0][0])
     data_point.shipment = shipment

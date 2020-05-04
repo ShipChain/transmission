@@ -27,9 +27,9 @@ from rest_framework_json_api import utils
 from rest_framework_json_api import views as jsapi_views
 from rest_framework_json_api.renderers import JSONRenderer
 
-from apps.permissions import get_owner_id
+from apps.permissions import get_owner_id, nested_wallet_owner_filter
 from ..serializers import QueryParamsSerializer, TrackingOverviewSerializer
-from ..models import TrackingData, PermissionLink
+from ..models import TrackingData
 from ..filters import ShipmentOverviewFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 
 LOG = logging.getLogger('transmission')
@@ -96,12 +96,14 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
         request.GET._mutable = True  # Make query_params mutable
         for param in dict(request.GET):
             # Prepend non-trackingdata search/filter/order query params with 'shipment__' to properly query relation
-            if param not in ('search', 'in_bbox', 'ordering') and request.GET.getlist(param):
+            if param in ('ordering',) and request.GET.getlist(param):
+                request.GET.setlist(
+                    param,
+                    [f'-shipment__{ship_ordering.replace("-", "")}' if ship_ordering.startswith('-') else
+                     f'shipment__{ship_ordering}' for ship_ordering in request.GET.getlist(param)]
+                )
+            elif param not in ('search', 'in_bbox') and request.GET.getlist(param):
                 request.GET.setlist(f'shipment__{param}', request.GET.pop(param))
-            elif param in ('ordering',) and request.GET.getlist(param):
-                request.GET.setlist(param,
-                                    [f'-shipment__{ship_ordering.replace("-", "")}' if '-' in ship_ordering else
-                                     f'shipment__{ship_ordering}' for ship_ordering in request.GET.getlist(param)])
         request.GET._mutable = False  # Make query_params immutable
         return super().dispatch(request, *args, **kwargs)
 
@@ -115,14 +117,9 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
                                    .values('id'))
 
         if settings.PROFILES_ENABLED:
-            queryset_filter = Q(shipment__owner_id=get_owner_id(self.request))
-            permission_link_id = self.request.query_params.get('shipment__permission_link')
-            permission_link = PermissionLink.objects.filter(id=permission_link_id).first()
-            if permission_link and permission_link.is_valid:
-                queryset_filter = queryset_filter | Q(shipment_id=permission_link.shipment_id)
-
-            # Filter by owner or permission link's shipment id
-            queryset = queryset.filter(queryset_filter)
+            # Filter by owner or wallet id
+            queryset = queryset.filter(Q(shipment__owner_id=get_owner_id(self.request)) |
+                                       nested_wallet_owner_filter(self.request))
 
         return queryset
 

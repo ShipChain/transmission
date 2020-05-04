@@ -33,7 +33,7 @@ from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelViewSet
 
 from apps.jobs.models import JobState
-from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
+from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists, wallet_owner_filter
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 from ..geojson import render_filtered_point_features
 from ..models import Shipment, TrackingData, PermissionLink
@@ -102,16 +102,20 @@ class ShipmentViewSet(ConfigurableModelViewSet):
     def get_queryset(self):
         queryset = self.queryset
         if settings.PROFILES_ENABLED:
+            queryset_filter = owner_access_filter(self.request)
+
             permission_link = self.request.query_params.get('permission_link')
             if permission_link:
-                # The  validity of the permission link object
-                # has already been done by the permission class
-                permission_link_obj = PermissionLink.objects.get(pk=permission_link)
-                queryset = queryset.filter(owner_access_filter(self.request) | Q(pk=permission_link_obj.shipment.pk))
+                # The  validity of the permission link object has already been done by the permission class
+                queryset_filter = queryset_filter | Q(pk=PermissionLink.objects.get(pk=permission_link).shipment.pk)
+
             elif self.detail:
                 return queryset
+
             else:
-                queryset = queryset.filter(owner_access_filter(self.request))
+                queryset_filter = queryset_filter | wallet_owner_filter(self.request)
+
+            queryset = queryset.filter(queryset_filter)
 
         for key, value in self.request.query_params.items():
             if key.startswith('customer_fields__'):

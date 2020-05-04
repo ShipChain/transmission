@@ -21,10 +21,10 @@ from django.conf import settings
 
 from rest_framework import permissions, status
 from shipchain_common.authentication import get_jwt_from_request
+from shipchain_common.exceptions import Custom500Error
 from shipchain_common.utils import get_client_ip
 
 from apps.shipments.models import Shipment
-
 
 PROFILES_WALLET_URL = f'{settings.PROFILES_URL}/api/v1/wallet'
 
@@ -62,6 +62,32 @@ def has_owner_access(request, obj):
     return (organization_id and obj.owner_id == organization_id) or obj.owner_id == user_id
 
 
+def parse_wallet_ids(request):
+    response = settings.REQUESTS_SESSION.get(
+        f'{settings.PROFILES_URL}/api/v1/wallet?page_size=9999',
+        headers={'Authorization': 'JWT {}'.format(get_jwt_from_request(request))}
+    )
+    if not response.ok:
+        raise Custom500Error(detail='Invalid response from profiles', status_code=response.status_code)
+
+    return [data['id'] for data in response.json()['data']]
+
+
+def wallet_owner_filter(request):
+    wallet_ids = parse_wallet_ids(request)
+
+    return Q(carrier_wallet_id__in=wallet_ids) | Q(shipper_wallet_id__in=wallet_ids) | \
+        Q(moderator_wallet_id__in=wallet_ids)
+
+
+def nested_wallet_owner_filter(request):
+    wallet_ids = parse_wallet_ids(request)
+
+    return Q(shipment__carrier_wallet_id__in=wallet_ids) | \
+        Q(shipment__shipper_wallet_id__in=wallet_ids) | \
+        Q(shipment__moderator_wallet_id__in=wallet_ids)
+
+
 def get_organization_name(request):
     if request_is_authenticated(request):
         return request.user.token.get('organization_name', None)
@@ -86,6 +112,7 @@ class IsOwner(permissions.BasePermission):
     """
     Custom permission to only allow owners of an object to edit it
     """
+
     def has_object_permission(self, request, view, obj):
         # Permissions are only allowed to the owner of the shipment.
         return has_owner_access(request, obj)
@@ -94,7 +121,6 @@ class IsOwner(permissions.BasePermission):
 class ShipmentExists(permissions.BasePermission):
 
     def has_permission(self, request, view):
-
         shipment_id = view.kwargs.get('shipment_pk') or view.kwargs.get('pk')
 
         if not shipment_exists(shipment_id):
@@ -110,6 +136,7 @@ class IsShipmentOwnerMixin:
     """
     Main shipment owner permission
     """
+
     @staticmethod
     def is_shipment_owner(request, shipment):
         return has_owner_access(request, shipment)
@@ -119,6 +146,7 @@ class IsShipperMixin:
     """
     Custom permission for Shipper shipment access
     """
+
     @staticmethod
     def has_shipper_permission(request, shipment):
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.shipper_wallet_id}/?is_active',
@@ -131,6 +159,7 @@ class IsCarrierMixin:
     """
     Custom permission for Carrier shipment access
     """
+
     @staticmethod
     def has_carrier_permission(request, shipment):
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.carrier_wallet_id}/?is_active',
@@ -143,9 +172,9 @@ class IsModeratorMixin:
     """
     Custom permission for Moderator shipment access
     """
+
     @staticmethod
     def has_moderator_permission(request, shipment):
-
         if shipment.moderator_wallet_id:
             response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.moderator_wallet_id}/?is_active',
                                                      headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
@@ -158,6 +187,7 @@ class IsNestedOwner(IsShipmentOwnerMixin, permissions.BasePermission):
     """
     Custom permission to only allow the owner access to a shipment object in a nested route
     """
+
     def has_permission(self, request, view):
         shipment = Shipment.objects.get(id=view.kwargs.get('shipment_pk'))
 
