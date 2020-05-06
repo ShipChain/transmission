@@ -13,11 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
+from django.db.models import Q
 from rest_framework import permissions
 
 from apps.permissions import IsShipmentOwnerMixin, IsShipperMixin, IsModeratorMixin, IsCarrierMixin
 from .models import Shipment, PermissionLink
+from ..utils import retrieve_profiles_wallet_ids
 
 
 class IsSharedShipmentMixin:
@@ -127,3 +128,12 @@ class IsListenerOwner(IsOwnerOrShared):
         # Permissions are allowed to anyone who owns a shipment listening to this job
         shipment = obj.shipment if hasattr(obj, 'shipment') else obj
         return self.is_shipment_owner(request, shipment) or self.has_valid_permission_link(request, shipment)
+
+
+def shipment_list_wallets_filter(request, nested=False):
+    wallet_ids = retrieve_profiles_wallet_ids(request)
+    queries = Q()
+    for field in ('carrier', 'shipper', 'moderator'):
+        queries |= Q(**{f'{"shipment__" if nested else ""}{field}_wallet_id__in': wallet_ids})
+
+    return queries

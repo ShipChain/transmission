@@ -27,7 +27,8 @@ from rest_framework_json_api import utils
 from rest_framework_json_api import views as jsapi_views
 from rest_framework_json_api.renderers import JSONRenderer
 
-from apps.permissions import get_owner_id, nested_wallet_owner_filter
+from apps.permissions import get_owner_id
+from ..permissions import shipment_list_wallets_filter
 from ..serializers import QueryParamsSerializer, TrackingOverviewSerializer
 from ..models import TrackingData
 from ..filters import ShipmentOverviewFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
@@ -119,7 +120,7 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
         if settings.PROFILES_ENABLED:
             # Filter by owner or wallet id
             queryset = queryset.filter(Q(shipment__owner_id=get_owner_id(self.request)) |
-                                       nested_wallet_owner_filter(self.request))
+                                       shipment_list_wallets_filter(self.request, nested=True))
 
         return queryset
 

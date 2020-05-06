@@ -33,11 +33,11 @@ from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelViewSet
 
 from apps.jobs.models import JobState
-from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists, wallet_owner_filter
+from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 from ..geojson import render_filtered_point_features
 from ..models import Shipment, TrackingData, PermissionLink
-from ..permissions import IsOwnerOrShared, IsOwnerShipperCarrierModerator
+from ..permissions import IsOwnerOrShared, IsOwnerShipperCarrierModerator, shipment_list_wallets_filter
 from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, \
     ShipmentTxSerializer
 
@@ -113,7 +113,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
                 return queryset
 
             else:
-                queryset_filter = queryset_filter | wallet_owner_filter(self.request)
+                queryset_filter = queryset_filter | shipment_list_wallets_filter(self.request)
 
             queryset = queryset.filter(queryset_filter)
 

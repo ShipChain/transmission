@@ -21,7 +21,6 @@ from django.conf import settings
 
 from rest_framework import permissions, status
 from shipchain_common.authentication import get_jwt_from_request
-from shipchain_common.exceptions import Custom500Error
 from shipchain_common.utils import get_client_ip
 
 from apps.shipments.models import Shipment
@@ -60,32 +59,6 @@ def get_owner_id(request):
 def has_owner_access(request, obj):
     user_id, organization_id = get_user(request)
     return (organization_id and obj.owner_id == organization_id) or obj.owner_id == user_id
-
-
-def parse_wallet_ids(request):
-    response = settings.REQUESTS_SESSION.get(
-        f'{settings.PROFILES_URL}/api/v1/wallet?page_size=9999',
-        headers={'Authorization': 'JWT {}'.format(get_jwt_from_request(request))}
-    )
-    if not response.ok:
-        raise Custom500Error(detail='Invalid response from profiles', status_code=response.status_code)
-
-    return [data['id'] for data in response.json()['data']]
-
-
-def wallet_owner_filter(request):
-    wallet_ids = parse_wallet_ids(request)
-
-    return Q(carrier_wallet_id__in=wallet_ids) | Q(shipper_wallet_id__in=wallet_ids) | \
-        Q(moderator_wallet_id__in=wallet_ids)
-
-
-def nested_wallet_owner_filter(request):
-    wallet_ids = parse_wallet_ids(request)
-
-    return Q(shipment__carrier_wallet_id__in=wallet_ids) | \
-        Q(shipment__shipper_wallet_id__in=wallet_ids) | \
-        Q(shipment__moderator_wallet_id__in=wallet_ids)
 
 
 def get_organization_name(request):
