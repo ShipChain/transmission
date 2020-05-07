@@ -3,6 +3,8 @@ from enumfields import Enum
 from django.conf import settings
 
 from rest_framework import exceptions
+from shipchain_common.authentication import get_jwt_from_request
+from shipchain_common.exceptions import Custom500Error
 
 
 class AliasSerializerMixin:
@@ -80,3 +82,14 @@ class UploadStatus(Enum):
         PENDING = 'PENDING'
         COMPLETE = 'COMPLETE'
         FAILED = 'FAILED'
+
+
+def retrieve_profiles_wallet_ids(request):
+    response = settings.REQUESTS_SESSION.get(
+        f'{settings.PROFILES_URL}/api/v1/wallet?page_size=9999',
+        headers={'Authorization': 'JWT {}'.format(get_jwt_from_request(request))}
+    )
+    if not response.ok:
+        raise Custom500Error(detail='Invalid response from profiles', status_code=response.status_code)
+
+    return [data['id'] for data in response.json()['data']]

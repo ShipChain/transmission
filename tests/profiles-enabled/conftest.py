@@ -276,6 +276,14 @@ def mocked_profiles(http_pretty, profiles_ids):
 
 
 @pytest.fixture
+def mocked_profiles_wallet_list(modified_http_pretty):
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
+                                      f"{test_settings.PROFILES_URL}/api/v1/wallet",
+                                      body=json.dumps({'data': []}), status=status.HTTP_200_OK)
+    return modified_http_pretty
+
+
+@pytest.fixture
 def shipment(mocked_engine_rpc, mocked_iot_api, user_alice_id, profiles_ids):
     return Shipment.objects.create(vault_id=VAULT_ID,
                                    carrier_wallet_id=profiles_ids['carrier_wallet_id'],

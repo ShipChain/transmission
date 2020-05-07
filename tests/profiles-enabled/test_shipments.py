@@ -102,11 +102,15 @@ class ShipmentAPITests(APITestCase):
     def create_location(self, **data):
         return Location.objects.create(**data)
 
+    @httpretty.activate
     def test_list_empty(self):
         """
         Test listing requires authentication
         """
 
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet",
+                               body=json.dumps({'data': []}), status=status.HTTP_200_OK)
         # Unauthenticated request should fail with 403
         url = reverse('shipment-list', kwargs={'version': 'v1'})
 
@@ -124,6 +128,7 @@ class ShipmentAPITests(APITestCase):
         # No shipments created should return empty array
         self.assertEqual(len(response_data['data']), 0)
 
+    @httpretty.activate
     def test_list_populated(self):
         """
         Test listing requires authentication
@@ -132,6 +137,9 @@ class ShipmentAPITests(APITestCase):
         # Unauthenticated request should fail with 403
         url = reverse('shipment-list', kwargs={'version': 'v1'})
 
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet",
+                               body=json.dumps({'data': []}), status=status.HTTP_200_OK)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -145,6 +153,7 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()
         self.assertEqual(len(response_data['data']), 2)
 
+    @httpretty.activate
     def test_filter(self):
         """
         Test filtering for objects
@@ -152,6 +161,9 @@ class ShipmentAPITests(APITestCase):
         # Unauthenticated request should fail with 403
         url = reverse('shipment-list', kwargs={'version': 'v1'})
 
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet",
+                               body=json.dumps({'data': []}), status=status.HTTP_200_OK)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -195,6 +207,7 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()
         self.assertEqual(response_data['data'][0]['id'], self.shipments[1].id)
 
+    @httpretty.activate
     def test_ordering(self):
         """
         Test filtering for objects
@@ -202,6 +215,9 @@ class ShipmentAPITests(APITestCase):
         # Unauthenticated request should fail with 403
         url = reverse('shipment-list', kwargs={'version': 'v1'})
 
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet",
+                               body=json.dumps({'data': []}), status=status.HTTP_200_OK)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -220,6 +236,7 @@ class ShipmentAPITests(APITestCase):
         response_data = response.json()
         self.assertEqual(response_data['data'][0]['id'], self.shipments[0].id)
 
+    @httpretty.activate
     def test_search(self):
         """
         Test searching for objects
@@ -229,6 +246,9 @@ class ShipmentAPITests(APITestCase):
         # Unauthenticated request should fail with 403
         url = reverse('shipment-list', kwargs={'version': 'v1'})
 
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet",
+                               body=json.dumps({'data': []}), status=status.HTTP_200_OK)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -1654,6 +1674,10 @@ class ShipmentAPITests(APITestCase):
 
         response = self.client.post(url, one_location, content_type=content_type)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        httpretty.register_uri(httpretty.GET,
+                               f"{test_settings.PROFILES_URL}/api/v1/wallet",
+                               body=json.dumps({'data': []}), status=status.HTTP_200_OK)
 
         # Test query parameters
         response = self.client.get(f'{url}?ship_to_location__name={LOCATION_NAME_2}')
