@@ -46,6 +46,7 @@ services:
       - REDIS_URL=redis://:redis_pass@redis_db:6379/1
       - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
       - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
+      - MAPBOX_ACCESS_TOKEN=MAPBOX_ACCESS_TOKEN
 
 networks:
   portal:
