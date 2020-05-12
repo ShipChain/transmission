@@ -683,28 +683,28 @@ class TestShipmentCreate:
         assert shipment.background_data_hash_interval == 25
         assert shipment.manual_update_hash_interval == 30
 
-    # def test_gtx_requires_permisison(self, client_carol, client_gtx_alice, mock_successful_wallet_owner_calls):
-    #     response = client_carol.post(self.url, data={
-    #         'gtx_required': True,
-    #         **self.profiles_ids
-    #     })
-    #     AssertionHelper.HTTP_400(response, error='User does not have access to enable GTX for this shipment')
-    #     mock_successful_wallet_owner_calls.assert_calls(self.assertions)
-    #
-    #     response = client_gtx_alice.post(self.url, data={
-    #         'gtx_required': True,
-    #         **self.profiles_ids
-    #     })
-    #     AssertionHelper.HTTP_202(response,
-    #                              entity_refs=AssertionHelper.EntityRef(
-    #                                  resource='Shipment',
-    #                                  attributes={
-    #                                      'gtx_required': True,
-    #                                      **self.profiles_ids
-    #                                  }
-    #                              ))
-    #     assert response.json()['data']['meta']['async_job_id']
-    #     mock_successful_wallet_owner_calls.assert_calls(self.assertions)
+    def test_gtx_requires_permisison(self, client_carol, client_gtx_alice, mock_successful_wallet_owner_calls):
+        response = client_carol.post(self.url, data={
+            'gtx_required': True,
+            **self.profiles_ids
+        })
+        AssertionHelper.HTTP_403(response, error='User does not have access to enable GTX for this shipment')
+        mock_successful_wallet_owner_calls.assert_calls(self.assertions)
+
+        response = client_gtx_alice.post(self.url, data={
+            'gtx_required': True,
+            **self.profiles_ids
+        })
+        AssertionHelper.HTTP_202(response,
+                                 entity_refs=AssertionHelper.EntityRef(
+                                     resource='Shipment',
+                                     attributes={
+                                         'gtx_required': True,
+                                         **self.profiles_ids
+                                     }
+                                 ))
+        assert response.json()['data']['meta']['async_job_id']
+        mock_successful_wallet_owner_calls.assert_calls(self.assertions)
 
     def test_cannot_set_asset_physical_id(self, client_alice, mock_successful_wallet_owner_calls):
         response = client_alice.post(self.url, data={
