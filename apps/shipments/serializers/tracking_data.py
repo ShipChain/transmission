@@ -58,6 +58,8 @@ class SignedDevicePayloadSerializer(serializers.Serializer):
             except BotoCoreError as exc:
                 LOG.warning(f'Found dubious certificate: {certificate_id_from_payload}, on shipment: {shipment.id}')
                 raise exceptions.PermissionDenied(f"Certificate: {certificate_id_from_payload}, is invalid: {exc}")
+            except iot.exceptions.ResourceNotFoundException as exc:
+                raise exceptions.PermissionDenied(f"Certificate: {certificate_id_from_payload}, is invalid: {exc}")
 
             device = shipment.device
             device.certificate_id = Device.get_valid_certificate(device.id)

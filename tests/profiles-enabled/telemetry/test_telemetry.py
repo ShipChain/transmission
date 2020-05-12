@@ -65,31 +65,36 @@ class TestPostTelemetryData:
 
 class TestRetrieveTelemetryData:
     @pytest.fixture(autouse=True)
-    def set_up(self, shipment_alice_with_device, create_signed_telemetry_post, shipment_alice, unsigned_telemetry):
+    def set_up(self, shipment_alice_with_device, create_signed_telemetry_post, shipment_alice, unsigned_telemetry,
+               successful_wallet_owner_calls_assertions, nonsuccessful_wallet_owner_calls_assertions):
         self.telemetry_url = reverse('shipment-telemetry-list', kwargs={'version': 'v1', 'shipment_pk': shipment_alice_with_device.id})
         self.empty_telemetry_url = reverse('shipment-telemetry-list', kwargs={'version': 'v1', 'shipment_pk': shipment_alice.id})
         self.random_telemetry_url = reverse('shipment-telemetry-list', kwargs={'version': 'v1', 'shipment_pk': random_id()})
         self.shipment_alice_with_device = shipment_alice_with_device
         add_telemetry_data_to_shipment([unsigned_telemetry], self.shipment_alice_with_device)
         self.unsigned_telemetry = unsigned_telemetry
+        self.assert_success = successful_wallet_owner_calls_assertions
+        self.assert_fail = nonsuccessful_wallet_owner_calls_assertions
 
     def test_unauthenticated_user_fails(self, api_client, mock_non_wallet_owner_calls):
         response = api_client.get(self.telemetry_url)
-        # AssertionHelper.HTTP_403(response, vnd=False)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert response.json()['detail'] == 'You do not have permission to perform this action.'
+        AssertionHelper.HTTP_403(response, vnd=False)
 
     def test_random_shipment_url_fails(self, client_alice):
         response = client_alice.get(self.random_telemetry_url)
-        # AssertionHelper.HTTP_403(response, vnd=False)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert response.json()['detail'] == 'You do not have permission to perform this action.'
+        AssertionHelper.HTTP_403(response, vnd=False)
 
-    def test_non_shipment_owner_retrieves(self, client_bob, mock_successful_wallet_owner_calls):
+    def test_wallet_owner_retrieves(self, client_bob, mock_successful_wallet_owner_calls):
         response = client_bob.get(self.telemetry_url)
         self.unsigned_telemetry.pop('version')
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
         assert len(response.json()) == 1
+        mock_successful_wallet_owner_calls.assert_calls(self.assert_success)
+
+    def test_non_wallet_owner_fails(self, client_bob, mock_non_wallet_owner_calls):
+        response = client_bob.get(self.telemetry_url)
+        AssertionHelper.HTTP_403(response, vnd=False)
+        mock_non_wallet_owner_calls.assert_calls(self.assert_fail)
 
     def test_shipment_owner_retrieves(self, client_alice):
         response = client_alice.get(self.telemetry_url)
@@ -120,6 +125,10 @@ class TestRetrieveTelemetryData:
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
         assert self.unsigned_telemetry in response.json()
         assert len(response.json()) == 1
+
+    def test_permission_link_fail(self, api_client, permission_link_device_shipment_expired):
+        response = api_client.get(f'{self.telemetry_url}?permission_link={permission_link_device_shipment_expired.id}')
+        AssertionHelper.HTTP_403(response, vnd=False)
 
     def test_unique_per_shipment(self, client_alice):
         response = client_alice.get(self.empty_telemetry_url)

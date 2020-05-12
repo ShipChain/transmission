@@ -61,7 +61,7 @@ def shipment_notes(user_alice, user_bob, shipper_user, shipment, org2_shipment):
 
 @pytest.mark.django_db
 def test_create_shipment_note(user_alice, shipper_user, api_client, shipper_api_client, client_alice,
-                              shipment, mocked_is_shipper):
+                              shipment, mocked_is_shipper, successful_wallet_owner_calls_assertions):
 
     url = reverse('shipment-notes-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
     create_note_data, content_type = create_form_content({'message': MESSAGE_1})
@@ -102,22 +102,24 @@ def test_create_shipment_note(user_alice, shipper_user, api_client, shipper_api_
                              entity_refs=AssertionHelper.EntityRef(resource='ShipmentNote',
                                                                    attributes={
                                                                        'message': MESSAGE_1,
-                                                                       'user_id': mocked_is_shipper.id,
+                                                                       'user_id': shipper_user.id,
                                                                        'username': get_username(shipper_user)},
                                                                    relationships={
                                                                        'shipment': AssertionHelper.EntityRef(
                                                                            resource='Shipment', pk=shipment.id)})
                              )
+    mocked_is_shipper.assert_calls(successful_wallet_owner_calls_assertions)
 
 
 @pytest.mark.django_db
 def test_non_org_user_shipment_note_creation(client_bob, shipment, mocked_not_shipper, mocked_not_carrier,
-                                             mocked_not_moderator):
+                                             mocked_not_moderator, nonsuccessful_wallet_owner_calls_assertions):
     url = reverse('shipment-notes-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
     # user2 is an authenticated user from another Org. he cannot create a shipment note
     response = client_bob.post(url, {'message': MESSAGE_1})
     AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
+    mocked_not_moderator.assert_calls(nonsuccessful_wallet_owner_calls_assertions)
 
 
 @pytest.mark.django_db
@@ -137,8 +139,8 @@ def test_update_delete_shipment_note(client_alice, shipment, shipment_notes):
 
 
 @pytest.mark.django_db
-def test_list_search_filter(client_alice, shipper_api_client, api_client, shipment,
-                            mocked_is_shipper, shipment_notes):
+def test_list_search_filter(client_alice, shipper_api_client, api_client, shipment, mocked_is_shipper, shipment_notes,
+                            successful_wallet_owner_calls_assertions, shipper_user):
 
     url = reverse('shipment-notes-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
@@ -155,8 +157,10 @@ def test_list_search_filter(client_alice, shipper_api_client, api_client, shipme
     response = shipper_api_client.get(url)
     AssertionHelper.HTTP_200(response, is_list=True, count=len(shipment_notes) - 1)
 
+    mocked_is_shipper.assert_calls(successful_wallet_owner_calls_assertions)
+
     # There is only one note authored by the shipper
-    response = client_alice.get(f'{url}?user_id={mocked_is_shipper.id}')
+    response = client_alice.get(f'{url}?user_id={shipper_user.id}')
     AssertionHelper.HTTP_200(response,
                              is_list=True,
                              entity_refs=[AssertionHelper.EntityRef(resource='ShipmentNote',

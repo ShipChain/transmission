@@ -160,7 +160,7 @@ description = "AWS SAM Translator is a library that transform SAM templates into
 name = "aws-sam-translator"
 optional = false
 python-versions = "*"
-version = "1.22.0"
+version = "1.23.0"
 
 [package.dependencies]
 boto3 = ">=1.5,<2.0"
@@ -371,11 +371,12 @@ description = "Checks CloudFormation templates for practices and behaviour that 
 name = "cfn-lint"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.30.1"
+version = "0.31.0"
 
 [package.dependencies]
 aws-sam-translator = ">=1.21.0"
 jsonschema = ">=3.0,<4.0"
+junit-xml = ">=1.9,<2.0"
 six = ">=1.11,<2.0"
 
 [package.dependencies.importlib-resources]
@@ -1154,6 +1155,17 @@ format = ["idna", "jsonpointer (>1.13)", "rfc3987", "strict-rfc3339", "webcolors
 format_nongpl = ["idna", "jsonpointer (>1.13)", "webcolors", "rfc3986-validator (>0.1.0)", "rfc3339-validator"]
 
 [[package]]
+category = "dev"
+description = "Creates JUnit XML test result documents that can be read by tools such as Jenkins"
+name = "junit-xml"
+optional = false
+python-versions = "*"
+version = "1.9"
+
+[package.dependencies]
+six = "*"
+
+[[package]]
 category = "main"
 description = "Messaging library for Python."
 name = "kombu"
@@ -1762,7 +1774,7 @@ description = "pytest: simple powerful testing with Python"
 name = "pytest"
 optional = false
 python-versions = ">=3.5"
-version = "5.4.1"
+version = "5.4.2"
 
 [package.dependencies]
 atomicwrites = ">=1.0"
@@ -2040,25 +2052,29 @@ YAML = ["pyyaml"]
 
 [[package]]
 category = "main"
-description = "A PyPI package containing shared code for ShipChain's Python/Django projects."
+description = ""
 name = "shipchain-common"
 optional = false
-python-versions = ">=3.6,<3.8"
+python-versions = ">=3.6,<3.8"  # Compatible python versions must be declared here
 version = "1.0.21"
 
 [package.dependencies]
-aws-requests-auth = ">=0.4,<0.5"
-boto3 = ">=1.9,<1.10"
-cryptography = ">=2.5,<2.6"
-django = ">=2.2.12,<2.3.0"
-django-enumfields = ">=0.10.0,<0.11.0"
-django-influxdb-tagged-metrics = "1.3.3"
-djangorestframework = ">=3.10,<3.11"
-djangorestframework-jsonapi = ">=3,<4"
-drf-nested-routers = ">=0.91.0,<0.92.0"
-python-dateutil = ">=2.7.5,<2.8.0"
-requests = ">=2.21,<3.0"
+aws-requests-auth = "~0.4"
+boto3 = "~1.9"
+cryptography = "~2.5"
+django = "~2.2.12"
+django-enumfields = "~0.10.0"
+django-influxdb-tagged-metrics = "==1.3.3"
+djangorestframework = "~3.10"
+djangorestframework-jsonapi = "~3"
+drf-nested-routers = "^0.91.0"
+python-dateutil = "~2.7.5"
+requests = "^2.21"
 
+[package.source]
+reference = "9ce4f02cfbb86f09df99b19b112842c706d292ad"
+type = "git"
+url = "git://github.com/ShipChain/python-common.git"
 [[package]]
 category = "main"
 description = "Python 2 and 3 compatibility utilities"
@@ -2372,7 +2388,7 @@ test = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
 [metadata]
-content-hash = "bb51d087a9396e84edced2983b3ab06a4e2e98b676e2b703111681252ad03670"
+content-hash = "24d2abe175c78e0e4d98a0444bf4b67f6af3e5cdf95679c89f88e2cf69c518d4"
 python-versions = "==3.6.9"
 
 [metadata.files]
@@ -2428,7 +2444,9 @@ aws-requests-auth = [
     {file = "aws-requests-auth-0.4.2.tar.gz", hash = "sha256:112c85fe938a01e28f7e1a87168615b6977b28596362b1dcbafbf4f2cc69f720"},
 ]
 aws-sam-translator = [
-    {file = "aws-sam-translator-1.22.0.tar.gz", hash = "sha256:3ba6a821eda29ca8ea1306e27a8135256d6136f1b0b29c6cbf9a107dfd1c2dd9"},
+    {file = "aws-sam-translator-1.23.0.tar.gz", hash = "sha256:6e847b02661247e5d9b99b3bd22351fc6ed614e0f12e0598c0181cb796b3967e"},
+    {file = "aws_sam_translator-1.23.0-py2-none-any.whl", hash = "sha256:0dabd2fd57e63fca1cdd511fa73e9fe4f9ca869f5cbcd5749a0c0c9c532a0b2a"},
+    {file = "aws_sam_translator-1.23.0-py3-none-any.whl", hash = "sha256:75dc45e4d8609696f847369a7497774f04ec992f58c9bc4aae4ead77a46e7991"},
 ]
 aws-xray-sdk = [
     {file = "aws-xray-sdk-2.5.0.tar.gz", hash = "sha256:8dfa785305fc8dc720d8d4c2ec6a58e85e467ddc3a53b1506a2ed8b5801c8fc7"},
@@ -2508,8 +2526,8 @@ cffi = [
     {file = "cffi-1.14.0.tar.gz", hash = "sha256:2d384f4a127a15ba701207f7639d94106693b6cd64173d6c8988e2c25f3ac2b6"},
 ]
 cfn-lint = [
-    {file = "cfn-lint-0.30.1.tar.gz", hash = "sha256:5001d5fa0e1b255d546fe966c0111a6aeaf26dc583249df626488622929e419b"},
-    {file = "cfn_lint-0.30.1-py3-none-any.whl", hash = "sha256:6a1506d2b5859a8bbfa33864e96cd2599dc918038660000241087f22db29b0d0"},
+    {file = "cfn-lint-0.31.0.tar.gz", hash = "sha256:be9d527f81b449b246f8b573ecd42e2f4a3b394f47d1b3343d19ef5d422296da"},
+    {file = "cfn_lint-0.31.0-py3-none-any.whl", hash = "sha256:53739f68246d7ce94d6feb6bfd42ac03609208b5a62c8d2778498a370d970d53"},
 ]
 channels = [
     {file = "channels-2.3.1-py2.py3-none-any.whl", hash = "sha256:70c988074c03b500c96a46123bb5e37a9444930d0be988d488d1e786dfe08631"},
@@ -2876,6 +2894,9 @@ jsonschema = [
     {file = "jsonschema-3.2.0-py2.py3-none-any.whl", hash = "sha256:4e5b3cf8216f577bee9ce139cbe72eca3ea4f292ec60928ff24758ce626cd163"},
     {file = "jsonschema-3.2.0.tar.gz", hash = "sha256:c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a"},
 ]
+junit-xml = [
+    {file = "junit_xml-1.9-py2.py3-none-any.whl", hash = "sha256:ec5ca1a55aefdd76d28fcc0b135251d156c7106fa979686a4b48d62b761b4732"},
+]
 kombu = [
     {file = "kombu-4.6.8-py2.py3-none-any.whl", hash = "sha256:598e7e749d6ab54f646b74b2d2df67755dee13894f73ab02a2a9feb8870c7cb2"},
     {file = "kombu-4.6.8.tar.gz", hash = "sha256:2d1cda774126a044d91a7ff5fa6d09edf99f46924ab332a810760fe6740e9b76"},
@@ -3203,8 +3224,8 @@ pyrsistent = [
     {file = "pyrsistent-0.16.0.tar.gz", hash = "sha256:28669905fe725965daa16184933676547c5bb40a5153055a8dee2a4bd7933ad3"},
 ]
 pytest = [
-    {file = "pytest-5.4.1-py3-none-any.whl", hash = "sha256:0e5b30f5cb04e887b91b1ee519fa3d89049595f428c1db76e73bd7f17b09b172"},
-    {file = "pytest-5.4.1.tar.gz", hash = "sha256:84dde37075b8805f3d1f392cc47e38a0e59518fb46a431cfdaf7cf1ce805f970"},
+    {file = "pytest-5.4.2-py3-none-any.whl", hash = "sha256:95c710d0a72d91c13fae35dce195633c929c3792f54125919847fdcdf7caa0d3"},
+    {file = "pytest-5.4.2.tar.gz", hash = "sha256:eb2b5e935f6a019317e455b6da83dd8650ac9ffd2ee73a7b657a30873d67a698"},
 ]
 pytest-asyncio = [
     {file = "pytest-asyncio-0.10.0.tar.gz", hash = "sha256:9fac5100fd716cbecf6ef89233e8590a4ad61d729d1732e0a96b84182df1daaf"},
@@ -3302,10 +3323,7 @@ service-identity = [
 setoptconf = [
     {file = "setoptconf-0.2.0.tar.gz", hash = "sha256:5b0b5d8e0077713f5d5152d4f63be6f048d9a1bb66be15d089a11c898c3cf49c"},
 ]
-shipchain-common = [
-    {file = "shipchain-common-1.0.21.tar.gz", hash = "sha256:c485ac370fd91a865a05e2a67d6ed1c19942953562d388faa5d1f65f16425533"},
-    {file = "shipchain_common-1.0.21-py3-none-any.whl", hash = "sha256:a1e23bf14e16e0090db8a96b6695a68c6d5d0ca060762d8ceb474305a2e6ba65"},
-]
+shipchain-common = []
 six = [
     {file = "six-1.14.0-py2.py3-none-any.whl", hash = "sha256:8f3cd2e254d8f793e7f3d6d9df77b92252b52637291d0f0da013c76ea2724b6c"},
     {file = "six-1.14.0.tar.gz", hash = "sha256:236bdbdce46e6e6a3d61a337c0f8b763ca1e8717c03b369e87a7ec7ce1319c0a"},

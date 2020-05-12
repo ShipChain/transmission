@@ -121,9 +121,9 @@ class IsShipperMixin:
     """
 
     @staticmethod
-    def has_shipper_permission(request, shipment):
+    def has_shipper_permission(jwt, shipment):
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.shipper_wallet_id}/?is_active',
-                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+                                                 headers={'Authorization': f'JWT {jwt}'})
 
         return response.status_code == status.HTTP_200_OK
 
@@ -134,9 +134,9 @@ class IsCarrierMixin:
     """
 
     @staticmethod
-    def has_carrier_permission(request, shipment):
+    def has_carrier_permission(jwt, shipment):
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.carrier_wallet_id}/?is_active',
-                                                 headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+                                                 headers={'Authorization': f'JWT {jwt}'})
 
         return response.status_code == status.HTTP_200_OK
 
@@ -147,10 +147,10 @@ class IsModeratorMixin:
     """
 
     @staticmethod
-    def has_moderator_permission(request, shipment):
+    def has_moderator_permission(jwt, shipment):
         if shipment.moderator_wallet_id:
             response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.moderator_wallet_id}/?is_active',
-                                                     headers={'Authorization': f'JWT {get_jwt_from_request(request)}'})
+                                                     headers={'Authorization': f'JWT {jwt}'})
 
             return response.status_code == status.HTTP_200_OK
         return False
@@ -192,8 +192,9 @@ class IsNestedOwnerShipperCarrierModerator(IsShipmentOwnerMixin,
 
     def has_permission(self, request, view):
         shipment = Shipment.objects.get(id=view.kwargs.get('shipment_pk'))
+        jwt = get_jwt_from_request(request)
 
         return self.is_shipment_owner(request, shipment) or \
-            self.has_shipper_permission(request, shipment) or \
-            self.has_carrier_permission(request, shipment) or \
-            self.has_moderator_permission(request, shipment)
+            self.has_shipper_permission(jwt, shipment) or \
+            self.has_carrier_permission(jwt, shipment) or \
+            self.has_moderator_permission(jwt, shipment)

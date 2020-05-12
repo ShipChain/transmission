@@ -1,0 +1,114 @@
+import json
+from datetime import datetime
+
+import pytest
+import re
+from django.conf import settings
+from rest_framework import status
+from shipchain_common.test_utils import AssertionHelper
+from shipchain_common.utils import random_id
+
+from apps.shipments.models import Shipment
+
+google_obj = {
+    'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
+mapbox_obj = {'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [42, 27]}}]}
+
+mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
+google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
+
+
+def create_organization_shipments(user, profiles_ids):
+    return [Shipment.objects.create(vault_id=random_id(),
+                                    owner_id=user.token.payload['organization_id'],
+                                    **profiles_ids
+                                    ) for i in range(0, 3)]
+
+
+@pytest.fixture
+def tracking_data():
+    return {
+        'position': {
+            'latitude': 75.0587610,
+            'longitude': -35.628643,
+            'altitude': 554,
+            'source': 'Gps',
+            'uncertainty': 92,
+            'speed': 34.56
+        },
+        'version': '1.0.0',
+        'timestamp': datetime.utcnow().isoformat()
+    }
+
+
+@pytest.fixture
+def alice_organization_shipments(user_alice, mocked_engine_rpc, mocked_iot_api, profiles_ids):
+    return create_organization_shipments(user_alice, profiles_ids)
+
+
+@pytest.fixture
+def alice_organization_shipment_fixtures(alice_organization_shipments, profiles_ids):
+    return [AssertionHelper.EntityRef(
+        resource='Shipment',
+        pk=shipment.id,
+        attributes={
+            'vault_id': shipment.vault_id,
+            'owner_id': shipment.owner_id,
+            **profiles_ids
+        },
+    ) for shipment in alice_organization_shipments]
+
+
+@pytest.fixture
+def bob_organization_shipments(user_bob, mocked_engine_rpc, mocked_iot_api, profiles_ids):
+    return create_organization_shipments(user_bob, profiles_ids)
+
+
+@pytest.fixture
+def bob_organization_shipment_fixtures(bob_organization_shipments, profiles_ids):
+    return [AssertionHelper.EntityRef(
+        resource='Shipment',
+        pk=shipment.id,
+        attributes={
+            'vault_id': shipment.vault_id,
+            'owner_id': shipment.owner_id,
+            **profiles_ids
+        },
+    ) for shipment in bob_organization_shipments]
+
+
+@pytest.fixture
+def mock_location(mock_successful_wallet_owner_calls):
+    mock_successful_wallet_owner_calls.register_uri(mock_successful_wallet_owner_calls.GET, google_url, body=json.dumps(google_obj))
+    mock_successful_wallet_owner_calls.register_uri(mock_successful_wallet_owner_calls.GET, mapbox_url, body=json.dumps(mapbox_obj))
+    return mock_successful_wallet_owner_calls
+
+
+@pytest.fixture
+def mock_device_retrieval(mock_successful_wallet_owner_calls, device, device_two):
+    mock_successful_wallet_owner_calls.register_uri(
+        mock_successful_wallet_owner_calls.GET,
+        f'{settings.PROFILES_URL}/api/v1/device/{device.id}/?is_active',
+        status=status.HTTP_200_OK
+    )
+    mock_successful_wallet_owner_calls.register_uri(
+        mock_successful_wallet_owner_calls.GET,
+        f'{settings.PROFILES_URL}/api/v1/device/{device_two.id}/?is_active',
+        status=status.HTTP_200_OK
+    )
+    return mock_successful_wallet_owner_calls
+
+
+@pytest.fixture
+def mock_device_retrieval_fails(mock_successful_wallet_owner_calls, device, device_two):
+    mock_successful_wallet_owner_calls.register_uri(
+        mock_successful_wallet_owner_calls.GET,
+        f'{settings.PROFILES_URL}/api/v1/device/{device.id}/?is_active',
+        status=status.HTTP_404_NOT_FOUND
+    )
+    mock_successful_wallet_owner_calls.register_uri(
+        mock_successful_wallet_owner_calls.GET,
+        f'{settings.PROFILES_URL}/api/v1/device/{device_two.id}/?is_active',
+        status=status.HTTP_404_NOT_FOUND
+    )
+    return mock_successful_wallet_owner_calls

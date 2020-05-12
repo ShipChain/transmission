@@ -20,7 +20,7 @@ from botocore.exceptions import ClientError
 
 from django.conf import settings
 from django.db import models
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.status import HTTP_200_OK
 
 LOG = logging.getLogger('transmission')
@@ -38,7 +38,7 @@ class Device(models.Model):
             response = settings.REQUESTS_SESSION.get(f'{settings.PROFILES_URL}/api/v1/device/{device_id}/',
                                                      headers={'Authorization': f'JWT {jwt}'})
             if response.status_code != HTTP_200_OK:
-                raise PermissionDenied("User does not have access to this device in ShipChain Profiles")
+                raise ValidationError("User does not have access to this device in ShipChain Profiles")
 
         device, created = Device.objects.get_or_create(id=device_id, defaults={'certificate_id': certificate_id})
 
