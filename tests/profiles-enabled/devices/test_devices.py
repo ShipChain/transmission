@@ -14,14 +14,14 @@
 import json
 from datetime import datetime, timedelta
 from unittest import mock
-from django.conf import settings
+
 import pytest
+from django.conf import settings
 from django.urls import reverse
 from jose import jws
 from moto import mock_iot
-from shipchain_common.test_utils import AssertionHelper
 from rest_framework import status
-from django.conf import settings
+from shipchain_common.test_utils import AssertionHelper
 from shipchain_common.utils import random_id
 
 from apps.shipments.models import TrackingData

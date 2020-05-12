@@ -1,3 +1,16 @@
+#  Copyright 2020 ShipChain, Inc.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 import json
 from datetime import datetime, timedelta
 from unittest import mock
@@ -380,44 +393,13 @@ class TestShipmentUpdate:
         response = client_gtx_alice.patch(self.url, data={"gtx_required": True})
         AssertionHelper.HTTP_202(response, entity_refs=self.entity_ref)
 
-    def test_gtx_requires_before_pickup(self, client_carol, client_gtx_alice):
+    def test_gtx_requires_before_pickup(self, client_gtx_alice):
         self.shipment.pick_up()
         self.shipment.save()
         response = client_gtx_alice.patch(self.url, data={"gtx_required": True})
         AssertionHelper.HTTP_400(response, error='Cannot modify GTX for a shipment in progress')
 
-    # def test_update_with_location_mapbox(self, client_alice, mock_location):
-    #     mapbox_access_token = 'mapbox access token'
-    #     self.entity_ref.attributes = None
-    #     location_attributes, content_type = create_form_content({
-    #         'ship_from_location.name': "Location Name",
-    #         'ship_from_location.city': "City",
-    #         'ship_from_location.state': "State"
-    #     })
-    #
-    #     response = client_alice.patch(self.url, data=location_attributes, content_type=content_type)
-    #     self.entity_ref.relationships = [{
-    #         'ship_from_location': AssertionHelper.EntityRef(resource='Location')
-    #     }]
-    #     self.shipment.refresh_from_db(fields=['ship_from_location'])
-    #     AssertionHelper.HTTP_202(
-    #         response,
-    #         entity_refs=self.entity_ref,
-    #         included=[AssertionHelper.EntityRef(resource='Location',
-    #                                             pk=self.shipment.ship_from_location.id,
-    #                                             attributes={
-    #                                                 'name': "Location Name",
-    #                                                 'city': "City",
-    #                                                 'state': "State",
-    #                                                 'geometry': {'coordinates': [42.0, 27.0], 'type': 'Point'}
-    #                                             })]
-    #     )
-    #     mock_location.assert_calls([{
-    #         'host': 'https://api.mapbox.com',
-    #         'path': '/geocoding/v5/mapbox.places/',
-    #     }])
-
-    def test_update_with_location_google(self, client_alice, mock_location):
+    def test_update_with_location_mapbox(self, client_alice, mock_location):
         self.entity_ref.attributes = None
         location_attributes, content_type = create_form_content({
             'ship_from_location.name': "Location Name",
@@ -439,14 +421,47 @@ class TestShipmentUpdate:
                                                     'name': "Location Name",
                                                     'city': "City",
                                                     'state': "State",
-                                                    'geometry': {'coordinates': [23.0, 12.0], 'type': 'Point'}
+                                                    'geometry': {'coordinates': [42.0, 27.0], 'type': 'Point'}
                                                 })]
         )
         mock_location.assert_calls([{
-            'host': 'https://maps.googleapis.com',
-            'path': '/maps/api/geocode/json',
-            'query': {'address': ', City, State'},
+            'host': 'https://api.mapbox.com',
+            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
         }])
+
+    # It is only possible to test location with google OR mapbox due to how the token is gathered by geocoder.
+    # We will default to testing with mapbox as that is what is currently used on ShipChain's Transmission services,
+    # But this is the test necessary to check the google API call.
+    # def test_update_with_location_google(self, client_alice, mock_location):
+    #     self.entity_ref.attributes = None
+    #     location_attributes, content_type = create_form_content({
+    #         'ship_from_location.name': "Location Name",
+    #         'ship_from_location.city': "City",
+    #         'ship_from_location.state': "State"
+    #     })
+    #
+    #     response = client_alice.patch(self.url, data=location_attributes, content_type=content_type)
+    #     self.entity_ref.relationships = [{
+    #         'ship_from_location': AssertionHelper.EntityRef(resource='Location')
+    #     }]
+    #     self.shipment.refresh_from_db(fields=['ship_from_location'])
+    #     AssertionHelper.HTTP_202(
+    #         response,
+    #         entity_refs=self.entity_ref,
+    #         included=[AssertionHelper.EntityRef(resource='Location',
+    #                                             pk=self.shipment.ship_from_location.id,
+    #                                             attributes={
+    #                                                 'name': "Location Name",
+    #                                                 'city': "City",
+    #                                                 'state': "State",
+    #                                                 'geometry': {'coordinates': [23.0, 12.0], 'type': 'Point'}
+    #                                             })]
+    #     )
+    #     mock_location.assert_calls([{
+    #         'host': 'https://maps.googleapis.com',
+    #         'path': '/maps/api/geocode/json',
+    #         'query': {'address': ', City, State'},
+    #     }])
 
     def test_update_with_multiple_locations(self, client_alice, mock_location):
         self.entity_ref.attributes = None
@@ -473,7 +488,7 @@ class TestShipmentUpdate:
                                                     'name': "Location Name",
                                                     'city': "City",
                                                     'state': "State",
-                                                    'geometry': {'coordinates': [23.0, 12.0], 'type': 'Point'}
+                                                    'geometry': {'coordinates': [42.0, 27.0], 'type': 'Point'}
                                                 }),
                       AssertionHelper.EntityRef(resource='Location',
                                                 pk=self.shipment.ship_to_location.id,
@@ -481,18 +496,16 @@ class TestShipmentUpdate:
                                                     'name': "Location Name",
                                                     'city': "City",
                                                     'state': "State",
-                                                    'geometry': {'coordinates': [23.0, 12.0], 'type': 'Point'}
+                                                    'geometry': {'coordinates': [42.0, 27.0], 'type': 'Point'}
                                                 })
                       ]
         )
         mock_location.assert_calls([{
-            'host': 'https://maps.googleapis.com',
-            'path': '/maps/api/geocode/json',
-            'query': {'address': ', City, State'},
+            'host': 'https://api.mapbox.com',
+            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
         }, {
-            'host': 'https://maps.googleapis.com',
-            'path': '/maps/api/geocode/json',
-            'query': {'address': ', City, State'},
+            'host': 'https://api.mapbox.com',
+            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
         }])
 
     def test_update_customer_fields(self, client_alice):
@@ -711,7 +724,7 @@ class TestShipmentCreate:
         assert "asset_physical_id" not in response.json()['data']
         assert not shipment.asset_physical_id
 
-    def test_create_with_location_google(self, client_alice, mock_location):
+    def test_create_with_location_mapbox(self, client_alice, mock_location):
         location_attributes, content_type = create_form_content({
             'ship_from_location.name': "Location Name",
             'ship_from_location.city': "City",
@@ -736,16 +749,54 @@ class TestShipmentCreate:
                                                                          'name': "Location Name",
                                                                          'city': "City",
                                                                          'state': "State",
-                                                                         'geometry': {'coordinates': [23.0, 12.0],
+                                                                         'geometry': {'coordinates': [42.0, 27.0],
                                                                                       'type': 'Point'}
                                                                      })]
 
                                  )
         mock_location.assert_calls([*self.assertions, {
-            'host': 'https://maps.googleapis.com',
-            'path': '/maps/api/geocode/json',
-            'query': {'address': ', City, State'},
+            'host': 'https://api.mapbox.com',
+            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
         }])
+
+    # It is only possible to test location with google OR mapbox due to how the token is gathered by geocoder.
+    # We will default to testing with mapbox as that is what is currently used on ShipChain's Transmission services,
+    # But this is the test necessary to check the google API call.
+    # def test_create_with_location_google(self, client_alice, mock_location):
+    #     location_attributes, content_type = create_form_content({
+    #         'ship_from_location.name': "Location Name",
+    #         'ship_from_location.city': "City",
+    #         'ship_from_location.state': "State",
+    #         **self.profiles_ids
+    #     })
+    #
+    #     response = client_alice.post(self.url, data=location_attributes, content_type=content_type)
+    #
+    #     shipment = Shipment.objects.get(id=response.json()['data']['id'])
+    #     AssertionHelper.HTTP_202(response,
+    #                              entity_refs=AssertionHelper.EntityRef(
+    #                                  resource='Shipment',
+    #                                  attributes=self.profiles_ids,
+    #                                  relationships=[{
+    #                                      'ship_from_location': AssertionHelper.EntityRef(resource='Location')
+    #                                  }],
+    #                              ),
+    #                              included=[AssertionHelper.EntityRef(resource='Location',
+    #                                                                  pk=shipment.ship_from_location.id,
+    #                                                                  attributes={
+    #                                                                      'name': "Location Name",
+    #                                                                      'city': "City",
+    #                                                                      'state': "State",
+    #                                                                      'geometry': {'coordinates': [23.0, 12.0],
+    #                                                                                   'type': 'Point'}
+    #                                                                  })]
+    #
+    #                              )
+    #     mock_location.assert_calls([*self.assertions, {
+    #         'host': 'https://maps.googleapis.com',
+    #         'path': '/maps/api/geocode/json',
+    #         'query': {'address': ', City, State'},
+    #     }])
 
     def test_create_with_multiple_locations(self, client_alice, mock_location):
         location_attributes, content_type = create_form_content({
@@ -781,7 +832,7 @@ class TestShipmentCreate:
                                                     'name': "Location Name",
                                                     'city': "City",
                                                     'state': "State",
-                                                    'geometry': {'coordinates': [23.0, 12.0], 'type': 'Point'}
+                                                    'geometry': {'coordinates': [42.0, 27.0], 'type': 'Point'}
                                                 }),
                       AssertionHelper.EntityRef(resource='Location',
                                                 pk=shipment.ship_to_location.id,
@@ -789,19 +840,17 @@ class TestShipmentCreate:
                                                     'name': "Location Name",
                                                     'city': "City",
                                                     'state': "State",
-                                                    'geometry': {'coordinates': [23.0, 12.0], 'type': 'Point'}
+                                                    'geometry': {'coordinates': [42.0, 27.0], 'type': 'Point'}
                                                 })
                       ]
         )
 
         mock_location.assert_calls([*self.assertions, {
-            'host': 'https://maps.googleapis.com',
-            'path': '/maps/api/geocode/json',
-            'query': {'address': ', City, State'},
+            'host': 'https://api.mapbox.com',
+            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
         }, {
-            'host': 'https://maps.googleapis.com',
-            'path': '/maps/api/geocode/json',
-            'query': {'address': ', City, State'},
+            'host': 'https://api.mapbox.com',
+            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
         }])
 
     def test_create_with_device(self, client_alice, device):
