@@ -127,9 +127,8 @@ class TestShipmentHistory:
         response = client_alice.patch(self.update_url, data=location_attributes, content_type=content_type)
         AssertionHelper.HTTP_202(response)
         mock_location.assert_calls([{
-            'host': 'https://maps.googleapis.com',
-            'path': '/maps/api/geocode/json',
-            'query': {'address': ', City, State'},
+            'host': 'https://api.mapbox.com',
+            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
         }])
 
         response = client_alice.get(self.history_url)
@@ -146,9 +145,8 @@ class TestShipmentHistory:
         response = client_alice.patch(self.update_url, data=location_attributes, content_type=content_type)
         AssertionHelper.HTTP_202(response)
         mock_location.assert_calls([{
-            'host': 'https://maps.googleapis.com',
-            'path': '/maps/api/geocode/json',
-            'query': {'address': ', City, State'},
+            'host': 'https://api.mapbox.com',
+            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
         }])
 
         response = client_alice.get(self.history_url)
