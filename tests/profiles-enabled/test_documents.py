@@ -363,6 +363,14 @@ class DocumentAPITests(APITestCase):
             assert mock_method.call_count == 1
             assert doc.upload_status == UploadStatus.COMPLETE
 
+            # Test that 'upload complete' is idempotent
+            current_history_count = doc.history.count()
+            response = self.client.post(url, json.dumps(s3_event), content_type="application/json",
+                                        X_NGINX_SOURCE='internal', X_SSL_CLIENT_VERIFY='SUCCESS',
+                                        X_SSL_CLIENT_DN='/CN=document-management-s3-hook.test-internal')
+            assert response.status_code == status.HTTP_204_NO_CONTENT
+            assert doc.history.count() == current_history_count
+
     def test_document_permission(self):
 
         url = reverse('shipment-documents-list', kwargs={'version': 'v1', 'shipment_pk': self.shipments[0].id})

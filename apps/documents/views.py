@@ -102,17 +102,19 @@ class S3Events(APIView):
                 document_id = key_fields['filename'].split('.')[0]
                 document = Document.objects.filter(id=document_id).first()
                 if document:
-                    # Save document to vault
-                    signature = DocumentRPCClient().add_document_from_s3(bucket, key,
-                                                                         key_fields['wallet_uuid'],
-                                                                         key_fields['storage_credentials_id'],
-                                                                         key_fields['vault_id'],
-                                                                         key_fields['filename'])
+                    # Don't re-add document to vault if this event is just from repopulating the s3 cache
+                    if document.upload_status != UploadStatus.COMPLETE:
+                        # Save document to vault
+                        signature = DocumentRPCClient().add_document_from_s3(bucket, key,
+                                                                             key_fields['wallet_uuid'],
+                                                                             key_fields['storage_credentials_id'],
+                                                                             key_fields['vault_id'],
+                                                                             key_fields['filename'])
 
-                    # Update upload status
-                    document.upload_status = UploadStatus.COMPLETE
-                    document.save()
-                    document.shipment.set_vault_hash(signature['hash'], action_type=AsyncActionType.DOCUMENT)
+                        # Update upload status
+                        document.upload_status = UploadStatus.COMPLETE
+                        document.save()
+                        document.shipment.set_vault_hash(signature['hash'], action_type=AsyncActionType.DOCUMENT)
                 else:
                     message = f'Document not found with ID {document_id}, for {key} uploaded to {bucket}'
                     LOG.warning(message)
