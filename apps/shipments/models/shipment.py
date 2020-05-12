@@ -122,6 +122,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
     delayed = models.BooleanField(default=False, editable=False)
     expected_delay_hours = models.IntegerField(default=0, editable=False)
     exception = EnumIntegerField(enum=ExceptionType, default=ExceptionType.NONE)
+    arrival_est = models.DateTimeField(blank=True, null=True, editable=False)
 
     # Shipment Schema fields
     carriers_scac = models.CharField(max_length=255, blank=True, null=True)
