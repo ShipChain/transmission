@@ -122,6 +122,8 @@ class IsShipperMixin:
 
     @staticmethod
     def has_shipper_permission(jwt, shipment):
+        if not jwt:
+            return False
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.shipper_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {jwt}'})
 
@@ -135,6 +137,8 @@ class IsCarrierMixin:
 
     @staticmethod
     def has_carrier_permission(jwt, shipment):
+        if not jwt:
+            return False
         response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.carrier_wallet_id}/?is_active',
                                                  headers={'Authorization': f'JWT {jwt}'})
 
@@ -148,7 +152,7 @@ class IsModeratorMixin:
 
     @staticmethod
     def has_moderator_permission(jwt, shipment):
-        if shipment.moderator_wallet_id:
+        if jwt and shipment.moderator_wallet_id:
             response = settings.REQUESTS_SESSION.get(f'{PROFILES_WALLET_URL}/{shipment.moderator_wallet_id}/?is_active',
                                                      headers={'Authorization': f'JWT {jwt}'})
 

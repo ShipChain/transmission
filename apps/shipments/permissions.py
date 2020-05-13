@@ -80,11 +80,11 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
 
     def has_object_permission(self, request, view, obj):
         jwt = get_jwt_from_request(request)
-        return self.is_shipment_owner(request, obj) or \
-            self.has_valid_permission_link(request, obj) or \
-            (jwt and (self.has_shipper_permission(jwt, obj) or
-                    self.has_carrier_permission(jwt, obj) or
-                    self.has_moderator_permission(jwt, obj)))
+        return (self.is_shipment_owner(request, obj) or
+                self.has_valid_permission_link(request, obj) or
+                self.has_shipper_permission(jwt, obj) or
+                self.has_carrier_permission(jwt, obj) or
+                self.has_moderator_permission(jwt, obj))
 
 
 class IsOwnerShipperCarrierModerator(IsShipmentOwnerMixin,
