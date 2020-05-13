@@ -90,9 +90,10 @@ class TestShipmentTagOnCreate:
     url = reverse('shipment-list', kwargs={'version': 'v1'})
 
     @pytest.fixture(autouse=True)
-    def set_up(self, mock_successful_wallet_owner_calls, profiles_ids):
+    def set_up(self, mock_successful_wallet_owner_calls, profiles_ids, successful_shipment_create_profiles_assertions):
         self.wallet_mocking = mock_successful_wallet_owner_calls
         self.base_call = profiles_ids
+        self.assertions = successful_shipment_create_profiles_assertions
 
     def test_create_requires_uniqueness(self, client_alice):
         self.base_call['tags'] = [
@@ -107,6 +108,7 @@ class TestShipmentTagOnCreate:
         ]
         response = client_alice.post(self.url, self.base_call)
         AssertionHelper.HTTP_400(response, 'Tags field cannot contain duplicates')
+        self.wallet_mocking.assert_calls(self.assertions)
 
     def test_create_requires_fields(self, client_alice):
         self.base_call['tags'] = [
@@ -116,6 +118,7 @@ class TestShipmentTagOnCreate:
         ]
         response = client_alice.post(self.url, self.base_call)
         AssertionHelper.HTTP_400(response, 'Tags items must contain `tag_value` and `tag_type`.')
+        self.wallet_mocking.assert_calls(self.assertions)
 
         self.base_call['tags'] = [
             {
@@ -124,6 +127,7 @@ class TestShipmentTagOnCreate:
         ]
         response = client_alice.post(self.url, self.base_call)
         AssertionHelper.HTTP_400(response, 'Tags items must contain `tag_value` and `tag_type`.')
+        self.wallet_mocking.assert_calls(self.assertions)
 
     def test_can_create(self, client_alice, mocked_engine_rpc):
         self.base_call['tags'] = [
@@ -148,6 +152,7 @@ class TestShipmentTagOnCreate:
                                           'tag_value': 'tag_value_two'
                                       })
         ])
+        self.wallet_mocking.assert_calls(self.assertions)
 
 
 class TestShipmentTagUpdate:

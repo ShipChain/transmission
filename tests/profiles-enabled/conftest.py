@@ -58,6 +58,11 @@ def user_alice_id():
 
 
 @pytest.fixture
+def org_id_alice():
+    return ORGANIZATION_ALICE_ID
+
+
+@pytest.fixture
 def user_alice(user_alice_id):
     return passive_credentials_auth(
         get_jwt(
@@ -77,8 +82,29 @@ def client_alice(user_alice):
 
 
 @pytest.fixture
-def org_id_alice():
-    return ORGANIZATION_ALICE_ID
+def user_carol_id():
+    return random_id()
+
+
+@pytest.fixture
+def user_carol(user_carol_id):
+    return passive_credentials_auth(
+        get_jwt(
+            username='carol@shipchain.io',
+            sub=user_carol_id,
+            organization_id=ORGANIZATION_ALICE_ID,
+            organization_name=ORGANIZATION_NAME,
+            permissions=BASE_PERMISSIONS,
+            background_data_hash_interval=25,
+            manual_update_hash_interval=30,
+        ))
+
+
+@pytest.fixture
+def client_carol(user_carol):
+    api_client = APIClient()
+    api_client.force_authenticate(user_carol)
+    return api_client
 
 
 @pytest.fixture
@@ -108,14 +134,22 @@ def client_bob(user_bob):
     return api_client
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture
 def user_gtx_alice(user_alice_id):
     return passive_credentials_auth(
         get_jwt(username='user1@shipchain.io',
                 sub=user_alice_id,
                 organization_id=ORGANIZATION_ALICE_ID,
-                permissions=GTX_PERMISSIONS
+                permissions=GTX_PERMISSIONS,
+                features={'gtx': ['shipment_use']}
                 ))
+
+
+@pytest.fixture
+def client_gtx_alice(user_gtx_alice):
+    api_client = APIClient()
+    api_client.force_authenticate(user_gtx_alice)
+    return api_client
 
 
 @pytest.fixture(scope='session')
@@ -143,49 +177,43 @@ def shipper_api_client(shipper_user):
 
 
 @pytest.fixture
-def profiles_ids():
-    return {
-        "shipper_wallet_id": random_id(),
-        "carrier_wallet_id": random_id(),
-        "storage_credentials_id": random_id()
-    }
+def mocked_is_shipper(shipper_user, modified_http_pretty, shipment):
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
+                                      f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.shipper_wallet_id}/?is_active",
+                                      body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+    return modified_http_pretty
 
 
 @pytest.fixture
-def mocked_is_shipper(shipper_user, http_pretty, shipment):
-    http_pretty.register_uri(http_pretty.GET,
-                             f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.shipper_wallet_id}/?is_active",
-                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-    return shipper_user
-
-
-@pytest.fixture
-def mocked_storage_credential(http_pretty, shipment):
-    http_pretty.register_uri(http_pretty.GET,
+def mocked_storage_credential(modified_http_pretty, shipment):
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/"
                              f"{shipment.storage_credentials_id}/?is_active", body=json.dumps({'good': 'good'}),
                              status=status.HTTP_200_OK)
+    return modified_http_pretty
 
 
 @pytest.fixture
-def mocked_not_shipper(http_pretty, shipment):
-    http_pretty.register_uri(http_pretty.GET,
-                             f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.shipper_wallet_id}/?is_active",
-                             body=json.dumps({'bad': 'bad'}), status=status.HTTP_403_FORBIDDEN)
-
+def mocked_not_shipper(modified_http_pretty, shipment):
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
+                                      f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.shipper_wallet_id}/?is_active",
+                                      body=json.dumps({'bad': 'bad'}), status=status.HTTP_403_FORBIDDEN)
+    return modified_http_pretty
 
 @pytest.fixture
-def mocked_not_carrier(http_pretty, shipment):
-    http_pretty.register_uri(http_pretty.GET,
+def mocked_not_carrier(modified_http_pretty, shipment):
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.carrier_wallet_id}/?is_active",
                              body=json.dumps({'bad': 'bad'}), status=status.HTTP_403_FORBIDDEN)
+    return modified_http_pretty
 
 
 @pytest.fixture
-def mocked_not_moderator(http_pretty, shipment):
-    http_pretty.register_uri(http_pretty.GET,
-                             f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.moderator_wallet_id}/?is_active",
-                             body=json.dumps({'bad': 'bad'}), status=status.HTTP_403_FORBIDDEN)
+def mocked_not_moderator(modified_http_pretty, shipment):
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
+                                      f"{test_settings.PROFILES_URL}/api/v1/wallet/{shipment.moderator_wallet_id}/?is_active",
+                                      body=json.dumps({'bad': 'bad'}), status=status.HTTP_403_FORBIDDEN)
+    return modified_http_pretty
 
 
 @pytest.fixture
@@ -262,17 +290,17 @@ def mock_successful_wallet_owner_calls(modified_http_pretty, profiles_ids):
 
 
 @pytest.fixture
-def mocked_profiles(http_pretty, profiles_ids):
-    http_pretty.register_uri(http_pretty.GET,
+def mocked_profiles(modified_http_pretty, profiles_ids):
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['shipper_wallet_id']}/",
                              body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-    http_pretty.register_uri(http_pretty.GET,
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['carrier_wallet_id']}/",
                              body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-    http_pretty.register_uri(http_pretty.GET,
+    modified_http_pretty.register_uri(modified_http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/storage_credentials/{profiles_ids['storage_credentials_id']}/",
                              body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
-    return profiles_ids
+    return modified_http_pretty
 
 
 @pytest.fixture
@@ -281,6 +309,16 @@ def mocked_profiles_wallet_list(modified_http_pretty):
                                       f"{test_settings.PROFILES_URL}/api/v1/wallet",
                                       body=json.dumps({'data': []}), status=status.HTTP_200_OK)
     return modified_http_pretty
+
+
+@pytest.fixture
+def profiles_wallet_list_assertions():
+    return [{
+            'path': f'/api/v1/wallet',
+            'body': '',
+            'host': test_settings.PROFILES_URL.replace('http://', ''),
+            'query': {'page_size': 9999}
+        }]
 
 
 @pytest.fixture
@@ -311,21 +349,21 @@ def org2_shipment(mocked_engine_rpc, mocked_iot_api):
 
 
 @pytest.fixture
-def shipment_alice(mocked_engine_rpc, mocked_iot_api, user_alice_id, profiles_ids):
+def shipment_alice(mocked_engine_rpc, mocked_iot_api, profiles_ids):
     return Shipment.objects.create(vault_id=VAULT_ID,
                                    carrier_wallet_id=profiles_ids["carrier_wallet_id"],
                                    shipper_wallet_id=profiles_ids["shipper_wallet_id"],
                                    storage_credentials_id=profiles_ids["storage_credentials_id"],
-                                   owner_id=user_alice_id)
+                                   owner_id=ORGANIZATION_ALICE_ID)
 
 
 @pytest.fixture
-def shipment_alice_two(mocked_engine_rpc, mocked_iot_api, user_alice_id, profiles_ids):
+def shipment_alice_two(mocked_engine_rpc, mocked_iot_api, profiles_ids):
     return Shipment.objects.create(vault_id=VAULT_ID,
                                    carrier_wallet_id=profiles_ids["carrier_wallet_id"],
                                    shipper_wallet_id=profiles_ids["shipper_wallet_id"],
                                    storage_credentials_id=profiles_ids["storage_credentials_id"],
-                                   owner_id=user_alice_id)
+                                   owner_id=ORGANIZATION_ALICE_ID)
 
 
 @pytest.fixture
@@ -350,18 +388,44 @@ def entity_ref_shipment_alice_two(shipment_alice_two):
 
 @pytest.fixture
 @mock_iot
-def device(boto):
+def mocked_iot(boto):
+    return boto.client('iot', region_name='us-east-1')
+
+
+@pytest.fixture
+@mock_iot
+def device(mocked_iot):
     device_id = random_id()
     # Create device 'thing'
-    iot = boto.client('iot', region_name='us-east-1')
-    iot.create_thing(
+    mocked_iot.create_thing(
         thingName=device_id
     )
 
     # Load device cert into AWS
     with open('tests/data/cert.pem', 'r') as cert_file:
         cert_pem = cert_file.read()
-    cert_response = iot.register_certificate(
+    cert_response = mocked_iot.register_certificate(
+        certificatePem=cert_pem,
+        status='ACTIVE'
+    )
+    certificate_id = cert_response['certificateId']
+
+    return Device.objects.create(id=device_id, certificate_id=certificate_id)
+
+
+@pytest.fixture
+@mock_iot
+def device_two(mocked_iot):
+    device_id = random_id()
+    # Create device 'thing'
+    mocked_iot.create_thing(
+        thingName=device_id
+    )
+
+    # Load device cert into AWS
+    with open('tests/data/cert.pem', 'r') as cert_file:
+        cert_pem = cert_file.read()
+    cert_response = mocked_iot.register_certificate(
         certificatePem=cert_pem,
         status='ACTIVE'
     )
@@ -394,3 +458,19 @@ def permission_link_device_shipment_expired(shipment_alice_with_device):
         expiration_date=datetime.now(timezone.utc) - timedelta(days=1),
         shipment=shipment_alice_with_device
     )
+
+
+@pytest.fixture
+def tracking_data():
+    return {
+        'position': {
+            'latitude': 75.0587610,
+            'longitude': -35.628643,
+            'altitude': 554,
+            'source': 'Gps',
+            'uncertainty': 92,
+            'speed': 34.56
+        },
+        'version': '1.0.0',
+        'timestamp': datetime.utcnow().isoformat()
+    }

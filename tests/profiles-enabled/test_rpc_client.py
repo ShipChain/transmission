@@ -199,6 +199,98 @@ class TestShipmentRPCClient(TestCase):
                         "ayy": "lmao"
                     })
 
+    def test_add_telemetry_data(self):
+
+        rpc_client = ShipmentRPCClient()
+
+        # Error response from RPC Server should return server detail in exception
+        with mock.patch.object(requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "error": {
+                    "code": 1337,
+                    "message": "Error from RPC Server",
+                },
+            })
+            try:
+                rpc_client.add_telemetry_data(STORAGE_CRED_ID, SHIPPER_WALLET_ID, CARRIER_WALLET_ID, '{}')
+                self.fail("Should have thrown RPC Error")
+            except RPCError as rpc_error:
+                self.assertEqual(rpc_error.status_code, 500)
+                self.assertEqual(rpc_error.detail, 'Error from RPC Server')
+
+            mock_method.return_value = mocked_rpc_response({
+                "result": {
+                    "code": 1337,
+                    "message": "Error from RPC Server",
+                },
+            })
+            try:
+                rpc_client.add_telemetry_data(STORAGE_CRED_ID, SHIPPER_WALLET_ID, CARRIER_WALLET_ID, '{}')
+                self.fail("Should have thrown RPC Error")
+            except RPCError as rpc_error:
+                self.assertEqual(rpc_error.status_code, 500)
+                self.assertEqual(rpc_error.detail, 'Invalid response from Engine')
+
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "vault_signed": SHIPPER_WALLET_ID
+                },
+                "id": 0
+            })
+
+            vault_signed = rpc_client.add_tracking_data(STORAGE_CRED_ID, SHIPPER_WALLET_ID, CARRIER_WALLET_ID, '{}')
+            self.assertEqual(vault_signed, SHIPPER_WALLET_ID)
+
+    def test_get_telemetry_data(self):
+
+        rpc_client = ShipmentRPCClient()
+
+        # Error response from RPC Server should return server detail in exception
+        with mock.patch.object(requests.Session, 'post') as mock_method:
+            mock_method.return_value = mocked_rpc_response({
+                "error": {
+                    "code": 1337,
+                    "message": "Error from RPC Server",
+                },
+            })
+            try:
+                rpc_client.get_telemetry_data(STORAGE_CRED_ID, SHIPPER_WALLET_ID, VAULT_ID)
+                self.fail("Should have thrown RPC Error")
+            except RPCError as rpc_error:
+                self.assertEqual(rpc_error.status_code, 500)
+                self.assertEqual(rpc_error.detail, 'Error from RPC Server')
+
+            mock_method.return_value = mocked_rpc_response({
+                "result": {
+                    "code": 1337,
+                    "message": "Error from RPC Server",
+                },
+            })
+            try:
+                rpc_client.get_telemetry_data(STORAGE_CRED_ID, SHIPPER_WALLET_ID, VAULT_ID)
+                self.fail("Should have thrown RPC Error")
+            except RPCError as rpc_error:
+                self.assertEqual(rpc_error.status_code, 500)
+                self.assertEqual(rpc_error.detail, 'Invalid response from Engine')
+
+            mock_method.return_value = mocked_rpc_response({
+                "jsonrpc": "2.0",
+                "result": {
+                    "success": True,
+                    "contents": {
+                        "ayy": "lmao"
+                    }
+                },
+                "id": 0
+            })
+
+            contents = rpc_client.get_telemetry_data(STORAGE_CRED_ID, SHIPPER_WALLET_ID, VAULT_ID)
+            self.assertEqual(contents, {
+                        "ayy": "lmao"
+                    })
+
 
 class TestLoad110RPCClient(TestCase):
 

@@ -13,7 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import json
 import logging
 from string import Template
 
@@ -30,6 +29,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from shipchain_common.mixins import SerializationType
 from shipchain_common.permissions import HasViewSetActionPermissions
+from shipchain_common.utils import parse_value
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelViewSet
 
 from apps.jobs.models import JobState
@@ -119,11 +119,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
 
         for key, value in self.request.query_params.items():
             if key.startswith('customer_fields__'):
-                try:
-                    value = json.loads(value)
-                except ValueError:
-                    pass
-                queryset = queryset.filter(**{key: value})
+                queryset = queryset.filter(**{key: parse_value(value)})
 
         return queryset
 
@@ -172,9 +168,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         """
         LOG.debug(f'Retrieve tracking data for a shipment {pk}.')
         log_metric('transmission.info', tags={'method': 'shipments.tracking', 'module': __name__})
-        shipment = Shipment.objects.get(pk=pk)
-
-        # TODO: re-implement device/shipment authorization for tracking data
+        shipment = self.get_object()
 
         tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
 

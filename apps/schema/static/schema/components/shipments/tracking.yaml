@@ -13,9 +13,7 @@ get:
       content:
         application/vnd.api+json:
           schema:
-            oneOf:
-            - $ref: '../tracking/schema.yaml#/pointResponse'
-            - $ref: '../tracking/schema.yaml#/lineResponse'
+            $ref: '../tracking/schema.yaml#/pointResponse'
     '401':
       description: "Unauthorized"
       content:

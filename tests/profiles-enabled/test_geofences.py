@@ -74,11 +74,12 @@ def test_geofence_updates(client_alice, shipment_with_device, shipment):
 
 
 @pytest.mark.django_db
-def test_geofence_creates(client_alice, mocked_iot_api, mocked_profiles, mocked_engine_rpc):
+def test_geofence_creates(client_alice, mocked_iot_api, mocked_profiles, mocked_engine_rpc, profiles_ids,
+                          successful_shipment_create_profiles_assertions):
     url = reverse('shipment-list', kwargs={'version': 'v1'})
     shipment_create_request = {
         "geofences": [GEOFENCE_3],
-        **mocked_profiles
+        **profiles_ids
     }
     response = client_alice.post(url, data=shipment_create_request)
     AssertionHelper.HTTP_202(response,
@@ -86,6 +87,7 @@ def test_geofence_creates(client_alice, mocked_iot_api, mocked_profiles, mocked_
                                  resource='Shipment',
                                  attributes=shipment_create_request
                              ))
+    mocked_profiles.assert_calls(successful_shipment_create_profiles_assertions)
 
 
 @pytest.mark.django_db

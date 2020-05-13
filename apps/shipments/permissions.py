@@ -15,6 +15,7 @@ limitations under the License.
 """
 from django.db.models import Q
 from rest_framework import permissions
+from shipchain_common.authentication import get_jwt_from_request
 
 from apps.permissions import IsShipmentOwnerMixin, IsShipperMixin, IsModeratorMixin, IsCarrierMixin
 from .models import Shipment, PermissionLink
@@ -78,11 +79,12 @@ class IsOwnerOrShared(IsShipmentOwnerMixin,
         return is_authenticated or has_permission_link
 
     def has_object_permission(self, request, view, obj):
-        return self.is_shipment_owner(request, obj) or \
-           self.has_valid_permission_link(request, obj) or \
-           self.has_shipper_permission(request, obj) or \
-           self.has_carrier_permission(request, obj) or \
-           self.has_moderator_permission(request, obj)
+        jwt = get_jwt_from_request(request)
+        return (self.is_shipment_owner(request, obj) or
+                self.has_valid_permission_link(request, obj) or
+                self.has_shipper_permission(jwt, obj) or
+                self.has_carrier_permission(jwt, obj) or
+                self.has_moderator_permission(jwt, obj))
 
 
 class IsOwnerShipperCarrierModerator(IsShipmentOwnerMixin,
@@ -113,10 +115,11 @@ class IsOwnerShipperCarrierModerator(IsShipmentOwnerMixin,
         return is_authenticated
 
     def has_object_permission(self, request, view, obj):
+        jwt = get_jwt_from_request(request)
         return self.is_shipment_owner(request, obj) or \
-           self.has_shipper_permission(request, obj) or \
-           self.has_carrier_permission(request, obj) or \
-           self.has_moderator_permission(request, obj)
+            self.has_shipper_permission(jwt, obj) or \
+            self.has_carrier_permission(jwt, obj) or \
+            self.has_moderator_permission(jwt, obj)
 
 
 class IsListenerOwner(IsOwnerOrShared):

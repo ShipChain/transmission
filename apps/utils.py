@@ -86,7 +86,7 @@ class UploadStatus(Enum):
 
 def retrieve_profiles_wallet_ids(request):
     response = settings.REQUESTS_SESSION.get(
-        f'{settings.PROFILES_URL}/api/v1/wallet?page_size=9999',
+        f'{settings.PROFILES_URL}/api/v1/wallet?page_size=9999&is_active',
         headers={'Authorization': 'JWT {}'.format(get_jwt_from_request(request))}
     )
     if not response.ok:

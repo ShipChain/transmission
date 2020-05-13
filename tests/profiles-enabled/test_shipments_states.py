@@ -139,8 +139,7 @@ class TestGTXValidation:
         assert gtx_shipment.gtx_validation == GTXValidation.VALIDATED
 
     def test_gtx_fail(self, client_alice, gtx_shipment, modified_http_pretty, gtx_validation_assertion):
-        modified_http_pretty.register_uri(modified_http_pretty.POST, settings.GTX_VALIDATION_URL,
-                                          status=404)
+        modified_http_pretty.register_uri(modified_http_pretty.POST, settings.GTX_VALIDATION_URL, status=404)
 
         gtx_shipment.validate_gtx()
         gtx_shipment.save()

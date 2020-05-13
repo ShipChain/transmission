@@ -13,8 +13,10 @@
 #  limitations under the License.
 
 import pytest
+import requests
+from moto import mock_iot
 from rest_framework.test import APIClient
-from shipchain_common.test_utils import mocked_rpc_response
+from shipchain_common.test_utils import mocked_rpc_response, modified_http_pretty
 from shipchain_common.utils import random_id
 
 from apps.shipments.models import Shipment, Device
@@ -32,9 +34,32 @@ def api_client():
 
 
 @pytest.fixture
+def profiles_ids():
+    return {
+        "shipper_wallet_id": random_id(),
+        "carrier_wallet_id": random_id(),
+        "storage_credentials_id": random_id()
+    }
+
+
+@pytest.fixture
+def mock_requests_session(mocker):
+    mocker.patch.object(requests.Session, 'post', return_value=mocked_rpc_response({
+        "jsonrpc": "2.0",
+        "result": {
+            "success": True,
+            "vault_id": "TEST_VAULT_ID",
+            "vault_uri": "engine://test_url",
+            "vault_signed": {'hash': "TEST_VAULT_SIGNATURE"}
+        }
+    }))
+
+
+@pytest.fixture
 def mocked_engine_rpc(mocker):
     mocker.patch('apps.shipments.rpc.Load110RPCClient.create_vault', return_value=(VAULT_ID, 's3://fake-vault-uri/'))
     mocker.patch('apps.shipments.rpc.Load110RPCClient.add_shipment_data', return_value={'hash': TRANSACTION_HASH})
+    mocker.patch('apps.shipments.rpc.Load110RPCClient.add_tracking_data', return_value={'hash': TRANSACTION_HASH})
     mocked_cst = mocker.patch('apps.shipments.rpc.Load110RPCClient.create_shipment_transaction',
                               return_value=('version', {}))
     mocked_cst.__qualname__ = 'Load110RPCClient.create_shipment_transaction'
@@ -63,21 +88,11 @@ def mocked_iot_api(mocker):
         {'data': {'shipmentId': 'dunno yet', 'shipmentState': 'dunno yet'}}))
 
 
-@pytest.yield_fixture
-def http_pretty():
-    import httpretty
-    httpretty.enable()
-    yield httpretty
-    httpretty.disable()
-
-
 @pytest.fixture
-def shipment(mocked_engine_rpc, mocked_iot_api):
+def shipment(mocked_engine_rpc, mocked_iot_api, profiles_ids):
     return Shipment.objects.create(vault_id=VAULT_ID,
-                                   carrier_wallet_id=random_id(),
-                                   shipper_wallet_id=SHIPPER_ID,
-                                   storage_credentials_id=random_id(),
-                                   owner_id=USER_ID)
+                                   owner_id=USER_ID,
+                                   **profiles_ids)
 
 
 @pytest.fixture
@@ -91,10 +106,8 @@ def shipment_with_device(shipment):
 @pytest.fixture
 def second_shipment(mocked_engine_rpc, mocked_iot_api):
     return Shipment.objects.create(vault_id=random_id(),
-                                   carrier_wallet_id=random_id(),
-                                   shipper_wallet_id=SHIPPER_ID,
-                                   storage_credentials_id=random_id(),
-                                   owner_id=USER_ID)
+                                   owner_id=USER_ID,
+                                   **profiles_ids)
 
 
 @pytest.fixture(autouse=True)
