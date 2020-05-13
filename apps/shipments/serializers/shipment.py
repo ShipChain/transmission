@@ -143,7 +143,8 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     class Meta:
         model = Shipment
         exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
-        read_only_fields = ('owner_id', 'contract_version',) if settings.PROFILES_ENABLED else ('contract_version',)
+        read_only_fields = ('owner_id', 'contract_version', 'arrival_est') \
+            if settings.PROFILES_ENABLED else ('contract_version', 'arrival_est')
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
@@ -410,7 +411,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id', 'manual_update_hash_interval',
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours',
                    'geofences', 'assignee_id', 'gtx_required', 'gtx_validation', 'gtx_validation_timestamp',
-                   'aftership_tracking')
+                   'aftership_tracking', 'arrival_est')
 
 
 class ShipmentOverviewSerializer(serializers.ModelSerializer):

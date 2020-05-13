@@ -47,6 +47,7 @@ attributes:
   - $ref: '#/shipment/departureEst'
   - $ref: '#/shipment/departureAct'
   - $ref: '#/shipment/deliveryApptAct'
+  - $ref: '#/shipment/arrivalEst'
   - $ref: '#/shipment/portArrivalEst'
   - $ref: '#/shipment/portArrivalAct'
   - $ref: '#/shipment/deliveryEst'

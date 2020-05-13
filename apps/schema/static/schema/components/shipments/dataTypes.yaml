@@ -327,6 +327,14 @@ deliveryApptAct:
       type: string
       example: '2018-08-22T17:44:39.874352'
 
+arrivalEst:
+  properties:
+    arrival_est:
+      title: arrival_est
+      description: Estimated time of arrival according to the ShipChain BI Platform
+      type: string
+      example: '2018-08-22T17:44:39.874352'
+
 portArrivalEst:
   properties:
     port_arrival_est:
