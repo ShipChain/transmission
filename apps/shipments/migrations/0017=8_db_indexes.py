@@ -7,7 +7,7 @@ import django_fsm
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0016_gtx_validation_fields'),
+        ('shipments', '0017_add_arrival_est'),
     ]
 
     operations = [
