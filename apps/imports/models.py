@@ -54,7 +54,7 @@ class ShipmentImport(models.Model):
     storage_credentials_id = models.CharField(null=False, max_length=36)
     shipper_wallet_id = models.CharField(null=False, max_length=36)
     carrier_wallet_id = models.CharField(null=False, max_length=36)
-    owner_id = models.CharField(null=False, max_length=36)
+    owner_id = models.CharField(null=False, max_length=36, db_index=True)
     masquerade_id = models.CharField(null=False, max_length=36)
     description = models.CharField(max_length=250, null=True, blank=True)
     file_type = EnumIntegerField(enum=FileType, default=FileType.CSV)
