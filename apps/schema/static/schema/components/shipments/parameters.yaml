@@ -266,9 +266,9 @@ sensorId:
     $ref: '#/dataTypes/uuid'
 
 
-timestampGte:
+after:
   required: false
-  name: timestamp_gte
+  name: after
   in: query
   description: Minimum timestamp of desired telemetry data
   schema:
@@ -277,9 +277,9 @@ timestampGte:
     example: '2018-06-18T14:54:56.652732Z'
 
 
-timestampLte:
+before:
   required: false
-  name: timestamp_lte
+  name: before
   in: query
   description: Maximum timestamp of desired telemetry data
   schema:
@@ -292,10 +292,10 @@ aggregrate:
   required: false
   name: aggregate
   in: query
-  description: Aggregation of telemetry data
+  description: Aggregation of telemetry data. Additionally requires `per` query parameter.
   schema:
     type: string
-    enum: [minnimum, maximum, average]
+    enum: [minimum, maximum, average]
     example: average
 
 
@@ -303,7 +303,7 @@ per:
   required: false
   name: per
   in: query
-  description: Truncation of telemetry data
+  description: Truncation of telemetry data. Additionally requires `aggregrate` query parameter.
   schema:
     type: string
     enum: [minutes, hours, days]

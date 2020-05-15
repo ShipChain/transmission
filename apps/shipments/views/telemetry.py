@@ -15,6 +15,7 @@ limitations under the License.
 """
 from datetime import datetime, timezone
 
+import dateutil.parser
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
@@ -52,7 +53,10 @@ class TelemetryViewSet(mixins.ListModelMixin,
 
     def _truncate_time(self):
         segment = self.request.query_params.get('per')
-        if not segment or segment not in TimeTrunc.__members__:
+        if not segment:
+            raise ValidationError(f'No time selector supplied with aggregation. '
+                                  f'Should be in {list(TimeTrunc.__members__.keys())}')
+        if segment not in TimeTrunc.__members__:
             raise ValidationError(f'Invalid time selector supplied, should be in: {list(TimeTrunc.__members__.keys())}')
 
         return TimeTrunc[segment].value('timestamp')
@@ -85,12 +89,21 @@ class TelemetryViewSet(mixins.ListModelMixin,
     @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        before = request.query_params.get('before')
+        after = request.query_params.get('after')
+        if before and after and (dateutil.parser.parse(before) > dateutil.parser.parse(after)):
+            raise ValidationError(
+                f'Invalid timemismatch applied. Before timestamp {before} is greater than after: {after}')
 
         aggregate = request.query_params.get('aggregate', None)
 
         if aggregate:
             queryset = self._aggregrate_queryset(queryset, aggregate, )
             self.serializer_class = TelemetryResponseAggregrateSerializer
+        else:
+            if request.query_params.get('per'):
+                raise ValidationError(f'No aggregrator supplied with time selector. '
+                                      f'Should be in {list(Aggregates.__members__.keys())}')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

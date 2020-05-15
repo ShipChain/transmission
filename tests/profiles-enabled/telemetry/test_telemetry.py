@@ -11,6 +11,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from copy import deepcopy
+from datetime import timedelta
+
 import pytest
 from django.urls import reverse
 from moto import mock_iot
@@ -133,6 +136,37 @@ class TestRetrieveTelemetryData:
         assert self.unsigned_telemetry['hardware_id'] != unsigned_telemetry_different_hardware['hardware_id']
         assert len(response.json()) == 1
 
+    def test_timestamp(self, client_alice, unsigned_telemetry_different_hardware, current_datetime):
+        telemetry_copy = deepcopy(self.unsigned_telemetry)
+        telemetry_copy['timestamp'] = (current_datetime + timedelta(days=1)).isoformat().replace('+00:00', 'Z')
+        add_telemetry_data_to_shipment([telemetry_copy], self.shipment_alice_with_device)
+
+        valid_timestamp = (current_datetime + timedelta(hours=12)).isoformat().replace('+00:00', 'Z')
+        invalid_before_timestamp = (current_datetime + timedelta(hours=18)).isoformat().replace('+00:00', 'Z')
+        invalid_after_timestamp = (current_datetime + timedelta(hours=6)).isoformat().replace('+00:00', 'Z')
+
+        response = client_alice.get(f'{self.telemetry_url}?before=NOT A TIMESTAMP')
+        AssertionHelper.HTTP_400(response)
+        assert response.json()['before'] == ['Enter a valid date/time.']
+
+        response = client_alice.get(f'{self.telemetry_url}?before={valid_timestamp}')
+        self.unsigned_telemetry.pop('version')
+        AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry, count=1)
+
+        response = client_alice.get(f'{self.telemetry_url}?after={valid_timestamp}')
+        telemetry_copy.pop('version')
+        AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=telemetry_copy, count=1)
+
+        response = client_alice.get(f'{self.telemetry_url}?before={valid_timestamp}&after={invalid_after_timestamp}')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()[0] == \
+            f'Invalid timemismatch applied. Before timestamp {valid_timestamp} is greater than after: {invalid_after_timestamp}'
+
+        response = client_alice.get(f'{self.telemetry_url}?after={valid_timestamp}&before={invalid_before_timestamp}')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()[0] == \
+            f'Invalid timemismatch applied. Before timestamp {invalid_before_timestamp} is greater than after: {valid_timestamp}'
+
     def test_aggregrate_requirements(self, client_alice):
         response = client_alice.get(f'{self.telemetry_url}?aggregate=NOT_AN_AGGREGRATE')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -141,7 +175,12 @@ class TestRetrieveTelemetryData:
         response = client_alice.get(f'{self.telemetry_url}?aggregate={Aggregates.average.name}')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()[0] == \
-               f'Invalid time selector supplied, should be in: {list(TimeTrunc.__members__.keys())}'
+               f'No time selector supplied with aggregation. Should be in {list(TimeTrunc.__members__.keys())}'
+
+        response = client_alice.get(f'{self.telemetry_url}?per={TimeTrunc.minutes.name}')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()[0] == \
+               f'No aggregrator supplied with time selector. Should be in {list(Aggregates.__members__.keys())}'
 
     def test_aggregrate_success(self, client_alice, unsigned_telemetry_different_sensor):
         response = client_alice.get(

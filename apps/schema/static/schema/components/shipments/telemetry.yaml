@@ -7,8 +7,8 @@ get:
   - $ref: 'parameters.yaml#/path'
   - $ref: 'parameters.yaml#/sensorId'
   - $ref: 'parameters.yaml#/hardwareId'
-  - $ref: 'parameters.yaml#/timestampLte'
-  - $ref: 'parameters.yaml#/timestampGte'
+  - $ref: 'parameters.yaml#/before'
+  - $ref: 'parameters.yaml#/after'
   - $ref: 'parameters.yaml#/aggregrate'
   - $ref: 'parameters.yaml#/per'
   tags:
