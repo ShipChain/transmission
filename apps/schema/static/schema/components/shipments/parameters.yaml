@@ -288,7 +288,7 @@ before:
     example: '2018-06-18T14:54:56.652732Z'
 
 
-aggregrate:
+aggregate:
   required: false
   name: aggregate
   in: query
@@ -303,7 +303,7 @@ per:
   required: false
   name: per
   in: query
-  description: Truncation of telemetry data. Additionally requires `aggregrate` query parameter.
+  description: Truncation of telemetry data. Additionally requires `aggregate` query parameter.
   schema:
     type: string
     enum: [minutes, hours, days]

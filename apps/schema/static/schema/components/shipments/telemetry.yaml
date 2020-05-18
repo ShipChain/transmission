@@ -9,7 +9,7 @@ get:
   - $ref: 'parameters.yaml#/hardwareId'
   - $ref: 'parameters.yaml#/before'
   - $ref: 'parameters.yaml#/after'
-  - $ref: 'parameters.yaml#/aggregrate'
+  - $ref: 'parameters.yaml#/aggregate'
   - $ref: 'parameters.yaml#/per'
   tags:
   - Additional Shipment Details
