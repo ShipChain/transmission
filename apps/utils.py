@@ -1,6 +1,9 @@
+from functools import partial
 from enumfields import Enum
 
 from django.conf import settings
+from django.db.models.aggregates import Avg, Max, Min
+from django.db.models.functions import TruncMinute, TruncHour, TruncDay
 
 from rest_framework import exceptions
 from shipchain_common.authentication import get_jwt_from_request
@@ -82,6 +85,18 @@ class UploadStatus(Enum):
         PENDING = 'PENDING'
         COMPLETE = 'COMPLETE'
         FAILED = 'FAILED'
+
+
+class Aggregates(Enum):
+    average = partial(Avg)
+    maximum = partial(Max)
+    minimum = partial(Min)
+
+
+class TimeTrunc(Enum):
+    minutes = partial(TruncMinute)
+    hours = partial(TruncHour)
+    days = partial(TruncDay)
 
 
 def retrieve_profiles_wallet_ids(request):

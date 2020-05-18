@@ -265,5 +265,49 @@ sensorId:
   schema:
     $ref: '#/dataTypes/uuid'
 
+
+after:
+  required: false
+  name: after
+  in: query
+  description: Minimum timestamp of desired telemetry data
+  schema:
+    type: string
+    format: date-time
+    example: '2018-06-18T14:54:56.652732Z'
+
+
+before:
+  required: false
+  name: before
+  in: query
+  description: Maximum timestamp of desired telemetry data
+  schema:
+    type: string
+    format: date-time
+    example: '2018-06-18T14:54:56.652732Z'
+
+
+aggregate:
+  required: false
+  name: aggregate
+  in: query
+  description: Aggregation of telemetry data. Additionally requires `per` query parameter.
+  schema:
+    type: string
+    enum: [minimum, maximum, average]
+    example: average
+
+
+per:
+  required: false
+  name: per
+  in: query
+  description: Truncation of telemetry data. Additionally requires `aggregate` query parameter.
+  schema:
+    type: string
+    enum: [minutes, hours, days]
+    example: minutes
+
 dataTypes:
   $ref: ../core/dataTypes.yaml
