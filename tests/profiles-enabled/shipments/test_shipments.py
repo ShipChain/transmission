@@ -383,7 +383,7 @@ class TestShipmentUpdate:
 
     def test_put_fails(self, client_alice):
         response = client_alice.put(self.url, data={"carriers_scac": "carriers_scac"})
-        AssertionHelper.HTTP_405(response, error='Method "PUT" not allowed.')
+        AssertionHelper.HTTP_405(response)
 
     def test_gtx_update_permissions(self, client_carol, client_gtx_alice):
         response = client_carol.patch(self.url, data={"gtx_required": True})

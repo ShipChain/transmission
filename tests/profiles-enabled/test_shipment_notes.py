@@ -131,11 +131,11 @@ def test_update_delete_shipment_note(client_alice, shipment, shipment_notes):
 
     # A note object cannot be updated
     response = client_alice.patch(url, update_note_data)
-    assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+    AssertionHelper.HTTP_405(response)
 
     # Similarly, a note object cannot be deleted
     response = client_alice.delete(url)
-    assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+    AssertionHelper.HTTP_405(response)
 
 
 @pytest.mark.django_db
@@ -146,8 +146,7 @@ def test_list_search_filter(client_alice, shipper_api_client, api_client, shipme
 
     # An unauthenticated user cannot list a shipment notes
     response = api_client.get(url)
-    assert response.status_code == status.HTTP_403_FORBIDDEN
-    AssertionHelper.HTTP_403(response, error='You do not have permission to perform this action.')
+    AssertionHelper.HTTP_403(response)
 
     # A shipment owner can list all notes associated
     response = client_alice.get(url)

@@ -334,12 +334,12 @@ class TestPermissionDetail:
 
     def test_owner_cannot_retrieve(self, client_alice, url_permission_link_detail):
         response = client_alice.get(url_permission_link_detail)
-        AssertionHelper.HTTP_405(response, error='Method "GET" not allowed.')
+        AssertionHelper.HTTP_405(response)
 
     def test_owner_cannot_update(self, client_alice, url_permission_link_detail):
         response = client_alice.patch(url_permission_link_detail,
                                       {'expiration_date': datetime.utcnow() + timedelta(days=1)})
-        AssertionHelper.HTTP_405(response, error='Method "PATCH" not allowed.')
+        AssertionHelper.HTTP_405(response)
 
 
 class TestPermissionList:

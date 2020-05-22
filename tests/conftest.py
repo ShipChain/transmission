@@ -16,7 +16,7 @@ import pytest
 import requests
 from moto import mock_iot
 from rest_framework.test import APIClient
-from shipchain_common.test_utils import mocked_rpc_response, modified_http_pretty
+from shipchain_common.test_utils import mocked_rpc_response, modified_http_pretty, AssertionHelper
 from shipchain_common.utils import random_id
 
 from apps.shipments.models import Shipment, Device
@@ -123,5 +123,5 @@ def boto():
 
 
 @pytest.fixture
-def entity_shipment_relationship(json_asserter, shipment):
-    return json_asserter.EntityRef(resource='Shipment', pk=shipment.id)
+def entity_shipment_relationship(shipment):
+    return AssertionHelper.EntityRef(resource='Shipment', pk=shipment.id)
