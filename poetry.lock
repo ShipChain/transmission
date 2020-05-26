@@ -371,10 +371,10 @@ description = "Checks CloudFormation templates for practices and behaviour that 
 name = "cfn-lint"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.31.1"
+version = "0.32.1"
 
 [package.dependencies]
-aws-sam-translator = ">=1.21.0"
+aws-sam-translator = ">=1.23.0"
 jsonschema = ">=3.0,<4.0"
 junit-xml = ">=1.9,<2.0"
 six = ">=1.11,<2.0"
@@ -1303,7 +1303,7 @@ description = "More routines for operating on iterables, beyond itertools"
 name = "more-itertools"
 optional = false
 python-versions = ">=3.5"
-version = "8.2.0"
+version = "8.3.0"
 
 [[package]]
 category = "dev"
@@ -1390,7 +1390,7 @@ description = "Core utilities for Python packages"
 name = "packaging"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "20.3"
+version = "20.4"
 
 [package.dependencies]
 pyparsing = ">=2.0.2"
@@ -2056,7 +2056,7 @@ description = "A PyPI package containing shared code for ShipChain's Python/Djan
 name = "shipchain-common"
 optional = false
 python-versions = ">=3.6,<3.8"
-version = "1.0.22"
+version = "1.0.23"
 
 [package.dependencies]
 aws-requests-auth = ">=0.4,<0.5"
@@ -2077,7 +2077,7 @@ description = "Python 2 and 3 compatibility utilities"
 name = "six"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
-version = "1.14.0"
+version = "1.15.0"
 
 [[package]]
 category = "dev"
@@ -2144,7 +2144,7 @@ description = "Extract the top-level domain (TLD) from the URL given."
 name = "tld"
 optional = false
 python-versions = ">=2.7, <4"
-version = "0.12.1"
+version = "0.12.2"
 
 [[package]]
 category = "dev"
@@ -2384,7 +2384,7 @@ test = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
 [metadata]
-content-hash = "905cec0160ddfc909e05ca821724249e260009f0a50f69a275ef18fe37f61d66"
+content-hash = "fef125361e7f26ded609e68b132f453d07eb060db11c0adbac5b1e5b44d1ebb1"
 python-versions = "==3.6.9"
 
 [metadata.files]
@@ -2522,8 +2522,8 @@ cffi = [
     {file = "cffi-1.14.0.tar.gz", hash = "sha256:2d384f4a127a15ba701207f7639d94106693b6cd64173d6c8988e2c25f3ac2b6"},
 ]
 cfn-lint = [
-    {file = "cfn-lint-0.31.1.tar.gz", hash = "sha256:ef3a33a4df06b4955c938274e816a6ad16da5bf36abc9c80821b06d0ec9a340c"},
-    {file = "cfn_lint-0.31.1-py3-none-any.whl", hash = "sha256:b9947cc903da0fb977fac7ce803bcd3a5f4ac19f9dc9199b72b41eb89b2a00b6"},
+    {file = "cfn-lint-0.32.1.tar.gz", hash = "sha256:96dedfaa72b84aed2c93c82f0ad68e0d0385cb986a3cc3fa8b7491cc5f565292"},
+    {file = "cfn_lint-0.32.1-py3-none-any.whl", hash = "sha256:da8adba55060cb95118b15142fefb49b760ff0b4e83c4cff10151408a90c9a21"},
 ]
 channels = [
     {file = "channels-2.3.1-py2.py3-none-any.whl", hash = "sha256:70c988074c03b500c96a46123bb5e37a9444930d0be988d488d1e786dfe08631"},
@@ -2984,8 +2984,8 @@ model-bakery = [
     {file = "model_bakery-1.0.2.tar.gz", hash = "sha256:f0b94fde361abcabaf321c6bb62538aed3909c346ece35c628cb004ff1da6cdc"},
 ]
 more-itertools = [
-    {file = "more-itertools-8.2.0.tar.gz", hash = "sha256:b1ddb932186d8a6ac451e1d95844b382f55e12686d51ca0c68b6f61f2ab7a507"},
-    {file = "more_itertools-8.2.0-py3-none-any.whl", hash = "sha256:5dd8bcf33e5f9513ffa06d5ad33d78f31e1931ac9a18f33d37e77a180d393a7c"},
+    {file = "more-itertools-8.3.0.tar.gz", hash = "sha256:558bb897a2232f5e4f8e2399089e35aecb746e1f9191b6584a151647e89267be"},
+    {file = "more_itertools-8.3.0-py3-none-any.whl", hash = "sha256:7818f596b1e87be009031c7653d01acc46ed422e6656b394b0f765ce66ed4982"},
 ]
 moto = [
     {file = "moto-1.3.14-py2.py3-none-any.whl", hash = "sha256:2b3fa22778504b45715868cad95ad458fdea7227f9005b12e522fc9c2ae0cabc"},
@@ -3022,8 +3022,8 @@ openpyxl = [
     {file = "openpyxl-3.0.3.tar.gz", hash = "sha256:547a9fc6aafcf44abe358b89ed4438d077e9d92e4f182c87e2dc294186dc4b64"},
 ]
 packaging = [
-    {file = "packaging-20.3-py2.py3-none-any.whl", hash = "sha256:82f77b9bee21c1bafbf35a84905d604d5d1223801d639cf3ed140bd651c08752"},
-    {file = "packaging-20.3.tar.gz", hash = "sha256:3c292b474fda1671ec57d46d739d072bfd495a4f51ad01a055121d81e952b7a3"},
+    {file = "packaging-20.4-py2.py3-none-any.whl", hash = "sha256:998416ba6962ae7fbd6596850b80e17859a5753ba17c32284f67bfff33784181"},
+    {file = "packaging-20.4.tar.gz", hash = "sha256:4357f74f47b9c12db93624a82154e9b120fa8293699949152b22065d556079f8"},
 ]
 pathtools = [
     {file = "pathtools-0.1.2.tar.gz", hash = "sha256:7c35c5421a39bb82e58018febd90e3b6e5db34c5443aaaf742b3f33d4655f1c0"},
@@ -3320,12 +3320,12 @@ setoptconf = [
     {file = "setoptconf-0.2.0.tar.gz", hash = "sha256:5b0b5d8e0077713f5d5152d4f63be6f048d9a1bb66be15d089a11c898c3cf49c"},
 ]
 shipchain-common = [
-    {file = "shipchain-common-1.0.22.tar.gz", hash = "sha256:ba31f96083c55f5676f9dd71dd947fdd44d1ce9b7bf1ff1e2ec741728e331a49"},
-    {file = "shipchain_common-1.0.22-py3-none-any.whl", hash = "sha256:1fffb96aff3054094012df561bb88677fa3c632cd1babde78fbeba2d2c283859"},
+    {file = "shipchain-common-1.0.23.tar.gz", hash = "sha256:4bdeb220773b8ab87a641b677b10c1f1dc7a86c16d5e99c3a0bb281f3584ac1e"},
+    {file = "shipchain_common-1.0.23-py3-none-any.whl", hash = "sha256:8aa5fdab68bf41f2a7e16d1bccfe67ffa0b2577be900e667e09878efd342a0e8"},
 ]
 six = [
-    {file = "six-1.14.0-py2.py3-none-any.whl", hash = "sha256:8f3cd2e254d8f793e7f3d6d9df77b92252b52637291d0f0da013c76ea2724b6c"},
-    {file = "six-1.14.0.tar.gz", hash = "sha256:236bdbdce46e6e6a3d61a337c0f8b763ca1e8717c03b369e87a7ec7ce1319c0a"},
+    {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},
+    {file = "six-1.15.0.tar.gz", hash = "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259"},
 ]
 smmap = [
     {file = "smmap-3.0.4-py2.py3-none-any.whl", hash = "sha256:54c44c197c819d5ef1991799a7e30b662d1e520f2ac75c9efbeb54a742214cf4"},
@@ -3352,12 +3352,12 @@ texttable = [
     {file = "texttable-1.6.2.tar.gz", hash = "sha256:eff3703781fbc7750125f50e10f001195174f13825a92a45e9403037d539b4f4"},
 ]
 tld = [
-    {file = "tld-0.12.1-py27-none-any.whl", hash = "sha256:c344206d7d297746b5cb501963f26641bd71462d698919822d75fe7c646e151b"},
-    {file = "tld-0.12.1-py35-none-any.whl", hash = "sha256:eb494c2ea14bb585134154734d7159da1a915a64ac60be0eaff64d9d80a40900"},
-    {file = "tld-0.12.1-py36-none-any.whl", hash = "sha256:a7e04f0f00184c05f72e62f36cc156349f3070add4a328b0e26d425a55db24e7"},
-    {file = "tld-0.12.1-py37-none-any.whl", hash = "sha256:046e186bc57c2ea338f85d39c9448888e0229c8e2770602fd84ebc5ac06ff912"},
-    {file = "tld-0.12.1-py38-none-any.whl", hash = "sha256:04d8cbd11fcfb6a2b71c05ec59ab1ddeb6f205013b74e2beed7ae06c2c948264"},
-    {file = "tld-0.12.1.tar.gz", hash = "sha256:bc11bcf39dce89102d7c6dafffe675e2eab8ddbf7267a615f745d4d288bafc95"},
+    {file = "tld-0.12.2-py27-none-any.whl", hash = "sha256:afc49c2d8d03ebd3cb686fc958747c03d0db5f51a5c5038c893a44fdae4a1987"},
+    {file = "tld-0.12.2-py35-none-any.whl", hash = "sha256:66d1b79284d014a40c36d675c1a56ec22a716d87da2a190b12fe2b267c5a95e9"},
+    {file = "tld-0.12.2-py36-none-any.whl", hash = "sha256:3e7ecadbc58632af78b2aa887d6eaf0d20983061720c070e5bd5639c2bcf63cb"},
+    {file = "tld-0.12.2-py37-none-any.whl", hash = "sha256:5eb6f39835c286189cd3bab7613e1d611fd03e91a5b1926172020c978881daef"},
+    {file = "tld-0.12.2-py38-none-any.whl", hash = "sha256:7a172dc412bb46624f6c61c7afa9ba581a9147699c94386b802830836752ba9f"},
+    {file = "tld-0.12.2.tar.gz", hash = "sha256:cf8410a7ed7b9477f563fa158dabef5117d8374cba55f65142ba0af6dcd15d4d"},
 ]
 toml = [
     {file = "toml-0.10.1-py2.py3-none-any.whl", hash = "sha256:bda89d5935c2eac546d648028b9901107a595863cb36bae0c73ac804a9b4ce88"},

@@ -14,6 +14,7 @@
 
 import pytest
 from rest_framework.reverse import reverse
+from shipchain_common.test_utils import AssertionHelper
 from shipchain_common.utils import random_id
 
 
@@ -28,6 +29,7 @@ def shipment_tag_creation_data():
         'owner_id': USER_ID,
     }
 
+
 @pytest.fixture
 def shipment_tag_creation_missing_owner_id():
     return {
@@ -35,28 +37,28 @@ def shipment_tag_creation_missing_owner_id():
         'tag_value': 'Toronto'
     }
 
+
 @pytest.fixture
-def entity_shipment_relationship(json_asserter, shipment):
-    return json_asserter.EntityRef(resource='Shipment', pk=shipment.id)
+def entity_shipment_relationship(shipment):
+    return AssertionHelper.EntityRef(resource='Shipment', pk=shipment.id)
 
 
 @pytest.mark.django_db
 def test_profiles_disabled_shipment_tag_creation(api_client, shipment, shipment_tag_creation_data,
-                                                 shipment_tag_creation_missing_owner_id, entity_shipment_relationship,
-                                                 json_asserter):
+                                                 shipment_tag_creation_missing_owner_id, entity_shipment_relationship):
 
     url = reverse('shipment-tags-list', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
 
     # A request without user_id should fail
     response = api_client.post(url, shipment_tag_creation_missing_owner_id)
-    json_asserter.HTTP_400(response, error='This field is required.')
+    AssertionHelper.HTTP_400(response, error='This field is required.')
 
     response = api_client.post(url, shipment_tag_creation_data)
-    json_asserter.HTTP_201(response,
-                           entity_refs=json_asserter.EntityRef(
-                               resource='ShipmentTag',
-                               attributes={'tag_type': shipment_tag_creation_data['tag_type'],
-                                           'tag_value': shipment_tag_creation_data['tag_value'],
-                                           'owner_id': USER_ID},
-                               relationships={'shipment': entity_shipment_relationship})
-                           )
+    AssertionHelper.HTTP_201(response,
+                             entity_refs=AssertionHelper.EntityRef(
+                                 resource='ShipmentTag',
+                                 attributes={'tag_type': shipment_tag_creation_data['tag_type'],
+                                             'tag_value': shipment_tag_creation_data['tag_value'],
+                                             'owner_id': USER_ID},
+                                 relationships={'shipment': entity_shipment_relationship})
+                             )

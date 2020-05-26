@@ -58,26 +58,21 @@ class TestPostTelemetryData:
         AssertionHelper.HTTP_204(response)
         assert TelemetryData.objects.all().count() == 2
 
-    # TODO: HTTP_403 on shipchain_common
     def test_nonextant_device_fails(self, api_client, create_signed_telemetry_post):
         response = api_client.post(self.random_telemetry_url, create_signed_telemetry_post)
-        # Error: "No shipment found associated to device."
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        AssertionHelper.HTTP_403(response, error='No shipment found associated to device.')
 
-    # TODO: HTTP_405 on shipchain_common
     def test_no_get_calls(self, api_client):
         response = api_client.get(self.random_telemetry_url)
-        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        AssertionHelper.HTTP_405(response)
 
-    # TODO: HTTP_405 on shipchain_common
     def test_no_patch_calls(self, api_client, create_signed_telemetry_post):
         response = api_client.patch(self.random_telemetry_url, create_signed_telemetry_post)
-        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        AssertionHelper.HTTP_405(response)
 
-    # TODO: HTTP_405 on shipchain_common
     def test_no_del_calls(self, api_client):
         response = api_client.delete(self.random_telemetry_url)
-        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        AssertionHelper.HTTP_405(response)
 
 
 class TestRetrieveTelemetryData:

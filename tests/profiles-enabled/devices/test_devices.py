@@ -164,16 +164,16 @@ class TestTrackingData:
     def test_only_post_calls(self, api_client, tracking_data):
         signed_tracking_data = self.sign_tracking(tracking_data, self.device)
         response = api_client.get(self.url_device)
-        AssertionHelper.HTTP_405(response, error='Method "GET" not allowed.')
+        AssertionHelper.HTTP_405(response)
 
         response = api_client.put(self.url_device, data={'payload': signed_tracking_data})
-        AssertionHelper.HTTP_405(response, error='Method "PUT" not allowed.')
+        AssertionHelper.HTTP_405(response)
 
         response = api_client.patch(self.url_device, data={'payload': signed_tracking_data})
-        AssertionHelper.HTTP_405(response, error='Method "PATCH" not allowed.')
+        AssertionHelper.HTTP_405(response)
 
         response = api_client.delete(self.url_device)
-        AssertionHelper.HTTP_405(response, error='Method "DELETE" not allowed.')
+        AssertionHelper.HTTP_405(response)
 
     def test_requires_shipment_association(self, api_client, shipment_alice, tracking_data):
         signed_tracking_data = self.sign_tracking(tracking_data, self.device)
