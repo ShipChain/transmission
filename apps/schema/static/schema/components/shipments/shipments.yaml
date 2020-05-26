@@ -32,6 +32,7 @@ get:
   - $ref: 'parameters.yaml#/assignee_id'
   - $ref: 'parameters.yaml#/gtxValidation'
   - $ref: 'parameters.yaml#/aftershipTracking'
+  - $ref: 'parameters.yaml#/hasAftershipTracking'
   - $ref: 'parameters.yaml#/customer_fields__has_key'
   - $ref: 'parameters.yaml#/customer_fields__{key}'
   tags:
