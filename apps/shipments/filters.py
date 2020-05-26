@@ -79,7 +79,8 @@ class ShipmentFilter(filters.filterset.FilterSet):
             'state',
             'delayed',
             'asset_physical_id',
-            'asset_custodian_id'
+            'asset_custodian_id',
+            'aftership_tracking'
         )
 
 
@@ -135,6 +136,8 @@ SHIPMENT_SEARCH_FIELDS = (
     'final_destination_location__contact_email',
     'shipment_tags__tag_type',
     'shipment_tags__tag_value',
+    'aftership_tracking',
+    'pk'
 )
 
 SHIPMENT_ORDERING_FIELDS = (

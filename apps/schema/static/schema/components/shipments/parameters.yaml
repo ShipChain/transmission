@@ -288,6 +288,17 @@ before:
     example: '2018-06-18T14:54:56.652732Z'
 
 
+aftershipTracking:
+  required: false
+  name: aftership_tracking
+  in: query
+  description: Aftership Tracking number of shipment
+  schema:
+    type: string
+    format: date-time
+    example: '2018-06-18T14:54:56.652732Z'
+
+
 aggregate:
   required: false
   name: aggregate
