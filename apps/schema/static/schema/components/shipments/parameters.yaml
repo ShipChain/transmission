@@ -303,8 +303,7 @@ aftershipTracking:
   description: Aftership Tracking number of shipment
   schema:
     type: string
-    format: date-time
-    example: '2018-06-18T14:54:56.652732Z'
+    example: 5b766a5cc7c33c0e007de3c9
 
 
 aggregate:
