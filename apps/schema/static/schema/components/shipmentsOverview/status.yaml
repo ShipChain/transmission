@@ -15,6 +15,7 @@ get:
     - $ref: '../shipments/parameters.yaml#/has_ship_from_location'
     - $ref: '../shipments/parameters.yaml#/has_ship_to_location'
     - $ref: '../shipments/parameters.yaml#/has_final_destination_location'
+    - $ref: '../shipments/parameters.yaml#/hasAftershipTracking'
     - $ref: '../shipments/parameters.yaml#/ship_from_location__city'
     - $ref: '../shipments/parameters.yaml#/ship_from_location__state'
     - $ref: '../shipments/parameters.yaml#/ship_from_location__postal_code'
@@ -28,6 +29,7 @@ get:
     - $ref: '../shipments/parameters.yaml#/final_destination_location__postal_code'
     - $ref: '../shipments/parameters.yaml#/final_destination_location__country'
     - $ref: '../shipments/parameters.yaml#/asset_custodian_id'
+    - $ref: '../shipments/parameters.yaml#/aftershipTracking'
     - $ref: '../shipments/parameters.yaml#/customer_fields__has_key'
     - $ref: '../shipments/parameters.yaml#/customer_fields__{key}'
   tags:

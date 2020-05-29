@@ -20,6 +20,14 @@ asLine:
   schema:
     type: string
 
+hasAftershipTracking:
+  name: has_aftership_tracking
+  in: query
+  description: Returns shipments with the field `aftership_tracking`.
+  schema:
+    type: boolean
+    example: true
+
 has_ship_from_location:
   name: has_ship_from_location
   in: query
@@ -286,6 +294,16 @@ before:
     type: string
     format: date-time
     example: '2018-06-18T14:54:56.652732Z'
+
+
+aftershipTracking:
+  required: false
+  name: aftership_tracking
+  in: query
+  description: Aftership Tracking number of shipment
+  schema:
+    type: string
+    example: 5b766a5cc7c33c0e007de3c9
 
 
 aggregate:
