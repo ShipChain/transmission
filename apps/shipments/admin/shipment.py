@@ -81,7 +81,16 @@ NON_SCHEMA_FIELDS = [
     'state',
     'delayed',
     'expected_delay_hours',
-    'exception'
+    'exception',
+    'delayed',
+    'expected_delay_hours',
+    'geofences',
+    'assignee_id',
+    'gtx_required',
+    'gtx_validation',
+    'gtx_validation_timestamp',
+    'aftership_tracking',
+    'arrival_est'
 ]
 
 
