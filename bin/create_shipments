@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+bin/dev-tools/create_shipments.py "$@"
