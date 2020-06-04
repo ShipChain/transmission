@@ -1,16 +1,17 @@
 #! /usr/bin/env python3
 
 import argparse
-import json
 import sys
-from datetime import datetime, timezone, timedelta
+import json
 from json.decoder import JSONDecodeError
-from random import randint
+from datetime import datetime, timezone, timedelta
 from uuid import uuid4
 
-import requests
 from copy import deepcopy
+from random import randint
+import requests
 
+# pylint:disable=invalid-name
 parser = argparse.ArgumentParser()
 parser.add_argument("--total", "-t", help="Total amount of shipments to be created, defaults to 10", type=int)
 parser.add_argument("--startnumber", "-n", help="Number to start at for sequential attributes", type=int)
@@ -32,6 +33,7 @@ parser.add_argument("--add_telemetry", help="Adds telemetry data to shipments (r
 argument_list = sys.argv[1:]
 
 
+# pylint:disable=too-many-instance-attributes
 class CreateShipments:
     # Default variables for local use
     profiles_url = 'http://localhost:9000'
@@ -67,18 +69,15 @@ class CreateShipments:
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
-
     # Values that can be set via command line
     attributes = {}
-    add_tracking = False
-    add_telemetry = False
 
     # Values that cannot be set via command line but dynamic within function
-    active_users = {'user_1'}
     errors = []
     shipments = []
 
     def __init__(self):
+        self.active_users = {'user_1'}
         args = parser.parse_args()
         self.carrier = self._validate_user(args.carrier) if args.carrier else self.users['user_1']
         self.shipper = self._validate_user(args.shipper) if args.shipper else self.users['user_1']
@@ -88,12 +87,12 @@ class CreateShipments:
         self.verbose = args.verbose
         self.device = args.device
         self.chunk_size = int(args.partition) if args.partition else 10
-        if args.add_tracking and not self.device:
-            parser.error(f'--add_tracking requires --device or -d')
         self.add_tracking = args.add_tracking
-        if args.add_telemetry and not self.device:
-            parser.error(f'--add_telemetry requires --device or -d')
+        if self.add_tracking and not self.device:
+            parser.error(f'--add_tracking requires --device or -d')
         self.add_telemetry = args.add_telemetry
+        if self.add_telemetry and not self.device:
+            parser.error(f'--add_telemetry requires --device or -d')
         if args.attributes:
             self._validate_attributes(args.attributes)
         if self.users['user_1'] not in (self.moderator, self.carrier, self.shipper):
@@ -110,13 +109,15 @@ class CreateShipments:
         return self.users[user]
 
     def _validate_attributes(self, attributes):
-        print(f'Validating attributes: {attributes}') if self.verbose else None
+        if self.verbose:
+            print(f'Validating attributes: {attributes}')
         for attribute in attributes:
             try:
                 attribute = json.loads(attribute)
             except JSONDecodeError:
-                print(f'Non json attribute recieved: {attribute}') if self.verbose else None
-            if type(attribute) == dict:
+                if self.verbose:
+                    print(f'Non json attribute recieved: {attribute}')
+            if isinstance(attribute, dict):
                 self.attributes.update(attribute)
             else:
                 try:
@@ -137,17 +138,20 @@ class CreateShipments:
         try:
             response = request_method(url, **kwargs)
         except requests.exceptions.ConnectionError:
-            print(f'Connection error raised when connecting to {url}') if self.verbose else None
+            if self.verbose:
+                print(f'Connection error raised when connecting to {url}')
             self._process_failure(f'Error connecting to url: {url}')
 
         if not response.ok:
-            print(f'Invalid response returned from {url}') if self.verbose else None
+            if self.verbose:
+                print(f'Invalid response returned from {url}')
             self.errors += response.json()['errors']
             return None
         return response.json()
 
     def _retrieve_updated_attributes(self):
-        print(f'Updating attributes to remove update random and sequential variables') if self.verbose else None
+        if self.verbose:
+            print(f'Updating attributes to remove update random and sequential variables')
         updated_attributes = deepcopy(self.attributes)
         for key, value in updated_attributes.items():
             if value == "##RAND##":
@@ -193,7 +197,8 @@ class CreateShipments:
         return response
 
     def _set_wallets(self):
-        print('Generating wallets for shipment') if self.verbose else None
+        if self.verbose:
+            print('Generating wallets for shipment')
         shipper_response = self._parse_request(
             f"{self.profiles_url}/api/v1/wallet/generate",
             headers={'Authorization': 'JWT {}'.format(self.shipper['token'])})
@@ -201,8 +206,8 @@ class CreateShipments:
             f"{self.profiles_url}/api/v1/wallet/generate",
             headers={'Authorization': 'JWT {}'.format(self.carrier['token'])})
         if not shipper_response or not carrier_response:
-            print(f'Error generating {"shipper" if not shipper_response else "carrier"} wallet.') \
-                if self.verbose else None
+            if self.verbose:
+                print(f'Error generating {"shipper" if not shipper_response else "carrier"} wallet.')
 
             self._process_failure(f'Error generating wallets')
 
@@ -211,7 +216,8 @@ class CreateShipments:
                 f"{self.profiles_url}/api/v1/wallet/generate/",
                 headers={'Authorization': 'JWT {}'.format(self.moderator['token'])})
             if not moderator_response:
-                print(f'Error generating moderator wallet.') if self.verbose else None
+                if self.verbose:
+                    print(f'Error generating moderator wallet.')
                 self._process_failure(f'Error generating moderator wallets')
 
             self.attributes['moderator_wallet_id'] = moderator_response['data']['id']
@@ -219,7 +225,8 @@ class CreateShipments:
         self.attributes['carrier_wallet_id'] = carrier_response['data']['id']
 
     def _set_storage_credentials(self):
-        print(f'Creating storage credentials.') if self.verbose else None
+        if self.verbose:
+            print(f'Creating storage credentials.')
 
         response = self._parse_request(
             f"{self.profiles_url}/api/v1/storage_credentials", data={
@@ -232,8 +239,61 @@ class CreateShipments:
         if not response:
             self._process_failure(f'Error generating storage credentials')
 
-        print(f'Created storage credentials: {response["data"]["id"]}') if self.verbose else None
+        if self.verbose:
+            print(f'Created storage credentials: {response["data"]["id"]}')
         self.attributes['storage_credentials_id'] = response['data']['id']
+
+    # pylint:disable=unused-variable
+    def _add_telemetry(self, device_id):
+        if self.verbose:
+            print(f'Creating sensors for device: {device_id}')
+        telemetry_data = []
+        self.telemetry_data['device_id'] = device_id
+        for i in range(3):
+            attributes = {
+                'name': f'Sensor: {str(uuid4())}',
+                'hardware_id': f'Hardware_id: {str(uuid4())}',
+                'units': 'c',
+            }
+            response = self._parse_request(
+                f'{self.profiles_url}/api/v1/device/{device_id}/sensor/',
+                data=attributes,
+                headers={'Authorization': 'JWT {}'.format(self.shipper['token'])}
+            )
+            if not response:
+                print(f'{"Failed to create" if not response.ok else "created"} sensor for device: {device_id}')
+                continue
+
+            telemetry_copy = deepcopy(self.telemetry_data)
+            telemetry_copy['hardware_id'] = attributes['hardware_id']
+            telemetry_copy['sensor_id'] = response['data']['id']
+            for j in range(3):
+                telemetry_copy['value'] = randint(0, 100)
+                telemetry_data.append({"payload": telemetry_copy})
+        if self.verbose:
+            print(f'Adding telemetry via device: {device_id}')
+        telemetry_response = requests.post(
+            f"{self.transmission_url}/api/v1/devices/{device_id}/telemetry",
+            json=telemetry_data,
+            headers={"Content-type": "application/json"}
+        )
+        if self.verbose:
+            print(f'{"Failed to add" if not telemetry_response.ok else "Added"} tracking via device: {device_id}')
+
+    def _add_tracking(self, device_id):
+        if self.verbose:
+            print(f'Adding tracking via device: {device_id}')
+        self.tracking_data['device_id'] = device_id
+        # py
+        tracking_data_collection = [{"payload": self.tracking_data} for i in range(10)]
+        tracking_response = requests.post(
+            f"{self.transmission_url}/api/v1/devices/{device_id}/tracking",
+            json=tracking_data_collection,
+            headers={"Content-type": "application/json"}
+        )
+        if self.verbose:
+            print(f'{"Failed to add" if not tracking_response.ok else "Added"} '
+                  f'tracking via device: {device_id}')
 
     def _create_shipment(self):
         attributes = self._retrieve_updated_attributes()
@@ -246,53 +306,13 @@ class CreateShipments:
         self.shipments.append(response['data']['id'])
 
         if self.add_tracking:
-            print(f'Adding tracking via device: {attributes["device_id"]}') if self.verbose else None
-            self.tracking_data['device_id'] = response['data']['id']
-            tracking_data_collection = [{"payload": self.tracking_data} for i in range(10)]
-            tracking_response = requests.post(
-                f"{self.transmission_url}/api/v1/devices/{attributes['device_id']}/tracking",
-                json=tracking_data_collection,
-                headers={"Content-type": "application/json"}
-            )
-            if self.verbose:
-                print(f'{"Failed to add" if not tracking_response.ok else "Added"} tracking via device: {attributes["device_id"]}')
-
+            self._add_tracking(attributes['device_id'])
         if self.add_telemetry:
-            device_id = attributes["device_id"]
-            print(f'Creating sensors for device: {device_id}') if self.verbose else None
-            telemetry_data = []
-            self.telemetry_data['device_id'] = device_id
-            for i in range(3):
-                attributes = {
-                    'name': f'Sensor: {str(uuid4())}',
-                    'hardware_id': f'Hardware_id: {str(uuid4())}',
-                    'units': 'c',
-                }
-                response = self._parse_request(
-                    f'{self.profiles_url}/api/v1/device/{device_id}/sensor/',
-                    data=attributes,
-                    headers={'Authorization': 'JWT {}'.format(self.shipper['token'])}
-                )
-                if not response:
-                    print(f'{"Failed to create" if not response.ok else "created"} sensor for device: {device_id}')
-                    continue
-
-                telemetry_copy = deepcopy(self.telemetry_data)
-                telemetry_copy['hardware_id'] = attributes['hardware_id']
-                telemetry_copy['sensor_id'] = response['data']['id']
-                telemetry_copy['value'] = randint(0, 100)
-                telemetry_data += [{"payload": telemetry_copy} for i in range(3)]
-            print(f'Adding telemetry via device: {device_id}') if self.verbose else None
-            telemetry_response = requests.post(
-                f"{self.transmission_url}/api/v1/devices/{device_id}/telemetry",
-                json=telemetry_data,
-                headers={"Content-type": "application/json"}
-            )
-            if self.verbose:
-                print(f'{"Failed to add" if not telemetry_response.ok else "Added"} tracking via device: {device_id}')
+            self._add_telemetry(attributes['device_id'])
 
     def create_bulk_shipments(self):
-        print('Generating user tokens') if self.verbose else None
+        if self.verbose:
+            print('Generating user tokens')
         self._set_user_tokens()
         self._set_wallets()
         self._set_storage_credentials()
