@@ -26,12 +26,14 @@ from rest_framework_gis.filters import InBBoxFilter
 from rest_framework_json_api import utils
 from rest_framework_json_api import views as jsapi_views
 from rest_framework_json_api.renderers import JSONRenderer
+from shipchain_common.utils import parse_value
 
 from apps.permissions import get_owner_id
 from ..permissions import shipment_list_wallets_filter
 from ..serializers import QueryParamsSerializer, TrackingOverviewSerializer
 from ..models import TrackingData
-from ..filters import ShipmentOverviewFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
+from ..filters import ShipmentOverviewFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS, \
+    NestedCustomerFieldsSearchFilter
 
 LOG = logging.getLogger('transmission')
 
@@ -86,7 +88,7 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
     permission_classes = (permissions.IsAuthenticated,)
     renderer_classes = (JSONAPIGeojsonRenderer,)
 
-    filter_backends = (InBBoxFilter, filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
+    filter_backends = (InBBoxFilter, NestedCustomerFieldsSearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     bbox_filter_field = 'point'
     search_fields = tuple([f'shipment__{field}' for field in SHIPMENT_SEARCH_FIELDS])
     ordering_fields = tuple([f'shipment__{field}' for field in SHIPMENT_ORDERING_FIELDS])
@@ -121,6 +123,15 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
             # Filter by owner or wallet id
             queryset = queryset.filter(Q(shipment__owner_id=get_owner_id(self.request)) |
                                        shipment_list_wallets_filter(self.request, nested=True))
+
+        queryset = self._parse_customer_fields_queries(queryset)
+
+        return queryset
+
+    def _parse_customer_fields_queries(self, queryset):
+        for key, value in self.request.query_params.items():
+            if key.startswith('shipment__customer_fields__'):
+                queryset = queryset.filter(**{key: parse_value(value)})
 
         return queryset
 

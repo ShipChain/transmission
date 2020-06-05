@@ -1,7 +1,25 @@
+"""
+Copyright 2019 ShipChain, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 from django.forms.fields import MultipleChoiceField
 from django_filters import rest_framework as filters
+from rest_framework import filters as rest_framework_filters
 from rest_framework_json_api.serializers import ValidationError
 from shipchain_common.filters import filter_enum
+from shipchain_common.utils import parse_value
+
 from .models import Shipment, TransitState, TelemetryData, TrackingData
 
 SHIPMENT_STATE_CHOICES = tuple((m.name, m.value, ) for m in TransitState)
@@ -163,3 +181,33 @@ class TelemetryFilter(filters.filterset.FilterSet):
             'before',
             'after',
         )
+
+
+class CustomerFieldsSearchFilter(rest_framework_filters.SearchFilter):
+    def filter_queryset(self, request, queryset, view):
+        search_queryset = super().filter_queryset(request, queryset, view)
+        shipment_ids = []
+        search_terms = self.get_search_terms(request)
+        if not search_terms:
+            return search_queryset
+        for value in search_terms:
+            for shipment in queryset:
+                if shipment.customer_fields and parse_value(value) in shipment.customer_fields.values():
+                    shipment_ids.append(shipment.id)
+
+        return search_queryset.union(queryset.filter(pk__in=shipment_ids))
+
+
+class NestedCustomerFieldsSearchFilter(rest_framework_filters.SearchFilter):
+    def filter_queryset(self, request, queryset, view):
+        search_queryset = super().filter_queryset(request, queryset, view)
+        shipment_ids = []
+        search_terms = self.get_search_terms(request)
+        if not search_terms:
+            return search_queryset
+        for value in search_terms:
+            for nested in queryset:
+                if nested.shipment.customer_fields and parse_value(value) in nested.shipment.customer_fields.values():
+                    shipment_ids.append(nested.shipment.id)
+
+        return search_queryset.union(queryset.filter(shipment__pk__in=shipment_ids))

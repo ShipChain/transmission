@@ -270,6 +270,41 @@ class TestShipmentsList:
                                      count=1)
             mocked_profiles_wallet_list.assert_calls(self.profiles_assertions)
 
+    def test_customer_fields_search(self, client_alice, alice_organization_shipment_fixtures,
+                                    alice_organization_shipments, mocked_profiles_wallet_list):
+        customer_fields = {
+            'number': 8675309,
+            'boolean': True,
+            'datetime': datetime.utcnow().isoformat(),
+            'decimal': 3.14,
+            'string': 'value'
+        }
+
+        alice_organization_shipments[0].customer_fields = customer_fields
+        alice_organization_shipments[0].save()
+
+        for value in customer_fields.values():
+            response = client_alice.get(f'{self.url}?search={json.dumps(value)}')
+            AssertionHelper.HTTP_200(response, is_list=True,
+                                     entity_refs=alice_organization_shipment_fixtures[0],
+                                     count=1)
+            mocked_profiles_wallet_list.assert_calls(self.profiles_assertions)
+
+        alice_organization_shipments[1].customer_fields = {
+            'other_key': 'value'
+        }
+        alice_organization_shipments[1].save()
+        alice_organization_shipment_fixtures[0].attributes['customer_fields'] = customer_fields
+        alice_organization_shipment_fixtures[1].attributes['customer_fields'] = {
+            'other_key': 'value'
+        }
+        response = client_alice.get(f'{self.url}?search=value')
+        AssertionHelper.HTTP_200(response, is_list=True,
+                                 entity_refs=[alice_organization_shipment_fixtures[0],
+                                              alice_organization_shipment_fixtures[1]],
+                                 count=2)
+        mocked_profiles_wallet_list.assert_calls(self.profiles_assertions)
+
 
 class TestShipmentDetail:
     @pytest.fixture(autouse=True)
