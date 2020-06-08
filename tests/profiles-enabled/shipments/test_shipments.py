@@ -294,15 +294,23 @@ class TestShipmentsList:
             'other_key': 'value'
         }
         alice_organization_shipments[1].save()
-        alice_organization_shipment_fixtures[0].attributes['customer_fields'] = customer_fields
         alice_organization_shipment_fixtures[1].attributes['customer_fields'] = {
             'other_key': 'value'
+        }
+        # Should search values or keys
+        alice_organization_shipments[2].customer_fields = {
+            'value': 'other'
+        }
+        alice_organization_shipments[2].save()
+        alice_organization_shipment_fixtures[2].attributes['customer_fields'] = {
+            'value': 'other'
         }
         response = client_alice.get(f'{self.url}?search=value')
         AssertionHelper.HTTP_200(response, is_list=True,
                                  entity_refs=[alice_organization_shipment_fixtures[0],
-                                              alice_organization_shipment_fixtures[1]],
-                                 count=2)
+                                              alice_organization_shipment_fixtures[1],
+                                              alice_organization_shipment_fixtures[2]],
+                                 count=3)
         mocked_profiles_wallet_list.assert_calls(self.profiles_assertions)
 
 
