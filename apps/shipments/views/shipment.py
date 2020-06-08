@@ -34,7 +34,7 @@ from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelView
 
 from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
-from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS, CustomerFieldsSearchFilter
+from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 from ..geojson import render_filtered_point_features
 from ..models import Shipment, TrackingData, PermissionLink
 from ..permissions import IsOwnerOrShared, IsOwnerShipperCarrierModerator, shipment_list_wallets_filter
@@ -71,7 +71,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
     permission_classes = ((HasViewSetActionPermissions,
                            IsOwnerOrShared, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
 
-    filter_backends = (CustomerFieldsSearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
 
     filterset_class = ShipmentFilter
 

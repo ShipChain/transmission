@@ -32,8 +32,7 @@ from apps.permissions import get_owner_id
 from ..permissions import shipment_list_wallets_filter
 from ..serializers import QueryParamsSerializer, TrackingOverviewSerializer
 from ..models import TrackingData
-from ..filters import ShipmentOverviewFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS, \
-    NestedCustomerFieldsSearchFilter
+from ..filters import ShipmentOverviewFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 
 LOG = logging.getLogger('transmission')
 
@@ -88,7 +87,7 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
     permission_classes = (permissions.IsAuthenticated,)
     renderer_classes = (JSONAPIGeojsonRenderer,)
 
-    filter_backends = (InBBoxFilter, NestedCustomerFieldsSearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
+    filter_backends = (InBBoxFilter, filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     bbox_filter_field = 'point'
     search_fields = tuple([f'shipment__{field}' for field in SHIPMENT_SEARCH_FIELDS])
     ordering_fields = tuple([f'shipment__{field}' for field in SHIPMENT_ORDERING_FIELDS])
