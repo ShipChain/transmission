@@ -117,6 +117,11 @@ class ShipmentViewSet(ConfigurableModelViewSet):
 
             queryset = queryset.filter(queryset_filter)
 
+        queryset = self._parse_customer_fields_queries(queryset)
+
+        return queryset
+
+    def _parse_customer_fields_queries(self, queryset):
         for key, value in self.request.query_params.items():
             if key.startswith('customer_fields__'):
                 queryset = queryset.filter(**{key: parse_value(value)})

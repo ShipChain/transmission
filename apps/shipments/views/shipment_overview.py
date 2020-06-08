@@ -26,6 +26,7 @@ from rest_framework_gis.filters import InBBoxFilter
 from rest_framework_json_api import utils
 from rest_framework_json_api import views as jsapi_views
 from rest_framework_json_api.renderers import JSONRenderer
+from shipchain_common.utils import parse_value
 
 from apps.permissions import get_owner_id
 from ..permissions import shipment_list_wallets_filter
@@ -121,6 +122,15 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
             # Filter by owner or wallet id
             queryset = queryset.filter(Q(shipment__owner_id=get_owner_id(self.request)) |
                                        shipment_list_wallets_filter(self.request, nested=True))
+
+        queryset = self._parse_customer_fields_queries(queryset)
+
+        return queryset
+
+    def _parse_customer_fields_queries(self, queryset):
+        for key, value in self.request.query_params.items():
+            if key.startswith('shipment__customer_fields__'):
+                queryset = queryset.filter(**{key: parse_value(value)})
 
         return queryset
 

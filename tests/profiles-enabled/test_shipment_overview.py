@@ -266,6 +266,60 @@ def test_ordering(client_alice, api_client, shipment_tracking_data, mocked_profi
     mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
 
 
+def test_search_custom_fields(client_alice, shipment_tracking_data, mocked_profiles_wallet_list,
+                              profiles_wallet_list_assertions):
+    url = reverse('shipment-overview', kwargs={'version': 'v1'})
+    customer_fields = {
+        'number': 8675309,
+        'boolean': True,
+        'datetime': datetime.datetime.utcnow().isoformat(),
+        'decimal': 3.14,
+        'string': 'value'
+    }
+    shipment_tracking_data[0].customer_fields = customer_fields
+    shipment_tracking_data[0].save()
+    for value in customer_fields.values():
+        response = client_alice.get(f'{url}?search={json.dumps(value)}')
+        AssertionHelper.HTTP_200(response, vnd=True, is_list=True, check_ordering=True,
+                                 entity_refs=[AssertionHelper.EntityRef(
+                                     resource='TrackingData',
+                                     relationships=[{
+                                         'shipment': AssertionHelper.EntityRef(
+                                             resource='Shipment',
+                                             pk=shipment_tracking_data[0].id
+                                         )
+                                     }]
+                                 )])
+        mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
+
+
+def test_filter_custom_fields(client_alice, shipment_tracking_data, mocked_profiles_wallet_list,
+                              profiles_wallet_list_assertions):
+    url = reverse('shipment-overview', kwargs={'version': 'v1'})
+    customer_fields = {
+        'number': 8675309,
+        'boolean': True,
+        'datetime': datetime.datetime.utcnow().isoformat(),
+        'decimal': 3.14,
+        'string': 'value'
+    }
+    shipment_tracking_data[0].customer_fields = customer_fields
+    shipment_tracking_data[0].save()
+    for key, value in customer_fields.items():
+        response = client_alice.get(f'{url}?customer_fields__{key}={json.dumps(value)}')
+        AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=1,
+                                 entity_refs=[AssertionHelper.EntityRef(
+                                     resource='TrackingData',
+                                     relationships=[{
+                                         'shipment': AssertionHelper.EntityRef(
+                                             resource='Shipment',
+                                             pk=shipment_tracking_data[0].id
+                                         )
+                                     }]
+                                 )])
+        mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
+
+
 @pytest.mark.django_db
 def test_filter_shipment_device_location(client_alice, shipment_tracking_data, mocked_profiles_wallet_list,
                                          profiles_wallet_list_assertions):
