@@ -60,7 +60,7 @@ class TestPostTelemetryData:
 
     def test_nonextant_device_fails(self, api_client, create_signed_telemetry_post):
         response = api_client.post(self.random_telemetry_url, create_signed_telemetry_post)
-        AssertionHelper.HTTP_403(response, error='No shipment found associated to device.')
+        AssertionHelper.HTTP_403(response, error='No shipment/route found associated to device.')
 
     def test_no_get_calls(self, api_client):
         response = api_client.get(self.random_telemetry_url)
