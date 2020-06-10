@@ -35,3 +35,17 @@ class Route(models.Model):
 
     class Meta:
         ordering = ('created_at',)
+
+    def get_next_leg_sequence(self):
+        last_leg = self.routeleg_set.all().order_by('sequence').last()
+        return (last_leg.sequence + 1) if last_leg else 1
+
+    def can_disassociate_device(self):
+        if not self.device:
+            return True
+
+        for leg in self.routeleg_set.all():
+            if not leg.shipment.can_disassociate_device():
+                return False
+
+        return True
