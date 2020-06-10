@@ -407,6 +407,15 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
         self.gtx_validation = validation_status
         self.gtx_validation_timestamp = datetime.now(timezone.utc)
 
+    def can_disassociate_device(self):
+        if not self.device:
+            return True
+
+        if TransitState(self.state) == TransitState.IN_TRANSIT:
+            return False
+
+        return True
+
     # Defaults
     FUNDING_TYPE = FundingType.NO_FUNDING.value
     SHIPMENT_AMOUNT = 0
