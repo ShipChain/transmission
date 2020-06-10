@@ -17,4 +17,3 @@ from .route import Route
 from .route_leg import RouteLeg
 from .telemetry import RouteTelemetryData
 from .tracking import RouteTrackingData
-

@@ -29,6 +29,7 @@ class Route(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     owner_id = models.UUIDField(null=False)
 
+    name = models.CharField(max_length=64, null=True, blank=True)
     driver_id = models.UUIDField(null=True)
     device = models.OneToOneField(Device, on_delete=models.PROTECT, null=True)
 
