@@ -347,7 +347,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
     # State transitions
     @transition(field=state, source=TransitState.AWAITING_PICKUP.value, target=TransitState.IN_TRANSIT.value)
-    def pick_up(self, document_id=None, asset_physical_id=None, **kwargs):
+    def pick_up(self, document_id=None, asset_physical_id=None, action_timestamp=None, **kwargs):
         if document_id:
             # TODO: Validate that ID is a BOL Document?
             pass
@@ -360,17 +360,17 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
             self.asset_physical_id = hashlib.sha256(asset_physical_id.encode()).hexdigest()
             celery.current_app.send_task('apps.shipments.tasks.gtx_validation_task', args=[self.id])
 
-        self.pickup_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
+        self.pickup_act = datetime.now(timezone.utc) if not action_timestamp else action_timestamp
 
     @transition(field=state, source=TransitState.IN_TRANSIT.value, target=TransitState.AWAITING_DELIVERY.value)
-    def arrival(self, tracking_data=None, **kwargs):
+    def arrival(self, tracking_data=None, action_timestamp=None, **kwargs):
         if tracking_data:
             # TODO: Validate that tracking update is within bbox around delivery location?
             pass
-        self.port_arrival_act = datetime.now(timezone.utc)
+        self.port_arrival_act = datetime.now(timezone.utc) if not action_timestamp else action_timestamp
 
     @transition(field=state, source=TransitState.AWAITING_DELIVERY.value, target=TransitState.DELIVERED.value)
-    def drop_off(self, document_id=None, raw_asset_physical_id=None, **kwargs):
+    def drop_off(self, document_id=None, raw_asset_physical_id=None, action_timestamp=None, **kwargs):
         if document_id:
             # TODO: Validate that ID is a BOL Document?
             pass
@@ -382,7 +382,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                 raise PermissionDenied(f"Hash of asset tag does not match value "
                                        f"specified in Shipment.asset_physical_id")
 
-        self.delivery_act = datetime.now(timezone.utc)  # TODO: pull from action parameters?
+        self.delivery_act = datetime.now(timezone.utc) if not action_timestamp else action_timestamp
 
     def validate_gtx(self):
         validation_status = GTXValidation.VALIDATION_FAILED

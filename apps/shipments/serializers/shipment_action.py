@@ -20,6 +20,7 @@ from django_fsm import can_proceed
 from enumfields import Enum
 from rest_framework import exceptions
 from rest_framework_json_api import serializers
+from shipchain_common.authentication import is_internal_call
 from shipchain_common.utils import UpperEnumField
 
 from apps.shipments.models import Shipment, TransitState
@@ -37,6 +38,7 @@ class ShipmentActionRequestSerializer(serializers.Serializer):
     document_id = serializers.CharField(required=False, allow_null=True)
     raw_asset_physical_id = serializers.CharField(required=False, allow_null=True)
     asset_physical_id = serializers.CharField(required=False, allow_null=True)
+    action_timestamp = serializers.DateTimeField(required=False)
 
     def validate_action_type(self, action_type):
         shipment = self.context['shipment']
@@ -46,3 +48,8 @@ class ShipmentActionRequestSerializer(serializers.Serializer):
             raise exceptions.ValidationError(f'Action {action_type.name} not available while Shipment '
                                              f'is in state {TransitState(shipment.state).name}')
         return action_type
+
+    def validate_action_timestamp(self, action_timestamp):
+        if not is_internal_call(self.context['request']):
+            raise exceptions.ValidationError('Can only manually set timestamp for action on internal calls')
+        return action_timestamp
