@@ -27,6 +27,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from shipchain_common.exceptions import Custom500Error
 
+from apps.routes.serializers.tracking_data import RouteTrackingDataToDbSerializer
 from apps.shipments.models import Device
 from apps.shipments.permissions import IsOwnerOrShared
 from apps.shipments.serializers import SignedDevicePayloadSerializer, UnvalidatedDevicePayloadSerializer, \
@@ -108,8 +109,7 @@ class DeviceViewSet(viewsets.ViewSet):
         if associated_entity_type == 'shipment':
             serializer_class = TrackingDataToDbSerializer
         elif associated_entity_type == 'route':
-            raise NotImplementedError
-            # serializer_class = None
+            serializer_class = RouteTrackingDataToDbSerializer
         else:
             raise ValidationError('Unable to determine entity associated to device')
 
