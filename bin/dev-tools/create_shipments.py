@@ -6,46 +6,88 @@ import json
 from json.decoder import JSONDecodeError
 from datetime import datetime, timezone, timedelta
 from uuid import uuid4
+from enum import Enum
+import logging
 
 from copy import deepcopy
 from random import randint
 import requests
 
 # pylint:disable=invalid-name
+logger = logging.getLogger('transmission')
+
+
+class CriticalError(Exception):
+    def __init__(self, message):
+        logger.critical(message)
+        self.parameter = message
+
+    def __str__(self):
+        return repr(self.parameter)
+
+
+class NonCriticalError(Exception):
+    def __init__(self, message):
+        logger.warning(message)
+        self.parameter = message
+
+    def __str__(self):
+        return repr(self.parameter)
+
+
+class LogLevels(Enum):
+    critical = 'CRITICAL'
+    error = 'ERROR'
+    warning = 'WARNING'
+    info = 'INFO'
+    debug = 'DEBUG'
+
+    def __str__(self):
+        return self.value
+
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--total", "-t", help="Total amount of shipments to be created, defaults to 10", type=int)
-parser.add_argument("--startnumber", "-n", help="Number to start at for sequential attributes", type=int)
-parser.add_argument("--partition", "-p", help="Number shipments to create per wallet, defaults to 10", type=int)
-parser.add_argument("--carrier", "-c", help="Set carrier wallet owner (defaults to user 1)")
-parser.add_argument("--shipper", "-s", help="Set shipper wallet owner (defaults to user 1)")
-parser.add_argument("--moderator", "-m", help="Set moderator wallet owner (defaults to None)")
-parser.add_argument("--verbose", "-v", help="More descriptive when running functions.", action="store_true")
+parser.add_argument("--total", "-t", help="Total amount of shipments to be created, defaults to 10", type=int,
+                    default=10)
+parser.add_argument("--startnumber", "-n", help="Number to start at for sequential attributes", type=int,
+                    default=0)
+parser.add_argument("--partition", "-p", help="Number shipments to create per wallet, defaults to 10", type=int,
+                    default=10)
+parser.add_argument("--carrier", "-c", help="Set carrier wallet owner by passing in the username. Defaults to user1.",
+                    choices=['user1@shipchain.io', 'user2@shipchain.io'], default='user1@shipchain.io')
+parser.add_argument("--shipper", "-s", help="Set shipper wallet owner by passing in the username. Defaults to user1.",
+                    choices=['user1@shipchain.io', 'user2@shipchain.io'], default='user1@shipchain.io')
+parser.add_argument("--moderator", "-m",
+                    help="Set moderator wallet owner by passing in the username. Defaults to user1.",
+                    choices=['user1@shipchain.io', 'user2@shipchain.io'])
+parser.add_argument("--loglevel", "-l", help="Set the logging level for the creator. Defaults to warning.",
+                    choices=list(LogLevels.__members__), default='warning')
 parser.add_argument("--device", "-d", help="Add devices to shipment creation, defaults to false",
                     action="store_true")
 parser.add_argument("--attributes", "-a", action='append',
-                    help="Attributes to be sent in shipment creation (defaults to required values)")
+                    help="Attributes to be sent in shipment creation (defaults to required values). "
+                         "Format should be either {\"key\": \"value\"} or key = value.")
 parser.add_argument("--add_tracking", help="Adds tracking data to shipments (requires --device or -d)",
                     action='store_true')
 parser.add_argument("--add_telemetry", help="Adds telemetry data to shipments (requires --device or -d)",
                     action='store_true')
-
-# Keep all but the first command-line arguments
-argument_list = sys.argv[1:]
+parser.add_argument("--profiles_url", help="Sets the profiles url for the creator. Defaults to localhost:9000",
+                    default='http://localhost:9000')
+parser.add_argument("--transmission_url", help="Sets the transmission url for the creator. Defaults to localhost:8000",
+                    default='http://localhost:8000')
 
 
 # pylint:disable=too-many-instance-attributes
-class CreateShipments:
+class ShipmentCreator:
     # Default variables for local use
-    profiles_url = 'http://localhost:9000'
-    transmission_url = 'http://localhost:8000'
     client_id = 892633
     users = {
-        'user_1': {
+        'user1@shipchain.io': {
             'username': 'user1@shipchain.io',
             'password': 'user1Password',
             'token': None,
             'token_exp': None,
-        }, 'user_2': {
+        }, 'user2@shipchain.io': {
             'username': 'user2@shipchain.io',
             'password': 'user2Password',
             'token': None,
@@ -69,89 +111,72 @@ class CreateShipments:
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
-    # Values that can be set via command line
-    attributes = {}
-
-    # Values that cannot be set via command line but dynamic within function
-    errors = []
-    shipments = []
-
     def __init__(self):
-        self.active_users = {'user_1'}
-        args = parser.parse_args()
-        self.carrier = self._validate_user(args.carrier) if args.carrier else self.users['user_1']
-        self.shipper = self._validate_user(args.shipper) if args.shipper else self.users['user_1']
-        self.moderator = self._validate_user(args.moderator) if args.moderator else None
-        self.sequence_number = args.startnumber if args.startnumber else 0
-        self.total = int(args.total) if args.total else 10
-        self.verbose = args.verbose
-        self.device = args.device
-        self.chunk_size = int(args.partition) if args.partition else 10
-        self.add_tracking = args.add_tracking
+        self.attributes = {}
+        self.errors = []
+        self.shipments = []
+
+    # pylint: disable=attribute-defined-outside-init
+    def handle_args(self, command_args):
+        self.carrier = self.users[command_args.carrier]
+        self.shipper = self.users[command_args.shipper]
+        self.moderator = self.users[command_args.moderator] if command_args.moderator else None
+        self.sequence_number = command_args.startnumber
+        self.total = int(command_args.total)
+        console = logging.StreamHandler()
+        console.setLevel(LogLevels[command_args.loglevel].value)
+        logger.addHandler(console)
+        logger.setLevel(LogLevels[command_args.loglevel].value)
+        self.device = command_args.device
+        self.chunk_size = int(command_args.partition)
+        self.add_tracking = command_args.add_tracking
         if self.add_tracking and not self.device:
             parser.error(f'--add_tracking requires --device or -d')
-        self.add_telemetry = args.add_telemetry
+        self.add_telemetry = command_args.add_telemetry
+        self.profiles_url = command_args.profiles_url
+        self.transmission_url = command_args.transmission_url
         if self.add_telemetry and not self.device:
             parser.error(f'--add_telemetry requires --device or -d')
-        if args.attributes:
-            self._validate_attributes(args.attributes)
-        if self.users['user_1'] not in (self.moderator, self.carrier, self.shipper):
-            self.active_users.remove('user_1')
+        if command_args.attributes:
+            self._validate_attributes(command_args.attributes)
 
     def _chunker(self, array):
         return (array[i:i + self.chunk_size] for i in range(0, len(array), self.chunk_size))
 
-    def _validate_user(self, user):
-        if user not in self.users:
-            self._process_failure(f'Invalid user: {user}')
-        if user not in self.active_users:
-            self.active_users.add(user)
-        return self.users[user]
-
     def _validate_attributes(self, attributes):
-        if self.verbose:
-            print(f'Validating attributes: {attributes}')
+        logger.info(f'Validating attributes: {attributes}')
         for attribute in attributes:
             try:
                 attribute = json.loads(attribute)
             except JSONDecodeError:
-                if self.verbose:
-                    print(f'Non json attribute recieved: {attribute}')
+                logger.info(f'Non json attribute recieved: {attribute}')
             if isinstance(attribute, dict):
+                logger.info(f'Dict attribute recieved: {attribute}')
                 self.attributes.update(attribute)
             else:
                 try:
                     key, value = attribute.split("=")
                 except ValueError:
-                    self._process_failure(f'Invalid format for attribute: {attribute}, should be in format: key=value')
+                    raise CriticalError(f'Invalid format for attribute: {attribute}, should be in format: key=value')
                 self.attributes[key] = value
-
-    def _process_failure(self, error_message):
-        print(f'Shipment Creator failed: {error_message}')
-        print(f'Response errors: {self.errors}')
-        sys.exit(2)
 
     def _parse_request(self, url, method='post', **kwargs):
         if method not in ['post', 'get', 'patch']:
-            self._process_failure(f'Invalid method: {method}')
+            raise CriticalError(f'Invalid method: {method}')
         request_method = getattr(requests, method)
         try:
             response = request_method(url, **kwargs)
         except requests.exceptions.ConnectionError:
-            if self.verbose:
-                print(f'Connection error raised when connecting to {url}')
-            self._process_failure(f'Error connecting to url: {url}')
+            raise CriticalError(f'Connection error raised when connecting to {url}')
 
         if not response.ok:
-            if self.verbose:
-                print(f'Invalid response returned from {url}')
             self.errors += response.json()['errors']
-            return None
+            raise NonCriticalError(f'Invalid response returned from {url}')
+
         return response.json()
 
     def _retrieve_updated_attributes(self):
-        if self.verbose:
-            print(f'Updating attributes to remove update random and sequential variables')
+        logger.info('Updating attributes to remove/update random and sequential variables')
         updated_attributes = deepcopy(self.attributes)
         for key, value in updated_attributes.items():
             if value == "##RAND##":
@@ -159,94 +184,88 @@ class CreateShipments:
             elif value == "##NUM##":
                 updated_attributes[key] = self.sequence_number
         if self.device:
-            device_response = self._parse_request(
-                f"{self.profiles_url}/api/v1/device",
-                data={'device_type': "AXLE_GATEWAY"},
-                headers={'Authorization': 'JWT {}'.format(self.shipper['token'])})
-            if not device_response:
-                self._process_failure(f'Error generating device')
+            try:
+                device_response = self._parse_request(
+                    f"{self.profiles_url}/api/v1/device",
+                    data={'device_type': "AXLE_GATEWAY"},
+                    headers={'Authorization': 'JWT {}'.format(self.shipper['token'])})
+            except NonCriticalError:
+                raise CriticalError(f'Error generating device')
             updated_attributes['device_id'] = device_response['data']['id']
         self.sequence_number += 1
         return updated_attributes
 
-    def _set_user_tokens(self):
-        for user in self.active_users:
-            if self.users[user]['token_exp'] and (self.users[user]['token_exp'] < datetime.now(timezone.utc)):
-                continue
-            response = self.get_user_jwt(self.users[user]['username'], self.users[user]['password'])
-            if not response:
-                self._process_failure(f'Error generating tokens')
+    def get_user_jwt(self, user):
+        if user['token_exp'] and user['token_exp'] < datetime.now(timezone.utc):
+            logger.debug(f'User {user["username"]} has non-expired token')
+            return user['token']
 
-            self.users[user]['token'] = response['id_token']
-            self.users[user]['token_exp'] = datetime.now(timezone.utc) + timedelta(seconds=response['expires_in'])
-
-    def get_user_jwt(self, username, password):
         response = self._parse_request(
             f"{self.profiles_url}/openid/token/",
             data={
-                "username": username,
-                "password": password,
+                "username": user['username'],
+                "password": user['password'],
                 "client_id": self.client_id,
                 "grant_type": "password",
                 "scope": "openid email"
             })
         if not response:
-            print(self.errors)
-            sys.exit(2)
+            raise CriticalError(f'Error generating token for user {user["username"]}')
 
-        return response
+        user['token'] = response['id_token']
+        # Give a buffer of 15 seconds to the token time check
+        user['token_exp'] = datetime.now(timezone.utc) + timedelta(seconds=(response['expires_in'] - 15))
+        return response['id_token']
 
     def _set_wallets(self):
-        if self.verbose:
-            print('Generating wallets for shipment')
-        shipper_response = self._parse_request(
-            f"{self.profiles_url}/api/v1/wallet/generate",
-            headers={'Authorization': 'JWT {}'.format(self.shipper['token'])})
-        carrier_response = self._parse_request(
-            f"{self.profiles_url}/api/v1/wallet/generate",
-            headers={'Authorization': 'JWT {}'.format(self.carrier['token'])})
-        if not shipper_response or not carrier_response:
-            if self.verbose:
-                print(f'Error generating {"shipper" if not shipper_response else "carrier"} wallet.')
-
-            self._process_failure(f'Error generating wallets')
+        logger.info('Generating wallets for shipment')
+        try:
+            shipper_response = self._parse_request(
+                f"{self.profiles_url}/api/v1/wallet/generate",
+                headers={'Authorization': f'JWT {self.get_user_jwt(self.shipper)}'})
+        except NonCriticalError:
+            raise CriticalError(f'Error generating shipper wallet for user {self.shipper["username"]}.')
+        try:
+            carrier_response = self._parse_request(
+                f"{self.profiles_url}/api/v1/wallet/generate",
+                headers={'Authorization': f'JWT {self.get_user_jwt(self.carrier)}'})
+        except NonCriticalError:
+            raise CriticalError(f'Error generating carrier wallet for user {self.carrier["username"]}.')
 
         if self.moderator:
-            moderator_response = self._parse_request(
-                f"{self.profiles_url}/api/v1/wallet/generate/",
-                headers={'Authorization': 'JWT {}'.format(self.moderator['token'])})
-            if not moderator_response:
-                if self.verbose:
-                    print(f'Error generating moderator wallet.')
-                self._process_failure(f'Error generating moderator wallets')
+            try:
+                moderator_response = self._parse_request(
+                    f"{self.profiles_url}/api/v1/wallet/generate/",
+                    headers={'Authorization': f'JWT {self.get_user_jwt(self.moderator)}'})
+            except NonCriticalError:
+                raise CriticalError(f'Error generating storage credentials for user {self.shipper["username"]}.')
 
             self.attributes['moderator_wallet_id'] = moderator_response['data']['id']
         self.attributes['shipper_wallet_id'] = shipper_response['data']['id']
         self.attributes['carrier_wallet_id'] = carrier_response['data']['id']
 
     def _set_storage_credentials(self):
-        if self.verbose:
-            print(f'Creating storage credentials.')
-
-        response = self._parse_request(
-            f"{self.profiles_url}/api/v1/storage_credentials", data={
-                'driver_type': 'local',
-                'base_path': '/shipments',
-                'options': "{}",
-                'title': f'Shipment creator SC: {str(uuid4())}'
-            }, headers={'Authorization': 'JWT {}'.format(self.shipper['token'])})
+        logger.info('Creating storage credentials.')
+        try:
+            response = self._parse_request(
+                f"{self.profiles_url}/api/v1/storage_credentials", data={
+                    'driver_type': 'local',
+                    'base_path': '/shipments',
+                    'options': "{}",
+                    'title': f'Shipment creator SC: {str(uuid4())}'
+                }, headers={'Authorization': f'JWT {self.get_user_jwt(self.shipper)}'})
+        except NonCriticalError:
+            raise CriticalError(f'Error generating storage .')
 
         if not response:
-            self._process_failure(f'Error generating storage credentials')
+            raise CriticalError(f'Error generating storage credentials.')
 
-        if self.verbose:
-            print(f'Created storage credentials: {response["data"]["id"]}')
+        logger.debug(f'Created storage credentials: {response["data"]["id"]}')
         self.attributes['storage_credentials_id'] = response['data']['id']
 
     # pylint:disable=unused-variable
     def _add_telemetry(self, device_id):
-        if self.verbose:
-            print(f'Creating sensors for device: {device_id}')
+        logger.info(f'Creating sensors for device: {device_id}')
         telemetry_data = []
         self.telemetry_data['device_id'] = device_id
         for i in range(3):
@@ -255,14 +274,18 @@ class CreateShipments:
                 'hardware_id': f'Hardware_id: {str(uuid4())}',
                 'units': 'c',
             }
-            response = self._parse_request(
-                f'{self.profiles_url}/api/v1/device/{device_id}/sensor/',
-                data=attributes,
-                headers={'Authorization': 'JWT {}'.format(self.shipper['token'])}
-            )
-            if not response:
-                print(f'{"Failed to create" if not response.ok else "created"} sensor for device: {device_id}')
+            try:
+                response = self._parse_request(
+                    f'{self.profiles_url}/api/v1/device/{device_id}/sensor/',
+                    data=attributes,
+                    headers={'Authorization': f'JWT {self.get_user_jwt(self.shipper)}'}
+                )
+
+            except NonCriticalError:
+                logger.warning(f'Failed to create sensor for device: {device_id}')
                 continue
+
+            logger.info(f'Created sensor {response["data"]["id"]} for device {device_id}')
 
             telemetry_copy = deepcopy(self.telemetry_data)
             telemetry_copy['hardware_id'] = attributes['hardware_id']
@@ -270,39 +293,43 @@ class CreateShipments:
             for j in range(3):
                 telemetry_copy['value'] = randint(0, 100)
                 telemetry_data.append({"payload": telemetry_copy})
-        if self.verbose:
-            print(f'Adding telemetry via device: {device_id}')
+
+        logger.info(f'Adding telemetry via device: {device_id}')
         telemetry_response = requests.post(
             f"{self.transmission_url}/api/v1/devices/{device_id}/telemetry",
             json=telemetry_data,
             headers={"Content-type": "application/json"}
         )
-        if self.verbose:
-            print(f'{"Failed to add" if not telemetry_response.ok else "Added"} tracking via device: {device_id}')
+        if not telemetry_response.ok:
+            logger.warning(f'Failed to add telemetry data for device: {device_id}')
+        else:
+            logger.info(f'Added telemetry data via device: {device_id}')
 
     def _add_tracking(self, device_id):
-        if self.verbose:
-            print(f'Adding tracking via device: {device_id}')
+        logger.info(f'Adding tracking via device: {device_id}')
         self.tracking_data['device_id'] = device_id
-        # py
         tracking_data_collection = [{"payload": self.tracking_data} for i in range(10)]
         tracking_response = requests.post(
             f"{self.transmission_url}/api/v1/devices/{device_id}/tracking",
             json=tracking_data_collection,
             headers={"Content-type": "application/json"}
         )
-        if self.verbose:
-            print(f'{"Failed to add" if not tracking_response.ok else "Added"} '
-                  f'tracking via device: {device_id}')
+        if not tracking_response.ok:
+            logger.warning(f'Failed to add tracking data for device: {device_id}')
+        else:
+            logger.info(f'Added tracking data via device: {device_id}')
 
     def _create_shipment(self):
         attributes = self._retrieve_updated_attributes()
-        response = self._parse_request(
-            f"{self.transmission_url}/api/v1/shipments/",
-            data=attributes,
-            headers={'Authorization': 'JWT {}'.format(self.shipper['token'])})
-        if not response:
+        try:
+            response = self._parse_request(
+                f"{self.transmission_url}/api/v1/shipments/",
+                data=attributes,
+                headers={'Authorization': f'JWT {self.get_user_jwt(self.shipper)}'})
+        except NonCriticalError:
+            logger.warning(f'Failed to create shipment.')
             return
+
         self.shipments.append(response['data']['id'])
 
         if self.add_tracking:
@@ -311,22 +338,31 @@ class CreateShipments:
             self._add_telemetry(attributes['device_id'])
 
     def create_bulk_shipments(self):
-        if self.verbose:
-            print('Generating user tokens')
-        self._set_user_tokens()
-        self._set_wallets()
-        self._set_storage_credentials()
+        try:
+            self._set_wallets()
+            self._set_storage_credentials()
+        except CriticalError:
+            logger.critical(f'Response errors: {self.errors}')
+            sys.exit(2)
+
         for i in range(self.total):
             if i % self.chunk_size != 0:
-                self._set_user_tokens()
-                self._set_wallets()
-            self._create_shipment()
+                try:
+                    self._set_wallets()
+                except CriticalError:
+                    logger.critical(f'Response errors: {self.errors}')
+                    break
+            try:
+                self._create_shipment()
+            except NonCriticalError:
+                logger.info(f'Errors when generating shipments: {self.errors}')
 
-        print(f'Shipments created: {len(self.shipments)}')
-        if self.verbose:
-            print(f'Shipment ids: {self.shipments}')
-        print(f'Response Errors: {self.errors}')
+        logger.info(f'Shipments created: {len(self.shipments)}')
+        logger.info(f'Shipment ids: {self.shipments}')
 
 
-shipment_creator = CreateShipments()
-shipment_creator.create_bulk_shipments()
+if __name__ == '__main__':
+    args = parser.parse_args()
+    shipment_creator = ShipmentCreator()
+    shipment_creator.handle_args(args)
+    shipment_creator.create_bulk_shipments()
