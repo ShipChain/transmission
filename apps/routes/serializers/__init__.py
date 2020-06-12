@@ -15,3 +15,6 @@ limitations under the License.
 """
 from .route import RouteSerializer, RouteCreateSerializer, RouteUpdateSerializer
 from .route_leg import RouteLegCreateSerializer, RouteLegInfoSerializer
+from .tracking_data import BaseRouteDataToDbSerializer, RouteTrackingDataToDbSerializer
+from .telemetry_data import RouteTelemetryDataToDbSerializer, RouteTelemetryResponseSerializer, \
+    RouteTelemetryResponseAggregateSerializer

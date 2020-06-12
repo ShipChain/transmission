@@ -7,4 +7,4 @@ from .shipment_history import *
 from .tags import *
 from .tracking_data import *
 from .telemetry_data import TelemetryDataToDbSerializer, TelemetryResponseSerializer,\
-    TelemetryResponseAggregrateSerializer
+    TelemetryResponseAggregateSerializer

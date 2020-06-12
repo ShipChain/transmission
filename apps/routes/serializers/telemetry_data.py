@@ -17,25 +17,25 @@ import logging
 
 from rest_framework import serializers
 
-from apps.shipments.models import TelemetryData
-from . import BaseDataToDbSerializer
+from apps.routes.models import RouteTelemetryData
+from apps.routes.serializers import BaseRouteDataToDbSerializer
 
 LOG = logging.getLogger('transmission')
 
 
-class TelemetryDataToDbSerializer(BaseDataToDbSerializer):
+class RouteTelemetryDataToDbSerializer(BaseRouteDataToDbSerializer):
     """
     Serializer for telemetry data to be cached in db
     """
     class Meta:
-        model = TelemetryData
+        model = RouteTelemetryData
         exclude = ('device',)
 
     def create(self, validated_data):
-        return TelemetryData.objects.create(**validated_data, **self.context)
+        return RouteTelemetryData.objects.create(**validated_data, **self.context)
 
 
-class TelemetryResponseSerializer(serializers.ModelSerializer):
+class RouteTelemetryResponseSerializer(serializers.ModelSerializer):
     """
     Serializer for telemetry data consumer
     """
@@ -43,10 +43,10 @@ class TelemetryResponseSerializer(serializers.ModelSerializer):
     value = serializers.FloatField()
 
     class Meta:
-        model = TelemetryData
+        model = RouteTelemetryData
         fields = ('sensor_id', 'timestamp', 'hardware_id', 'value')
 
 
-class TelemetryResponseAggregateSerializer(TelemetryResponseSerializer):
+class RouteTelemetryResponseAggregateSerializer(RouteTelemetryResponseSerializer):
     timestamp = serializers.DateTimeField(source='window')
     value = serializers.FloatField(source='aggregate_value')
