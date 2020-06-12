@@ -111,12 +111,31 @@ class ShipmentCreator:
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
-    def __init__(self):
+    # pylint: disable=too-many-arguments, too-many-locals
+    def __init__(self, carrier='user1@shipchain.io', shipper='user1@shipchain.io', moderator=None, sequence_number=0,
+                 total=10, loglevel='warning', device=False, partition=10, attributes=None, add_tracking=False,
+                 add_telemetry=False, profiles_url='http://localhost:9000', transmission_url='http://localhost:8000'):
         self.attributes = {}
         self.errors = []
         self.shipments = []
+        self.carrier = self.users[carrier]
+        self.shipper = self.users[shipper]
+        self.moderator = self.users[moderator] if moderator else None
+        self.sequence_number = sequence_number
+        self.total = total
+        console = logging.StreamHandler()
+        console.setLevel(LogLevels[loglevel].value)
+        logger.addHandler(console)
+        logger.setLevel(LogLevels[loglevel].value)
+        self.device = device
+        self.chunk_size = partition
+        self.add_tracking = add_tracking
+        self.add_telemetry = add_telemetry
+        self.profiles_url = profiles_url
+        self.transmission_url = transmission_url
+        if attributes:
+            self._validate_attributes(attributes)
 
-    # pylint: disable=attribute-defined-outside-init
     def handle_args(self, command_args):
         self.carrier = self.users[command_args.carrier]
         self.shipper = self.users[command_args.shipper]
@@ -133,10 +152,10 @@ class ShipmentCreator:
         if self.add_tracking and not self.device:
             parser.error(f'--add_tracking requires --device or -d')
         self.add_telemetry = command_args.add_telemetry
-        self.profiles_url = command_args.profiles_url
-        self.transmission_url = command_args.transmission_url
         if self.add_telemetry and not self.device:
             parser.error(f'--add_telemetry requires --device or -d')
+        self.profiles_url = command_args.profiles_url
+        self.transmission_url = command_args.transmission_url
         if command_args.attributes:
             self._validate_attributes(command_args.attributes)
 
@@ -149,9 +168,9 @@ class ShipmentCreator:
             try:
                 attribute = json.loads(attribute)
             except JSONDecodeError:
-                logger.info(f'Non json attribute recieved: {attribute}')
+                logger.debug(f'Non json attribute recieved: {attribute}')
             if isinstance(attribute, dict):
-                logger.info(f'Dict attribute recieved: {attribute}')
+                logger.debug(f'Dict attribute recieved: {attribute}')
                 self.attributes.update(attribute)
             else:
                 try:
@@ -213,8 +232,8 @@ class ShipmentCreator:
             raise CriticalError(f'Error generating token for user {user["username"]}')
 
         user['token'] = response['id_token']
-        # Give a buffer of 15 seconds to the token time check
-        user['token_exp'] = datetime.now(timezone.utc) + timedelta(seconds=(response['expires_in'] - 15))
+        # Give a buffer of 60 seconds to the token time check
+        user['token_exp'] = datetime.now(timezone.utc) + timedelta(seconds=(response['expires_in'] - 60))
         return response['id_token']
 
     def _set_wallets(self):
