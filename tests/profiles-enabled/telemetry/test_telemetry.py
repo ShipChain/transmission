@@ -162,10 +162,10 @@ class TestRetrieveTelemetryData:
         assert response.json()[0] == \
             f'Invalid timemismatch applied. Before timestamp {invalid_before_timestamp} is greater than after: {valid_timestamp}'
 
-    def test_aggregrate_requirements(self, client_alice):
-        response = client_alice.get(f'{self.telemetry_url}?aggregate=NOT_AN_AGGREGRATE')
+    def test_aggregate_requirements(self, client_alice):
+        response = client_alice.get(f'{self.telemetry_url}?aggregate=NOT_AN_AGGREGATE')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()[0] == f'Invalid aggregrate supplied should be in: {list(Aggregates.__members__.keys())}'
+        assert response.json()[0] == f'Invalid aggregate supplied should be in: {list(Aggregates.__members__.keys())}'
 
         response = client_alice.get(f'{self.telemetry_url}?aggregate={Aggregates.average.name}')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -175,9 +175,9 @@ class TestRetrieveTelemetryData:
         response = client_alice.get(f'{self.telemetry_url}?per={TimeTrunc.minutes.name}')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()[0] == \
-               f'No aggregrator supplied with time selector. Should be in {list(Aggregates.__members__.keys())}'
+               f'No aggregator supplied with time selector. Should be in {list(Aggregates.__members__.keys())}'
 
-    def test_aggregrate_success(self, client_alice, unsigned_telemetry_different_sensor):
+    def test_aggregate_success(self, client_alice, unsigned_telemetry_different_sensor):
         response = client_alice.get(
             f'{self.telemetry_url}?aggregate={Aggregates.average.name}&per={TimeTrunc.minutes.name}')
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes={
