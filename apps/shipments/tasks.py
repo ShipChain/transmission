@@ -19,6 +19,8 @@ def tracking_data_update(self, shipment_id, payload):
                                           'module': __name__})
     shipment = Shipment.objects.get(id=shipment_id)
 
+    # TODO: return if shipment is delivered (or otherwise complete)?
+
     rpc_client = RPCClientFactory.get_client()
     signature = rpc_client.add_tracking_data(shipment.storage_credentials_id,
                                              shipment.shipper_wallet_id,
@@ -36,6 +38,8 @@ def telemetry_data_update(self, shipment_id, payload):
     log_metric('transmission.info', tags={'method': 'shipments_tasks.telemetry_data_update',
                                           'module': __name__})
     shipment = Shipment.objects.get(id=shipment_id)
+
+    # TODO: return if shipment is delivered (or otherwise complete)?
 
     rpc_client = RPCClientFactory.get_client()
     signature = rpc_client.add_telemetry_data(shipment.storage_credentials_id,
