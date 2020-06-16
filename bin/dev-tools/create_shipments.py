@@ -5,6 +5,7 @@ import sys
 import json
 from json.decoder import JSONDecodeError
 from datetime import datetime, timezone, timedelta
+from urllib.parse import urlparse
 from uuid import uuid4
 from enum import Enum
 import logging
@@ -15,11 +16,13 @@ import requests
 
 # pylint:disable=invalid-name
 logger = logging.getLogger('transmission')
+console = logging.StreamHandler()
 
 
 class CriticalError(Exception):
     def __init__(self, message):
         logger.critical(message)
+        logger.removeHandler(console)
         self.parameter = message
 
     def __str__(self):
@@ -71,9 +74,10 @@ parser.add_argument("--add_tracking", help="Adds tracking data to shipments (req
                     action='store_true')
 parser.add_argument("--add_telemetry", help="Adds telemetry data to shipments (requires --device or -d)",
                     action='store_true')
-parser.add_argument("--profiles_url", help="Sets the profiles url for the creator. Defaults to localhost:9000",
+parser.add_argument("--profiles_url", help="Sets the profiles url for the creator. Defaults to http://localhost:9000",
                     default='http://localhost:9000')
-parser.add_argument("--transmission_url", help="Sets the transmission url for the creator. Defaults to localhost:8000",
+parser.add_argument("--transmission_url",
+                    help="Sets the transmission url for the creator. Defaults to http://localhost:8000",
                     default='http://localhost:8000')
 
 
@@ -112,18 +116,21 @@ class ShipmentCreator:
     }
 
     # pylint: disable=too-many-arguments, too-many-locals
-    def __init__(self, carrier='user1@shipchain.io', shipper='user1@shipchain.io', moderator=None, sequence_number=0,
-                 total=10, loglevel='warning', device=False, partition=10, attributes=None, add_tracking=False,
-                 add_telemetry=False, profiles_url='http://localhost:9000', transmission_url='http://localhost:8000'):
+    def __init__(self):
         self.attributes = {}
         self.errors = []
         self.shipments = []
+
+    # pylint: disable=too-many-arguments, too-many-locals, attribute-defined-outside-init
+    def set_shipment_fields(self, carrier='user1@shipchain.io', shipper='user1@shipchain.io', moderator=None,
+                            startnumber=0, total=10, loglevel='warning', device=False, partition=10, attributes=None,
+                            add_tracking=False, add_telemetry=False, profiles_url='http://localhost:9000',
+                            transmission_url='http://localhost:8000'):
         self.carrier = self.users[carrier]
         self.shipper = self.users[shipper]
         self.moderator = self.users[moderator] if moderator else None
-        self.sequence_number = sequence_number
+        self.sequence_number = startnumber
         self.total = total
-        console = logging.StreamHandler()
         console.setLevel(LogLevels[loglevel].value)
         logger.addHandler(console)
         logger.setLevel(LogLevels[loglevel].value)
@@ -131,36 +138,22 @@ class ShipmentCreator:
         self.chunk_size = partition
         self.add_tracking = add_tracking
         self.add_telemetry = add_telemetry
-        self.profiles_url = profiles_url
-        self.transmission_url = transmission_url
+        self.profiles_url = self._validate_url(profiles_url, 'profiles')
+        self.transmission_url = self._validate_url(transmission_url, 'transmission')
         if attributes:
             self._validate_attributes(attributes)
 
-    def handle_args(self, command_args):
-        self.carrier = self.users[command_args.carrier]
-        self.shipper = self.users[command_args.shipper]
-        self.moderator = self.users[command_args.moderator] if command_args.moderator else None
-        self.sequence_number = command_args.startnumber
-        self.total = int(command_args.total)
-        console = logging.StreamHandler()
-        console.setLevel(LogLevels[command_args.loglevel].value)
-        logger.addHandler(console)
-        logger.setLevel(LogLevels[command_args.loglevel].value)
-        self.device = command_args.device
-        self.chunk_size = int(command_args.partition)
-        self.add_tracking = command_args.add_tracking
-        if self.add_tracking and not self.device:
-            parser.error(f'--add_tracking requires --device or -d')
-        self.add_telemetry = command_args.add_telemetry
-        if self.add_telemetry and not self.device:
-            parser.error(f'--add_telemetry requires --device or -d')
-        self.profiles_url = command_args.profiles_url
-        self.transmission_url = command_args.transmission_url
-        if command_args.attributes:
-            self._validate_attributes(command_args.attributes)
-
     def _chunker(self, array):
         return (array[i:i + self.chunk_size] for i in range(0, len(array), self.chunk_size))
+
+    def _validate_url(self, url, url_base):
+        try:
+            result = urlparse(url)
+            if not result.scheme or not result.netloc:
+                raise CriticalError(f'Invalid url supplied for {url_base}: {url}')
+            return url
+        except ValueError:
+            raise CriticalError(f'Invalid url supplied for {url_base}: {url}')
 
     def _validate_attributes(self, attributes):
         logger.info(f'Validating attributes: {attributes}')
@@ -382,6 +375,10 @@ class ShipmentCreator:
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    args_dict = vars(args)
     shipment_creator = ShipmentCreator()
-    shipment_creator.handle_args(args)
+    try:
+        shipment_creator.set_shipment_fields(**args_dict)
+    except CriticalError:
+        sys.exit(2)
     shipment_creator.create_bulk_shipments()
