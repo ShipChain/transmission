@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from datetime import datetime, timezone
 
 from functools import partial
 
@@ -52,4 +53,6 @@ class ShipmentActionRequestSerializer(serializers.Serializer):
     def validate_action_timestamp(self, action_timestamp):
         if not is_internal_call(self.context['request']):
             raise exceptions.ValidationError('Can only manually set timestamp for action on internal calls')
+        if action_timestamp > datetime.now(timezone.utc):
+            raise exceptions.ValidationError('Cannot set action for datetime in the future.')
         return action_timestamp
