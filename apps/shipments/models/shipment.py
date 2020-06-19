@@ -31,7 +31,7 @@ from django_fsm import FSMIntegerField, transition
 from enumfields import Enum, EnumIntegerField
 from enumfields import EnumField
 from influxdb_metrics.loader import log_metric
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from shipchain_common.utils import random_id
 
 from apps.eth.fields import AddressField, HashField
@@ -367,6 +367,11 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
         if tracking_data:
             # TODO: Validate that tracking update is within bbox around delivery location?
             pass
+
+        if action_timestamp:
+            if action_timestamp < self.pickup_act:
+                raise ValidationError(f'Invalid datetime for action: arrival timestamp cannot occur before pickup.')
+
         self.port_arrival_act = datetime.now(timezone.utc) if not action_timestamp else action_timestamp
 
     @transition(field=state, source=TransitState.AWAITING_DELIVERY.value, target=TransitState.DELIVERED.value)
@@ -381,6 +386,9 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
                                              hashlib.sha256(raw_asset_physical_id.encode()).hexdigest()):
                 raise PermissionDenied(f"Hash of asset tag does not match value "
                                        f"specified in Shipment.asset_physical_id")
+        if action_timestamp:
+            if action_timestamp < self.port_arrival_act:
+                raise ValidationError(f'Invalid datetime for action: drop off timestamp cannot occur before arrival.')
 
         self.delivery_act = datetime.now(timezone.utc) if not action_timestamp else action_timestamp
 
