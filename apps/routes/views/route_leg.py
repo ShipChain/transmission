@@ -15,11 +15,18 @@ limitations under the License.
 """
 import logging
 
+from django.conf import settings
+from django.db.models import Q
+from rest_framework import permissions
+from rest_framework.exceptions import ValidationError
 from shipchain_common.mixins import mixins as cgvs_mixins
 from shipchain_common.viewsets import ConfigurableGenericViewSet, ActionConfiguration
 
+from apps.permissions import get_user
 from apps.routes.models import RouteLeg
+from apps.routes.permissions import NestedRoutePermission
 from apps.routes.serializers import RouteLegCreateSerializer, RouteLegInfoSerializer
+from apps.shipments.models import TransitState
 
 LOG = logging.getLogger('transmission')
 
@@ -27,9 +34,10 @@ LOG = logging.getLogger('transmission')
 class RouteLegViewSet(cgvs_mixins.CreateModelMixin,
                       cgvs_mixins.DestroyModelMixin,
                       ConfigurableGenericViewSet):
-
     queryset = RouteLeg.objects.all()
     serializer_class = RouteLegInfoSerializer
+    permission_classes = ((permissions.IsAuthenticated, NestedRoutePermission) if settings.PROFILES_ENABLED
+                          else (permissions.AllowAny, NestedRoutePermission))
 
     configuration = {
         'create': ActionConfiguration(
@@ -37,3 +45,20 @@ class RouteLegViewSet(cgvs_mixins.CreateModelMixin,
             response_serializer=RouteLegInfoSerializer,
         )
     }
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(route__id=self.kwargs['route_pk'])
+
+        if settings.PROFILES_ENABLED:
+            user_id, organization_id = get_user(self.request)
+            queryset_filter = Q(route__owner_id=organization_id) | Q(route__owner_id=user_id) if organization_id \
+                else Q(route__owner_id=user_id)
+            queryset = queryset.filter(queryset_filter)
+
+        return queryset
+
+    def perform_destroy(self, instance):
+        for leg in instance.route.routeleg_set.all():
+            if TransitState(leg.shipment.state).value > TransitState.AWAITING_PICKUP.value:
+                raise ValidationError(f'Cannot remove shipment from route after transit has begun')
+        return super().perform_destroy(instance)
