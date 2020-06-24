@@ -16,7 +16,7 @@ limitations under the License.
 from datetime import datetime, timezone
 
 from functools import partial
-
+from django.conf import settings
 from django_fsm import can_proceed
 from enumfields import Enum
 from rest_framework import exceptions
@@ -51,7 +51,7 @@ class ShipmentActionRequestSerializer(serializers.Serializer):
         return action_type
 
     def validate_action_timestamp(self, action_timestamp):
-        if not is_internal_call(self.context['request']):
+        if settings.PROFILES_ENABLED and not is_internal_call(self.context['request'], 'third-party-integrator'):
             raise exceptions.ValidationError('Can only manually set timestamp for action on internal calls')
         if action_timestamp > datetime.now(timezone.utc):
             raise exceptions.ValidationError('Cannot set action for datetime in the future.')

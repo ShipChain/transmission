@@ -318,10 +318,15 @@ def test_set_timestamps(client_alice, shipment):
 
     response = client_alice.post(url, data=invalid_action_timestamp, X_NGINX_SOURCE='internal',
                                  X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=transmission.test-internal')
+    AssertionHelper.HTTP_400(response, error='Can only manually set timestamp for action on internal calls',
+                             pointer='action_timestamp')
+
+    response = client_alice.post(url, data=invalid_action_timestamp, X_NGINX_SOURCE='internal',
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
     AssertionHelper.HTTP_400(response, error='Cannot set action for datetime in the future.', pointer='action_timestamp')
 
     response = client_alice.post(url, data=action, X_NGINX_SOURCE='internal',
-                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=transmission.test-internal')
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
     AssertionHelper.HTTP_200(response,
                              entity_refs=AssertionHelper.EntityRef(
                                  resource='Shipment',
@@ -341,11 +346,11 @@ def test_set_timestamps(client_alice, shipment):
                              pointer='action_timestamp')
 
     response = client_alice.post(url, data=invalid_action_timestamp, X_NGINX_SOURCE='internal',
-                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=transmission.test-internal')
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
     AssertionHelper.HTTP_400(response, error='Invalid datetime for action: arrival timestamp cannot occur before pickup.')
 
     response = client_alice.post(url, data=action, X_NGINX_SOURCE='internal',
-                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=transmission.test-internal')
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
     AssertionHelper.HTTP_200(response,
                              entity_refs=AssertionHelper.EntityRef(
                                  resource='Shipment',
@@ -362,11 +367,11 @@ def test_set_timestamps(client_alice, shipment):
                              pointer='action_timestamp')
 
     response = client_alice.post(url, data=invalid_action_timestamp, X_NGINX_SOURCE='internal',
-                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=transmission.test-internal')
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
     AssertionHelper.HTTP_400(response, error='Invalid datetime for action: drop off timestamp cannot occur before arrival.')
 
     response = client_alice.post(url, data=action, X_NGINX_SOURCE='internal',
-                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=transmission.test-internal')
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
     AssertionHelper.HTTP_200(response,
                              entity_refs=AssertionHelper.EntityRef(
                                  resource='Shipment',
