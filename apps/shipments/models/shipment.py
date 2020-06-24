@@ -408,7 +408,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
         self.gtx_validation_timestamp = datetime.now(timezone.utc)
 
     def can_disassociate_device(self):
-        if not self.device:
+        if not hasattr(self, 'routeleg') and not self.device:
             return True
 
         if TransitState(self.state) == TransitState.IN_TRANSIT:
