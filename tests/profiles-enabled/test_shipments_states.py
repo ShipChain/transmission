@@ -11,7 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 import pytz
@@ -296,6 +296,89 @@ def test_dropoff_asset_physical_id(client_alice, shipment):
                                  pk=shipment.id,
                                  attributes={'state': TransitState.DELIVERED.name})
                              )
+
+
+@pytest.mark.django_db
+def test_set_timestamps(client_alice, shipment):
+    assert shipment.pickup_act is None
+    url = reverse('shipment-actions', kwargs={'version': 'v1', 'shipment_pk': shipment.id})
+    yesterday_timestamp = datetime.utcnow() - timedelta(days=1)
+    action = {
+        'action_type': ActionType.PICK_UP.name,
+        'action_timestamp': yesterday_timestamp.isoformat()
+    }
+    invalid_action_timestamp = {
+        'action_type': ActionType.ARRIVAL.name,
+        'action_timestamp': (yesterday_timestamp + timedelta(days=2)).isoformat()
+    }
+
+    response = client_alice.post(url, data=action)
+    AssertionHelper.HTTP_400(response, error='Can only manually set timestamp for action on internal calls',
+                             pointer='action_timestamp')
+
+    response = client_alice.post(url, data=invalid_action_timestamp, X_NGINX_SOURCE='internal',
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=transmission.test-internal')
+    AssertionHelper.HTTP_400(response, error='Can only manually set timestamp for action on internal calls',
+                             pointer='action_timestamp')
+
+    response = client_alice.post(url, data=invalid_action_timestamp, X_NGINX_SOURCE='internal',
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
+    AssertionHelper.HTTP_400(response, error='Cannot set action for datetime in the future.', pointer='action_timestamp')
+
+    response = client_alice.post(url, data=action, X_NGINX_SOURCE='internal',
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
+    AssertionHelper.HTTP_200(response,
+                             entity_refs=AssertionHelper.EntityRef(
+                                 resource='Shipment',
+                                 pk=shipment.id,
+                                 attributes={'state': TransitState.IN_TRANSIT.name,
+                                             'pickup_act': f'{yesterday_timestamp.isoformat()}Z'}
+                             ))
+
+    action['action_type'] = ActionType.ARRIVAL.name
+    invalid_action_timestamp = {
+        'action_type': ActionType.ARRIVAL.name,
+        'action_timestamp': (yesterday_timestamp - timedelta(days=1)).isoformat()
+    }
+
+    response = client_alice.post(url, data=action)
+    AssertionHelper.HTTP_400(response, error='Can only manually set timestamp for action on internal calls',
+                             pointer='action_timestamp')
+
+    response = client_alice.post(url, data=invalid_action_timestamp, X_NGINX_SOURCE='internal',
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
+    AssertionHelper.HTTP_400(response, error='Invalid datetime for action: arrival timestamp cannot occur before pickup.')
+
+    response = client_alice.post(url, data=action, X_NGINX_SOURCE='internal',
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
+    AssertionHelper.HTTP_200(response,
+                             entity_refs=AssertionHelper.EntityRef(
+                                 resource='Shipment',
+                                 pk=shipment.id,
+                                 attributes={'state': TransitState.AWAITING_DELIVERY.name,
+                                             'port_arrival_act': f'{yesterday_timestamp.isoformat()}Z'}
+                             ))
+
+    action['action_type'] = ActionType.DROP_OFF.name
+    invalid_action_timestamp['action_type'] = ActionType.DROP_OFF.name
+
+    response = client_alice.post(url, data=action)
+    AssertionHelper.HTTP_400(response, error='Can only manually set timestamp for action on internal calls',
+                             pointer='action_timestamp')
+
+    response = client_alice.post(url, data=invalid_action_timestamp, X_NGINX_SOURCE='internal',
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
+    AssertionHelper.HTTP_400(response, error='Invalid datetime for action: drop off timestamp cannot occur before arrival.')
+
+    response = client_alice.post(url, data=action, X_NGINX_SOURCE='internal',
+                                 X_SSL_CLIENT_VERIFY='SUCCESS', X_SSL_CLIENT_DN='/CN=third-party-integrator.test-internal')
+    AssertionHelper.HTTP_200(response,
+                             entity_refs=AssertionHelper.EntityRef(
+                                 resource='Shipment',
+                                 pk=shipment.id,
+                                 attributes={'state': TransitState.DELIVERED.name,
+                                             'delivery_act': f'{yesterday_timestamp.isoformat()}Z'}
+                             ))
 
 
 @pytest.mark.django_db

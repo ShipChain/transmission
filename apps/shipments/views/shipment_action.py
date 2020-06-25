@@ -43,7 +43,8 @@ class ShipmentActionsView(APIView):
         log_metric('transmission.info', tags={'method': 'shipment.action', 'module': __name__})
 
         shipment = Shipment.objects.get(id=kwargs['shipment_pk'])
-        serializer = ShipmentActionRequestSerializer(data=request.data, context={'shipment': shipment})
+        serializer = ShipmentActionRequestSerializer(data=request.data,
+                                                     context={'shipment': shipment, 'request': request})
         serializer.is_valid(raise_exception=True)
 
         method = serializer.validated_data.pop('action_type')
