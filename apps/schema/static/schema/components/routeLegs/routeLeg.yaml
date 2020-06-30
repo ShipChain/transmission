@@ -3,6 +3,8 @@ post:
   description: >
     Create a new `RouteLeg` associated to the nested `Route`
   operationId: createRouteLeg
+  parameters:
+    - $ref: '../routes/parameters.yaml#/path'
   tags:
   - Route Legs
   responses:

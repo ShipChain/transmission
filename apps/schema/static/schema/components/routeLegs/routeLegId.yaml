@@ -4,7 +4,8 @@ delete:
     Delete the `RouteLeg` from the `Route`.
   operationId: deleteRouteLeg
   parameters:
-  - $ref: 'parameters.yaml#/path'
+    - $ref: '../routes/parameters.yaml#/path'
+    - $ref: 'parameters.yaml#/path'
   tags:
   - Route Legs
   responses:

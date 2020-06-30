@@ -43,7 +43,7 @@ deviceResource:
   description: device associated with the route
   allOf:
     - $ref: '../devices/schema.yaml#/deviceResource'
-    - $ref: '../core/dataTypes.yaml#/resourcePk'
+    - $ref: '#/dataTypes/resourceId'
 
 legsArray:
   type: object

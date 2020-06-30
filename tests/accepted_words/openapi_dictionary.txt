@@ -62,6 +62,8 @@ online
 PermissionLink
 presigned
 
+RouteLeg
+
 scac
 shadowData
 shipmentId
