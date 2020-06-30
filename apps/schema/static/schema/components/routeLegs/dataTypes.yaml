@@ -1,0 +1,32 @@
+uuid: &uuid
+  type: string
+  format: uuid
+  example: '1243d23b-e2fc-475a-8290-0e4f53479553'
+
+resourcePk:
+  $ref: '../core/dataTypes.yaml#/resourcePk'
+
+sequence:
+  properties:
+    sequence:
+      title: sequence
+      description: Leg's Sequence within the Route
+      type: number
+      example: 7
+
+shipmentId:
+  properties:
+    shipment_id:
+      <<: *uuid
+      title: shipment_id
+      description: Shipment UUID associated with the route
+
+shipment:
+  properties:
+    data:
+      title: data
+      type: object
+      allOf:
+        - $ref: '../shipments/schema.yaml#/shipmentInRelationship'
+        - $ref: '../core/dataTypes.yaml#/resourcePk'
+

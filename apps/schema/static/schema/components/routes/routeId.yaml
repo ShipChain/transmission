@@ -1,0 +1,77 @@
+get:
+  summary: Get route details
+  description: >
+    Get additional info about a `Route`.
+  operationId: getRoute
+  parameters:
+    - $ref: 'parameters.yaml#/path'
+  tags:
+  - Routes
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/getResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+
+delete:
+  summary: Delete a route
+  description: >
+    Delete the `Route` object from Transmission.
+  operationId: deleteRoute
+  parameters:
+  - $ref: 'parameters.yaml#/path'
+  tags:
+  - Routes
+  responses:
+    '204':
+      description: "Success"
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+
+patch:
+  summary: Update a route
+  description: >
+    Update a `Route` object with the provided parameters.
+  operationId: updateRoute
+  parameters:
+    - $ref: 'parameters.yaml#/path'
+  tags:
+  - Routes
+  responses:
+    '202':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/createResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: 'requestBody.yaml#/patchRequest'
+      application/json:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/patchAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/patchAttributes'

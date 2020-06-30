@@ -1,0 +1,119 @@
+resource:
+  properties:
+    type:
+      description: Route
+      example: Route
+
+attributes:
+  allOf:
+  - $ref: '#/route/ownerId'
+  - $ref: '#/route/name'
+  - $ref: '#/route/driverId'
+  - $ref: '#/route/deviceId'
+
+getResource:
+  allOf:
+  - $ref: '#/resource'
+  - properties:
+      attributes:
+        $ref: '#/attributes'
+      relationships:
+        $ref: '#/relationships'
+
+getResponse:
+  allOf:
+  - $ref: '#/jsonApi/data'
+  - properties:
+      data:
+        $ref: '#/getResource'
+      included:
+        $ref: '#/included'
+
+device:
+  type: object
+  title: device
+  description: device associated with the route
+  properties:
+    device:
+      $ref: '#/route/device'
+
+deviceResource:
+  type: object
+  title: device
+  description: device associated with the route
+  allOf:
+    - $ref: '../devices/schema.yaml#/deviceResource'
+    - $ref: '../core/dataTypes.yaml#/resourcePk'
+
+legsArray:
+  type: object
+  title: legs
+  description: route legs associated with the route
+  allOf:
+    - $ref: '#/routeLeg/resource'
+    - $ref: '#/dataTypes/resourceId'
+
+relationships:
+  type: object
+  description: Relations for this resource
+  properties:
+    legs:
+      type: object
+      description: route legs associated with the route
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            $ref: '#/legsArray'
+  allOf:
+  - $ref: '#/device'
+
+createAttributes:
+  allOf:
+  - $ref: '#/route/name'
+  - $ref: '#/route/driverId'
+  - $ref: '#/route/deviceId'
+
+createResource:
+  allOf:
+  - $ref: '#/resource'
+  - properties:
+      attributes:
+        $ref: '#/createAttributes'
+      relationships:
+        $ref: '#/relationships'
+
+createResponse:
+  allOf:
+  - $ref: '#/getResponse'
+
+included:
+  type: array
+  items:
+    anyOf:
+    - $ref: '#/legsArray'
+    - $ref: '#/deviceResource'
+
+listResponse:
+  allOf:
+  - $ref: '#/jsonApi/dataArray'
+  - $ref: '#/jsonApi/linksAndMeta'
+  - properties:
+      data:
+        items:
+          $ref: '#/getResource'
+      included:
+        $ref: '#/included'
+
+route:
+  $ref: dataTypes.yaml
+
+routeLeg:
+  $ref: ../routeLegs/schema.yaml
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/schema.yaml

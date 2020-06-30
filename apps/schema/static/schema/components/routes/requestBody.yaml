@@ -1,0 +1,46 @@
+createResource:
+  allOf:
+  - $ref: 'schema.yaml#/resource'
+  - properties:
+      attributes:
+        $ref: '#/createAttributes'
+
+patchResource:
+  allOf:
+    - $ref: 'schema.yaml#/resource'
+    - properties:
+        attributes:
+          $ref: '#/patchAttributes'
+
+createAttributes:
+  allOf:
+  - $ref: '#/route/name'
+  - $ref: '#/route/driverId'
+  - $ref: '#/route/deviceId'
+
+patchAttributes:
+  allOf:
+    - $ref: '#/route/name'
+    - $ref: '#/route/driverId'
+    - $ref: '#/route/deviceId'
+
+createRequest:
+  allOf:
+  - $ref: '#/jsonApi/createData'
+  - properties:
+      data:
+        $ref: '#/createResource'
+
+patchRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/patchResource'
+
+
+route:
+  $ref: dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/requestBody.yaml

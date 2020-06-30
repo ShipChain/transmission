@@ -107,6 +107,18 @@ paths:
   /api/v1/imports/shipments/{shipment_import_id}:
     $ref: components/shipmentImports/shipmentImportsId.yaml
 
+  /api/v1/routes:
+    $ref: components/routes/route.yaml
+
+  /api/v1/routes/{route_id}:
+    $ref: components/routes/routeId.yaml
+
+  /api/v1/routes/{route_id}/legs:
+    $ref: components/routeLegs/routeLeg.yaml
+
+  /api/v1/routes/{route_id}/legs/{route_leg_id}:
+    $ref: components/routeLegs/routeLegId.yaml
+
 components:
   securitySchemes:
     $ref: components/securitySchemes.yaml
@@ -122,6 +134,10 @@ x-tagGroups:
   - name: Devices
     tags:
       - Devices
+  - name: Routes
+    tags:
+      - Routes
+      - Route Legs
   - name: Imports
     tags:
       - Imports
@@ -164,6 +180,12 @@ tags:
 - name: Shipments
   description: >
     Shipments are the core entity in the ShipChain Transmission service. This is a collection of endpoints related to managing shipments.
+- name: Routes
+  description: >
+    Routes are a collection of shipments that will be in transit together.
+- name: Route Legs
+  description: >
+    Route Legs are individual Shipments included in a Route
 - name: Transactions
   description: >
     Transaction entities contain read-only data about Ethereum Transactions and Transaction Receipts.

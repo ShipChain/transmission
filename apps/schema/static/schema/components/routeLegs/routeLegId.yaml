@@ -1,0 +1,18 @@
+delete:
+  summary: Delete a RouteLeg
+  description: >
+    Delete the `RouteLeg` from the `Route`.
+  operationId: deleteRouteLeg
+  parameters:
+  - $ref: 'parameters.yaml#/path'
+  tags:
+  - Route Legs
+  responses:
+    '204':
+      description: "Success"
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
