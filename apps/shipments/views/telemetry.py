@@ -26,13 +26,13 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from apps.permissions import ShipmentExists
+from apps.routes.models import RouteTelemetryData
+from apps.routes.serializers import RouteTelemetryResponseSerializer, RouteTelemetryResponseAggregateSerializer
+from apps.shipments.filters import TelemetryFilter, RouteTelemetryFilter
+from apps.shipments.models import Shipment, TelemetryData
+from apps.shipments.permissions import IsOwnerOrShared
+from apps.shipments.serializers import TelemetryResponseSerializer, TelemetryResponseAggregateSerializer
 from apps.utils import Aggregates, TimeTrunc
-from ..filters import TelemetryFilter
-from ..models import Shipment, TelemetryData
-from ..permissions import IsOwnerOrShared
-from ..serializers import TelemetryResponseSerializer, TelemetryResponseAggregateSerializer
-from ...routes.models import RouteTelemetryData
-from ...routes.serializers import RouteTelemetryResponseSerializer, RouteTelemetryResponseAggregateSerializer
 
 
 class TelemetryViewSet(mixins.ListModelMixin,
@@ -104,6 +104,7 @@ class TelemetryViewSet(mixins.ListModelMixin,
 
         if hasattr(shipment, 'routeleg'):
             queryset = RouteTelemetryData.objects.filter(route__id=shipment.routeleg.route.id)
+            self.filterset_class = RouteTelemetryFilter
         else:
             queryset = TelemetryData.objects.filter(shipment__id=shipment.id)
 
