@@ -23,6 +23,3 @@ from apps.shipments.models import Device
 class RouteTelemetryData(AbstractTelemetryData):
     device = models.ForeignKey(Device, on_delete=models.DO_NOTHING)
     route = models.ForeignKey(Route, on_delete=models.CASCADE)
-
-    class Meta(AbstractTelemetryData.Meta):
-        pass

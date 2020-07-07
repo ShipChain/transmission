@@ -22,6 +22,3 @@ from ...abstract_models import AbstractTelemetryData
 class TelemetryData(AbstractTelemetryData):
     device = models.ForeignKey(Device, on_delete=models.DO_NOTHING)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
-
-    class Meta(AbstractTelemetryData.Meta):
-        pass

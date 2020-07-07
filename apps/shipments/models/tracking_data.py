@@ -22,6 +22,3 @@ from ...abstract_models import AbstractTrackingData
 class TrackingData(AbstractTrackingData):
     device = models.ForeignKey(Device, on_delete=models.DO_NOTHING)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
-
-    class Meta(AbstractTrackingData.Meta):
-        pass
