@@ -8,6 +8,7 @@ from fancy_cache.memory import find_urls
 from rest_framework.reverse import reverse
 
 from apps.routes.models import RouteTelemetryData
+from apps.shipments.models import TransitState
 
 LOG = logging.getLogger('transmission')
 
@@ -20,7 +21,7 @@ def telemetrydata_post_save(sender, **kwargs):
     LOG.debug(f'New telemetry_data committed to db and will be pushed to the UI. Telemetry_data: {instance.id}.')
 
     # Invalidate cached telemetry data view for each shipment in Route
-    for leg in instance.route.routeleg_set.all():
+    for leg in instance.route.routeleg_set.filter(shipment__state=TransitState.IN_TRANSIT.value):
         telemetry_get_url = reverse('shipment-telemetry-list',
                                     kwargs={'version': 'v1', 'shipment_pk': leg.shipment.id})
         list(find_urls([telemetry_get_url + "*"], purge=True))

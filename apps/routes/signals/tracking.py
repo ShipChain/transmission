@@ -9,6 +9,7 @@ from django.urls import reverse
 from fancy_cache.memory import find_urls
 
 from apps.routes.models import RouteTrackingData
+from apps.shipments.models import TransitState
 
 LOG = logging.getLogger('transmission')
 
@@ -27,7 +28,7 @@ def routetrackingdata_post_save(sender, **kwargs):
     LOG.debug(f'New tracking_data committed to db and will be pushed to the UI. Tracking_data: {instance.id}.')
 
     # Invalidate cached tracking data view for each shipment in Route
-    for leg in instance.route.routeleg_set.all():
+    for leg in instance.route.routeleg_set.filter(shipment__state=TransitState.IN_TRANSIT.value):
         tracking_get_url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': leg.shipment.id})
         list(find_urls([tracking_get_url + "*"], purge=True))
 

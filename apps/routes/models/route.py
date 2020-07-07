@@ -18,7 +18,7 @@ import logging
 from django.db import models
 from shipchain_common.utils import random_id
 
-from apps.shipments.models import Device
+from apps.shipments.models import Device, TransitState
 
 LOG = logging.getLogger('transmission')
 
@@ -44,8 +44,7 @@ class Route(models.Model):
         if not self.device:
             return True
 
-        for leg in self.routeleg_set.all():
-            if not leg.shipment.can_disassociate_device():
-                return False
+        if self.routeleg_set.filter(shipment__state=TransitState.IN_TRANSIT.value).exists():
+            return False
 
         return True

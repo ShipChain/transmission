@@ -78,6 +78,15 @@ class TransitState(Enum):
     def choices(cls):
         return tuple((m.value, m.name) for m in cls)
 
+    def __eq__(self, other):
+        if isinstance(other, TransitState):
+            # pylint: disable=comparison-with-callable
+            return self.value == other.value
+        if isinstance(other, int):
+            # pylint: disable=comparison-with-callable
+            return self.value == other
+        return NotImplemented
+
     def __gt__(self, other):
         if isinstance(other, TransitState):
             # pylint: disable=comparison-with-callable
