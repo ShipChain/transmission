@@ -51,14 +51,16 @@ class RouteLegViewSet(cgvs_mixins.CreateModelMixin,
 
         if settings.PROFILES_ENABLED:
             user_id, organization_id = get_user(self.request)
-            queryset_filter = Q(route__owner_id=organization_id) | Q(route__owner_id=user_id) if organization_id \
-                else Q(route__owner_id=user_id)
+
+            queryset_filter = Q(route__owner_id=user_id)
+            if organization_id:
+                queryset_filter |= Q(route__owner_id=organization_id)
+
             queryset = queryset.filter(queryset_filter)
 
         return queryset
 
     def perform_destroy(self, instance):
-        for leg in instance.route.routeleg_set.all():
-            if TransitState(leg.shipment.state).value > TransitState.AWAITING_PICKUP.value:
-                raise ValidationError(f'Cannot remove shipment from route after transit has begun')
+        if instance.route.routeleg_set.filter(shipment__state__gt=TransitState.AWAITING_PICKUP.value).exists():
+            raise ValidationError(f'Cannot remove shipment from route after transit has begun')
         return super().perform_destroy(instance)

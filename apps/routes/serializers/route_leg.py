@@ -61,9 +61,8 @@ class RouteLegCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         route = Route.objects.get(pk=self.context['view'].kwargs['route_pk'])
-        for leg in route.routeleg_set.all():
-            if TransitState(leg.shipment.state).value > TransitState.AWAITING_PICKUP.value:
-                raise ValidationError(f'Cannot add shipment to route after transit has begun')
+        if route.routeleg_set.filter(shipment__state__gt=TransitState.AWAITING_PICKUP.value).exists():
+            raise ValidationError(f'Cannot add shipment to route after transit has begun')
         return attrs
 
     def create(self, validated_data):
