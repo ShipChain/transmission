@@ -19,8 +19,8 @@ from urllib.parse import unquote_plus
 import re
 
 from django.conf import settings
-from django_filters import rest_framework as filters
-from rest_framework import permissions, status, exceptions
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions, status, exceptions, filters
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from shipchain_common import mixins
@@ -57,8 +57,12 @@ class DocumentViewSet(mixins.ConfigurableCreateModelMixin,
         else (permissions.AllowAny, ShipmentExists, )
     )
 
-    filter_backends = (filters.DjangoFilterBackend,)
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
     filter_class = DocumentFilterSet
+
+    search_fields = ('name', 'description')
+
+    ordering_fields = ('updated_at', 'created_at',)
 
     configuration = {
         'create': ActionConfiguration(

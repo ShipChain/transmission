@@ -30,7 +30,7 @@ documentType:
       title: document_type
       description: Category of Document to upload
       type: string
-      enum: [BOL, IMAGE, OTHER]
+      enum: [BOL, IMAGE, OTHER, COMMERCIAL_INVOICE, PROOF_OF_INSURANCE, CERTIFICATE_OF_ORIGIN, CUSTOMS_FORMS, FREIGHT_BILL, AIR_WAYBILL, PACKING_SLIP]
       example: 'BOL'
 
 fileType:

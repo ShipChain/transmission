@@ -23,7 +23,7 @@ documentType:
   description: Document category to filter by
   schema:
     type: string
-    enum: [BOL, IMAGE, OTHER]
+    enum: [BOL, IMAGE, OTHER, COMMERCIAL_INVOICE, PROOF_OF_INSURANCE, CERTIFICATE_OF_ORIGIN, CUSTOMS_FORMS, FREIGHT_BILL, AIR_WAYBILL, PACKING_SLIP]
     example: BOL
 
 uploadStatus:
@@ -35,6 +35,16 @@ uploadStatus:
     type: string
     enum: [PENDING, COMPLETE, FAILED]
     example: PENDING
+
+search:
+  required: false
+  in: query
+  name: search
+  description: Search for documents with name/description info
+  schema:
+    type: string
+    example: 'BOL #123'
+
 
 dataTypes:
   $ref: ../core/dataTypes.yaml
