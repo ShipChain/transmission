@@ -29,7 +29,7 @@ from apps.permissions import ShipmentExists
 from apps.routes.models import RouteTelemetryData
 from apps.routes.serializers import RouteTelemetryResponseSerializer, RouteTelemetryResponseAggregateSerializer
 from apps.shipments.filters import TelemetryFilter, RouteTelemetryFilter
-from apps.shipments.models import Shipment, TelemetryData
+from apps.shipments.models import Shipment, TelemetryData, TransitState
 from apps.shipments.permissions import IsOwnerOrShared
 from apps.shipments.serializers import TelemetryResponseSerializer, TelemetryResponseAggregateSerializer
 from apps.utils import Aggregates, TimeTrunc
@@ -103,7 +103,12 @@ class TelemetryViewSet(mixins.ListModelMixin,
         end = (shipment.delivery_act or datetime.max).replace(tzinfo=timezone.utc)
 
         if hasattr(shipment, 'routeleg'):
-            queryset = RouteTelemetryData.objects.filter(route__id=shipment.routeleg.route.id)
+            if shipment.state == TransitState.AWAITING_PICKUP:
+                # RouteTelemetryData may contain data for other shipments already picked up.
+                # This shipment should not include those data as it has not yet begun transit.
+                queryset = RouteTelemetryData.objects.none()
+            else:
+                queryset = RouteTelemetryData.objects.filter(route__id=shipment.routeleg.route.id)
             self.filterset_class = RouteTelemetryFilter
         else:
             queryset = TelemetryData.objects.filter(shipment__id=shipment.id)

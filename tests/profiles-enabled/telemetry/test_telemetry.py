@@ -12,9 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from copy import deepcopy
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import pytest
+from django.core.cache import cache
 from django.urls import reverse
 from moto import mock_iot
 from rest_framework import status
@@ -235,17 +236,33 @@ class TestRetrieveTelemetryData:
         assert len(response.json()) == 0
         assert TelemetryData.objects.all().count() == 1
 
-    def test_route_telemetry_retrieval(self, client_alice, route_with_device_alice, shipment_alice, shipment_alice_two):
+    def test_route_telemetry_retrieval(self, client_alice, route_with_device_alice, shipment_alice):
         route_with_device_alice.routeleg_set.create(shipment=shipment_alice, sequence=1)
         add_telemetry_data_to_model([self.unsigned_telemetry], route_with_device_alice)
 
+        # Shipment awaiting pickup should show no telemetry
+        response = client_alice.get(self.empty_telemetry_url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()) == 0
+
+        shipment_alice.pick_up(action_timestamp=(datetime.utcnow() - timedelta(days=3)).isoformat())
+        shipment_alice.save()
+
+        cache.clear()
+
+        # Shipment picked up prior to telemetry data should include that data
         response = client_alice.get(self.empty_telemetry_url)
         self.unsigned_telemetry.pop('version')
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry, count=1)
 
-        new_url = reverse('shipment-telemetry-list', kwargs={'version': 'v1', 'shipment_pk': shipment_alice_two.id})
-        route_with_device_alice.routeleg_set.create(shipment=shipment_alice_two, sequence=2)
+        shipment_alice.arrival(action_timestamp=(datetime.utcnow() - timedelta(days=2)).isoformat())
+        shipment_alice.save()
+        shipment_alice.drop_off(action_timestamp=(datetime.utcnow() - timedelta(days=1)).isoformat())
+        shipment_alice.save()
 
-        # Ensure associated to route not to shipment
-        response = client_alice.get(new_url)
-        AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry, count=1)
+        cache.clear()
+
+        # Shipment dropped off prior to telemetry data should not include that data
+        response = client_alice.get(self.empty_telemetry_url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()) == 0

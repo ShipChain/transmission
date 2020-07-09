@@ -35,7 +35,7 @@ from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 from ..geojson import render_filtered_point_features
-from ..models import Shipment, TrackingData, PermissionLink
+from ..models import Shipment, TrackingData, PermissionLink, TransitState
 from ..permissions import IsOwnerOrShared, IsOwnerShipperCarrierModerator, shipment_list_wallets_filter
 from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, \
     ShipmentTxSerializer
@@ -176,7 +176,12 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         shipment = self.get_object()
 
         if hasattr(shipment, 'routeleg'):
-            tracking_data = RouteTrackingData.objects.filter(route__id=shipment.routeleg.route.id)
+            if shipment.state == TransitState.AWAITING_PICKUP:
+                # RouteTrackingData may contain data for other shipments already picked up.
+                # This shipment should not include those data as it has not yet begun transit.
+                tracking_data = RouteTrackingData.objects.none()
+            else:
+                tracking_data = RouteTrackingData.objects.filter(route__id=shipment.routeleg.route.id)
         else:
             tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
 
