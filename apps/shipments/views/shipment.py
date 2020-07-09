@@ -25,7 +25,6 @@ from fancy_cache import cache_page
 from influxdb_metrics.loader import log_metric
 from rest_framework import permissions, status, filters
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from shipchain_common.mixins import SerializationType
 from shipchain_common.permissions import HasViewSetActionPermissions
@@ -181,15 +180,9 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         else:
             tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
 
-        if tracking_data.exists():
-            response = Template('{"data": $geojson}').substitute(
-                geojson=render_filtered_point_features(shipment, tracking_data)
-            )
-            httpresponse = HttpResponse(content=response,
-                                        content_type='application/vnd.api+json')
-            return httpresponse
-
-        raise NotFound("No tracking data found for Shipment.")
+        response = Template('{"data": $geojson}')
+        response = response.substitute(geojson=render_filtered_point_features(shipment, tracking_data))
+        return HttpResponse(content=response, content_type='application/vnd.api+json')
 
     def update(self, request, *args, **kwargs):
         """

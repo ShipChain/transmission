@@ -991,7 +991,10 @@ class TestTrackingRetrieval:
 
     def test_empty_shipment_fails(self, client_alice, shipment_alice):
         response = client_alice.get(reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': shipment_alice.id}))
-        AssertionHelper.HTTP_404(response, error='No tracking data found for Shipment')
+        AssertionHelper.HTTP_200(response)
+        response_json = response.json()['data']
+        assert response_json['type'] == 'FeatureCollection'
+        assert len(response_json['features']) == 0
         assert TrackingData.objects.filter(shipment=shipment_alice).count() == 0
 
     def test_shipment_owner_retrieves(self, client_alice):
