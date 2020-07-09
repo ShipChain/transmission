@@ -26,7 +26,7 @@ class RouteLegInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RouteLeg
-        fields = ('shipment_id', 'sequence')
+        fields = ('shipment_id', '_order')
 
 
 class RouteLegCreateSerializer(serializers.ModelSerializer):
@@ -68,10 +68,6 @@ class RouteLegCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         try:
             route = Route.objects.get(pk=self.context['view'].kwargs['route_pk'])
-            return RouteLeg.objects.create(
-                route=route,
-                shipment_id=validated_data['shipment_id'],
-                sequence=route.get_next_leg_sequence(),
-            )
+            return route.routeleg_set.create(shipment_id=validated_data['shipment_id'])
         except IntegrityError as exc:
             raise ValidationError(f'{exc}')

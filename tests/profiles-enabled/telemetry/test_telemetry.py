@@ -237,7 +237,7 @@ class TestRetrieveTelemetryData:
         assert TelemetryData.objects.all().count() == 1
 
     def test_route_telemetry_retrieval(self, client_alice, route_with_device_alice, shipment_alice):
-        route_with_device_alice.routeleg_set.create(shipment=shipment_alice, sequence=1)
+        route_with_device_alice.routeleg_set.create(shipment=shipment_alice)
         add_telemetry_data_to_model([self.unsigned_telemetry], route_with_device_alice)
 
         # Shipment awaiting pickup should show no telemetry

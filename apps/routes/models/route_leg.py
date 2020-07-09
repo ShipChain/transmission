@@ -31,7 +31,6 @@ class RouteLeg(models.Model):
 
     route = models.ForeignKey(Route, on_delete=models.CASCADE)
     shipment = models.OneToOneField(Shipment, on_delete=models.CASCADE)
-    sequence = models.IntegerField(null=False, blank=False)
 
     class Meta:
-        ordering = ('route', 'sequence')
+        order_with_respect_to = 'route'

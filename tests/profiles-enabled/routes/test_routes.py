@@ -153,7 +153,7 @@ class TestRouteCreation:
     def test_with_device_blocked_on_route_fails(self, client_alice, route_attributes, new_route_with_device, shipment):
         route_attributes['device_id'] = new_route_with_device.device.id
 
-        new_route_with_device.routeleg_set.create(shipment=shipment, sequence=1)
+        new_route_with_device.routeleg_set.create(shipment=shipment)
         shipment.pick_up()
         shipment.save()
 
@@ -310,7 +310,7 @@ class TestRouteUpdate:
     def test_with_device_blocked_on_route_fails(self, client_alice, route_attributes, new_route_with_device, shipment):
         route_attributes['device_id'] = new_route_with_device.device.id
 
-        new_route_with_device.routeleg_set.create(shipment=shipment, sequence=1)
+        new_route_with_device.routeleg_set.create(shipment=shipment)
         shipment.pick_up()
         shipment.save()
 
@@ -368,7 +368,7 @@ class TestRouteUpdate:
     def test_remove_device_in_progress_fails(self, client_alice, route_attributes, new_route_with_device, shipment):
         route_attributes['device_id'] = None
 
-        new_route_with_device.routeleg_set.create(shipment=shipment, sequence=1)
+        new_route_with_device.routeleg_set.create(shipment=shipment)
         shipment.pick_up()
         shipment.save()
 
@@ -382,7 +382,7 @@ class TestRouteUpdate:
     def test_remove_device_not_in_progress(self, client_alice, route_attributes, new_route_with_device, shipment):
         route_attributes['device_id'] = None
 
-        new_route_with_device.routeleg_set.create(shipment=shipment, sequence=1)
+        new_route_with_device.routeleg_set.create(shipment=shipment)
 
         response = client_alice.patch(self.url_route_device, data=route_attributes)
         AssertionHelper.HTTP_200(
@@ -485,8 +485,8 @@ class TestRouteRetrieve:
         AssertionHelper.HTTP_404(response)
 
     def test_includes_legs(self, client_alice, new_route, shipment_alice_with_device, shipment):
-        leg1 = new_route.routeleg_set.create(shipment=shipment, sequence=1)
-        leg2 = new_route.routeleg_set.create(shipment=shipment_alice_with_device, sequence=2)
+        leg1 = new_route.routeleg_set.create(shipment=shipment)
+        leg2 = new_route.routeleg_set.create(shipment=shipment_alice_with_device)
 
         leg1_entity = AssertionHelper.EntityRef(resource='RouteLeg', pk=leg1.pk,
                                                 attributes={'shipment_id': shipment.pk})
@@ -515,7 +515,7 @@ class TestRouteAddLeg:
 
     @fixture
     def shipment_on_new_route(self, shipment, new_route):
-        new_route.routeleg_set.create(shipment=shipment, sequence=1)
+        new_route.routeleg_set.create(shipment=shipment)
         return shipment
 
     @fixture
@@ -634,8 +634,8 @@ class TestRouteRemoveLeg:
 
     @fixture(autouse=True)
     def setup_url(self, new_route, new_route_with_device, new_route_bob, shipment, org2_shipment):
-        leg = new_route.routeleg_set.create(shipment=shipment, sequence=1)
-        leg_bob = new_route_bob.routeleg_set.create(shipment=org2_shipment, sequence=1)
+        leg = new_route.routeleg_set.create(shipment=shipment)
+        leg_bob = new_route_bob.routeleg_set.create(shipment=org2_shipment)
         self.url_random_route = reverse('route-legs-detail',
                                         kwargs={'version': 'v1', 'route_pk': random_id(), 'pk': leg.pk})
         self.url_route = reverse('route-legs-detail', kwargs={'version': 'v1', 'route_pk': new_route.id, 'pk': leg.pk})

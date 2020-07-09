@@ -1062,7 +1062,7 @@ class TestTrackingRetrieval:
 
     def test_route_shipments(self, client_alice, route_with_device_alice, shipment_alice):
         url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': shipment_alice.id})
-        route_with_device_alice.routeleg_set.create(shipment=shipment_alice, sequence=1)
+        route_with_device_alice.routeleg_set.create(shipment=shipment_alice)
         self.add_tracking_data_to_object([self.unsigned_tracking], route_with_device_alice)
 
         # Shipment awaiting pickup should show no tracking
