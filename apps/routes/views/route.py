@@ -16,12 +16,15 @@ limitations under the License.
 import logging
 
 from django.conf import settings
-from rest_framework import permissions
+from rest_framework import permissions, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from shipchain_common.mixins import SerializationType
 from shipchain_common.viewsets import ConfigurableModelViewSet, ActionConfiguration
 
 from apps.permissions import get_owner_id, owner_access_filter
 from apps.routes.models import Route
-from apps.routes.serializers import RouteSerializer, RouteCreateSerializer, RouteUpdateSerializer
+from apps.routes.serializers import RouteSerializer, RouteCreateSerializer, RouteUpdateSerializer, RouteOrderSerializer
 
 LOG = logging.getLogger('transmission')
 
@@ -44,6 +47,10 @@ class RouteViewSet(ConfigurableModelViewSet):
         'retrieve': ActionConfiguration(
             serializer=RouteSerializer,
         ),
+        'reorder': ActionConfiguration(
+            request_serializer=RouteOrderSerializer,
+            response_serializer=RouteSerializer,
+        ),
     }
 
     def get_queryset(self):
@@ -57,3 +64,15 @@ class RouteViewSet(ConfigurableModelViewSet):
 
     def perform_create(self, serializer):
         return serializer.save(owner_id=get_owner_id(self.request))
+
+    @action(detail=True, methods=['post'], url_name='reorder')
+    def reorder(self, request, version, pk):
+        route = self.get_object()
+
+        serializer = self.get_serializer(instance=route, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        route.set_routeleg_order(serializer.validated_data['legs'])
+
+        response = self.get_serializer(route, serialization_type=SerializationType.RESPONSE)
+        return Response(response.data, status=status.HTTP_202_ACCEPTED)

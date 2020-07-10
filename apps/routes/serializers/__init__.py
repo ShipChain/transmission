@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from .route import RouteSerializer, RouteCreateSerializer, RouteUpdateSerializer
+from .route import RouteSerializer, RouteCreateSerializer, RouteUpdateSerializer, RouteOrderSerializer
 from .route_leg import RouteLegCreateSerializer, RouteLegInfoSerializer
 from .tracking_data import BaseRouteDataToDbSerializer, RouteTrackingDataToDbSerializer
 from .telemetry_data import RouteTelemetryDataToDbSerializer, RouteTelemetryResponseSerializer, \
