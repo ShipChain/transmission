@@ -8,7 +8,7 @@ class EthConfig(AppConfig):
     verbose_name = 'Eth'
 
     def ready(self):
-        # pylint:disable=unused-variable
+        # pylint:disable=unused-import,import-outside-toplevel
         import apps.eth.signals
 
         if settings.SUBSCRIBE_EVENTS:

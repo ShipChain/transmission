@@ -26,7 +26,7 @@ LOG = logging.getLogger('transmission')
 
 class DeviceAWSIoTClient(AWSIoTClient):
     def update_shadow(self, device_id, shadow):
-        LOG.debug(f'Updating Device Shadow in AWS IoT')
+        LOG.debug('Updating Device Shadow in AWS IoT')
         log_metric('transmission.info', tags={'method': 'device.aws_iot.update_shadow'})
 
         payload = {"data": shadow}

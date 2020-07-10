@@ -38,7 +38,7 @@ class JobsViewSet(mixins.ListModelMixin,
             permission_classes=[EngineRequest],
             renderer_classes=[renderers.JSONRenderer])
     def message(self, request, version, pk):
-        LOG.debug(f'Jobs message called.')
+        LOG.debug('Jobs message called.')
         log_metric('transmission.info', tags={'method': 'jobs.message', 'module': __name__})
 
         serializer = MessageSerializer(data=request.data)

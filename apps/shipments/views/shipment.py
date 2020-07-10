@@ -149,7 +149,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         """
         Create a Shipment object and make Async Request to Engine
         """
-        LOG.debug(f'Creating a shipment object.')
+        LOG.debug('Creating a shipment object.')
         log_metric('transmission.info', tags={'method': 'shipments.create', 'module': __name__})
         # Create Shipment
         serializer = self.get_serializer(data=request.data)

@@ -60,7 +60,7 @@ class ShipmentImportsViewSet(mixins.CreateModelMixin,
         """
         Create a pre-signed s3 post and create a corresponding document object with pending status
         """
-        LOG.debug(f'Creating a ShipmentImport document object')
+        LOG.debug('Creating a ShipmentImport document object')
         log_metric('transmission.info', tags={'method': 'imports.create', 'module': __name__})
 
         serializer = ShipmentImportCreateSerializer(data=request.data, context={'auth': get_jwt_from_request(request)})

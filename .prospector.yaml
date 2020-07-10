@@ -4,6 +4,7 @@ strictness: high
 
 uses:
     - django
+    - celery
 
 pylint:
   disable:
