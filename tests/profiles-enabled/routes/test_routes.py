@@ -681,3 +681,77 @@ class TestRouteRemoveLeg:
 
         response = client_alice.delete(self.url_route)
         AssertionHelper.HTTP_400(response, error='Cannot remove shipment from route after transit has begun')
+
+
+class TestRouteReorder:
+
+    @fixture(autouse=True)
+    def setup_url(self, new_route, new_route_bob, shipment, second_shipment, third_shipment):
+        leg1 = new_route.routeleg_set.create(shipment=shipment)
+        leg2 = new_route.routeleg_set.create(shipment=second_shipment)
+        leg3 = new_route.routeleg_set.create(shipment=third_shipment)
+
+        self.url_random = reverse('route-reorder', kwargs={'version': 'v1', 'pk': random_id()})
+        self.url_route = reverse('route-reorder', kwargs={'version': 'v1', 'pk': new_route.id})
+        self.url_route_bob = reverse('route-reorder', kwargs={'version': 'v1', 'pk': new_route_bob.id})
+
+        self.insert_order = [leg1.pk, leg2.pk, leg3.pk]
+        self.reverse_order = [leg3.pk, leg2.pk, leg1.pk]
+        self.short_order = [leg1.pk, leg3.pk]
+        self.long_order = [leg1.pk, leg3.pk]
+        self.bad_order = [leg1.pk, random_id(), leg3.pk]
+
+        self.leg1_entity = AssertionHelper.EntityRef(resource='RouteLeg', pk=leg1.pk,
+                                                     attributes={'shipment_id': shipment.pk})
+        self.leg2_entity = AssertionHelper.EntityRef(resource='RouteLeg', pk=leg2.pk,
+                                                     attributes={'shipment_id': second_shipment.pk})
+        self.leg3_entity = AssertionHelper.EntityRef(resource='RouteLeg', pk=leg3.pk,
+                                                     attributes={'shipment_id': third_shipment.pk})
+
+    def test_requires_authentication(self, api_client):
+        response = api_client.post(self.url_route)
+        AssertionHelper.HTTP_403(response)
+
+    def test_invalid_route(self, client_alice):
+        response = client_alice.post(self.url_random, data={'legs': self.insert_order})
+        AssertionHelper.HTTP_404(response)
+
+    def test_other_org(self, client_alice):
+        response = client_alice.post(self.url_route_bob, data={'legs': self.insert_order})
+        AssertionHelper.HTTP_404(response)
+
+    def test_reorder_short_list(self, client_alice):
+        response = client_alice.post(self.url_route, data={'legs': self.short_order})
+        AssertionHelper.HTTP_400(response, error='Reorder list does not contain exact list of existing RouteLegs')
+
+    def test_reorder_long_list(self, client_alice):
+        response = client_alice.post(self.url_route, data={'legs': self.long_order})
+        AssertionHelper.HTTP_400(response, error='Reorder list does not contain exact list of existing RouteLegs')
+
+    def test_reorder_bad_list(self, client_alice):
+        response = client_alice.post(self.url_route, data={'legs': self.bad_order})
+        AssertionHelper.HTTP_400(response, error='Reorder list does not contain exact list of existing RouteLegs')
+
+    def test_reorder_insert_order(self, client_alice, new_route):
+        response = client_alice.post(self.url_route, data={'legs': self.insert_order})
+        AssertionHelper.HTTP_200(
+            response,
+            entity_refs=AssertionHelper.EntityRef(
+                resource='Route',
+                pk=new_route.id,
+                relationships={
+                    'legs': [self.leg1_entity, self.leg2_entity, self.leg3_entity]
+                },
+            ),
+            included=[self.leg1_entity, self.leg2_entity, self.leg3_entity]
+        )
+        leg_data = response.json()['data']['relationships']['legs']['data']
+        assert len(leg_data) == len(self.insert_order)
+        assert list(map(lambda leg: leg['id'], leg_data)) == self.insert_order
+
+    def test_reorder_reverse(self, client_alice):
+        response = client_alice.post(self.url_route, data={'legs': self.reverse_order})
+        AssertionHelper.HTTP_200(response)
+        leg_data = response.json()['data']['relationships']['legs']['data']
+        assert len(leg_data) == len(self.reverse_order)
+        assert list(map(lambda leg: leg['id'], leg_data)) == self.reverse_order

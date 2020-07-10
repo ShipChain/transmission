@@ -106,7 +106,14 @@ def shipment_with_device(shipment):
 
 
 @pytest.fixture
-def second_shipment(mocked_engine_rpc, mocked_iot_api):
+def second_shipment(mocked_engine_rpc, mocked_iot_api, profiles_ids):
+    return Shipment.objects.create(vault_id=random_id(),
+                                   owner_id=USER_ID,
+                                   **profiles_ids)
+
+
+@pytest.fixture
+def third_shipment(mocked_engine_rpc, mocked_iot_api, profiles_ids):
     return Shipment.objects.create(vault_id=random_id(),
                                    owner_id=USER_ID,
                                    **profiles_ids)
