@@ -20,7 +20,7 @@ get:
             $ref: '../errors/schema.yaml#/401'
 
 post:
-  summary: Create Route
+  summary: Create route
   description: >
     Create a new `Route` owned by the current user.
   operationId: createRoute

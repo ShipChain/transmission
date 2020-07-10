@@ -38,6 +38,14 @@ patchRequest:
         data:
           $ref: '#/patchResource'
 
+reorderRequest:
+  allOf:
+    - properties:
+        legs:
+          type: array
+          items:
+            $ref: '#/route/uuid'
+
 
 route:
   $ref: dataTypes.yaml

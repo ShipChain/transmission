@@ -75,4 +75,4 @@ class RouteViewSet(ConfigurableModelViewSet):
         route.set_routeleg_order(serializer.validated_data['legs'])
 
         response = self.get_serializer(route, serialization_type=SerializationType.RESPONSE)
-        return Response(response.data, status=status.HTTP_202_ACCEPTED)
+        return Response(response.data, status=status.HTTP_200_OK)

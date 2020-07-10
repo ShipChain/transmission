@@ -52,3 +52,10 @@ legs:
       allOf:
         - $ref: '../core/dataTypes.yaml#/resourcePk'
         - $ref: '../routeLegs/schema.yaml#/legResource'
+
+routeLegId:
+  properties:
+    route_leg_id:
+      <<: *uuid
+      title: route_leg_id
+      description: RouteLeg UUID associated with the route

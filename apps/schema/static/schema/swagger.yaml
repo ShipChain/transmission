@@ -113,6 +113,9 @@ paths:
   /api/v1/routes/{route_id}:
     $ref: components/routes/routeId.yaml
 
+  /api/v1/routes/{route_id}/reorder:
+    $ref: components/routes/reorder.yaml
+
   /api/v1/routes/{route_id}/legs:
     $ref: components/routeLegs/routeLeg.yaml
 
