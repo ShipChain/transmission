@@ -368,9 +368,8 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
             # TODO: Validate that tracking update is within bbox around delivery location?
             pass
 
-        if action_timestamp:
-            if action_timestamp < self.pickup_act:
-                raise ValidationError(f'Invalid datetime for action: arrival timestamp cannot occur before pickup.')
+        if action_timestamp and action_timestamp < self.pickup_act:
+            raise ValidationError('Invalid datetime for action: arrival timestamp cannot occur before pickup.')
 
         self.port_arrival_act = datetime.now(timezone.utc) if not action_timestamp else action_timestamp
 
@@ -384,11 +383,11 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
             # Validate opaque physical ID (SHA256)
             if not raw_asset_physical_id or (self.asset_physical_id !=
                                              hashlib.sha256(raw_asset_physical_id.encode()).hexdigest()):
-                raise PermissionDenied(f"Hash of asset tag does not match value "
-                                       f"specified in Shipment.asset_physical_id")
+                raise PermissionDenied("Hash of asset tag does not match value "
+                                       "specified in Shipment.asset_physical_id")
         if action_timestamp:
             if action_timestamp < self.port_arrival_act:
-                raise ValidationError(f'Invalid datetime for action: drop off timestamp cannot occur before arrival.')
+                raise ValidationError('Invalid datetime for action: drop off timestamp cannot occur before arrival.')
 
         self.delivery_act = datetime.now(timezone.utc) if not action_timestamp else action_timestamp
 

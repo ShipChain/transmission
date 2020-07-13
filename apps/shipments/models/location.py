@@ -99,14 +99,14 @@ class Location(AnonymousHistoricalMixin, models.Model):
 
         if not geocoder_response.ok:
             if 'OVER_QUERY_LIMIT' in geocoder_response.error:
-                log_metric('transmission.errors', tags={'method': f'locations.geocoder',
+                log_metric('transmission.errors', tags={'method': 'locations.geocoder',
                                                         'code': 'service_unavailable', 'module': __name__,
                                                         'detail': f'error calling {method} geocoder'})
                 LOG.debug(f'{method} geocode for address {parsing_address} failed as query limit was reached')
                 raise Throttled(detail=f'Over Query Limit for {method}', code=HTTP_503_SERVICE_UNAVAILABLE)
 
-            elif 'No results found' or 'ZERO_RESULTS' in geocoder_response.error:
-                log_metric('transmission.errors', tags={'method': f'locations.geocoder',
+            if 'No results found' or 'ZERO_RESULTS' in geocoder_response.error:
+                log_metric('transmission.errors', tags={'method': 'locations.geocoder',
                                                         'code': 'internal_server_error', 'module': __name__,
                                                         'detail': f'No results returned from {method} geocoder'})
                 LOG.debug(f'{method} geocode for address {parsing_address} failed with zero results returned')

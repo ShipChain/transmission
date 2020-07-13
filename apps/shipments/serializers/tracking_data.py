@@ -52,7 +52,7 @@ class SignedDevicePayloadSerializer(serializers.Serializer):
         if not shipment.device:
             raise exceptions.PermissionDenied(f"No device for shipment {shipment.id}")
 
-        elif certificate_id_from_payload != shipment.device.certificate_id:
+        if certificate_id_from_payload != shipment.device.certificate_id:
             try:
                 iot.describe_certificate(certificateId=certificate_id_from_payload)
             except BotoCoreError as exc:

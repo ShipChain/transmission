@@ -101,12 +101,9 @@ class TransactionViewSet(jsapi_views.PreloadIncludesMixin, jsapi_views.ReadOnlyM
         if settings.PROFILES_ENABLED:
             if 'wallet_id' in self.request.query_params:
                 queryset = queryset.filter(Q(shipment__owner_id=get_owner_id(self.request)) |
-                                           Q(shipment__shipper_wallet_id=
-                                             self.request.query_params.get('wallet_id')) |
-                                           Q(shipment__moderator_wallet_id=
-                                             self.request.query_params.get('wallet_id')) |
-                                           Q(shipment__carrier_wallet_id=
-                                             self.request.query_params.get('wallet_id')))
+                                           Q(shipment__shipper_wallet_id=self.request.query_params.get('wallet_id')) |
+                                           Q(shipment__moderator_wallet_id=self.request.query_params.get('wallet_id')) |
+                                           Q(shipment__carrier_wallet_id=self.request.query_params.get('wallet_id')))
             else:
                 permission_link = self.request.query_params.get('permission_link', None)
                 if permission_link:

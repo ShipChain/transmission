@@ -4,8 +4,12 @@ strictness: high
 
 uses:
     - django
+    - celery
 
 pylint:
+  # Disabled due to issues with the way that pylint-django currently handles resolving string-referenced ForeignKeys
+  # Watching: https://github.com/PyCQA/pylint-django/issues/243
+  run: false
   disable:
     - unused-argument
     - redefined-builtin

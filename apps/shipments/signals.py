@@ -105,7 +105,7 @@ def loadshipment_post_save(sender, **kwargs):
     instance, created = kwargs["instance"], kwargs["created"]
     LOG.debug(f'LoadShipment post save for Shipment: {instance.shipment.id}')
     if created:
-        LOG.debug(f'Creating a shipment on the load contract.')
+        LOG.debug('Creating a shipment on the load contract.')
         # Create shipment on the LOAD contract
         AsyncJob.rpc_job_for_listener(
             rpc_method=RPCClientFactory.get_client().create_shipment_transaction,

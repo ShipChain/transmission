@@ -1,4 +1,4 @@
-# pylint:disable=invalid-name
+# pylint:disable=invalid-name,import-outside-toplevel
 import importlib
 import logging
 import random
