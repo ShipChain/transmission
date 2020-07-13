@@ -221,7 +221,7 @@ class ShipmentCreator:
                     data={'device_type': "AXLE_GATEWAY"},
                     headers={'Authorization': 'JWT {}'.format(self.shipper['token'])})
             except NonCriticalError:
-                raise CriticalError(f'Error generating device')
+                raise CriticalError('Error generating device')
             updated_attributes['device_id'] = device_response['data']['id']
         self.sequence_number += 1
         return updated_attributes
@@ -309,7 +309,7 @@ class ShipmentCreator:
                 f"{self.profiles_url}/api/v1/storage_credentials",
                 headers={'Authorization': f'JWT {self.get_user_jwt(self.shipper)}'}, method='get')
         except NonCriticalError:
-            raise CriticalError(f'Error retrieving storage credentials')
+            raise CriticalError('Error retrieving storage credentials')
 
         logger.debug(f'Storage credentials count returned: {response["meta"]["pagination"]["count"]}')
         if response['meta']['pagination']['count'] == 0:
@@ -328,7 +328,7 @@ class ShipmentCreator:
                     'title': f'Shipment creator SC: {str(uuid4())}'
                 }, headers={'Authorization': f'JWT {self.get_user_jwt(self.shipper)}'})
         except NonCriticalError:
-            raise CriticalError(f'Error generating storage credentials.')
+            raise CriticalError('Error generating storage credentials.')
 
         logger.debug(f'Created storage credentials: {response["data"]["id"]}')
         self.attributes['storage_credentials_id'] = response['data']['id']
@@ -398,7 +398,7 @@ class ShipmentCreator:
                 data=attributes,
                 headers={'Authorization': f'JWT {self.get_user_jwt(self.shipper)}'})
         except NonCriticalError:
-            logger.warning(f'Failed to create shipment.')
+            logger.warning('Failed to create shipment.')
             return
 
         logger.debug(f'Created shipment: {response["data"]["id"]}')
