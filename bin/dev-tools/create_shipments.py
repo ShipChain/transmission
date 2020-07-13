@@ -50,12 +50,12 @@ class LogLevels(Enum):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--total", "-t", help="Total amount of shipments to be created, defaults to 10", type=int,
+parser.add_argument("--count", "-t", help="Total amount of shipments to be created, defaults to 10", type=int,
                     default=10)
-parser.add_argument("--startnumber", "-n", help="Number to start at for sequential attributes", type=int,
+parser.add_argument("--startnumber", "-n", help="Number to start at for sequential attributes.", type=int,
                     default=0)
-parser.add_argument("--partition", "-p", help="Number shipments to create per wallet, defaults to 10", type=int,
-                    default=10)
+parser.add_argument("--partition", "-p", help="Maximum number of shipments to be created per wallet, defaults to 10.",
+                    type=int, default=10)
 parser.add_argument("--carrier", "-c", help="Set carrier wallet owner by passing in the username. Defaults to user1.",
                     choices=['user1@shipchain.io', 'user2@shipchain.io'], default='user1@shipchain.io')
 parser.add_argument("--shipper", "-s", help="Set shipper wallet owner by passing in the username. Defaults to user1.",
@@ -63,13 +63,16 @@ parser.add_argument("--shipper", "-s", help="Set shipper wallet owner by passing
 parser.add_argument("--moderator", "-m",
                     help="Set moderator wallet owner by passing in the username. Defaults to user1.",
                     choices=['user1@shipchain.io', 'user2@shipchain.io'])
-parser.add_argument("--loglevel", "-l", help="Set the logging level for the creator. Defaults to warning.",
-                    choices=list(LogLevels.__members__), default='warning')
+parser.add_argument("--loglevel", "-l", help="Set the logging level for the creator. Defaults to info.",
+                    choices=list(LogLevels.__members__), default='info')
 parser.add_argument("--device", "-d", help="Add devices to shipment creation, defaults to false",
                     action="store_true")
 parser.add_argument("--attributes", "-a", action='append',
                     help="Attributes to be sent in shipment creation (defaults to required values). "
-                         "Format should be either {\"key\": \"value\"} or key = value.")
+                         "Setting a key to ##RAND## sets the value as new uuid per creation, "
+                         "and ##NUMB## is replaced with a number starting from the --startnumber "
+                         "Format should be either {\"key\": \"value\"} or key = value. "
+                         "EX: \'{\"forwarders_shipper_id\": \"##RAND##\", \"pro_number\": \"PRO_##NUMB##\"}\'")
 parser.add_argument("--add_tracking", help="Adds tracking data to shipments (requires --device or -d)",
                     action='store_true')
 parser.add_argument("--add_telemetry", help="Adds telemetry data to shipments (requires --device or -d)",
@@ -79,6 +82,13 @@ parser.add_argument("--profiles_url", help="Sets the profiles url for the creato
 parser.add_argument("--transmission_url",
                     help="Sets the transmission url for the creator. Defaults to http://localhost:8000",
                     default='http://localhost:8000')
+parser.add_argument("--reuse_wallets", help="Reuse wallets instead of creating new ones, defaults to True",
+                    action="store_true",
+                    default=True)
+parser.add_argument("--reuse_storage_credentials",
+                    help="Reuse storage credentials instead of creating a new one, defaults to True",
+                    action="store_true",
+                    default=True)
 
 
 # pylint:disable=too-many-instance-attributes
@@ -91,11 +101,13 @@ class ShipmentCreator:
             'password': 'user1Password',
             'token': None,
             'token_exp': None,
+            'wallets': []
         }, 'user2@shipchain.io': {
             'username': 'user2@shipchain.io',
             'password': 'user2Password',
             'token': None,
             'token_exp': None,
+            'wallets': []
         }
     }
     tracking_data = {
@@ -122,10 +134,11 @@ class ShipmentCreator:
         self.shipments = []
 
     # pylint: disable=too-many-arguments, too-many-locals, attribute-defined-outside-init
-    def set_shipment_fields(self, carrier='user1@shipchain.io', shipper='user1@shipchain.io', moderator=None,
+    def set_shipment_fields(self, carrier='user1@shipchain.io', shipper='user1@shipchain.io', moderator=False,
                             startnumber=0, total=10, loglevel='warning', device=False, partition=10, attributes=None,
                             add_tracking=False, add_telemetry=False, profiles_url='http://localhost:9000',
-                            transmission_url='http://localhost:8000'):
+                            transmission_url='http://localhost:8000', reuse_wallets=False,
+                            reuse_storage_credentials=False):
         self.carrier = self.users[carrier]
         self.shipper = self.users[shipper]
         self.moderator = self.users[moderator] if moderator else None
@@ -135,16 +148,18 @@ class ShipmentCreator:
         logger.addHandler(console)
         logger.setLevel(LogLevels[loglevel].value)
         self.device = device
-        self.chunk_size = partition
+        self.partition = partition
         self.add_tracking = add_tracking
         self.add_telemetry = add_telemetry
+        self.reuse_storage_credentials = reuse_storage_credentials
+        self.reuse_wallets = reuse_wallets
         self.profiles_url = self._validate_url(profiles_url, 'profiles')
         self.transmission_url = self._validate_url(transmission_url, 'transmission')
         if attributes:
             self._validate_attributes(attributes)
 
     def _chunker(self, array):
-        return (array[i:i + self.chunk_size] for i in range(0, len(array), self.chunk_size))
+        return (array[i:i + self.partition] for i in range(0, len(array), self.partition))
 
     def _validate_url(self, url, url_base):
         try:
@@ -179,9 +194,13 @@ class ShipmentCreator:
         try:
             response = request_method(url, **kwargs)
         except requests.exceptions.ConnectionError:
-            raise CriticalError(f'Connection error raised when connecting to {url}')
+            url_group = 'Profiles' if self.profiles_url in url else 'Transmission'
+            raise CriticalError(
+                f'Connection error raised when connecting to {url}. Ensure service {url_group} is running.')
 
         if not response.ok:
+            if response.status_code == 503:
+                logger.warning('Ensure Engine services are running.')
             self.errors += response.json()['errors']
             raise NonCriticalError(f'Invalid response returned from {url}')
 
@@ -191,10 +210,10 @@ class ShipmentCreator:
         logger.info('Updating attributes to remove/update random and sequential variables')
         updated_attributes = deepcopy(self.attributes)
         for key, value in updated_attributes.items():
-            if value == "##RAND##":
-                updated_attributes[key] = str(uuid4())
-            elif value == "##NUM##":
-                updated_attributes[key] = self.sequence_number
+            if "##RAND##" in value:
+                updated_attributes[key] = value.replace("##RAND##", str(uuid4()))
+            elif "##NUM##" in value:
+                updated_attributes[key] = value.replace("##NUM##", self.sequence_number)
         if self.device:
             try:
                 device_response = self._parse_request(
@@ -229,7 +248,34 @@ class ShipmentCreator:
         user['token_exp'] = datetime.now(timezone.utc) + timedelta(seconds=(response['expires_in'] - 60))
         return response['id_token']
 
-    def _set_wallets(self):
+    def _reuse_wallets(self):
+        logger.info('Reusing wallets for shipment')
+        for wallet_owner in ('shipper', 'carrier', 'moderator'):
+            wallet_owner_dict = getattr(self, wallet_owner)
+            if not wallet_owner_dict:
+                continue
+
+            if not wallet_owner_dict['wallets']:
+                logger.debug(f'Wallets not found for owner: {wallet_owner_dict["username"]}')
+                try:
+                    response = self._parse_request(
+                        f"{self.profiles_url}/api/v1/wallet?page_size=9999", method='get',
+                        headers={'Authorization': f'JWT {self.get_user_jwt(self.shipper)}'})
+                except NonCriticalError:
+                    raise CriticalError(f'Error retrieving wallets for user {wallet_owner_dict["username"]}.')
+
+                logger.debug(f"Wallet count returned: {response['meta']['pagination']['count']}")
+                if response['meta']['pagination']['count'] == 0 or response['meta']['pagination']['count'] \
+                        < self.total // self.partition:
+                    raise CriticalError(f'Not enough wallets for user {wallet_owner_dict["username"]}.')
+
+                wallet_owner_dict['wallets'] = response['data']
+
+            wallet = wallet_owner_dict['wallets'].pop()
+
+            self.attributes[f'{wallet_owner}_wallet_id'] = wallet['id']
+
+    def _generate_wallets(self):
         logger.info('Generating wallets for shipment')
         try:
             shipper_response = self._parse_request(
@@ -256,7 +302,22 @@ class ShipmentCreator:
         self.attributes['shipper_wallet_id'] = shipper_response['data']['id']
         self.attributes['carrier_wallet_id'] = carrier_response['data']['id']
 
-    def _set_storage_credentials(self):
+    def _reuse_storage_credentials(self):
+        logger.info('Reusing storage credentials.')
+        try:
+            response = self._parse_request(
+                f"{self.profiles_url}/api/v1/storage_credentials",
+                headers={'Authorization': f'JWT {self.get_user_jwt(self.shipper)}'}, method='get')
+        except NonCriticalError:
+            raise CriticalError(f'Error retrieving storage credentials')
+
+        logger.debug(f'Storage credentials count returned: {response["meta"]["pagination"]["count"]}')
+        if response['meta']['pagination']['count'] == 0:
+            raise CriticalError(f'No storage credentials found associated with account {self.carrier["username"]}')
+
+        self.attributes['storage_credentials_id'] = response['data'][0]['id']
+
+    def _generate_storage_credentials(self):
         logger.info('Creating storage credentials.')
         try:
             response = self._parse_request(
@@ -267,9 +328,6 @@ class ShipmentCreator:
                     'title': f'Shipment creator SC: {str(uuid4())}'
                 }, headers={'Authorization': f'JWT {self.get_user_jwt(self.shipper)}'})
         except NonCriticalError:
-            raise CriticalError(f'Error generating storage .')
-
-        if not response:
             raise CriticalError(f'Error generating storage credentials.')
 
         logger.debug(f'Created storage credentials: {response["data"]["id"]}')
@@ -333,6 +391,7 @@ class ShipmentCreator:
 
     def _create_shipment(self):
         attributes = self._retrieve_updated_attributes()
+        logger.info('Creating shipment')
         try:
             response = self._parse_request(
                 f"{self.transmission_url}/api/v1/shipments/",
@@ -342,6 +401,7 @@ class ShipmentCreator:
             logger.warning(f'Failed to create shipment.')
             return
 
+        logger.debug(f'Created shipment: {response["data"]["id"]}')
         self.shipments.append(response['data']['id'])
 
         if self.add_tracking:
@@ -351,16 +411,16 @@ class ShipmentCreator:
 
     def create_bulk_shipments(self):
         try:
-            self._set_wallets()
-            self._set_storage_credentials()
+            (self._reuse_storage_credentials() if self.reuse_storage_credentials
+             else self._generate_storage_credentials())
         except CriticalError:
             logger.critical(f'Response errors: {self.errors}')
             sys.exit(2)
 
         for i in range(self.total):
-            if i % self.chunk_size != 0:
+            if i % self.partition == 0:
                 try:
-                    self._set_wallets()
+                    self._reuse_wallets() if self.reuse_wallets else self._generate_wallets()
                 except CriticalError:
                     logger.critical(f'Response errors: {self.errors}')
                     break
