@@ -1,7 +1,7 @@
 ## Base image with python and entrypoint scripts ##
 ## ============================================= ##
 FROM osgeo/gdal:alpine-normal-v2.4.1 as gdal
-FROM python:3.6.9-alpine3.9 AS base
+FROM python:3.6.10-alpine3.9 AS base
 
 LABEL maintainer="Adam Hodges <ahodges@shipchain.io>"
 
@@ -9,14 +9,15 @@ ENV LANG C.UTF-8
 ENV PYTHONUNBUFFERED 1
 
 # Essential packages for our app environment
-RUN apk add --no-cache bash curl libpq && \
+RUN apk add --no-cache bash wget libpq && \
     apk add --no-cache \
             --repository http://dl-3.alpinelinux.org/alpine/edge/main/ \
             --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ \
             libcrypto1.1 binutils libcurl libwebp zstd-libs libjpeg-turbo libpng openjpeg libwebp pcre libxml2 lcms2-dev fontconfig && \
     rm -f /usr/lib/libturbojpeg.so* /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so* /usr/lib/libpoppler-cpp.so* && \
-    curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python && \
-    apk del curl
+    wget https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py && \
+    python get-poetry.py --version 1.0.9 && \
+    apk del wget
 COPY --from=gdal /usr/share/gdal /usr/share/gdal
 COPY --from=gdal /usr/lib/libgdal.so* /usr/lib/
 COPY --from=gdal /usr/lib/libproj.so* /usr/lib/
@@ -30,7 +31,7 @@ COPY --from=gdal /usr/lib/libspatialite*.so* /usr/lib/
 COPY --from=gdal /usr/lib/libsz*.so* /usr/lib/
 
 # Install and configure virtualenv
-RUN pip install virtualenv==16.3.*
+RUN pip install virtualenv==20.0.*
 ENV VIRTUAL_ENV=/app/.virtualenv
 ENV PATH=$VIRTUAL_ENV/bin:/root/.poetry/bin:$PATH
 
