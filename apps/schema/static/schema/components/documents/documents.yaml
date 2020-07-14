@@ -6,10 +6,12 @@ get:
   parameters:
     - $ref: '../core/parameters.yaml#/page'
     - $ref: '../core/parameters.yaml#/page_size'
+    - $ref: '../core/parameters.yaml#/ordering'
     - $ref: '../shipments/parameters.yaml#/path'
     - $ref: 'parameters.yaml#/fileType'
     - $ref: 'parameters.yaml#/documentType'
     - $ref: 'parameters.yaml#/uploadStatus'
+    - $ref: 'parameters.yaml#/search'
   tags:
   - Documents
   responses:

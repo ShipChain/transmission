@@ -29,6 +29,13 @@ class DocumentType(Enum):
     BOL = 0
     IMAGE = 1
     OTHER = 2
+    COMMERCIAL_INVOICE = 3
+    PROOF_OF_INSURANCE = 4
+    CERTIFICATE_OF_ORIGIN = 5
+    CUSTOMS_FORMS = 6
+    FREIGHT_BILL = 7
+    AIR_WAYBILL = 8
+    PACKING_SLIP = 9
 
     class Labels:
         BOL = 'BOL'

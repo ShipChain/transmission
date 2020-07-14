@@ -11,7 +11,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+from datetime import datetime, timezone
 
+import freezegun
 import pytest
 import requests
 from moto import mock_iot
@@ -125,3 +127,14 @@ def boto():
 @pytest.fixture
 def entity_shipment_relationship(shipment):
     return AssertionHelper.EntityRef(resource='Shipment', pk=shipment.id)
+
+
+@pytest.fixture
+def current_datetime():
+    return datetime.now(timezone.utc)
+
+
+@pytest.fixture
+def frozen_time(current_datetime):
+    with freezegun.freeze_time(current_datetime) as current_datetime:
+        yield current_datetime
