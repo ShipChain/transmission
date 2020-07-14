@@ -50,7 +50,7 @@ def sqs_queue(boto_session, mocked_sns, settings):
 def mocked_aftership_api(modified_http_pretty, settings):
     modified_http_pretty.register_uri(modified_http_pretty.POST, f'{settings.AFTERSHIP_URL}couriers/detect')
     modified_http_pretty.register_uri(modified_http_pretty.POST, f'{settings.AFTERSHIP_URL}trackings',
-                                      body=json.dumps({'data': {'tracking': {'id': 'id-from-aftership'}}}),)
+                                      body=json.dumps({'data': {'tracking': {'id': 'id-from-aftership', 'slug': 'aftership-slug'}}}),)
 
 
 class TestSNS:

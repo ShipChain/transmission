@@ -68,9 +68,10 @@ class TestShipmentAftershipQuickadd:
 
     @pytest.fixture
     def mock_aftership_create_success(self, mock_aftership_validation_succeess):
-        mock_aftership_validation_succeess.register_uri(mock_aftership_validation_succeess.POST,
-                                                        f'{settings.AFTERSHIP_URL}trackings',
-                                                        body=json.dumps({'data': {'tracking': {'id': 'id'}}}),)
+        mock_aftership_validation_succeess.register_uri(
+            mock_aftership_validation_succeess.POST,
+            f'{settings.AFTERSHIP_URL}trackings',
+            body=json.dumps({'data': {'tracking': {'id': 'id', 'slug': 'aftership-slug'}}}),)
         return mock_aftership_validation_succeess
 
     @pytest.fixture
@@ -108,6 +109,8 @@ class TestShipmentAftershipQuickadd:
 
     def test_successful_quickadd(self, client_alice, mock_aftership_create_success, assertions_create_tracking):
         response = client_alice.post(self.create_url, self.base_create_attributes)
+        self.base_create_attributes['aftership_slug'] = 'aftership-slug'
+        self.base_create_attributes['shippers_reference'] = 'Quickadd Shipment: aftership_tracking'
         AssertionHelper.HTTP_202(response,
                                  entity_refs=AssertionHelper.EntityRef(
                                      resource='Shipment',
