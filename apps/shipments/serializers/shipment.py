@@ -328,13 +328,6 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         device = Device.get_or_create_with_permission(self.auth, device_id)
         device.prepare_for_reassignment()
 
-        if hasattr(device, 'shipment'):
-            if TransitState(device.shipment.state) == TransitState.IN_TRANSIT:
-                raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
-            else:
-                shipment = Shipment.objects.filter(device_id=device.id).first()
-                shipment.device_id = None
-                shipment.save()
         self.context['device'] = device
 
         return device_id
