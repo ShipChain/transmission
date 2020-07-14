@@ -62,7 +62,7 @@ class RouteLegViewSet(cgvs_mixins.CreateModelMixin,
 
     def perform_destroy(self, instance):
         if instance.route.routeleg_set.filter(shipment__state__gt=TransitState.AWAITING_PICKUP.value).exists():
-            raise ValidationError(f'Cannot remove shipment from route after transit has begun')
+            raise ValidationError('Cannot remove shipment from route after transit has begun')
 
         order = list(instance.route.get_routeleg_order())
         order.remove(instance.pk)

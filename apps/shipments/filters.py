@@ -171,11 +171,11 @@ SHIPMENT_ORDERING_FIELDS = (
 
 
 TELEMETRY_FILTER_FIELDS = (
-            'sensor_id',
-            'hardware_id',
-            'before',
-            'after',
-        )
+    'sensor_id',
+    'hardware_id',
+    'before',
+    'after',
+)
 
 
 class TelemetryFilter(filters.filterset.FilterSet):

@@ -41,26 +41,26 @@ class RouteLegCreateSerializer(serializers.ModelSerializer):
 
         if not shipment or \
                 not IsOwnerOrShared().has_object_permission(self.context['request'], self.context['view'], shipment):
-            raise ValidationError(f'Shipment does not exist')
+            raise ValidationError('Shipment does not exist')
 
         if hasattr(shipment, 'routeleg'):
             if shipment.routeleg.route.pk == self.context['view'].kwargs['route_pk']:
-                raise ValidationError(f'Shipment already included in this route')
+                raise ValidationError('Shipment already included in this route')
             else:
-                raise ValidationError(f'Shipment already included on another route')
+                raise ValidationError('Shipment already included on another route')
 
         if TransitState(shipment.state).value > TransitState.AWAITING_PICKUP.value:
-            raise ValidationError(f'Shipment already picked up, cannot add to route')
+            raise ValidationError('Shipment already picked up, cannot add to route')
 
         if shipment.device:
-            raise ValidationError(f'Shipment has device associated, cannot add to route')
+            raise ValidationError('Shipment has device associated, cannot add to route')
 
         return shipment.pk
 
     def validate(self, attrs):
         route = Route.objects.get(pk=self.context['view'].kwargs['route_pk'])
         if route.routeleg_set.filter(shipment__state__gt=TransitState.AWAITING_PICKUP.value).exists():
-            raise ValidationError(f'Cannot add shipment to route after transit has begun')
+            raise ValidationError('Cannot add shipment to route after transit has begun')
         return attrs
 
     def create(self, validated_data):
