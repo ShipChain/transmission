@@ -1,7 +1,7 @@
 ## Base image with python and entrypoint scripts ##
 ## ============================================= ##
-FROM osgeo/gdal:alpine-normal-v2.4.1 as gdal
-FROM python:3.6.10-alpine3.9 AS base
+FROM osgeo/gdal:alpine-normal-3.1.2 as gdal
+FROM python:3.6.11-alpine3.12 AS base
 
 LABEL maintainer="Adam Hodges <ahodges@shipchain.io>"
 
@@ -19,6 +19,7 @@ RUN apk add --no-cache bash wget libpq && \
     python get-poetry.py --version 1.0.9 && \
     apk del wget
 COPY --from=gdal /usr/share/gdal /usr/share/gdal
+COPY --from=gdal /usr/share/proj /usr/share/proj
 COPY --from=gdal /usr/lib/libgdal.so* /usr/lib/
 COPY --from=gdal /usr/lib/libproj.so* /usr/lib/
 COPY --from=gdal /usr/lib/libgeos*.so* /usr/lib/
@@ -29,6 +30,8 @@ COPY --from=gdal /usr/lib/libnetcdf*.so* /usr/lib/
 COPY --from=gdal /usr/lib/libhdf5*.so* /usr/lib/
 COPY --from=gdal /usr/lib/libspatialite*.so* /usr/lib/
 COPY --from=gdal /usr/lib/libsz*.so* /usr/lib/
+COPY --from=gdal /usr/lib/lib*df*.so* /usr/lib/
+COPY --from=gdal /usr/lib/libkea*.so* /usr/lib/
 
 # Install and configure virtualenv
 RUN pip install virtualenv==20.0.*
@@ -47,7 +50,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 FROM base AS build
 
 # Essential packages for building python packages
-RUN apk add --no-cache build-base git libffi-dev linux-headers jpeg-dev libressl2.7-libssl freetype-dev postgresql-dev su-exec
+RUN apk add --no-cache build-base git libffi-dev openexr-dev portablexdr-dev cfitsio linux-headers jpeg-dev libressl3.1-libssl freetype-dev postgresql-dev su-exec
 
 
 ## Image with additional dependencies for local docker usage ##
