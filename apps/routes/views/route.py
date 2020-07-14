@@ -38,18 +38,12 @@ class RouteViewSet(ConfigurableModelViewSet):
     configuration = {
         'create': ActionConfiguration(
             request_serializer=RouteCreateSerializer,
-            response_serializer=RouteSerializer,
         ),
         'update': ActionConfiguration(
             request_serializer=RouteUpdateSerializer,
-            response_serializer=RouteSerializer,
-        ),
-        'retrieve': ActionConfiguration(
-            serializer=RouteSerializer,
         ),
         'reorder': ActionConfiguration(
             request_serializer=RouteOrderSerializer,
-            response_serializer=RouteSerializer,
         ),
     }
 

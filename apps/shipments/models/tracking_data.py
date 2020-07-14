@@ -16,7 +16,7 @@ limitations under the License.
 from django.db import models
 
 from .shipment import Device, Shipment
-from ...abstract_models import AbstractTrackingData
+from apps.abstract_models import AbstractTrackingData
 
 
 class TrackingData(AbstractTrackingData):

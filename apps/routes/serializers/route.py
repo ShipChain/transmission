@@ -102,9 +102,6 @@ class RouteOrderSerializer(serializers.ModelSerializer):
         raise NotImplementedError
 
     def validate_legs(self, legs):
-        if not self.instance:
-            raise serializers.ValidationError('Cannot locate Route')
-
         if sorted(map(str, legs)) != sorted(map(lambda leg: leg['pk'], self.instance.routeleg_set.all().values('pk'))):
             raise serializers.ValidationError('Reorder list does not contain exact list of existing RouteLegs')
 

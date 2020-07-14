@@ -83,16 +83,15 @@ class Device(models.Model):
         if hasattr(self, 'shipment'):
             if not self.shipment.can_disassociate_device():
                 raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
-            else:
-                from apps.shipments.models import Shipment
-                shipment = Shipment.objects.get(pk=self.shipment.id)
-                shipment.device_id = None
-                shipment.save()
+            from apps.shipments.models import Shipment
+            shipment = Shipment.objects.get(pk=self.shipment.id)
+            shipment.device_id = None
+            shipment.save()
 
         if hasattr(self, 'route'):
-            from apps.routes.models import Route
             if not self.route.can_disassociate_device():
                 raise serializers.ValidationError('Device is already assigned to a Route in progress')
+            from apps.routes.models import Route
             route = Route.objects.get(pk=self.route.id)
             route.device_id = None
             route.save()

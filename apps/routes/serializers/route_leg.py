@@ -39,10 +39,8 @@ class RouteLegCreateSerializer(serializers.ModelSerializer):
     def validate_shipment_id(self, data):
         shipment = Shipment.objects.filter(pk=data).first()
 
-        if not shipment:
-            raise ValidationError(f'Shipment does not exist')
-
-        if not IsOwnerOrShared().has_object_permission(self.context['request'], self.context['view'], shipment):
+        if not shipment or \
+                not IsOwnerOrShared().has_object_permission(self.context['request'], self.context['view'], shipment):
             raise ValidationError(f'Shipment does not exist')
 
         if hasattr(shipment, 'routeleg'):
