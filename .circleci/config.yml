@@ -4,7 +4,7 @@ orbs:
 jobs:
   build:
     docker:
-      - image: circleci/python:3.6.8
+      - image: circleci/python:3.7.8
         user: root
     environment:
       ROLE: circleci
@@ -15,8 +15,8 @@ jobs:
           docker_layer_caching: true
       - restore_cache:
           keys:
-            - virtualenv-alpine-cache-v3-{{ checksum "poetry.lock" }}
-            - virtualenv-alpine-cache-v3
+            - virtualenv-alpine-cache-v4-{{ checksum "poetry.lock" }}
+            - virtualenv-alpine-cache-v4
       - run:
           name: Build Docker images
           command: |
@@ -67,7 +67,7 @@ jobs:
           command: |
             docker cp $(bin/dc ps -q runserver):/app/.virtualenv/. .virtualenv
       - save_cache:
-          key: virtualenv-alpine-cache-v3-{{ checksum "poetry.lock" }}
+          key: virtualenv-alpine-cache-v2-{{ checksum "poetry.lock" }}
           paths:
             - .virtualenv
       - run:
@@ -118,7 +118,7 @@ jobs:
 
   integration-testing:
     docker:
-      - image: circleci/python:3.6.8-node
+      - image: circleci/python:3.7.8-node
         user: root
     environment:
       ROLE: int

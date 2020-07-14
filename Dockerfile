@@ -1,7 +1,7 @@
 ## Base image with python and entrypoint scripts ##
 ## ============================================= ##
 FROM osgeo/gdal:alpine-normal-3.1.2 as gdal
-FROM python:3.6.11-alpine3.12 AS base
+FROM python:3.7.8-alpine3.12 AS base
 
 LABEL maintainer="Adam Hodges <ahodges@shipchain.io>"
 
