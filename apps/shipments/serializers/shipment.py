@@ -143,8 +143,8 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     class Meta:
         model = Shipment
         exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
-        read_only_fields = ('owner_id', 'contract_version', 'arrival_est', 'aftership_slug') \
-            if settings.PROFILES_ENABLED else ('contract_version', 'arrival_est', 'aftership_slug')
+        read_only_fields = ('owner_id', 'contract_version', 'arrival_est', 'carrier_abbv') \
+            if settings.PROFILES_ENABLED else ('contract_version', 'arrival_est', 'carrier_abbv')
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
@@ -281,7 +281,7 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
                     'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
                    if settings.PROFILES_ENABLED else ('version', 'background_data_hash_interval',
                                                       'aftership_tracking', 'manual_update_hash_interval',
-                                                      'asset_physical_id', 'aftership_slug'))
+                                                      'asset_physical_id', 'carrier_abbv'))
         read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                             'storage_credentials_id', 'contract_version', 'state')
 
@@ -409,7 +409,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id', 'manual_update_hash_interval',
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours',
                    'geofences', 'assignee_id', 'gtx_required', 'gtx_validation', 'gtx_validation_timestamp',
-                   'aftership_tracking', 'aftership_slug', 'arrival_est')
+                   'aftership_tracking', 'carrier_abbv', 'arrival_est')
 
 
 class ShipmentOverviewSerializer(serializers.ModelSerializer):

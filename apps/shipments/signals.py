@@ -171,8 +171,8 @@ def shipment_aftership_tracking_changed(sender, instance, changed_fields, **kwar
         tracking_data = response.json()['data']['tracking']
 
         instance.anonymous_historical_change(shippers_reference=f'Quickadd Shipment: {instance.aftership_tracking}',
-                                             aftership_slug=tracking_data['slug'])
-        instance.refresh_from_db(fields=['shippers_reference', 'aftership_slug'])
+                                             carrier_abbv=tracking_data['slug'])
+        instance.refresh_from_db(fields=['shippers_reference', 'carrier_abbv'])
 
         SNSClient().aftership_tracking_update(instance, tracking_data['id'])
 
