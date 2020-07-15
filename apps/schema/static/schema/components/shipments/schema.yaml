@@ -83,6 +83,7 @@ attributes:
   - $ref: '#/shipment/geofences'
   - $ref: '#/shipment/contractVersion'
   - $ref: '#/shipment/aftershipTracking'
+  - $ref: '#/shipment/carrierAbbv'
 
 meta:
   allOf:

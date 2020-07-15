@@ -594,6 +594,14 @@ aftershipTracking:
       type: string
       example: '906587618687'
 
+carrierAbbv:
+  properties:
+    carrier_abbv:
+      title: carrier_abbv
+      description: Abbreviation for shipment carrier
+      type: string
+      example: 'dhl-global-mail-asia'
+
 gtxRequired:
   properties:
     gtx_required:
