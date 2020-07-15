@@ -67,9 +67,10 @@ jobs:
           command: |
             docker cp $(bin/dc ps -q runserver):/app/.virtualenv/. .virtualenv
       - save_cache:
-          key: virtualenv-alpine-cache-v2-{{ checksum "poetry.lock" }}
+          key: virtualenv-alpine-cache-v4-{{ checksum "poetry.lock" }}
           paths:
             - .virtualenv
+            - ~/.cache/pypoetry
       - run:
           name: Save docker image
           command: |
