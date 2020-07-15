@@ -15,18 +15,24 @@ limitations under the License.
 """
 import copy
 import logging
+import json
 from functools import lru_cache
 
 from django.conf import settings
+from django.core.serializers import serialize
 from django.db import models
 from django.utils.timezone import now
 from django.db.models.fields.proxy import OrderWrt
 
 from simple_history.signals import post_create_historical_record, pre_create_historical_record
-from simple_history.models import HistoricalRecords, ModelChange, ModelDelta, transform_field, _model_to_dict
+from simple_history.models import HistoricalRecords, ModelChange, ModelDelta, transform_field
 
 
 LOG = logging.getLogger('transmission')
+
+
+def _model_to_dict(model):
+    return json.loads(serialize("json", [model]))[0]["fields"]
 
 
 def get_user(request=None, **kwargs):

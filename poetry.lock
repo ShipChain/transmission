@@ -407,14 +407,14 @@ version = "*"
 
 [[package]]
 category = "main"
-description = "Brings async, event-driven capabilities to Django. Django 1.11 and up only."
+description = "Brings async, event-driven capabilities to Django. Django 2.2 and up only."
 name = "channels"
 optional = false
 python-versions = ">=3.5"
-version = "2.3.1"
+version = "2.4.0"
 
 [package.dependencies]
-Django = ">=1.11"
+Django = ">=2.2"
 asgiref = ">=3.2,<4.0"
 daphne = ">=2.3,<3.0"
 
@@ -552,10 +552,11 @@ category = "main"
 description = "A high-level Python Web framework that encourages rapid development and clean, pragmatic design."
 name = "django"
 optional = false
-python-versions = ">=3.5"
-version = "2.2.14"
+python-versions = ">=3.6"
+version = "3.0.8"
 
 [package.dependencies]
+asgiref = ">=3.2,<4.0"
 pytz = "*"
 sqlparse = ">=0.2.2"
 
@@ -576,11 +577,11 @@ category = "main"
 description = "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS)."
 name = "django-cors-headers"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "3.0.0"
+python-versions = ">=3.5"
+version = "3.4.0"
 
 [package.dependencies]
-Django = ">=1.11"
+Django = ">=2.0"
 
 [[package]]
 category = "main"
@@ -596,7 +597,7 @@ description = "Real Python Enums for Django."
 name = "django-enumfields"
 optional = false
 python-versions = "*"
-version = "0.10.0"
+version = "2.0.0"
 
 [[package]]
 category = "main"
@@ -612,7 +613,7 @@ description = "Extensions for Django"
 name = "django-extensions"
 optional = false
 python-versions = "*"
-version = "2.0.6"
+version = "2.1.4"
 
 [package.dependencies]
 six = ">=1.2"
@@ -631,7 +632,7 @@ description = "Django fieldsignals simply makes it easy to tell when the fields 
 name = "django-fieldsignals"
 optional = false
 python-versions = "*"
-version = "0.4.0"
+version = "0.5.0"
 
 [[package]]
 category = "main"
@@ -650,7 +651,7 @@ description = "Django friendly finite state machine support."
 name = "django-fsm"
 optional = false
 python-versions = "*"
-version = "2.6.1"
+version = "2.7.0"
 
 [[package]]
 category = "main"
@@ -696,12 +697,12 @@ category = "main"
 description = "Full featured redis cache backend for Django."
 name = "django-redis"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "4.10.0"
+python-versions = ">=3.5"
+version = "4.12.1"
 
 [package.dependencies]
-Django = ">=1.11"
-redis = ">=2.10.0"
+Django = ">=2.2"
+redis = ">=3.0.0"
 
 [[package]]
 category = "main"
@@ -709,7 +710,7 @@ description = "Store model history and view/revert changes from admin site."
 name = "django-simple-history"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "2.7.3"
+version = "2.8.0"
 
 [package.dependencies]
 six = "*"
@@ -728,7 +729,7 @@ description = "Geographic add-ons for Django Rest Framework"
 name = "djangorestframework-gis"
 optional = false
 python-versions = "*"
-version = "0.14"
+version = "0.15"
 
 [package.dependencies]
 djangorestframework = "*"
@@ -2095,25 +2096,29 @@ YAML = ["pyyaml"]
 
 [[package]]
 category = "main"
-description = "A PyPI package containing shared code for ShipChain's Python/Django projects."
+description = ""
 name = "shipchain-common"
 optional = false
-python-versions = ">=3.6,<3.8"
+python-versions = ">=3.6,<3.8"  # Compatible python versions must be declared here
 version = "1.0.25"
 
 [package.dependencies]
-aws-requests-auth = ">=0.4,<0.5"
-boto3 = ">=1.9,<1.10"
-cryptography = ">=2.5,<2.6"
-django = ">=2.2.12,<2.3.0"
-django-enumfields = ">=0.10.0,<0.11.0"
-django-influxdb-tagged-metrics = "1.3.3"
-djangorestframework = ">=3.10,<3.11"
-djangorestframework-jsonapi = ">=3,<4"
-drf-nested-routers = ">=0.91.0,<0.92.0"
-python-dateutil = ">=2.7.5,<2.8.0"
-requests = ">=2.21,<3.0"
+aws-requests-auth = "~0.4"
+boto3 = "~1.9"
+cryptography = "~2.5"
+django = ">=2.2"
+django-enumfields = ">=0.10.0"
+django-influxdb-tagged-metrics = "==1.3.3"
+djangorestframework = "~3.10"
+djangorestframework-jsonapi = "~3"
+drf-nested-routers = "^0.91.0"
+python-dateutil = "~2.7.5"
+requests = "^2.21"
 
+[package.source]
+reference = "411ac98513e7a2fe0dc22752aae31711ab362dfe"
+type = "git"
+url = "git://github.com/shipchain/python-common.git"
 [[package]]
 category = "main"
 description = "Python 2 and 3 compatibility utilities"
@@ -2430,7 +2435,7 @@ test = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
 [metadata]
-content-hash = "2563fb87f4acebbce8f6cd89df01fa7c8da25b991036029056628388f1f28a72"
+content-hash = "f3fcc93dcac300c0f476f7a77b2c366728c5a4357ca8019adba62557a0a513b9"
 python-versions = "==3.6.9"
 
 [metadata.files]
@@ -2574,8 +2579,8 @@ cfn-lint = [
     {file = "cfn_lint-0.33.2-py3-none-any.whl", hash = "sha256:b29d172a0910f305162e354fd421594ab575ace6431b7b8884c245dfc5064859"},
 ]
 channels = [
-    {file = "channels-2.3.1-py2.py3-none-any.whl", hash = "sha256:70c988074c03b500c96a46123bb5e37a9444930d0be988d488d1e786dfe08631"},
-    {file = "channels-2.3.1.tar.gz", hash = "sha256:6b8ebd93fe0041a23e31c9f4130d92fadb9c0040c0eb377a004540631325a31d"},
+    {file = "channels-2.4.0-py2.py3-none-any.whl", hash = "sha256:80a5ad1962ae039a3dcc0a5cb5212413e66e2f11ad9e9db8004834436daf3400"},
+    {file = "channels-2.4.0.tar.gz", hash = "sha256:08e756406d7165cb32f6fc3090c0643f41ca9f7e0f7fada0b31194662f20f414"},
 ]
 channels-redis = [
     {file = "channels_redis-2.4.2-py2.py3-none-any.whl", hash = "sha256:62d2b5301cd0fc421e4284afa8e7ed5cadadc9738ec43fa2b3c92b5cc76926dc"},
@@ -2678,47 +2683,48 @@ decorator = [
     {file = "decorator-4.4.2.tar.gz", hash = "sha256:e3a62f0520172440ca0dcc823749319382e377f37f140a0b99ef45fecb84bfe7"},
 ]
 django = [
-    {file = "Django-2.2.14-py3-none-any.whl", hash = "sha256:f2250bd35d0f6c23e930c544629934144e5dd39a4c06092e1050c731c1712ba8"},
-    {file = "Django-2.2.14.tar.gz", hash = "sha256:edf0ecf6657713b0435b6757e6069466925cae70d634a3283c96b80c01e06191"},
+    {file = "Django-3.0.8-py3-none-any.whl", hash = "sha256:5457fc953ec560c5521b41fad9e6734a4668b7ba205832191bbdff40ec61073c"},
+    {file = "Django-3.0.8.tar.gz", hash = "sha256:31a5fbbea5fc71c99e288ec0b2f00302a0a92c44b13ede80b73a6a4d6d205582"},
 ]
 django-admin-rangefilter = [
     {file = "django-admin-rangefilter-0.5.4.tar.gz", hash = "sha256:f2b77568b57e65c14d76aa3fae7e5d0a9caa93335e116c3377d9c1f43d233dbb"},
     {file = "django_admin_rangefilter-0.5.4-py2.py3-none-any.whl", hash = "sha256:088cde1ec1d81ab6053b939d7ef5cb4a3991f295b558422e763d4760b96b21e3"},
 ]
 django-cors-headers = [
-    {file = "django-cors-headers-3.0.0.tar.gz", hash = "sha256:f484f2cca7df29d3ce8cc74f4ddc00aedb7d3789e16fce9fb5d860d6ec1ebcf4"},
-    {file = "django_cors_headers-3.0.0-py2.py3-none-any.whl", hash = "sha256:2876346858f7507ff7f1b3a159ae108b54c0902458ca0f9407760d28eb3029e5"},
+    {file = "django-cors-headers-3.4.0.tar.gz", hash = "sha256:f5218f2f0bb1210563ff87687afbf10786e080d8494a248e705507ebd92d7153"},
+    {file = "django_cors_headers-3.4.0-py3-none-any.whl", hash = "sha256:5240062ef0b16668ce8a5f43324c388d65f5439e1a30e22c38684d5ddaff0d15"},
 ]
 django-dotenv = [
     {file = "django-dotenv-1.4.2.tar.gz", hash = "sha256:3812bb0f4876cf31f902aad140f0645e120e51ee30eb7c40c22050f58a0e4adb"},
     {file = "django_dotenv-1.4.2-py2.py3-none-any.whl", hash = "sha256:a9b1b40a70bd321acd231926acedb9bd2c5e873e33a1873b34a7276d196a765e"},
 ]
 django-enumfields = [
-    {file = "django-enumfields-0.10.0.tar.gz", hash = "sha256:fafbf81c1a1707429c3ec5b5c4d4a2ca33bbffb3fa4c777dd35567e164391bf6"},
+    {file = "django-enumfields-2.0.0.tar.gz", hash = "sha256:e94f6b39de7adc0716130101d75eede3834b42e2a895599c19354eb1bb7fbdd1"},
+    {file = "django_enumfields-2.0.0-py3-none-any.whl", hash = "sha256:9bc0e2c410723c9592992155f32adadcedc11c841f6888dcf721f5f638d466e3"},
 ]
 django-environ = [
     {file = "django-environ-0.4.5.tar.gz", hash = "sha256:6c9d87660142608f63ec7d5ce5564c49b603ea8ff25da595fd6098f6dc82afde"},
     {file = "django_environ-0.4.5-py2.py3-none-any.whl", hash = "sha256:c57b3c11ec1f319d9474e3e5a79134f40174b17c7cc024bbb2fad84646b120c4"},
 ]
 django-extensions = [
-    {file = "django-extensions-2.0.6.tar.gz", hash = "sha256:bc9f2946c117bb2f49e5e0633eba783787790ae810ea112fe7fd82fa64de2ff1"},
-    {file = "django_extensions-2.0.6-py2.py3-none-any.whl", hash = "sha256:37a543af370ee3b0721ff50442d33c357dd083e6ea06c5b94a199283b6f9e361"},
+    {file = "django-extensions-2.1.4.tar.gz", hash = "sha256:8317a3fe479b1ba3e3a04ecf33fb8d6ccf09bb18f30eab64e34c40a593741d26"},
+    {file = "django_extensions-2.1.4-py2.py3-none-any.whl", hash = "sha256:a76a61566f1c8d96acc7bcf765080b8e91367a25a2c6f8c5bddd574493839180"},
 ]
 django-fancy-cache = [
     {file = "django-fancy-cache-1.0.0.tar.gz", hash = "sha256:33256143041b468f46ef2dc3b909c2fb323272001169bce47fd01529822c5712"},
     {file = "django_fancy_cache-1.0.0-py2-none-any.whl", hash = "sha256:a949ed5c663c44a1781ee50bb3eee564ad13269c8ccb2265bb109146ebde8a93"},
 ]
 django-fieldsignals = [
-    {file = "django-fieldsignals-0.4.0.tar.gz", hash = "sha256:6d789f271d655fd8fc33397f91bcc58e796a1f3ac054706dfe1c28ae90763487"},
-    {file = "django_fieldsignals-0.4.0-py2.py3-none-any.whl", hash = "sha256:8151847dee9e1e13af96535e6db2931d99e9b5d01ceb5a60ea4f7a2e0786bfdf"},
+    {file = "django-fieldsignals-0.5.0.tar.gz", hash = "sha256:cc004936b7053ec71d269c6657935109a9e17b8d1639c1a9c6b0a3ffc2897920"},
+    {file = "django_fieldsignals-0.5.0-py2.py3-none-any.whl", hash = "sha256:442298b7f97b267b29a128730c9a241d73e96c4ed153a13bbb529b8ae120366b"},
 ]
 django-filter = [
     {file = "django-filter-2.1.0.tar.gz", hash = "sha256:3dafb7d2810790498895c22a1f31b2375795910680ac9c1432821cbedb1e176d"},
     {file = "django_filter-2.1.0-py3-none-any.whl", hash = "sha256:a3014de317bef0cd43075a0f08dfa1d319a7ccc5733c3901fb860da70b0dda68"},
 ]
 django-fsm = [
-    {file = "django-fsm-2.6.1.tar.gz", hash = "sha256:96f776736042b8cde03483cb4b27c3a62580da40fc9b942845349718afdf5d0f"},
-    {file = "django_fsm-2.6.1-py2.py3-none-any.whl", hash = "sha256:cacd5485c726b411c6728c9ae3120303c9badf8aa0edff2db3aecdbe3a906945"},
+    {file = "django-fsm-2.7.0.tar.gz", hash = "sha256:9f42111814a273cdfd79cdf839f3596bc48b9cfe5fe5102293f07ade5b0048d5"},
+    {file = "django_fsm-2.7.0-py2.py3-none-any.whl", hash = "sha256:d5b0ca13965261f4fffad350fadd388dcfd9b6712399a84021073a40b161fbd7"},
 ]
 django-fullurl = [
     {file = "django_fullurl-0.5-py2.py3-none-any.whl", hash = "sha256:f700aadbd8d4c20df5976c1962a21e7eed3697c05394358e51cd26fb4cefb11d"},
@@ -2730,20 +2736,19 @@ django-mock-queries = [
     {file = "django_mock_queries-2.1.5.tar.gz", hash = "sha256:0c5f51eaaaa9732c43a7af8c55a543542d747ea2780aecf6e7b0bbf29f20c083"},
 ]
 django-redis = [
-    {file = "django-redis-4.10.0.tar.gz", hash = "sha256:af0b393864e91228dd30d8c85b5c44d670b5524cb161b7f9e41acc98b6e5ace7"},
-    {file = "django_redis-4.10.0-py2.py3-none-any.whl", hash = "sha256:f46115577063d00a890867c6964ba096057f07cb756e78e0503b89cd18e4e083"},
+    {file = "django-redis-4.12.1.tar.gz", hash = "sha256:306589c7021e6468b2656edc89f62b8ba67e8d5a1c8877e2688042263daa7a63"},
+    {file = "django_redis-4.12.1-py3-none-any.whl", hash = "sha256:1133b26b75baa3664164c3f44b9d5d133d1b8de45d94d79f38d1adc5b1d502e5"},
 ]
 django-simple-history = [
-    {file = "django-simple-history-2.7.3.tar.gz", hash = "sha256:7f3044439e401fb02b12231b675590865a27a149f6bd99587e429cbe6a9dd6a6"},
-    {file = "django_simple_history-2.7.3-py2.py3-none-any.whl", hash = "sha256:7273add61d3f89453c475531627f8c69cbfc41d6fb99d45278dddc3bafe39284"},
+    {file = "django-simple-history-2.8.0.tar.gz", hash = "sha256:831cfc3f1164627428be3cd38fb7268eb7a979f97f11018e55813a3ce23b1173"},
+    {file = "django_simple_history-2.8.0-py2.py3-none-any.whl", hash = "sha256:3d56ca81de5a960b293dd8be31af991b976f319940e01c68ed10652dbd86aa58"},
 ]
 djangorestframework = [
     {file = "djangorestframework-3.10.3-py3-none-any.whl", hash = "sha256:5488aed8f8df5ec1d70f04b2114abc52ae6729748a176c453313834a9ee179c8"},
     {file = "djangorestframework-3.10.3.tar.gz", hash = "sha256:dc81cbf9775c6898a580f6f1f387c4777d12bd87abf0f5406018d32ccae71090"},
 ]
 djangorestframework-gis = [
-    {file = "djangorestframework-gis-0.14.tar.gz", hash = "sha256:e645c6c8aedee53ac0a4851abcdf8121fff66813eebae1b040b1ccb941cb248b"},
-    {file = "djangorestframework_gis-0.14-py2.py3-none-any.whl", hash = "sha256:35527c51e083ccc93f6e6d90a6515c132bbeb2c5648b166ac5b1a48c4ea8e2a4"},
+    {file = "djangorestframework_gis-0.15-py2.py3-none-any.whl", hash = "sha256:63c253528a107bc77cd71506cd639a0489b05b763fa7c3190cfd4622bf094594"},
 ]
 djangorestframework-jsonapi = [
     {file = "djangorestframework-jsonapi-3.0.0.tar.gz", hash = "sha256:61d28ac49274815b1735d87b7ab93f38b481916ddfa7231509de297fd27e5b3b"},
@@ -3366,10 +3371,7 @@ service-identity = [
 setoptconf = [
     {file = "setoptconf-0.2.0.tar.gz", hash = "sha256:5b0b5d8e0077713f5d5152d4f63be6f048d9a1bb66be15d089a11c898c3cf49c"},
 ]
-shipchain-common = [
-    {file = "shipchain-common-1.0.25.tar.gz", hash = "sha256:d54d8c61ec2ed04800ef5ef024a3091a3a087106b21c24e76afaae7e054911da"},
-    {file = "shipchain_common-1.0.25-py3-none-any.whl", hash = "sha256:d00c7b46eec4659cda3dcca3869842ce3885a84d903ea615fe803c6e2e87e6be"},
-]
+shipchain-common = []
 six = [
     {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},
     {file = "six-1.15.0.tar.gz", hash = "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259"},
