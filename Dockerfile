@@ -13,7 +13,8 @@ RUN apk add --no-cache bash wget libpq && \
     apk add --no-cache \
             --repository http://dl-3.alpinelinux.org/alpine/edge/main/ \
             --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ \
-            libcrypto1.1 binutils libcurl libwebp zstd-libs libjpeg-turbo libpng openjpeg libwebp pcre libxml2 lcms2-dev fontconfig && \
+            libcrypto1.1 binutils libcurl libwebp zstd-libs libjpeg-turbo libpng openjpeg libwebp pcre libxml2 \
+            lcms2-dev fontconfig openexr-dev portablexdr-dev cfitsio  && \
     rm -f /usr/lib/libturbojpeg.so* /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so* /usr/lib/libpoppler-cpp.so* && \
     wget https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py && \
     python get-poetry.py --version 1.0.9 && \
@@ -50,7 +51,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 FROM base AS build
 
 # Essential packages for building python packages
-RUN apk add --no-cache build-base git libffi-dev openexr-dev portablexdr-dev cfitsio linux-headers jpeg-dev libressl3.1-libssl freetype-dev postgresql-dev su-exec
+RUN apk add --no-cache build-base git libffi-dev linux-headers jpeg-dev libressl3.1-libssl freetype-dev postgresql-dev su-exec
 
 
 ## Image with additional dependencies for local docker usage ##
