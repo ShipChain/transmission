@@ -43,7 +43,7 @@ django-fullurl= "==0.5"
 django-influxdb-tagged-metrics = '==1.3.3'
 django-redis = "==4.12.1"
 django-simple-history = "~2.8.0"
-djangorestframework = "==3.10.3"
+djangorestframework = "==3.10.3"  # 3.11.0 breaks UniqueTogetherValidator, fix should be in 3.12.0
 djangorestframework-gis = "==0.15"
 djangorestframework-jsonapi = "~3.0"
 djangorestframework-simplejwt = {git = "git://github.com/davesque/django-rest-framework-simplejwt.git", rev = "04a4f7f2e045ac4a49542b7e98350e66431adcf5"}
