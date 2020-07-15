@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import logging
+import uuid
 
 from django.db import models
-from shipchain_common.utils import random_id
 
 from apps.shipments.models import Device, TransitState
 
@@ -24,7 +24,7 @@ LOG = logging.getLogger('transmission')
 
 
 class Route(models.Model):
-    id = models.CharField(primary_key=True, default=random_id, max_length=36)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     owner_id = models.UUIDField(null=False)

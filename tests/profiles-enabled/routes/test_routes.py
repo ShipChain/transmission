@@ -747,11 +747,11 @@ class TestRouteReorder:
         )
         leg_data = response.json()['data']['relationships']['legs']['data']
         assert len(leg_data) == len(self.insert_order)
-        assert list(map(lambda leg: leg['id'], leg_data)) == self.insert_order
+        assert list(map(lambda leg: leg['id'], leg_data)) == list(map(lambda pk: str(pk), self.insert_order))
 
     def test_reorder_reverse(self, client_alice):
         response = client_alice.post(self.url_route, data={'legs': self.reverse_order})
         AssertionHelper.HTTP_200(response)
         leg_data = response.json()['data']['relationships']['legs']['data']
         assert len(leg_data) == len(self.reverse_order)
-        assert list(map(lambda leg: leg['id'], leg_data)) == self.reverse_order
+        assert list(map(lambda leg: leg['id'], leg_data)) == list(map(lambda pk: str(pk), self.reverse_order))
