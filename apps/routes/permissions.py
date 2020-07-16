@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db.models import Q
 from rest_framework import permissions
 
 from apps.permissions import get_user
@@ -12,10 +13,13 @@ class NestedRoutePermission(permissions.BasePermission):
         """
         from apps.routes.models import Route  # Avoid circular import
 
+        queryset_filter = Q(pk=view.kwargs['route_pk'])
+
         if settings.PROFILES_ENABLED:
             user_id, organization_id = get_user(request)
-            Route.objects.get(pk=view.kwargs['route_pk'],
-                              owner_id__in=[organization_id, user_id] if organization_id else [user_id])
-        else:
-            Route.objects.get(pk=view.kwargs['route_pk'])
+            queryset_filter &= Q(owner_id__in=[organization_id, user_id] if organization_id else [user_id])
+
+        if not Route.objects.filter(queryset_filter).exists():
+            raise Route.DoesNotExist("Route matching query does not exist.")
+
         return True

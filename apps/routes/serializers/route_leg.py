@@ -17,7 +17,7 @@ from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from apps.routes.models import RouteLeg, Route
+from apps.routes.models import RouteLeg
 from apps.shipments.models import Shipment, TransitState
 from apps.shipments.permissions import IsOwnerOrShared
 
@@ -58,14 +58,17 @@ class RouteLegCreateSerializer(serializers.ModelSerializer):
         return shipment.pk
 
     def validate(self, attrs):
-        route = Route.objects.get(pk=self.context['view'].kwargs['route_pk'])
-        if route.routeleg_set.filter(shipment__state__gt=TransitState.AWAITING_PICKUP.value).exists():
+        if RouteLeg.objects.filter(route_id=self.context['view'].kwargs['route_pk'],
+                                   shipment__state__gt=TransitState.AWAITING_PICKUP.value,
+                                   ).exists():
             raise ValidationError('Cannot add shipment to route after transit has begun')
         return attrs
 
     def create(self, validated_data):
         try:
-            route = Route.objects.get(pk=self.context['view'].kwargs['route_pk'])
-            return route.routeleg_set.create(shipment_id=validated_data['shipment_id'])
+            return RouteLeg.objects.create(
+                route_id=self.context['view'].kwargs['route_pk'],
+                shipment_id=validated_data['shipment_id'],
+            )
         except IntegrityError as exc:
             raise ValidationError(f'{exc}')
