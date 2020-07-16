@@ -97,7 +97,8 @@ class ShipmentFilter(filters.filterset.FilterSet):
             'delayed',
             'asset_physical_id',
             'asset_custodian_id',
-            'aftership_tracking'
+            'aftership_tracking',
+            'carrier_abbv',
         )
 
 

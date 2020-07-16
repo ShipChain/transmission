@@ -168,7 +168,13 @@ def shipment_aftership_tracking_changed(sender, instance, changed_fields, **kwar
         if not response.ok:
             raise ValidationError('Supplied tracking number has already been imported into Aftership')
 
-        SNSClient().aftership_tracking_update(instance, response.json()['data']['tracking']['id'])
+        tracking_data = response.json()['data']['tracking']
+
+        instance.anonymous_historical_change(shippers_reference=f'Quickadd Shipment: {instance.aftership_tracking}',
+                                             carrier_abbv=tracking_data['slug'])
+        instance.refresh_from_db(fields=['shippers_reference', 'carrier_abbv'])
+
+        SNSClient().aftership_tracking_update(instance, tracking_data['id'])
 
 
 @receiver(post_save_changed, sender=Shipment, fields=['device', 'state', 'geofences'],
