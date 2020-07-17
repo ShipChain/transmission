@@ -219,12 +219,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
 
     def validate_device_id(self, device_id):
         device = Device.get_or_create_with_permission(self.auth, device_id)
-        if hasattr(device, 'shipment'):
-            if TransitState(device.shipment.state) == TransitState.IN_TRANSIT:
-                raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
-            shipment = Shipment.objects.filter(device_id=device.id).first()
-            shipment.device_id = None
-            shipment.save()
+        device.prepare_for_reassignment()
+
         self.context['device'] = device
 
         return device_id
@@ -325,18 +321,13 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         if not device_id:
             if not self.instance.device:
                 return None
-            if TransitState(self.instance.state) == TransitState.IN_TRANSIT:
+            if not self.instance.can_disassociate_device():
                 raise serializers.ValidationError('Cannot remove device from Shipment in progress')
             return None
 
         device = Device.get_or_create_with_permission(self.auth, device_id)
+        device.prepare_for_reassignment()
 
-        if hasattr(device, 'shipment'):
-            if TransitState(device.shipment.state) == TransitState.IN_TRANSIT:
-                raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
-            shipment = Shipment.objects.filter(device_id=device.id).first()
-            shipment.device_id = None
-            shipment.save()
         self.context['device'] = device
 
         return device_id

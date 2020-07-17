@@ -26,19 +26,17 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from apps.permissions import ShipmentExists
+from apps.routes.models import RouteTelemetryData
+from apps.routes.serializers import RouteTelemetryResponseSerializer, RouteTelemetryResponseAggregateSerializer
+from apps.shipments.filters import TelemetryFilter, RouteTelemetryFilter
+from apps.shipments.models import Shipment, TelemetryData, TransitState
+from apps.shipments.permissions import IsOwnerOrShared
+from apps.shipments.serializers import TelemetryResponseSerializer, TelemetryResponseAggregateSerializer
 from apps.utils import Aggregates, TimeTrunc
-from ..filters import TelemetryFilter
-from ..models import Shipment, TelemetryData
-from ..permissions import IsOwnerOrShared
-from ..serializers import TelemetryResponseSerializer, TelemetryResponseAggregrateSerializer
 
 
 class TelemetryViewSet(mixins.ListModelMixin,
                        viewsets.GenericViewSet):
-
-    queryset = TelemetryData.objects.all()
-
-    serializer_class = TelemetryResponseSerializer
 
     permission_classes = (
         (ShipmentExists, IsOwnerOrShared) if settings.PROFILES_ENABLED
@@ -51,19 +49,39 @@ class TelemetryViewSet(mixins.ListModelMixin,
 
     renderer_classes = (JSONRenderer,)
 
-    def _truncate_time(self):
-        segment = self.request.query_params.get('per')
-        if not segment:
-            raise ValidationError(f'No time selector supplied with aggregation. '
-                                  f'Should be in {list(TimeTrunc.__members__.keys())}')
-        if segment not in TimeTrunc.__members__:
+    def _validate_query_parameters(self):
+        segment = self.request.query_params.get('per', None)
+        aggregate = self.request.query_params.get('aggregate', None)
+        before = self.request.query_params.get('before', None)
+        after = self.request.query_params.get('after', None)
+
+        if aggregate and aggregate not in Aggregates.__members__:
+            raise ValidationError(f'Invalid aggregate supplied should be in: {list(Aggregates.__members__.keys())}')
+
+        if segment and segment not in TimeTrunc.__members__:
             raise ValidationError(f'Invalid time selector supplied, should be in: {list(TimeTrunc.__members__.keys())}')
 
+        if not aggregate and segment:
+            raise ValidationError(f'No aggregator supplied with time selector. '
+                                  f'Should be in {list(Aggregates.__members__.keys())}')
+
+        if aggregate and not segment:
+            raise ValidationError(f'No time selector supplied with aggregation. '
+                                  f'Should be in {list(TimeTrunc.__members__.keys())}')
+
+        if before and after and (dateutil.parser.parse(before) > dateutil.parser.parse(after)):
+            raise ValidationError(f'Invalid timemismatch applied. '
+                                  f'Before timestamp {before} is greater than after: {after}')
+
+    def _truncate_time(self):
+        segment = self.request.query_params.get('per')
         return TimeTrunc[segment].value('timestamp')
 
-    def _aggregrate_queryset(self, queryset, aggregate):
-        if aggregate not in Aggregates.__members__:
-            raise ValidationError(f'Invalid aggregrate supplied should be in: {list(Aggregates.__members__.keys())}')
+    def _aggregate_queryset(self, queryset):
+        aggregate = self.request.query_params.get('aggregate', None)
+
+        if not aggregate:
+            return queryset
 
         method = Aggregates[aggregate].value
 
@@ -84,26 +102,34 @@ class TelemetryViewSet(mixins.ListModelMixin,
         begin = (shipment.pickup_act or datetime.min).replace(tzinfo=timezone.utc)
         end = (shipment.delivery_act or datetime.max).replace(tzinfo=timezone.utc)
 
-        return self.queryset.filter(shipment=shipment, timestamp__range=(begin, end))
+        if hasattr(shipment, 'routeleg'):
+            if shipment.state == TransitState.AWAITING_PICKUP:
+                # RouteTelemetryData may contain data for other shipments already picked up.
+                # This shipment should not include those data as it has not yet begun transit.
+                queryset = RouteTelemetryData.objects.none()
+            else:
+                queryset = RouteTelemetryData.objects.filter(route__id=shipment.routeleg.route.id)
+            self.filterset_class = RouteTelemetryFilter
+        else:
+            queryset = TelemetryData.objects.filter(shipment__id=shipment.id)
+
+        return queryset.filter(timestamp__range=(begin, end))
+
+    def get_serializer_class(self):
+        shipment = Shipment.objects.get(pk=self.kwargs['shipment_pk'])
+        aggregate = self.request.query_params.get('aggregate', None)
+
+        if hasattr(shipment, 'routeleg'):
+            return RouteTelemetryResponseAggregateSerializer if aggregate else RouteTelemetryResponseSerializer
+
+        return TelemetryResponseAggregateSerializer if aggregate else TelemetryResponseSerializer
 
     @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
     def list(self, request, *args, **kwargs):
+        self._validate_query_parameters()
+
         queryset = self.filter_queryset(self.get_queryset())
-        before = request.query_params.get('before')
-        after = request.query_params.get('after')
-        if before and after and (dateutil.parser.parse(before) > dateutil.parser.parse(after)):
-            raise ValidationError(
-                f'Invalid timemismatch applied. Before timestamp {before} is greater than after: {after}')
-
-        aggregate = request.query_params.get('aggregate', None)
-
-        if aggregate:
-            queryset = self._aggregrate_queryset(queryset, aggregate, )
-            self.serializer_class = TelemetryResponseAggregrateSerializer
-        else:
-            if request.query_params.get('per'):
-                raise ValidationError(f'No aggregrator supplied with time selector. '
-                                      f'Should be in {list(Aggregates.__members__.keys())}')
+        queryset = self._aggregate_queryset(queryset)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

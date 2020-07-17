@@ -1,0 +1,54 @@
+get:
+  summary: List routes
+  description: >
+    Retrieve an array of `Route` objects associated with the current user.
+  operationId: listRoutes
+  tags:
+  - Routes
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/listResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+
+post:
+  summary: Create route
+  description: >
+    Create a new `Route` owned by the current user.
+  operationId: createRoute
+  tags:
+  - Routes
+  responses:
+    '202':
+      description: "Accepted"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/createResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: 'requestBody.yaml#/createRequest'
+      application/json:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/createAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/createAttributes'

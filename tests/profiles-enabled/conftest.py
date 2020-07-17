@@ -52,6 +52,8 @@ BASE_PERMISSIONS = ['user.perm_1', 'user.perm_2', 'user.perm_3']
 GTX_PERMISSIONS = ['user.perm_1', 'gtx.shipment_use', 'user.perm_3']
 
 
+# Alice owns an organization; her org has 2 members total
+# -------------------------------------------------------
 @pytest.fixture
 def user_alice_id():
     return random_id()
@@ -81,6 +83,8 @@ def client_alice(user_alice):
     return api_client
 
 
+# Carol is in Alice's organization
+# --------------------------------
 @pytest.fixture
 def user_carol_id():
     return random_id()
@@ -107,6 +111,8 @@ def client_carol(user_carol):
     return api_client
 
 
+# Bob has an organization; There are no other members
+# ---------------------------------------------------
 @pytest.fixture
 def user_bob_id():
     return random_id()
@@ -131,6 +137,25 @@ def org_id_bob():
 def client_bob(user_bob):
     api_client = APIClient()
     api_client.force_authenticate(user_bob)
+    return api_client
+
+
+# Lionel is alone; He has no organization
+# ---------------------------------------
+@pytest.fixture
+def user_lionel_id():
+    return random_id()
+
+
+@pytest.fixture
+def user_lionel(user_lionel_id):
+    return passive_credentials_auth(get_jwt(username='lionel@shipchain.io', sub=user_lionel_id))
+
+
+@pytest.fixture
+def client_lionel(user_lionel):
+    api_client = APIClient()
+    api_client.force_authenticate(user_lionel)
     return api_client
 
 

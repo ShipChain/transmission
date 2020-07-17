@@ -1,0 +1,74 @@
+resource:
+  properties:
+    type:
+      description: RouteLeg
+      example: RouteLeg
+
+attributes:
+  allOf:
+  - $ref: '#/routeLeg/shipmentId'
+  - $ref: '#/routeLeg/sequence'
+
+getResource:
+  allOf:
+  - $ref: '#/resource'
+  - properties:
+      attributes:
+        $ref: '#/attributes'
+      relationships:
+        $ref: '#/relationships'
+
+getResponse:
+  allOf:
+  - $ref: '#/jsonApi/data'
+  - properties:
+      data:
+        $ref: '#/getResource'
+      included:
+        $ref: '#/included'
+
+shipment:
+  type: object
+  title: shipment
+  description: shipment associated with the route leg
+  properties:
+    shipment:
+      $ref: '#/routeLeg/shipment'
+
+relationships:
+  type: object
+  description: Relations for this resource
+  allOf:
+  - $ref: '#/shipment'
+
+createAttributes:
+  allOf:
+  - $ref: '#/routeLeg/shipmentId'
+
+createResource:
+  allOf:
+  - $ref: '#/resource'
+  - properties:
+      attributes:
+        $ref: '#/createAttributes'
+      relationships:
+        $ref: '#/relationships'
+
+createResponse:
+  allOf:
+  - $ref: '#/getResponse'
+
+included:
+  type: array
+  items:
+    anyOf:
+    - $ref: '#/shipment'
+
+routeLeg:
+  $ref: dataTypes.yaml
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/schema.yaml

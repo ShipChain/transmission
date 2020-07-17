@@ -15,8 +15,8 @@ jobs:
           docker_layer_caching: true
       - restore_cache:
           keys:
-            - virtualenv-alpine-cache-v2-{{ checksum "poetry.lock" }}
-            - virtualenv-alpine-cache-v2
+            - virtualenv-alpine-cache-v3-{{ checksum "poetry.lock" }}
+            - virtualenv-alpine-cache-v3
       - run:
           name: Build Docker images
           command: |
@@ -67,7 +67,7 @@ jobs:
           command: |
             docker cp $(bin/dc ps -q runserver):/app/.virtualenv/. .virtualenv
       - save_cache:
-          key: virtualenv-alpine-cache-v2-{{ checksum "poetry.lock" }}
+          key: virtualenv-alpine-cache-v3-{{ checksum "poetry.lock" }}
           paths:
             - .virtualenv
       - run:

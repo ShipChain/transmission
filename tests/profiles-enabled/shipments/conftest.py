@@ -21,6 +21,7 @@ from rest_framework import status
 from shipchain_common.test_utils import AssertionHelper
 from shipchain_common.utils import random_id
 
+from apps.routes.models import Route
 from apps.shipments.models import Shipment
 
 google_obj = {
@@ -125,3 +126,8 @@ def mock_device_retrieval_fails(mock_successful_wallet_owner_calls, device, devi
         status=status.HTTP_404_NOT_FOUND
     )
     return mock_successful_wallet_owner_calls
+
+
+@pytest.fixture
+def route_with_device_alice(org_id_alice, device):
+    return Route.objects.create(owner_id=org_id_alice, device=device)

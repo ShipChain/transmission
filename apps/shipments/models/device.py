@@ -17,11 +17,11 @@ import logging
 
 import boto3
 from botocore.exceptions import ClientError
-
 from django.conf import settings
 from django.db import models
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.status import HTTP_200_OK
+from rest_framework_json_api import serializers
 
 LOG = logging.getLogger('transmission')
 
@@ -78,3 +78,20 @@ class Device(models.Model):
                                    f"{device_id}, from AWS IoT")
 
         return certificate_id
+
+    def prepare_for_reassignment(self):
+        if hasattr(self, 'shipment'):
+            if not self.shipment.can_disassociate_device():
+                raise serializers.ValidationError('Device is already assigned to a Shipment in progress')
+            from apps.shipments.models import Shipment
+            shipment = Shipment.objects.get(pk=self.shipment.id)
+            shipment.device_id = None
+            shipment.save()
+
+        if hasattr(self, 'route'):
+            if not self.route.can_disassociate_device():
+                raise serializers.ValidationError('Device is already assigned to a Route in progress')
+            from apps.routes.models import Route
+            route = Route.objects.get(pk=self.route.id)
+            route.device_id = None
+            route.save()

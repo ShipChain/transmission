@@ -25,7 +25,6 @@ from fancy_cache import cache_page
 from influxdb_metrics.loader import log_metric
 from rest_framework import permissions, status, filters
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from shipchain_common.mixins import SerializationType
 from shipchain_common.permissions import HasViewSetActionPermissions
@@ -36,10 +35,11 @@ from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 from ..geojson import render_filtered_point_features
-from ..models import Shipment, TrackingData, PermissionLink
+from ..models import Shipment, TrackingData, PermissionLink, TransitState
 from ..permissions import IsOwnerOrShared, IsOwnerShipperCarrierModerator, shipment_list_wallets_filter
 from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, \
     ShipmentTxSerializer
+from ...routes.models import RouteTrackingData
 
 LOG = logging.getLogger('transmission')
 
@@ -175,17 +175,19 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         log_metric('transmission.info', tags={'method': 'shipments.tracking', 'module': __name__})
         shipment = self.get_object()
 
-        tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
+        if hasattr(shipment, 'routeleg'):
+            if shipment.state == TransitState.AWAITING_PICKUP:
+                # RouteTrackingData may contain data for other shipments already picked up.
+                # This shipment should not include those data as it has not yet begun transit.
+                tracking_data = RouteTrackingData.objects.none()
+            else:
+                tracking_data = RouteTrackingData.objects.filter(route__id=shipment.routeleg.route.id)
+        else:
+            tracking_data = TrackingData.objects.filter(shipment__id=shipment.id)
 
-        if tracking_data.exists():
-            response = Template('{"data": $geojson}').substitute(
-                geojson=render_filtered_point_features(shipment, tracking_data)
-            )
-            httpresponse = HttpResponse(content=response,
-                                        content_type='application/vnd.api+json')
-            return httpresponse
-
-        raise NotFound("No tracking data found for Shipment.")
+        response = Template('{"data": $geojson}')
+        response = response.substitute(geojson=render_filtered_point_features(shipment, tracking_data))
+        return HttpResponse(content=response, content_type='application/vnd.api+json')
 
     def update(self, request, *args, **kwargs):
         """

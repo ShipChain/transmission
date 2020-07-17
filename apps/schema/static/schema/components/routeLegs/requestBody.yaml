@@ -1,0 +1,24 @@
+createResource:
+  allOf:
+  - $ref: 'schema.yaml#/resource'
+  - properties:
+      attributes:
+        $ref: '#/createAttributes'
+
+createAttributes:
+  allOf:
+  - $ref: '#/routeLeg/shipmentId'
+
+createRequest:
+  allOf:
+  - $ref: '#/jsonApi/createData'
+  - properties:
+      data:
+        $ref: '#/createResource'
+
+
+routeLeg:
+  $ref: dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/requestBody.yaml

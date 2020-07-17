@@ -19,6 +19,8 @@ import pytest
 from copy import deepcopy
 from jose import jws
 
+from apps.routes.models import Route
+
 
 @pytest.fixture
 def unsigned_telemetry(current_datetime):
@@ -110,3 +112,8 @@ def create_batch_unsigned_telemetry_post(unsigned_telemetry):
     }, {
         'payload': unsigned_telemetry
     }]
+
+
+@pytest.fixture
+def route_with_device_alice(org_id_alice, device):
+    return Route.objects.create(owner_id=org_id_alice, device=device)

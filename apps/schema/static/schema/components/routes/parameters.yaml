@@ -1,0 +1,10 @@
+path:
+  required: true
+  name: route_id
+  in: path
+  description: ID of the Route
+  schema:
+    $ref: '#/dataTypes/uuid'
+
+dataTypes:
+  $ref: ../core/dataTypes.yaml

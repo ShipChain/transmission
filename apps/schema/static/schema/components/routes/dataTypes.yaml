@@ -1,0 +1,61 @@
+uuid: &uuid
+  type: string
+  format: uuid
+  example: '1243d23b-e2fc-475a-8290-0e4f53479553'
+
+resourcePk:
+  $ref: '../core/dataTypes.yaml#/resourcePk'
+
+name:
+  properties:
+    name:
+      title: name
+      description: Name of the Route
+      type: string
+      example: 'Friday 2020-06-19'
+
+ownerId:
+  properties:
+    owner_id:
+      <<: *uuid
+      title: owner_id
+      description: Owner UUID of the route
+
+driverId:
+  properties:
+    driver_id:
+      <<: *uuid
+      title: driver_id
+      description: UUID of the user assigned to this route
+
+deviceId:
+  properties:
+    device_id:
+      <<: *uuid
+      title: device_id
+      description: Device UUID associated with the route
+
+device:
+  properties:
+    data:
+      title: data
+      type: object
+      allOf:
+        - $ref: '../devices/schema.yaml#/deviceResource'
+        - $ref: '../core/dataTypes.yaml#/resourcePk'
+
+legs:
+  properties:
+    data:
+      title: data
+      type: object
+      allOf:
+        - $ref: '../core/dataTypes.yaml#/resourcePk'
+        - $ref: '../routeLegs/schema.yaml#/legResource'
+
+routeLegId:
+  properties:
+    route_leg_id:
+      <<: *uuid
+      title: route_leg_id
+      description: RouteLeg UUID associated with the route

@@ -12,24 +12,28 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 from copy import deepcopy
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import pytest
+from django.core.cache import cache
 from django.urls import reverse
 from moto import mock_iot
 from rest_framework import status
 from shipchain_common.test_utils import AssertionHelper
 from shipchain_common.utils import random_id
 
+from apps.routes.models import RouteTelemetryData
 from apps.shipments.models import TelemetryData
 from apps.utils import Aggregates, TimeTrunc
 
 
-def add_telemetry_data_to_shipment(telemetry_data, shipment):
+def add_telemetry_data_to_model(telemetry_data, model):
     for telemetry in telemetry_data:
-        TelemetryData.objects.create(shipment=shipment,
-                                     device=shipment.device,
-                                     **telemetry)
+        object = TelemetryData if model.__class__.__name__.lower() == 'shipment' else RouteTelemetryData
+        object.objects.create(**{
+            'device': model.device,
+            model.__class__.__name__.lower(): model
+        }, **telemetry)
 
 
 @mock_iot
@@ -60,7 +64,7 @@ class TestPostTelemetryData:
 
     def test_nonextant_device_fails(self, api_client, create_signed_telemetry_post):
         response = api_client.post(self.random_telemetry_url, create_signed_telemetry_post)
-        AssertionHelper.HTTP_403(response, error='No shipment found associated to device.')
+        AssertionHelper.HTTP_403(response, error='No shipment/route found associated to device.')
 
     def test_no_get_calls(self, api_client):
         response = api_client.get(self.random_telemetry_url)
@@ -83,7 +87,7 @@ class TestRetrieveTelemetryData:
         self.empty_telemetry_url = reverse('shipment-telemetry-list', kwargs={'version': 'v1', 'shipment_pk': shipment_alice.id})
         self.random_telemetry_url = reverse('shipment-telemetry-list', kwargs={'version': 'v1', 'shipment_pk': random_id()})
         self.shipment_alice_with_device = shipment_alice_with_device
-        add_telemetry_data_to_shipment([unsigned_telemetry], self.shipment_alice_with_device)
+        add_telemetry_data_to_model([unsigned_telemetry], self.shipment_alice_with_device)
         self.unsigned_telemetry = unsigned_telemetry
         self.assert_success = successful_wallet_owner_calls_assertions
         self.assert_fail = nonsuccessful_wallet_owner_calls_assertions
@@ -114,8 +118,8 @@ class TestRetrieveTelemetryData:
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
 
     def test_filter_sensor(self, client_alice, unsigned_telemetry_different_sensor):
-        add_telemetry_data_to_shipment([unsigned_telemetry_different_sensor],
-                                       self.shipment_alice_with_device)
+        add_telemetry_data_to_model([unsigned_telemetry_different_sensor],
+                                    self.shipment_alice_with_device)
         response = client_alice.get(f'{self.telemetry_url}?sensor_id={self.unsigned_telemetry["sensor_id"]}')
         self.unsigned_telemetry.pop('version')
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
@@ -123,8 +127,8 @@ class TestRetrieveTelemetryData:
         assert self.unsigned_telemetry['sensor_id'] != unsigned_telemetry_different_sensor['sensor_id']
 
     def test_filter_hardware_id(self, client_alice, unsigned_telemetry_different_hardware):
-        add_telemetry_data_to_shipment([unsigned_telemetry_different_hardware],
-                                       self.shipment_alice_with_device)
+        add_telemetry_data_to_model([unsigned_telemetry_different_hardware],
+                                    self.shipment_alice_with_device)
         response = client_alice.get(f'{self.telemetry_url}?hardware_id={self.unsigned_telemetry["hardware_id"]}')
         self.unsigned_telemetry.pop('version')
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
@@ -134,7 +138,7 @@ class TestRetrieveTelemetryData:
     def test_timestamp(self, client_alice, unsigned_telemetry_different_hardware, current_datetime):
         telemetry_copy = deepcopy(self.unsigned_telemetry)
         telemetry_copy['timestamp'] = (current_datetime + timedelta(days=1)).isoformat().replace('+00:00', 'Z')
-        add_telemetry_data_to_shipment([telemetry_copy], self.shipment_alice_with_device)
+        add_telemetry_data_to_model([telemetry_copy], self.shipment_alice_with_device)
 
         valid_timestamp = (current_datetime + timedelta(hours=12)).isoformat().replace('+00:00', 'Z')
         invalid_before_timestamp = (current_datetime + timedelta(hours=18)).isoformat().replace('+00:00', 'Z')
@@ -162,22 +166,27 @@ class TestRetrieveTelemetryData:
         assert response.json()[0] == \
             f'Invalid timemismatch applied. Before timestamp {invalid_before_timestamp} is greater than after: {valid_timestamp}'
 
-    def test_aggregrate_requirements(self, client_alice):
-        response = client_alice.get(f'{self.telemetry_url}?aggregate=NOT_AN_AGGREGRATE')
+    def test_aggregate_requirements(self, client_alice):
+        response = client_alice.get(f'{self.telemetry_url}?aggregate=NOT_AN_AGGREGATE')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response.json()[0] == f'Invalid aggregrate supplied should be in: {list(Aggregates.__members__.keys())}'
+        assert response.json()[0] == f'Invalid aggregate supplied should be in: {list(Aggregates.__members__.keys())}'
 
         response = client_alice.get(f'{self.telemetry_url}?aggregate={Aggregates.average.name}')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()[0] == \
                f'No time selector supplied with aggregation. Should be in {list(TimeTrunc.__members__.keys())}'
 
+        response = client_alice.get(f'{self.telemetry_url}?aggregate={Aggregates.average.name}&per=NOT_A_PER')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()[0] == \
+               f'Invalid time selector supplied, should be in: {list(TimeTrunc.__members__.keys())}'
+
         response = client_alice.get(f'{self.telemetry_url}?per={TimeTrunc.minutes.name}')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()[0] == \
-               f'No aggregrator supplied with time selector. Should be in {list(Aggregates.__members__.keys())}'
+               f'No aggregator supplied with time selector. Should be in {list(Aggregates.__members__.keys())}'
 
-    def test_aggregrate_success(self, client_alice, unsigned_telemetry_different_sensor):
+    def test_aggregate_success(self, client_alice, unsigned_telemetry_different_sensor):
         response = client_alice.get(
             f'{self.telemetry_url}?aggregate={Aggregates.average.name}&per={TimeTrunc.minutes.name}')
         AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes={
@@ -186,8 +195,8 @@ class TestRetrieveTelemetryData:
         assert len(response.json()) == 1
 
         self.unsigned_telemetry['value'] = 20
-        add_telemetry_data_to_shipment([self.unsigned_telemetry],
-                                       self.shipment_alice_with_device)
+        add_telemetry_data_to_model([self.unsigned_telemetry],
+                                    self.shipment_alice_with_device)
         response = client_alice.get(
             f'{self.telemetry_url}?aggregate={Aggregates.average.name}&per={TimeTrunc.minutes.name}')
         self.unsigned_telemetry['value'] = 15
@@ -226,3 +235,34 @@ class TestRetrieveTelemetryData:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()) == 0
         assert TelemetryData.objects.all().count() == 1
+
+    def test_route_telemetry_retrieval(self, client_alice, route_with_device_alice, shipment_alice):
+        route_with_device_alice.routeleg_set.create(shipment=shipment_alice)
+        add_telemetry_data_to_model([self.unsigned_telemetry], route_with_device_alice)
+
+        # Shipment awaiting pickup should show no telemetry
+        response = client_alice.get(self.empty_telemetry_url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()) == 0
+
+        shipment_alice.pick_up(action_timestamp=(datetime.utcnow() - timedelta(days=3)).isoformat())
+        shipment_alice.save()
+
+        cache.clear()
+
+        # Shipment picked up prior to telemetry data should include that data
+        response = client_alice.get(self.empty_telemetry_url)
+        self.unsigned_telemetry.pop('version')
+        AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry, count=1)
+
+        shipment_alice.arrival(action_timestamp=(datetime.utcnow() - timedelta(days=2)).isoformat())
+        shipment_alice.save()
+        shipment_alice.drop_off(action_timestamp=(datetime.utcnow() - timedelta(days=1)).isoformat())
+        shipment_alice.save()
+
+        cache.clear()
+
+        # Shipment dropped off prior to telemetry data should not include that data
+        response = client_alice.get(self.empty_telemetry_url)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()) == 0

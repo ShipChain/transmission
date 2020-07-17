@@ -17,12 +17,14 @@ from unittest import mock
 
 import pytest
 from django.conf import settings
+from django.core.cache import cache
 from django.urls import reverse
 from moto import mock_sns
 from shipchain_common.test_utils import AssertionHelper, create_form_content
 from shipchain_common.utils import random_id
 from copy import deepcopy
 
+from apps.routes.models import RouteTrackingData
 from apps.shipments.models import Shipment, Location, TrackingData
 
 
@@ -970,13 +972,15 @@ class TestTrackingRetrieval:
         self.unsigned_tracking['timestamp'] = datetime.utcnow()
         self.unsigned_tracking.update(tracking_data.pop('position'))
         self.shipment = shipment_alice_with_device
-        self.add_tracking_data_to_shipment([self.unsigned_tracking], shipment_alice_with_device)
+        self.add_tracking_data_to_object([self.unsigned_tracking], shipment_alice_with_device)
 
-    def add_tracking_data_to_shipment(self, tracking_data, shipment):
+    def add_tracking_data_to_object(self, tracking_data, model):
         for tracking in tracking_data:
-            TrackingData.objects.create(shipment=shipment,
-                                        device=shipment.device,
-                                        **tracking)
+            object = TrackingData if model.__class__.__name__.lower() == 'shipment' else RouteTrackingData
+            object.objects.create(**{
+                'device': model.device,
+                model.__class__.__name__.lower(): model
+            }, **tracking)
 
     def test_unauthenticated_user_fails(self, api_client):
         response = api_client.get(self.url)
@@ -988,7 +992,10 @@ class TestTrackingRetrieval:
 
     def test_empty_shipment_fails(self, client_alice, shipment_alice):
         response = client_alice.get(reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': shipment_alice.id}))
-        AssertionHelper.HTTP_404(response, error='No tracking data found for Shipment')
+        AssertionHelper.HTTP_200(response)
+        response_json = response.json()['data']
+        assert response_json['type'] == 'FeatureCollection'
+        assert len(response_json['features']) == 0
         assert TrackingData.objects.filter(shipment=shipment_alice).count() == 0
 
     def test_shipment_owner_retrieves(self, client_alice):
@@ -1016,7 +1023,7 @@ class TestTrackingRetrieval:
         tracking_two['latitude'] += 2
         tracking_two['timestamp'] += timedelta(minutes=4)
 
-        self.add_tracking_data_to_shipment([tracking_one, tracking_two], self.shipment)
+        self.add_tracking_data_to_object([tracking_one, tracking_two], self.shipment)
 
         response = client_alice.get(self.url)
         AssertionHelper.HTTP_200(response)
@@ -1052,3 +1059,43 @@ class TestTrackingRetrieval:
 
         response = api_client.get(f'{self.url}?permission_link={permission_link_device_shipment_expired.id}')
         AssertionHelper.HTTP_403(response)
+
+    def test_route_shipments(self, client_alice, route_with_device_alice, shipment_alice):
+        url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': shipment_alice.id})
+        route_with_device_alice.routeleg_set.create(shipment=shipment_alice)
+        self.add_tracking_data_to_object([self.unsigned_tracking], route_with_device_alice)
+
+        # Shipment awaiting pickup should show no tracking
+        response = client_alice.get(url)
+        AssertionHelper.HTTP_200(response)
+        response_json = response.json()['data']
+        assert response_json['type'] == 'FeatureCollection'
+        assert len(response_json['features']) == 0
+
+        shipment_alice.pick_up(action_timestamp=(datetime.utcnow() - timedelta(days=3)).isoformat())
+        shipment_alice.save()
+
+        cache.clear()
+
+        # Shipment picked up prior to tracking point should include that point
+        response = client_alice.get(url)
+        AssertionHelper.HTTP_200(response)
+        response_json = response.json()['data']
+        assert response_json['type'] == 'FeatureCollection'
+        assert len(response_json['features']) == 1
+        assert response_json['features'][0]['geometry']['type'] == 'Point'
+        assert response_json['features'][0]['geometry']['coordinates'] == [self.unsigned_tracking['longitude'], self.unsigned_tracking['latitude']]
+
+        shipment_alice.arrival(action_timestamp=(datetime.utcnow() - timedelta(days=2)).isoformat())
+        shipment_alice.save()
+        shipment_alice.drop_off(action_timestamp=(datetime.utcnow() - timedelta(days=1)).isoformat())
+        shipment_alice.save()
+
+        cache.clear()
+
+        # Shipment dropped off prior to tracking point should not include that point
+        response = client_alice.get(url)
+        AssertionHelper.HTTP_200(response)
+        response_json = response.json()['data']
+        assert response_json['type'] == 'FeatureCollection'
+        assert len(response_json['features']) == 0

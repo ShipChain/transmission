@@ -1,0 +1,73 @@
+post:
+  summary: Associate Shipment to Route
+  description: >
+    Create a new `RouteLeg`.
+  operationId: addLeg
+  tags:
+  - Routes
+  responses:
+    '202':
+      description: "Accepted"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/createResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+    '429':
+      description: "Too Many Requests"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/429'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: 'requestBody.yaml#/createRequest'
+      application/json:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/createAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/createAttributes'
+
+delete:
+  summary: Remove Shipment from a Route
+  description: >
+    Delete relationship `RouteLeg` between Shipment and Route.
+  operationId: removeLeg
+  tags:
+  - Routes
+  responses:
+    '204':
+      description: "Accepted"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/deleteResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: 'requestBody.yaml#/createRequest'
+      application/json:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/createAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+          - $ref: 'requestBody.yaml#/createAttributes'

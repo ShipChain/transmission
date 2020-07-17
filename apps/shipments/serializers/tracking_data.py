@@ -40,7 +40,8 @@ class SignedDevicePayloadSerializer(serializers.Serializer):
     def validate(self, attrs):  # noqa: MC0001
         iot = boto3.client('iot', region_name='us-east-1')
         payload = attrs['payload']
-        shipment = self.context['shipment']
+        associated_entity = self.context['associated_entity']
+        associated_entity_type = self.context['associated_entity_type']
         try:
             header = jws.get_unverified_header(payload)
         except JWSError as exc:
@@ -48,26 +49,28 @@ class SignedDevicePayloadSerializer(serializers.Serializer):
 
         certificate_id_from_payload = header['kid']
 
-        # Ensure that the device is allowed to update the Shipment tracking data
-        if not shipment.device:
-            raise exceptions.PermissionDenied(f"No device for shipment {shipment.id}")
+        # Ensure that the device is allowed to update the Shipment/Route tracking data
+        if not associated_entity.device:
+            raise exceptions.PermissionDenied(f"No device for {associated_entity_type} {associated_entity.id}")
 
-        if certificate_id_from_payload != shipment.device.certificate_id:
+        if certificate_id_from_payload != associated_entity.device.certificate_id:
             try:
                 iot.describe_certificate(certificateId=certificate_id_from_payload)
             except BotoCoreError as exc:
-                LOG.warning(f'Found dubious certificate: {certificate_id_from_payload}, on shipment: {shipment.id}')
+                LOG.warning(f'Found dubious certificate: {certificate_id_from_payload}, '
+                            f'on {associated_entity_type}: {associated_entity.id}')
                 raise exceptions.PermissionDenied(f"Certificate: {certificate_id_from_payload}, is invalid: {exc}")
             except iot.exceptions.ResourceNotFoundException as exc:
                 raise exceptions.PermissionDenied(f"Certificate: {certificate_id_from_payload}, is invalid: {exc}")
 
-            device = shipment.device
+            device = associated_entity.device
             device.certificate_id = Device.get_valid_certificate(device.id)
             device.save()
 
             if certificate_id_from_payload != device.certificate_id:
                 raise exceptions.PermissionDenied(f"Certificate {certificate_id_from_payload} is "
-                                                  f"not associated with shipment {shipment.id}")
+                                                  f"not associated with "
+                                                  f"{associated_entity_type} {associated_entity.id}")
 
         try:
             # Look up JWK for device from AWS IoT
@@ -83,7 +86,8 @@ class SignedDevicePayloadSerializer(serializers.Serializer):
                 attrs['payload'] = json.loads(jws.verify(payload, public_key, header['alg']).decode("utf-8"))
             else:
                 raise exceptions.PermissionDenied(f"Certificate {certificate_id_from_payload} is "
-                                                  f"not ACTIVE in IoT for shipment {shipment.id}")
+                                                  f"not ACTIVE in IoT for "
+                                                  f"{associated_entity_type} {associated_entity.id}")
         except ClientError as exc:
             raise exceptions.APIException(f'boto3 error when validating tracking update: {exc}')
         except JWSError as exc:
@@ -96,11 +100,12 @@ class UnvalidatedDevicePayloadSerializer(serializers.Serializer):
     payload = serializers.JSONField()
 
     def validate(self, attrs):
-        shipment = self.context['shipment']
+        associated_entity = self.context['associated_entity']
+        associated_entity_type = self.context['associated_entity_type']
 
-        # Ensure that the device is allowed to update the Shipment tracking data
-        if not shipment.device:
-            raise exceptions.PermissionDenied(f"No device for shipment {shipment.id}")
+        # Ensure that the device is allowed to update the Shipment/Route tracking data
+        if not associated_entity.device:
+            raise exceptions.PermissionDenied(f"No device for {associated_entity_type} {associated_entity.id}")
 
         return attrs
 

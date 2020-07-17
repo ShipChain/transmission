@@ -179,7 +179,7 @@ class TestTrackingData:
         signed_tracking_data = self.sign_tracking(tracking_data, self.device)
 
         response = api_client.post(self.url_device, {'payload': signed_tracking_data})
-        AssertionHelper.HTTP_403(response, error='No shipment found associated to device.')
+        AssertionHelper.HTTP_403(response, error='No shipment/route found associated to device.')
         shipment_alice.device = self.device
         shipment_alice.save()
 
@@ -288,7 +288,7 @@ class TestTrackingData:
         signed_tracking_data = self.sign_tracking(tracking_data, self.device)
 
         response = api_client.post(self.url_random, {'payload': signed_tracking_data})
-        AssertionHelper.HTTP_403(response, error='No shipment found associated to device.')
+        AssertionHelper.HTTP_403(response, error='No shipment/route found associated to device.')
 
         # Does not matter which device id is in the data just the id in the endpoint
         signed_tracking_data = self.sign_tracking(tracking_data, self.device, device_id=random_id())

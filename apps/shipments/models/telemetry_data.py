@@ -14,23 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 from django.db import models
-from shipchain_common.utils import random_id
 
 from .shipment import Device, Shipment
+from apps.abstract_models import AbstractTelemetryData
 
 
-class TelemetryData(models.Model):
-    id = models.CharField(primary_key=True, default=random_id, max_length=36)
-    created_at = models.DateTimeField(auto_now_add=True)
-
+class TelemetryData(AbstractTelemetryData):
     device = models.ForeignKey(Device, on_delete=models.DO_NOTHING)
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
-
-    timestamp = models.DateTimeField(db_index=True)
-    hardware_id = models.CharField(max_length=255)
-    sensor_id = models.CharField(max_length=36)
-    value = models.FloatField()
-    version = models.CharField(max_length=36)
-
-    class Meta:
-        ordering = ('timestamp',)

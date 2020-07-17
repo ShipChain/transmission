@@ -78,6 +78,24 @@ class TransitState(Enum):
     def choices(cls):
         return tuple((m.value, m.name) for m in cls)
 
+    def __eq__(self, other):
+        if isinstance(other, TransitState):
+            # pylint: disable=comparison-with-callable
+            return self.value == other.value
+        if isinstance(other, int):
+            # pylint: disable=comparison-with-callable
+            return self.value == other
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, TransitState):
+            # pylint: disable=comparison-with-callable
+            return self.value > other.value
+        if isinstance(other, int):
+            # pylint: disable=comparison-with-callable
+            return self.value > other
+        return NotImplemented
+
 
 class ExceptionType(Enum):
     NONE = 0
@@ -406,6 +424,15 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
         self.gtx_validation = validation_status
         self.gtx_validation_timestamp = datetime.now(timezone.utc)
+
+    def can_disassociate_device(self):
+        if not hasattr(self, 'routeleg') and not self.device:
+            return True
+
+        if TransitState(self.state) == TransitState.IN_TRANSIT:
+            return False
+
+        return True
 
     # Defaults
     FUNDING_TYPE = FundingType.NO_FUNDING.value

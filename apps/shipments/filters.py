@@ -18,7 +18,8 @@ from django_filters import rest_framework as filters
 from rest_framework_json_api.serializers import ValidationError
 from shipchain_common.filters import filter_enum
 
-from .models import Shipment, TransitState, TelemetryData, TrackingData
+from apps.routes.models import RouteTelemetryData
+from apps.shipments.models import Shipment, TransitState, TelemetryData, TrackingData
 
 SHIPMENT_STATE_CHOICES = tuple((m.name, m.value, ) for m in TransitState)
 
@@ -169,15 +170,27 @@ SHIPMENT_ORDERING_FIELDS = (
 )
 
 
+TELEMETRY_FILTER_FIELDS = (
+    'sensor_id',
+    'hardware_id',
+    'before',
+    'after',
+)
+
+
 class TelemetryFilter(filters.filterset.FilterSet):
     after = filters.IsoDateTimeFilter(field_name="timestamp", lookup_expr='gte')
-    before = filters.IsoDateTimeFilter(field_name="timestamp", lookup_expr='lte', )
+    before = filters.IsoDateTimeFilter(field_name="timestamp", lookup_expr='lte')
 
     class Meta:
         model = TelemetryData
-        fields = (
-            'sensor_id',
-            'hardware_id',
-            'before',
-            'after',
-        )
+        fields = TELEMETRY_FILTER_FIELDS
+
+
+class RouteTelemetryFilter(filters.filterset.FilterSet):
+    after = filters.IsoDateTimeFilter(field_name="timestamp", lookup_expr='gte')
+    before = filters.IsoDateTimeFilter(field_name="timestamp", lookup_expr='lte')
+
+    class Meta:
+        model = RouteTelemetryData
+        fields = TELEMETRY_FILTER_FIELDS

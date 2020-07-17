@@ -47,6 +47,6 @@ class TelemetryResponseSerializer(serializers.ModelSerializer):
         fields = ('sensor_id', 'timestamp', 'hardware_id', 'value')
 
 
-class TelemetryResponseAggregrateSerializer(TelemetryResponseSerializer):
+class TelemetryResponseAggregateSerializer(TelemetryResponseSerializer):
     timestamp = serializers.DateTimeField(source='window')
     value = serializers.FloatField(source='aggregate_value')

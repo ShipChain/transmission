@@ -21,13 +21,14 @@ from django.conf import settings
 from influxdb_metrics.loader import log_metric
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, MethodNotAllowed
+from rest_framework.exceptions import PermissionDenied, MethodNotAllowed, ValidationError
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from shipchain_common.exceptions import Custom500Error
 
-from apps.shipments.models import Shipment
+from apps.routes.serializers import RouteTrackingDataToDbSerializer, RouteTelemetryDataToDbSerializer
+from apps.shipments.models import Device
 from apps.shipments.permissions import IsOwnerOrShared
 from apps.shipments.serializers import SignedDevicePayloadSerializer, UnvalidatedDevicePayloadSerializer, \
     PermissionLinkSerializer, TelemetryDataToDbSerializer, TrackingDataToDbSerializer
@@ -40,48 +41,81 @@ class DeviceViewSet(viewsets.ViewSet):
     permission_classes = permissions.AllowAny
     serializer_class = PermissionLinkSerializer
 
-    def _validate_payload(self, request, pk):
-        shipment = Shipment.objects.filter(device_id=pk).first()
+    @staticmethod
+    def _validate_payload(request, pk):
 
-        if not shipment:
-            LOG.debug(f'No shipment found associated to device: {pk}')
-            raise PermissionDenied('No shipment found associated to device.')
+        device = Device.objects.filter(pk=pk).first()
+
+        # Determine the appropriate entity this payload applies to
+        if device and hasattr(device, 'shipment'):
+            associated_entity = device.shipment
+            associated_entity_type = 'shipment'
+
+        elif device and hasattr(device, 'route'):
+            associated_entity = device.route
+            associated_entity_type = 'route'
+
+        else:
+            LOG.debug(f'No shipment/route found associated to device: {pk}')
+            raise PermissionDenied('No shipment/route found associated to device.')
 
         data = request.data
         serializer = (UnvalidatedDevicePayloadSerializer if settings.ENVIRONMENT in ('LOCAL', 'INT')
                       else SignedDevicePayloadSerializer)
 
         if not isinstance(data, list):
-            LOG.debug(f'Adding data for device: {pk} for shipment: {shipment.id}')
-            serializer = serializer(data=data, context={'shipment': shipment})
+            LOG.debug(f'Adding data for device: {pk} for {associated_entity_type}: {associated_entity.id}')
+            serializer = serializer(data=data, context={'associated_entity': associated_entity,
+                                                        'associated_entity_type': associated_entity_type})
             serializer.is_valid(raise_exception=True)
             payload = [serializer.validated_data]
         else:
-            LOG.debug(f'Adding bulk data for device: {pk} shipment: {shipment.id}')
-            serializer = serializer(data=data, context={'shipment': shipment}, many=True)
+            LOG.debug(f'Adding bulk data for device: {pk} {associated_entity_type}: {associated_entity.id}')
+            serializer = serializer(data=data, context={'associated_entity': associated_entity,
+                                                        'associated_entity_type': associated_entity_type}, many=True)
             serializer.is_valid(raise_exception=True)
             payload = serializer.validated_data
 
-        return shipment, payload
+        return associated_entity, associated_entity_type, payload
+
+    @staticmethod
+    def _save_payload(associated_entity, associated_entity_type, payload_list, delay_task, serializer_class):
+
+        for data in payload_list:
+            payload = data['payload']
+
+            # Add tracking data to shipment via Engine RPC
+            if associated_entity_type == 'route':
+                for leg in associated_entity.routeleg_set.all():
+                    delay_task.delay(leg.shipment.id, payload)
+            else:
+                delay_task.delay(associated_entity.id, payload)
+
+            # Cache tracking data to db
+            serializer = serializer_class(
+                data=payload,
+                context={associated_entity_type: associated_entity, 'device': associated_entity.device})
+
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
     @action(detail=True, methods=['post'], permission_classes=(permissions.AllowAny,))
     def tracking(self, request, version, pk):
         LOG.debug(f'Adding tracking data by device with id: {pk}.')
         log_metric('transmission.info', tags={'method': 'devices.tracking', 'module': __name__})
 
-        shipment, tracking_data = self._validate_payload(request, pk)
+        associated_entity, associated_entity_type, tracking_data = DeviceViewSet._validate_payload(request, pk)
 
-        for data in tracking_data:
-            payload = data['payload']
+        if associated_entity_type == 'shipment':
+            serializer_class = TrackingDataToDbSerializer
+        elif associated_entity_type == 'route':
+            serializer_class = RouteTrackingDataToDbSerializer
+        else:
+            raise ValidationError('Unable to determine entity associated to device')
 
-            # Add tracking data to shipment via Engine RPC
-            tracking_data_update.delay(shipment.id, payload)
-
-            # Cache tracking data to db
-            tracking_model_serializer = TrackingDataToDbSerializer(data=payload, context={'shipment': shipment,
-                                                                                          'device': shipment.device})
-            tracking_model_serializer.is_valid(raise_exception=True)
-            tracking_model_serializer.save()
+        DeviceViewSet._save_payload(associated_entity, associated_entity_type,
+                                    tracking_data, tracking_data_update,
+                                    serializer_class)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -90,19 +124,18 @@ class DeviceViewSet(viewsets.ViewSet):
         LOG.debug(f'Adding telemetry data by device with id: {pk}.')
         log_metric('transmission.info', tags={'method': 'devices.telemetry', 'module': __name__})
 
-        shipment, telemetry_data = self._validate_payload(request, pk)
+        associated_entity, associated_entity_type, telemetry_data = DeviceViewSet._validate_payload(request, pk)
 
-        for data in telemetry_data:
-            payload = data['payload']
+        if associated_entity_type == 'shipment':
+            serializer_class = TelemetryDataToDbSerializer
+        elif associated_entity_type == 'route':
+            serializer_class = RouteTelemetryDataToDbSerializer
+        else:
+            raise ValidationError('Unable to determine entity associated to device')
 
-            # Add telemetry data to shipment via Engine RPC
-            telemetry_data_update.delay(shipment.id, payload)
-
-            # Cache telemetry data to db
-            telemetry_model_serializer = TelemetryDataToDbSerializer(data=payload, context={'shipment': shipment,
-                                                                                            'device': shipment.device})
-            telemetry_model_serializer.is_valid(raise_exception=True)
-            telemetry_model_serializer.save()
+        DeviceViewSet._save_payload(associated_entity, associated_entity_type,
+                                    telemetry_data, telemetry_data_update,
+                                    serializer_class)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
