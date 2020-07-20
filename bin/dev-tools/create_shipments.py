@@ -78,7 +78,8 @@ parser.add_argument("--add_tracking", help="Adds tracking data to shipments (req
                     action='store_true')
 parser.add_argument("--add_telemetry", help="Adds telemetry data to shipments (requires --device or -d)",
                     action='store_true')
-parser.add_argument("--profiles_url", help="Sets the profiles url for the creator. Defaults to http://profiles-runserver:8000",
+parser.add_argument("--profiles_url",
+                    help="Sets the profiles url for the creator. Defaults to http://profiles-runserver:8000",
                     default='http://profiles-runserver:8000')
 parser.add_argument("--transmission_url",
                     help="Sets the transmission url for the creator. Defaults to http://transmission-runserver:8000",
