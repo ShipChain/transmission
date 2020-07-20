@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 from uuid import uuid4
 from enum import Enum
 import logging
+from faker import Faker
 
 from copy import deepcopy
 from random import randint
@@ -77,11 +78,11 @@ parser.add_argument("--add_tracking", help="Adds tracking data to shipments (req
                     action='store_true')
 parser.add_argument("--add_telemetry", help="Adds telemetry data to shipments (requires --device or -d)",
                     action='store_true')
-parser.add_argument("--profiles_url", help="Sets the profiles url for the creator. Defaults to http://localhost:9000",
-                    default='http://localhost:9000')
+parser.add_argument("--profiles_url", help="Sets the profiles url for the creator. Defaults to http://profiles-runserver:8000",
+                    default='http://profiles-runserver:8000')
 parser.add_argument("--transmission_url",
-                    help="Sets the transmission url for the creator. Defaults to http://localhost:8000",
-                    default='http://localhost:8000')
+                    help="Sets the transmission url for the creator. Defaults to http://transmission-runserver:8000",
+                    default='http://transmission-runserver:8000')
 parser.add_argument("--reuse_wallets", help="Reuse wallets instead of creating new ones, defaults to True",
                     action="store_true",
                     default=True)
@@ -112,12 +113,7 @@ class ShipmentCreator:
     }
     tracking_data = {
         "position": {
-            "latitude": -81.048253,
-            "longitude": 34.628643,
-            "altitude": 924,
             "source": "gps",
-            "uncertainty": 95,
-            "speed": 34
         },
         "version": "1.2.4",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -135,15 +131,15 @@ class ShipmentCreator:
 
     # pylint: disable=too-many-arguments, too-many-locals, attribute-defined-outside-init
     def set_shipment_fields(self, carrier='user1@shipchain.io', shipper='user1@shipchain.io', moderator=False,
-                            startnumber=0, total=10, loglevel='warning', device=False, partition=10, attributes=None,
-                            add_tracking=False, add_telemetry=False, profiles_url='http://localhost:9000',
-                            transmission_url='http://localhost:8000', reuse_wallets=False,
+                            startnumber=0, count=10, loglevel='warning', device=False, partition=10, attributes=None,
+                            add_tracking=False, add_telemetry=False, profiles_url='http://profiles-runserver:8000',
+                            transmission_url='http://transmission-runserver:9000', reuse_wallets=False,
                             reuse_storage_credentials=False):
         self.carrier = self.users[carrier]
         self.shipper = self.users[shipper]
         self.moderator = self.users[moderator] if moderator else None
         self.sequence_number = startnumber
-        self.total = total
+        self.total = count
         console.setLevel(LogLevels[loglevel].value)
         logger.addHandler(console)
         logger.setLevel(LogLevels[loglevel].value)
@@ -371,6 +367,7 @@ class ShipmentCreator:
             headers={"Content-type": "application/json"}
         )
         if not telemetry_response.ok:
+            self.errors += telemetry_response.json()['errors']
             logger.warning(f'Failed to add telemetry data for device: {device_id}')
         else:
             logger.info(f'Added telemetry data via device: {device_id}')
@@ -378,13 +375,37 @@ class ShipmentCreator:
     def _add_tracking(self, device_id):
         logger.info(f'Adding tracking via device: {device_id}')
         self.tracking_data['device_id'] = device_id
-        tracking_data_collection = [{"payload": self.tracking_data} for i in range(10)]
+        faker = Faker()
+        tracking_data_collection = []
+        start_location = faker.local_latlng()
+        end_location = faker.local_latlng()
+        for location in (start_location, end_location):
+            if 'Honolulu' in location[4]:
+                location = faker.local_latlng()
+
+        longitude = float(start_location[0])
+        latitude = float(start_location[1])
+        long_delta = (float(end_location[0]) - longitude) / 10
+        lat_delta = (float(end_location[1]) - latitude) / 10
+        for i in range(10):
+            tracking_data_collection.append({"payload": {
+                'longitude': longitude,
+                'latitude': latitude,
+                'speed': randint(45, 85),
+                'altitude': randint(500, 800),
+                'uncertainty': randint(75, 100),
+                **self.tracking_data
+            }})
+            longitude += long_delta
+            latitude += lat_delta
+
         tracking_response = requests.post(
             f"{self.transmission_url}/api/v1/devices/{device_id}/tracking",
             json=tracking_data_collection,
             headers={"Content-type": "application/json"}
         )
         if not tracking_response.ok:
+            self.errors += tracking_response.json()['errors']
             logger.warning(f'Failed to add tracking data for device: {device_id}')
         else:
             logger.info(f'Added tracking data via device: {device_id}')
@@ -431,6 +452,7 @@ class ShipmentCreator:
 
         logger.info(f'Shipments created: {len(self.shipments)}')
         logger.info(f'Shipment ids: {self.shipments}')
+        logger.info(f'Response errors: {self.errors}')
 
 
 if __name__ == '__main__':

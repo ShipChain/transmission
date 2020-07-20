@@ -26,6 +26,13 @@ services:
     image: transmission-django-dev
     volumes:
       - ../:/app
+    networks:
+      default:
+        aliases:
+          - transmission-django-shell
+      portal:
+        aliases:
+          - transmission-django-shell
     links:
       - psql
       - redis_db

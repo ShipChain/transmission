@@ -63,6 +63,7 @@ uwsgi = "~2.0.17"
 watchdog = "~0.9"
 whitenoise = "~4.1"
 watchtower = "==0.5.5"
+faker = "^4.1.1"
 
 
 [tool.poetry.dev-dependencies]
