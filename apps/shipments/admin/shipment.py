@@ -90,7 +90,8 @@ NON_SCHEMA_FIELDS = [
     'gtx_validation',
     'gtx_validation_timestamp',
     'aftership_tracking',
-    'arrival_est'
+    'arrival_est',
+    'routeleg',
 ]
 
 
@@ -112,7 +113,7 @@ class ShipmentAdmin(AdminPageSizeMixin,
                 'state',
                 'vault_uri',
                 'device',
-                'contract_version',
+                ('contract_version', 'route_link')
             )
         }),
         ('Shipment Schema Fields', {
@@ -139,6 +140,10 @@ class ShipmentAdmin(AdminPageSizeMixin,
 
     def shipment_state(self, obj):
         return TransitState(obj.state).label.upper()
+
+    def route_link(self, obj):
+        return object_detail_admin_link(obj.routeleg.route)
+    route_link.short_description = 'Route'
 
     shipment_state.short_description = 'state'
 
