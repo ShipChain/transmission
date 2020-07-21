@@ -224,7 +224,7 @@ class ShipmentCreator:
         return updated_attributes
 
     def get_user_jwt(self, user):
-        if user['token_exp'] and user['token_exp'] < datetime.now(timezone.utc):
+        if user['token_exp'] and datetime.now(timezone.utc) < user['token_exp']:
             logger.debug(f'User {user["username"]} has non-expired token')
             return user['token']
 
