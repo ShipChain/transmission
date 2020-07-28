@@ -45,7 +45,7 @@ jobs:
       - run:
           name: Run unit tests and coverage report
           command: |
-            bin/dc exec -T runserver pytest --junitxml=test-results/pytest/results-pe.xml --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled
+            bin/dc exec -T runserver pytest --junitxml=test-results/pytest/results-pe.xml --cov=apps --cov-config=.coveragerc --ds=conf.test_settings --cov-report= tests/profiles-enabled
             bin/dc exec -T runserver pytest --junitxml=test-results/pytest/results-pd.xml --cov=apps --cov-config=.coveragerc --cov-report=html:test-results/coverage.html --cov-append --ds=conf.test_settings_profiles_disabled tests/profiles-disabled
       - run:
           name: Copy artifacts from Docker
