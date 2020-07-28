@@ -7,7 +7,7 @@ class ShipmentsConfig(AppConfig):
     verbose_name = 'shipments'
 
     def ready(self):
-        # pylint:disable=unused-import,import-outside-toplevel
+        # pylint:disable=unused-import
         import apps.shipments.signals
 
 

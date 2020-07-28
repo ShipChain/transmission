@@ -46,8 +46,8 @@ class RouteLegCreateSerializer(serializers.ModelSerializer):
         if hasattr(shipment, 'routeleg'):
             if shipment.routeleg.route.pk == self.context['view'].kwargs['route_pk']:
                 raise ValidationError('Shipment already included in this route')
-            else:
-                raise ValidationError('Shipment already included on another route')
+
+            raise ValidationError('Shipment already included on another route')
 
         if TransitState(shipment.state).value > TransitState.AWAITING_PICKUP.value:
             raise ValidationError('Shipment already picked up, cannot add to route')

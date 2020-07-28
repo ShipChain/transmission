@@ -18,6 +18,8 @@ pylint:
     - too-many-ancestors
     - logging-fstring-interpolation
     - super-init-not-called
+    - import-outside-toplevel
+    - cyclic-import
   options:
     good-names:
       - pk

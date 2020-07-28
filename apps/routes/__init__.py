@@ -7,7 +7,7 @@ class RoutesConfig(AppConfig):
     verbose_name = 'routes'
 
     def ready(self):
-        # pylint:disable=unused-variable
+        # pylint:disable=unused-import
         import apps.routes.signals
 
 
