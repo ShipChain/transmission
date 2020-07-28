@@ -15,8 +15,8 @@ limitations under the License.
 """
 from django.db import models
 
-from .shipment import Device, Shipment
 from apps.abstract_models import AbstractTelemetryData
+from .shipment import Device, Shipment
 
 
 class TelemetryData(AbstractTelemetryData):

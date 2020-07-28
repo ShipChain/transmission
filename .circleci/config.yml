@@ -4,7 +4,7 @@ orbs:
 jobs:
   build:
     docker:
-      - image: circleci/python:3.6.8
+      - image: circleci/python:3.7.8
         user: root
     environment:
       ROLE: circleci
@@ -15,8 +15,8 @@ jobs:
           docker_layer_caching: true
       - restore_cache:
           keys:
-            - virtualenv-alpine-cache-v3-{{ checksum "poetry.lock" }}
-            - virtualenv-alpine-cache-v3
+            - virtualenv-alpine-cache-v4-{{ checksum "poetry.lock" }}
+            - virtualenv-alpine-cache-v4
       - run:
           name: Build Docker images
           command: |
@@ -45,7 +45,7 @@ jobs:
       - run:
           name: Run unit tests and coverage report
           command: |
-            bin/dc exec -T runserver pytest --junitxml=test-results/pytest/results-pe.xml --cov=apps --cov-config=.coveragerc --cov-report= tests/profiles-enabled
+            bin/dc exec -T runserver pytest --junitxml=test-results/pytest/results-pe.xml --cov=apps --cov-config=.coveragerc --ds=conf.test_settings --cov-report= tests/profiles-enabled
             bin/dc exec -T runserver pytest --junitxml=test-results/pytest/results-pd.xml --cov=apps --cov-config=.coveragerc --cov-report=html:test-results/coverage.html --cov-append --ds=conf.test_settings_profiles_disabled tests/profiles-disabled
       - run:
           name: Copy artifacts from Docker
@@ -67,9 +67,10 @@ jobs:
           command: |
             docker cp $(bin/dc ps -q runserver):/app/.virtualenv/. .virtualenv
       - save_cache:
-          key: virtualenv-alpine-cache-v3-{{ checksum "poetry.lock" }}
+          key: virtualenv-alpine-cache-v4-{{ checksum "poetry.lock" }}
           paths:
             - .virtualenv
+            - ~/.cache/pypoetry
       - run:
           name: Save docker image
           command: |
@@ -118,7 +119,7 @@ jobs:
 
   integration-testing:
     docker:
-      - image: circleci/python:3.6.8-node
+      - image: circleci/python:3.7.8-node
         user: root
     environment:
       ROLE: int

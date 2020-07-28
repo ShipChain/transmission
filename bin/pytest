@@ -16,4 +16,4 @@ export ROLE=test
 
 bin/dc up -d --remove-orphans
 
-bin/dc exec -T runserver pytest -p no:cacheprovider --cov=apps --cov-config=.coveragerc --cov-report= "$@"
+bin/dc exec -T runserver pytest -p no:cacheprovider --cov=apps --cov-config=.coveragerc --ds=conf.test_settings --cov-report= "$@"

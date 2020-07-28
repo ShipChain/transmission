@@ -33,6 +33,7 @@ services:
       - smtp
     environment:
       - PYTHONDONTWRITEBYTECODE=1
+      - DJANGO_SETTINGS_MODULE=settings
       - ENV
       - SECRET_KEY
       - SERVICE=django_shell
@@ -71,6 +72,7 @@ services:
       - ./django/pip.cache:/build/pip.volume
     environment:
       - PYTHONDONTWRITEBYTECODE=1
+      - DJANGO_SETTINGS_MODULE=settings
       - ENV
       - SECRET_KEY
       - SERVICE=runserver
@@ -119,7 +121,7 @@ services:
     entrypoint: []
 
   flower:
-    image: mher/flower
+    image: mher/flower:latest
     command: ["flower", "--broker=redis://:redis_pass@redis_db:6379/1", "--port=8888"]
     environment:
       - CELERYBROKER_URL=redis://redis:6379/0

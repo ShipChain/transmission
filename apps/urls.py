@@ -36,26 +36,26 @@ admin.site.site_header = 'Transmission Administration'
 router = OptionalSlashRouter()
 
 router.register(f'{API_PREFIX[1:]}/shipments', shipments.ShipmentViewSet)
-router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, base_name='job')
-router.register(f'{API_PREFIX[1:]}/events', eth.EventViewSet, base_name='event')
-router.register(f'{API_PREFIX[1:]}/transactions', eth.TransactionViewSet, base_name='transaction')
-router.register(f'{API_PREFIX[1:]}/devices', shipments.DeviceViewSet, base_name='device')
-router.register(f'{API_PREFIX[1:]}/imports/shipments', imports_app.ShipmentImportsViewSet, base_name='import-shipments')
-router.register(f'{API_PREFIX[1:]}/routes', routes.RouteViewSet, base_name='route')
+router.register(f'{API_PREFIX[1:]}/jobs', jobs.JobsViewSet, basename='job')
+router.register(f'{API_PREFIX[1:]}/events', eth.EventViewSet, basename='event')
+router.register(f'{API_PREFIX[1:]}/transactions', eth.TransactionViewSet, basename='transaction')
+router.register(f'{API_PREFIX[1:]}/devices', shipments.DeviceViewSet, basename='device')
+router.register(f'{API_PREFIX[1:]}/imports/shipments', imports_app.ShipmentImportsViewSet, basename='import-shipments')
+router.register(f'{API_PREFIX[1:]}/routes', routes.RouteViewSet, basename='route')
 
 # Shipment's nested routes definition
 nested_shipment = OptionalSlashNested(router, f'{API_PREFIX[1:]}/shipments', lookup='shipment')
-nested_shipment.register(r'documents', documents.DocumentViewSet, base_name='shipment-documents')
-nested_shipment.register(r'transactions', eth.TransactionViewSet, base_name='shipment-transactions')
-nested_shipment.register(r'permission_links', shipments.PermissionLinkViewSet, base_name='shipment-permissions')
-nested_shipment.register(r'history', shipments.ShipmentHistoryListView, base_name='shipment-history')
-nested_shipment.register(r'notes', shipments.ShipmentNoteViewSet, base_name='shipment-notes')
-nested_shipment.register(r'tags', shipments.ShipmentTagViewSet, base_name='shipment-tags')
-nested_shipment.register(r'telemetry', shipments.TelemetryViewSet, base_name='shipment-telemetry')
+nested_shipment.register(r'documents', documents.DocumentViewSet, basename='shipment-documents')
+nested_shipment.register(r'transactions', eth.TransactionViewSet, basename='shipment-transactions')
+nested_shipment.register(r'permission_links', shipments.PermissionLinkViewSet, basename='shipment-permissions')
+nested_shipment.register(r'history', shipments.ShipmentHistoryListView, basename='shipment-history')
+nested_shipment.register(r'notes', shipments.ShipmentNoteViewSet, basename='shipment-notes')
+nested_shipment.register(r'tags', shipments.ShipmentTagViewSet, basename='shipment-tags')
+nested_shipment.register(r'telemetry', shipments.TelemetryViewSet, basename='shipment-telemetry')
 
 # Route's nested routes definition
 nested_route = OptionalSlashNested(router, f'{API_PREFIX[1:]}/routes', lookup='route')
-nested_route.register(r'legs', routes.RouteLegViewSet, base_name='route-legs')
+nested_route.register(r'legs', routes.RouteLegViewSet, basename='route-legs')
 
 urlpatterns = [
     re_path('health/?$', management.health_check, name='health'),
