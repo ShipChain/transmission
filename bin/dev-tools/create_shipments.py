@@ -1,19 +1,19 @@
 #! /usr/bin/env python3
 
 import argparse
-import sys
 import json
-from json.decoder import JSONDecodeError
+import logging
+import sys
+from copy import deepcopy
 from datetime import datetime, timezone, timedelta
+from enum import Enum
+from json.decoder import JSONDecodeError
+from random import randint
 from urllib.parse import urlparse
 from uuid import uuid4
-from enum import Enum
-import logging
-from faker import Faker
 
-from copy import deepcopy
-from random import randint
 import requests
+from faker import Faker
 
 # pylint:disable=invalid-name
 logger = logging.getLogger('transmission')
@@ -46,6 +46,7 @@ class LogLevels(Enum):
     info = 'INFO'
     debug = 'DEBUG'
 
+    # pylint: disable=invalid-str-returned
     def __str__(self):
         return self.value
 
