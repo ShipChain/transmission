@@ -151,6 +151,16 @@ class ShipmentAdmin(AdminPageSizeMixin,
 class HistoricalShipmentAdmin(BaseModelHistory, ShipmentAdmin):
     readonly_fields = [field.name for field in Shipment._meta.get_fields()]
 
+    def get_fieldsets(self, request, obj=None):
+        """
+        Hook for specifying fieldsets.
+        """
+        list_fieldsets = list(self.fieldsets)
+        list_fieldsets[0][1]['fields'] = tuple(list(list_fieldsets[0][1]['fields'])[:-1] + [('contract_version',)])
+        self.fieldsets = tuple(list_fieldsets)
+
+        return self.fieldsets
+
 
 class LocationAdmin(AdminPageSizeMixin, BaseModelHistory):
 
