@@ -113,7 +113,7 @@ class ShipmentAdmin(AdminPageSizeMixin,
                 'state',
                 'vault_uri',
                 'device',
-                ('contract_version', 'route_link')
+                'contract_version',
             )
         }),
         ('Shipment Schema Fields', {
@@ -126,6 +126,16 @@ class ShipmentAdmin(AdminPageSizeMixin,
     inlines = [
         AsyncJobInlineTab,
     ]
+
+    def get_fieldsets(self, request, obj=None):
+        if 'history' not in request.scope['path']:
+            if 'route_link' not in self.fieldsets[0][1]['fields']:
+                self.fieldsets[0][1]['fields'] = self.fieldsets[0][1]['fields'] + ('route_link',)
+        elif 'route_link' in self.fieldsets[0][1]['fields']:
+            self.fieldsets[0][1]['fields'] = tuple(
+                [field for field in self.fieldsets[0][1]['fields'] if field != 'route_link']
+            )
+        return self.fieldsets
 
     search_fields = ('id', 'shipper_wallet_id', 'carrier_wallet_id', 'moderator_wallet_id', 'state', 'owner_id',
                      'ship_from_location__name__icontains', 'ship_to_location__name__icontains',
