@@ -3,6 +3,7 @@ import importlib
 import logging
 import random
 from datetime import datetime
+import time
 
 import pytz
 from celery import shared_task
@@ -14,6 +15,7 @@ from influxdb_metrics.loader import log_metric
 from shipchain_common.exceptions import RPCError
 
 from .exceptions import WalletInUseException, TransactionCollisionException
+from .models import JobState
 
 LOG = logging.getLogger('transmission')
 
@@ -29,6 +31,17 @@ class AsyncTask:
         module_name, rpc_class_name = self.async_job.parameters['rpc_class'].rsplit('.', 1)
         module = importlib.import_module(module_name)
         self.rpc_client = getattr(module, rpc_class_name)()
+
+    def rerun(self):
+
+        self.async_job.state = JobState.PENDING
+        self.async_job.save()
+        while self.async_job.state == JobState.PENDING:
+            try:
+                self.run()
+            except WalletInUseException:
+                LOG.debug('Wallet still currently in use')
+                time.sleep(15)
 
     def run(self):
         log_metric('transmission.info', tags={'method': 'async_task.run', 'module': __name__})
