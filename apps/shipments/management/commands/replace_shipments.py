@@ -5,9 +5,9 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from shipchain_common.exceptions import RPCError
 
-from apps.eth.models import Transaction, EthAction
+from apps.eth.models import EthAction
 from apps.eth.rpc import EventRPCClient
-from apps.jobs.models import AsyncJob, JobState
+from apps.jobs.models import AsyncJob
 from apps.jobs.tasks import AsyncTask
 from apps.shipments.models import Shipment
 
@@ -43,6 +43,7 @@ class Command(BaseCommand):
                     logger.info(f'Deleting Eth Action: {eth_action.transaction_hash}')
                     eth_action.delete()
                 AsyncTask(async_job.id).rerun()
+            # pylint:disable=broad-except
             except Exception as exc:
                 print(exc)
 

@@ -15,7 +15,6 @@ from influxdb_metrics.loader import log_metric
 from shipchain_common.exceptions import RPCError
 
 from .exceptions import WalletInUseException, TransactionCollisionException
-from .models import JobState
 
 LOG = logging.getLogger('transmission')
 
@@ -33,6 +32,7 @@ class AsyncTask:
         self.rpc_client = getattr(module, rpc_class_name)()
 
     def rerun(self):
+        from .models import JobState
 
         self.async_job.state = JobState.PENDING
         self.async_job.save()
