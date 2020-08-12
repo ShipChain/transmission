@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from django.core.management.base import BaseCommand
 
@@ -45,13 +46,14 @@ class Command(BaseCommand):
                 AsyncTask(async_job.id).rerun()
             # pylint:disable=broad-except
             except Exception as exc:
-                print(exc)
+                logger.error(exc)
 
     def handle(self, *args, **options):
         if options['shipment_id']:
             shipment = Shipment.objects.filter(id=options['shipment_id']).first()
             if not shipment:
-                raise ValueError(f'Invalid shipment id: {options["shipment_id"]} supplied')
+                logger.error(f'Invalid shipment id: {options["shipment_id"]} supplied')
+                sys.exit()
 
             self._convert_shipment(shipment)
 
