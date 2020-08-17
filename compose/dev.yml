@@ -26,6 +26,13 @@ services:
     image: transmission-django-dev
     volumes:
       - ../:/app
+    networks:
+      default:
+        aliases:
+          - transmission-django-shell
+      portal:
+        aliases:
+          - transmission-django-shell
     links:
       - psql
       - redis_db
@@ -42,6 +49,7 @@ services:
       - INTERNAL_URL=http://transmission-runserver:8000
       - PROFILES_URL #http://profiles-runserver:8000
       - ELASTICSEARCH_URL
+      - LOG_LEVEL
       - AWS_ACCESS_KEY_ID=TEST-DEV-KEY
       - AWS_SECRET_ACCESS_KEY=NON-TRIVIAL-SECRETKEY
     command: "bash"

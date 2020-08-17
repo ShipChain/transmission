@@ -12,31 +12,33 @@ from apps.jobs.models import AsyncJob
 from apps.jobs.tasks import AsyncTask
 from apps.shipments.models import Shipment
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = logging.getLogger('transmission')
+logger.setLevel(settings.LOG_LEVEL)
 
 
 class Command(BaseCommand):
-    help = 'Moves shipment(s) to etherscan'
+    help = 'Replicate shipment related transactions to the sidechain.'
     rpc_client = None
+    successfull_shipments = []
+    unsuccessfull_shipments = []
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--shipment_id',
             type=str,
             default=None,
-            help='Delete poll instead of closing it',
+            help='Replicate specific shipment instead of all of them.',
         )
 
-    def _convert_shipment(self, shipment):
+    def _replicate_shipment(self, shipment):
         if not self.rpc_client:
             self.rpc_client = EventRPCClient()
             try:
                 self.rpc_client.unsubscribe("LOAD", settings.LOAD_VERSION)
             except RPCError as exc:
-                if 'Error: EventSubscription not found' in exc.detail:
-                    return
-                raise exc
+                if 'Error: EventSubscription not found' not in exc.detail:
+                    raise exc
+
         for async_job in AsyncJob.objects.filter(shipment=shipment):
             try:
                 eth_action = EthAction.objects.filter(async_job=async_job).first()
@@ -46,6 +48,9 @@ class Command(BaseCommand):
                 AsyncTask(async_job.id).rerun()
             # pylint:disable=broad-except
             except Exception as exc:
+                if shipment.id in self.successfull_shipments:
+                    self.successfull_shipments.remove(shipment.id)
+                    self.unsuccessfull_shipments.append(shipment.id)
                 logger.error(exc)
 
     def handle(self, *args, **options):
@@ -55,10 +60,18 @@ class Command(BaseCommand):
                 logger.error(f'Invalid shipment id: {options["shipment_id"]} supplied')
                 sys.exit()
 
-            self._convert_shipment(shipment)
+            self._replicate_shipment(shipment)
 
         else:
-            for shipment in Shipment.objects.all():
-                self._convert_shipment(shipment)
+            shipments = Shipment.objects.all()
+            logger.info(f'Shipments to replicate: {shipments.count()}')
+            for shipment in shipments:
+                self.successfull_shipments.append(shipment.id)
+                self._replicate_shipment(shipment)
 
+        logger.info(f'Successful shipments count: {len(self.successfull_shipments)}')
+        logger.debug(f'Successful shipments: {self.successfull_shipments}')
+
+        logger.warning(f'Unsuccessful shipments count: {len(self.unsuccessfull_shipments)}')
+        logger.warning(f'Unsuccessful shipments: {self.unsuccessfull_shipments}')
         self.rpc_client.subscribe("LOAD", settings.LOAD_VERSION)
