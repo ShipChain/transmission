@@ -57,6 +57,22 @@ class Command(BaseCommand):
                     self.unsuccessfull_shipments.append(shipment.id)
                 logger.error(exc)
 
+    def _resubscribe(self):
+        if not self.async_job:
+            logger.warning('Unable to find last blockheight to subscribe to. '
+                           'Need to manually subscribe to latest blockheight')
+            return
+
+        message = Message.objects.filter(async_job=self.async_job).last()
+        if "blockNumber" not in message.body:
+            time.sleep(15)
+            message = Message.objects.filter(async_job=self.async_job).last()
+        if "blockNumber" in message.body:
+            self.rpc_client.subscribe("LOAD", settings.LOAD_VERSION, blockheight=message.body["blockNumber"])
+        else:
+            logger.warning('Unable to find last blockheight to subscribe to. '
+                           'Need to manually subscribe to latest blockheight')
+
     def handle(self, *args, **options):
         if options['shipment_id']:
             shipment = Shipment.objects.filter(id=options['shipment_id']).first()
@@ -77,17 +93,4 @@ class Command(BaseCommand):
 
         logger.warning(f'Unsuccessful shipments count: {len(self.unsuccessfull_shipments)}')
         logger.warning(f'Unsuccessful shipments: {self.unsuccessfull_shipments}')
-        if not self.async_job:
-            logger.warning('Unable to find last blockheight to subscribe to. '
-                           'Need to manually subscribe to latest blockheight')
-            return
-
-        message = Message.objects.filter(async_job=self.async_job).last()
-        if "blockNumber" not in message.body:
-            time.sleep(15)
-            message = Message.objects.filter(async_job=self.async_job).last()
-        if "blockNumber" in message.body:
-            self.rpc_client.subscribe("LOAD", settings.LOAD_VERSION, blockheight=message.body["blockNumber"])
-        else:
-            logger.warning('Unable to find last blockheight to subscribe to. '
-                           'Need to manually subscribe to latest blockheight')
+        self._resubscribe()
