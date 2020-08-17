@@ -1,14 +1,14 @@
 import logging
 import sys
-
-from django.core.management.base import BaseCommand
+import time
 
 from django.conf import settings
+from django.core.management.base import BaseCommand
 from shipchain_common.exceptions import RPCError
 
 from apps.eth.models import EthAction
 from apps.eth.rpc import EventRPCClient
-from apps.jobs.models import AsyncJob
+from apps.jobs.models import AsyncJob, Message
 from apps.jobs.tasks import AsyncTask
 from apps.shipments.models import Shipment
 
@@ -21,6 +21,7 @@ class Command(BaseCommand):
     rpc_client = None
     successfull_shipments = []
     unsuccessfull_shipments = []
+    async_job = None
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -31,6 +32,7 @@ class Command(BaseCommand):
         )
 
     def _replicate_shipment(self, shipment):
+        self.successfull_shipments.append(shipment.id)
         if not self.rpc_client:
             self.rpc_client = EventRPCClient()
             try:
@@ -46,6 +48,8 @@ class Command(BaseCommand):
                     logger.info(f'Deleting Eth Action: {eth_action.transaction_hash}')
                     eth_action.delete()
                 AsyncTask(async_job.id).rerun()
+                self.async_job = async_job
+
             # pylint:disable=broad-except
             except Exception as exc:
                 if shipment.id in self.successfull_shipments:
@@ -66,7 +70,6 @@ class Command(BaseCommand):
             shipments = Shipment.objects.all()
             logger.info(f'Shipments to replicate: {shipments.count()}')
             for shipment in shipments:
-                self.successfull_shipments.append(shipment.id)
                 self._replicate_shipment(shipment)
 
         logger.info(f'Successful shipments count: {len(self.successfull_shipments)}')
@@ -74,4 +77,17 @@ class Command(BaseCommand):
 
         logger.warning(f'Unsuccessful shipments count: {len(self.unsuccessfull_shipments)}')
         logger.warning(f'Unsuccessful shipments: {self.unsuccessfull_shipments}')
-        self.rpc_client.subscribe("LOAD", settings.LOAD_VERSION)
+        if not self.async_job:
+            logger.warning('Unable to find last blockheight to subscribe to. '
+                           'Need to manually subscribe to latest blockheight')
+            return
+
+        message = Message.objects.filter(async_job=self.async_job).last()
+        if "blockNumber" not in message.body:
+            time.sleep(15)
+            message = Message.objects.filter(async_job=self.async_job).last()
+        if "blockNumber" in message.body:
+            self.rpc_client.subscribe("LOAD", settings.LOAD_VERSION, blockheight=message.body["blockNumber"])
+        else:
+            logger.warning('Unable to find last blockheight to subscribe to. '
+                           'Need to manually subscribe to latest blockheight')
