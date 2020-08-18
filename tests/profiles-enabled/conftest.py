@@ -365,7 +365,7 @@ def second_shipment(mocked_engine_rpc, mocked_iot_api):
 
 
 @pytest.fixture
-def org2_shipment(mocked_engine_rpc, mocked_iot_api):
+def shipment_bob(mocked_engine_rpc, mocked_iot_api):
     return Shipment.objects.create(vault_id=VAULT_ID,
                                    carrier_wallet_id=random_id(),
                                    shipper_wallet_id=ORGANIZATION_BOB_SHIPPER_ID,

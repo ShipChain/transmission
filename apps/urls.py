@@ -52,6 +52,7 @@ nested_shipment.register(r'history', shipments.ShipmentHistoryListView, basename
 nested_shipment.register(r'notes', shipments.ShipmentNoteViewSet, basename='shipment-notes')
 nested_shipment.register(r'tags', shipments.ShipmentTagViewSet, basename='shipment-tags')
 nested_shipment.register(r'telemetry', shipments.TelemetryViewSet, basename='shipment-telemetry')
+nested_shipment.register(r'access_requests', shipments.AccessRequestViewSet, basename='shipment-access-requests')
 
 # Route's nested routes definition
 nested_route = OptionalSlashNested(router, f'{API_PREFIX[1:]}/routes', lookup='route')

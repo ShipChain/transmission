@@ -50,12 +50,12 @@ def get_username(user):
 
 
 @pytest.fixture
-def shipment_notes(user_alice, user_bob, shipper_user, shipment, org2_shipment):
+def shipment_notes(user_alice, user_bob, shipper_user, shipment, shipment_bob):
     return [
         ShipmentNote.objects.create(user_id=user_alice.id, username=get_username(user_alice), message=MESSAGE_1, shipment=shipment),
         ShipmentNote.objects.create(user_id=user_alice.id, username=get_username(user_alice), message=MESSAGE_3, shipment=shipment),
         ShipmentNote.objects.create(user_id=shipper_user.id, username=get_username(shipper_user), message=MESSAGE_4, shipment=shipment),
-        ShipmentNote.objects.create(user_id=user_bob.id, username=get_username(user_bob), message=MESSAGE_4, shipment=org2_shipment),
+        ShipmentNote.objects.create(user_id=user_bob.id, username=get_username(user_bob), message=MESSAGE_4, shipment=shipment_bob),
     ]
 
 
