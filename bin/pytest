@@ -13,7 +13,6 @@ echo "Running pytest"
 trap 'bin/dc down' EXIT
 
 export ROLE=test
+export DDO_CONTAINER=runserver
 
-bin/dc up -d --remove-orphans
-
-bin/dc exec -T runserver pytest -p no:cacheprovider --cov=apps --cov-config=.coveragerc --ds=conf.test_settings --cov-report= "$@"
+bin/ddo pytest -p no:cacheprovider --cov=apps --cov-config=.coveragerc --ds=conf.test_settings --cov-report= "$@"
