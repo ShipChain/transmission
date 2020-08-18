@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import uuid
+from enum import auto
 
 from django.db import models
-from enum import auto
 from enumfields import Enum, EnumField
 
 from .shipment import Shipment
@@ -31,6 +31,7 @@ class PermissionLevel(Enum):
         NONE = 'NONE'
         READ_ONLY = 'READ_ONLY'
         READ_WRITE = 'READ_WRITE'
+
 
 class AccessRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
