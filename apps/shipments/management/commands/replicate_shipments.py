@@ -33,14 +33,6 @@ class Command(BaseCommand):
 
     def _replicate_shipment(self, shipment):
         self.successfull_shipments.append(shipment.id)
-        if not self.rpc_client:
-            self.rpc_client = EventRPCClient()
-            try:
-                self.rpc_client.unsubscribe("LOAD", settings.LOAD_VERSION)
-            except RPCError as exc:
-                if 'Error: EventSubscription not found' not in exc.detail:
-                    raise exc
-
         for async_job in AsyncJob.objects.filter(shipment=shipment):
             try:
                 eth_action = EthAction.objects.filter(async_job=async_job).first()
@@ -57,6 +49,14 @@ class Command(BaseCommand):
                     self.unsuccessfull_shipments.append(shipment.id)
                 logger.error(exc)
 
+    def _unsubscribe(self):
+        self.rpc_client = EventRPCClient()
+        try:
+            self.rpc_client.unsubscribe("LOAD", settings.LOAD_VERSION)
+        except RPCError as exc:
+            if 'Error: EventSubscription not found' not in exc.detail:
+                raise exc
+
     def _resubscribe(self):
         if not self.async_job:
             logger.warning('Unable to find last blockheight to subscribe to. '
@@ -68,12 +68,13 @@ class Command(BaseCommand):
             time.sleep(15)
             message = Message.objects.filter(async_job=self.async_job).last()
         if "blockNumber" in message.body:
-            self.rpc_client.subscribe("LOAD", settings.LOAD_VERSION, blockheight=message.body["blockNumber"])
+            self.rpc_client.subscribe("LOAD", settings.LOAD_VERSION, last_block=message.body["blockNumber"])
         else:
             logger.warning('Unable to find last blockheight to subscribe to. '
                            'Need to manually subscribe to latest blockheight')
 
     def handle(self, *args, **options):
+        self._unsubscribe()
         if options['shipment_id']:
             shipment = Shipment.objects.filter(id=options['shipment_id']).first()
             if not shipment:

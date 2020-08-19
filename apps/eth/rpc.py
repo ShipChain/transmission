@@ -14,19 +14,23 @@ class EventRPCClient(RPCClient):
 
     # pylint:disable=too-many-arguments
     def subscribe(self, project, version, url=Event.get_event_subscription_url(), interval=5000, events=None,
-                  blockheight=0):
+                  last_block=None):
         LOG.debug(f'Event subscription with url {url}.')
         log_metric('transmission.info', tags={'method': 'event_rpcclient.subscribe',
                                               'module': __name__})
 
-        result = self.call('event.subscribe', {
+        params = {
             "url": url,
             "project": project,
             "interval": interval,
             "eventNames": events or ["allEvents"],
-            "version": version,
-            "blockheight": blockheight
-        })
+            "version": version
+        }
+
+        if last_block:
+            params["lastBlock"] = last_block
+
+        result = self.call('event.subscribe', params)
 
         if 'success' in result and result['success']:
             if 'subscription' in result:

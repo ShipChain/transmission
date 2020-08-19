@@ -149,8 +149,7 @@ class TransactionReceiptTestCase(APITestCase):
             "project": "LOAD",
             "interval": 5000,
             "eventNames": ["allEvents"],
-            "version": "1.1.0",
-            "blockheight": 0
+            "version": "1.1.0"
         }
         full_params = {
             'jsonrpc': '2.0',
