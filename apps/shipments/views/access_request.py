@@ -18,15 +18,19 @@ from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions
 from shipchain_common.permissions import HasViewSetActionPermissions
-from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelViewSet
+from shipchain_common.viewsets import ActionConfiguration, mixins, ConfigurableGenericViewSet
 
 from apps.permissions import ShipmentExists
 from ..models import AccessRequest
+from ..permissions import IsNotShipmentOwner
 from ..serializers import AccessRequestSerializer, AccessRequestCreateSerializer
 
 
-class AccessRequestViewSet(ConfigurableModelViewSet):
-
+class AccessRequestViewSet(mixins.ConfigurableCreateModelMixin,
+                           mixins.ConfigurableRetrieveModelMixin,
+                           mixins.ConfigurableUpdateModelMixin,
+                           mixins.ConfigurableListModelMixin,
+                           ConfigurableGenericViewSet):
     queryset = AccessRequest.objects.all()
 
     serializer_class = AccessRequestSerializer
@@ -37,17 +41,18 @@ class AccessRequestViewSet(ConfigurableModelViewSet):
          HasViewSetActionPermissions,
          # TODO: IsRequester | CanApprove
          ) if settings.PROFILES_ENABLED else
-        (permissions.AllowAny, ShipmentExists, )
+        (permissions.AllowAny, ShipmentExists,)
     )
 
-    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
+    filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend,)
     filterset_fields = ('requester_id', 'approved', 'approved_by')
     ordering_fields = ('created_at', 'approved_at')
 
     configuration = {
         'create': ActionConfiguration(
             request_serializer=AccessRequestCreateSerializer,
-            response_serializer=AccessRequestSerializer
+            response_serializer=AccessRequestSerializer,
+            permission_classes=(IsNotShipmentOwner,) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
         ),
     }
 

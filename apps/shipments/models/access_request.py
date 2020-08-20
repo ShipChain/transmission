@@ -37,9 +37,9 @@ class AccessRequest(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    requester_id = models.UUIDField(null=False)
+    requester_id = models.UUIDField(null=False, editable=False)
 
-    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
+    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, editable=False)
 
     shipment_permission = EnumField(PermissionLevel, default=PermissionLevel.NONE)
     tags_permission = EnumField(PermissionLevel, default=PermissionLevel.NONE)
@@ -49,8 +49,8 @@ class AccessRequest(models.Model):
     telemetry_permission = EnumField(PermissionLevel, default=PermissionLevel.NONE)
 
     approved = models.NullBooleanField(default=None)
-    approved_at = models.DateTimeField(default=None, null=True)
-    approved_by = models.UUIDField(default=None, null=True)
+    approved_at = models.DateTimeField(default=None, null=True, editable=False)
+    approved_by = models.UUIDField(default=None, null=True, editable=False)
 
     class Meta:
         ordering = ('created_at',)
