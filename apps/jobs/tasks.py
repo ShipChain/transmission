@@ -132,7 +132,7 @@ class AsyncTask:
             self.async_job.save()
 
 
-@shared_task(bind=True, autoretry_for=(RPCError,), retry_backoff=True, retry_backoff_max=3600, max_retries=None)
+@shared_task(bind=True, autoretry_for=(RPCError,), retry_backoff=True, retry_backoff_max=3600, max_retries=None)   # noqa: MC0001
 def async_job_fire(self):
     # Lock on Task ID to protect against tasks that are queued multiple times
     task_lock = cache.lock(self.request.id, timeout=600)
@@ -145,6 +145,9 @@ def async_job_fire(self):
             task = None
             try:
                 task = AsyncTask(async_job_id)
+                while cache.ttl("REPLICATE_SHIPMENTS_LOCK") is None:
+                    LOG.info("Lock for Replicating Shipments currently in use.")
+                    time.sleep(15)
                 task.run()
             except (WalletInUseException, TransactionCollisionException) as exc:
                 LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {exc}")

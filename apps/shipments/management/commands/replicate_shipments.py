@@ -3,14 +3,16 @@ import sys
 import time
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from shipchain_common.exceptions import RPCError
 
 from apps.eth.models import EthAction
 from apps.eth.rpc import EventRPCClient
-from apps.jobs.models import AsyncJob, Message
+from apps.jobs.models import AsyncJob, Message, MessageType
 from apps.jobs.tasks import AsyncTask
 from apps.shipments.models import Shipment
+
 
 logger = logging.getLogger('transmission')
 logger.setLevel(settings.LOG_LEVEL)
@@ -32,24 +34,31 @@ class Command(BaseCommand):
         )
 
     def _replicate_shipment(self, shipment):
-        self.successfull_shipments.append(shipment.id)
         for async_job in AsyncJob.objects.filter(shipment=shipment):
             try:
-                eth_action = EthAction.objects.filter(async_job=async_job).first()
+                message = Message.objects.filter(async_job=async_job, type=MessageType.ETH_TRANSACTION).last()
+                if not message or 'cumulativeGasUsed' not in message.body or message.body['cumulativeGasUsed'] == '0':
+                    continue
+                logger.info(f'Performing action for shipment: {shipment.id}')
+                AsyncTask(async_job.id).rerun()
+                eth_action = EthAction.objects.filter(async_job=async_job).last()
                 if eth_action:
                     logger.info(f'Deleting Eth Action: {eth_action.transaction_hash}')
                     eth_action.delete()
-                AsyncTask(async_job.id).rerun()
+                if shipment.id not in self.successfull_shipments:
+                    self.successfull_shipments.append(shipment.id)
                 self.async_job = async_job
 
             # pylint:disable=broad-except
             except Exception as exc:
+                logger.info(f'Error replicating shipment transactions: {shipment.id}')
                 if shipment.id in self.successfull_shipments:
                     self.successfull_shipments.remove(shipment.id)
-                    self.unsuccessfull_shipments.append(shipment.id)
+                self.unsuccessfull_shipments.append(shipment.id)
                 logger.error(exc)
 
     def _unsubscribe(self):
+        cache.set('REPLICATE_SHIPMENTS_LOCK', True, None)
         self.rpc_client = EventRPCClient()
         try:
             self.rpc_client.unsubscribe("LOAD", settings.LOAD_VERSION)
@@ -58,6 +67,7 @@ class Command(BaseCommand):
                 raise exc
 
     def _resubscribe(self):
+        cache.expire('REPLICATE_SHIPMENTS_LOCK', timeout=1)
         if not self.async_job:
             logger.warning('Unable to find last blockheight to subscribe to. '
                            'Need to manually subscribe to latest blockheight')
@@ -85,7 +95,7 @@ class Command(BaseCommand):
 
         else:
             shipments = Shipment.objects.all()
-            logger.info(f'Shipments to replicate: {shipments.count()}')
+            logger.info(f'Total shipments: {shipments.count()}')
             for shipment in shipments:
                 self._replicate_shipment(shipment)
 
