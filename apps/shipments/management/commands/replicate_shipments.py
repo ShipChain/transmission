@@ -21,8 +21,8 @@ logger.setLevel(settings.LOG_LEVEL)
 class Command(BaseCommand):
     help = 'Replicate shipment related transactions to the sidechain.'
     rpc_client = None
-    successfull_shipments = []
-    unsuccessfull_shipments = []
+    successful_shipments = []
+    unsuccessful_shipments = []
     async_job = None
 
     def add_arguments(self, parser):
@@ -45,16 +45,16 @@ class Command(BaseCommand):
                 if eth_action:
                     logger.info(f'Deleting Eth Action: {eth_action.transaction_hash}')
                     eth_action.delete()
-                if shipment.id not in self.successfull_shipments:
-                    self.successfull_shipments.append(shipment.id)
+                if shipment.id not in self.successful_shipments:
+                    self.successful_shipments.append(shipment.id)
                 self.async_job = async_job
 
             # pylint:disable=broad-except
             except Exception as exc:
                 logger.info(f'Error replicating shipment transactions: {shipment.id}')
-                if shipment.id in self.successfull_shipments:
-                    self.successfull_shipments.remove(shipment.id)
-                self.unsuccessfull_shipments.append(shipment.id)
+                if shipment.id in self.successful_shipments:
+                    self.successful_shipments.remove(shipment.id)
+                self.unsuccessful_shipments.append(shipment.id)
                 logger.error(exc)
 
     def _unsubscribe(self):
@@ -99,9 +99,9 @@ class Command(BaseCommand):
             for shipment in shipments:
                 self._replicate_shipment(shipment)
 
-        logger.info(f'Successful shipments count: {len(self.successfull_shipments)}')
-        logger.debug(f'Successful shipments: {self.successfull_shipments}')
+        logger.info(f'Successful shipments count: {len(self.successful_shipments)}')
+        logger.debug(f'Successful shipments: {self.successful_shipments}')
 
-        logger.warning(f'Unsuccessful shipments count: {len(self.unsuccessfull_shipments)}')
-        logger.warning(f'Unsuccessful shipments: {self.unsuccessfull_shipments}')
+        logger.warning(f'Unsuccessful shipments count: {len(self.unsuccessful_shipments)}')
+        logger.warning(f'Unsuccessful shipments: {self.unsuccessful_shipments}')
         self._resubscribe()
