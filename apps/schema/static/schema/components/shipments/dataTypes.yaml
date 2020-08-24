@@ -586,11 +586,11 @@ exception:
       enum: [NONE, CUSTOMS_HOLD, DOCUMENTATION_ERROR]
       example: NONE
 
-aftershipTracking:
+aftsTracking:
   properties:
-    aftership_tracking:
-      title: aftership_tracking
-      description: Tracking number for aftership tracking
+    afts_tracking:
+      title: afts_tracking
+      description: Tracking number for shipments added and tracked via quickadd
       type: string
       example: '906587618687'
 

@@ -59,7 +59,7 @@ class ShipmentFilter(filters.filterset.FilterSet):
     has_ship_to_location = filters.BooleanFilter(field_name='ship_to_location', lookup_expr='isnull', exclude=True)
     has_final_destination_location = filters.BooleanFilter(
         field_name='final_destination_location', lookup_expr='isnull', exclude=True)
-    has_aftership_tracking = filters.BooleanFilter(field_name='aftership_tracking', lookup_expr='isnull', exclude=True)
+    has_afts_tracking = filters.BooleanFilter(field_name='afts_tracking', lookup_expr='isnull', exclude=True)
     state = CustomMultipleChoiceFilter(method=filter_state, choices=SHIPMENT_STATE_CHOICES)
     exception = filters.CharFilter(method=filter_enum)
     gtx_validation = filters.CharFilter(method=filter_enum)
@@ -98,7 +98,7 @@ class ShipmentFilter(filters.filterset.FilterSet):
             'delayed',
             'asset_physical_id',
             'asset_custodian_id',
-            'aftership_tracking',
+            'afts_tracking',
             'carrier_abbv',
         )
 
@@ -114,8 +114,7 @@ class ShipmentOverviewFilter(ShipmentFilter):
                                                  choices=SHIPMENT_STATE_CHOICES)
     shipment__exception = filters.CharFilter(field_name='shipment__exception', method=filter_enum)
     shipment__assignee_id = filters.UUIDFilter(field_name='shipment__assignee_id')
-    has_aftership_tracking = filters.BooleanFilter(field_name='shipment__aftership_tracking',
-                                                   lookup_expr='isnull', exclude=True)
+    has_afts_tracking = filters.BooleanFilter(field_name='shipment__afts_tracking', lookup_expr='isnull', exclude=True)
 
     # Tag filter fields
     shipment__tag_type = filters.CharFilter(field_name='shipment__shipment_tags__tag_type', lookup_expr='icontains',
@@ -157,7 +156,7 @@ SHIPMENT_SEARCH_FIELDS = (
     'final_destination_location__contact_email',
     'shipment_tags__tag_type',
     'shipment_tags__tag_value',
-    'aftership_tracking',
+    'afts_tracking',
     'customer_fields',
     'pk'
 )

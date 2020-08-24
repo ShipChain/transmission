@@ -20,10 +20,10 @@ asLine:
   schema:
     type: string
 
-hasAftershipTracking:
-  name: has_aftership_tracking
+hasAftsTracking:
+  name: has_afts_tracking
   in: query
-  description: Returns shipments with the field `aftership_tracking`.
+  description: Returns shipments with the field `afts_tracking`.
   schema:
     type: boolean
     example: true
@@ -296,11 +296,11 @@ before:
     example: '2018-06-18T14:54:56.652732Z'
 
 
-aftershipTracking:
+aftsTracking:
   required: false
-  name: aftership_tracking
+  name: afts_tracking
   in: query
-  description: Aftership Tracking number of shipment
+  description: Tracking Number for shipment added via quickadd
   schema:
     type: string
     example: 5b766a5cc7c33c0e007de3c9

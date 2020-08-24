@@ -89,7 +89,7 @@ NON_SCHEMA_FIELDS = [
     'gtx_required',
     'gtx_validation',
     'gtx_validation_timestamp',
-    'aftership_tracking',
+    'afts_tracking',
     'arrival_est',
     'routeleg',
 ]

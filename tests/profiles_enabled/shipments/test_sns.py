@@ -65,13 +65,13 @@ class TestSNS:
         assert len(messages) == 0  # Queue should be clear
 
         # Addition of aftership tracking # should add SHIPMENT_UPDATE and AFTERSHIP_UPDATE messages
-        shipment.aftership_tracking = 'abc123'
+        shipment.afts_tracking = 'abc123'
         shipment.save()
 
         modified_http_pretty.assert_calls([{
                 'host': settings.AFTERSHIP_URL.replace('/v4/', ''),
                 'path': '/v4/trackings',
-                'body': {'tracking': {'tracking_number': shipment.aftership_tracking}}
+                'body': {'tracking': {'tracking_number': shipment.afts_tracking}}
         }])
         messages = sqs_queue.receive_messages(MaxNumberOfMessages=2)
         assert len(messages) == 2
