@@ -38,6 +38,12 @@ def approved_access_request_bob(new_access_request_bob):
     new_access_request_bob.save()
     return new_access_request_bob
 
+@fixture
+def entity_ref_access_request(new_access_request_bob, user_bob_id, entity_ref_shipment_alice):
+    return AssertionHelper.EntityRef(resource='AccessRequest', pk=new_access_request_bob.id,
+                                     attributes={'requester_id': user_bob_id},
+                                     relationships=[{'shipment': entity_ref_shipment_alice}])
+
 
 class TestAccessRequestCreation:
     @fixture(autouse=True)
@@ -209,33 +215,38 @@ class TestAccessRequestRetrieval:
         self.shipment_list_url = reverse('shipment-access-requests-list', kwargs={'version': 'v1', 'shipment_pk': shipment_alice.id})
 
     # Shipment owners should be able to see full list of shipment access requests
-    def test_get_list(self, client_alice):
+    def test_get_list(self, client_alice, new_access_request_bob, entity_ref_access_request):
         response = client_alice.get(self.shipment_list_url)
-        AssertionHelper.HTTP_200(response)  # TODO: assert attributes
+        AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[entity_ref_access_request], count=1)
 
     # Access requests should be able to be filtered by approval status
-    def test_filtering(self, client_alice):
+    def test_filtering(self, client_alice, new_access_request_bob):
         response = client_alice.get(self.shipment_list_url + '?approved=true')
-        AssertionHelper.HTTP_200(response)  # TODO: assert attributes and filtering
+        AssertionHelper.HTTP_200(response, is_list=True, count=0)
 
     # Other authenticated users can only see ones that they've created (but for any shipment, GET /shipments/access_requests)
-    def test_get_requester_list(self, client_bob, client_lionel):
+    def test_get_requester_list(self, client_bob, new_access_request_bob, client_lionel):
         response = client_bob.get(self.list_url)
-        AssertionHelper.HTTP_200(response)  # TODO: assert attributes
+        AssertionHelper.HTTP_200(response, is_list=True, count=1)
 
         response = client_bob.get(self.shipment_list_url)
-        AssertionHelper.HTTP_200(response)  # TODO: assert attributes
+        AssertionHelper.HTTP_200(response, is_list=True, count=1)
+
+        response = client_lionel.get(self.list_url)
+        AssertionHelper.HTTP_200(response, is_list=True, count=0)
 
         response = client_lionel.get(self.shipment_list_url)
-        AssertionHelper.HTTP_403(response)  # TODO: assert error
+        AssertionHelper.HTTP_200(response, is_list=True, count=0)
 
     # Ensure requester's pending access requests list does not include any unauthorized shipment details
-    def test_shipment_not_included(self, client_bob):
+    def test_shipment_not_included(self, client_bob, new_access_request_bob):
         response = client_bob.get(self.list_url)
-        AssertionHelper.HTTP_200(response)  # TODO: assert that shipment is not included
+        AssertionHelper.HTTP_200(response, is_list=True, count=1)
+        assert 'included' not in response.json()
 
         response = client_bob.get(self.shipment_list_url)
-        AssertionHelper.HTTP_200(response)  # TODO: assert that shipment is not included
+        AssertionHelper.HTTP_200(response, is_list=True, count=1)
+        assert 'included' not in response.json()
 
 class TestAccessRequestPermissions:
     # Bob (org 2) should not have access to Alice's (org 1) shipment
