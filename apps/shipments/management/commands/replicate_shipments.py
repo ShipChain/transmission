@@ -21,8 +21,8 @@ logger.setLevel(settings.LOG_LEVEL)
 class Command(BaseCommand):
     help = 'Replicate shipment related transactions to the sidechain.'
     rpc_client = None
-    successful_shipments = []
-    unsuccessful_shipments = []
+    successful_shipments = set()
+    unsuccessful_shipments = set()
     async_job = None
 
     def add_arguments(self, parser):
@@ -36,29 +36,26 @@ class Command(BaseCommand):
     def _replicate_shipment(self, shipment):
         for async_job in AsyncJob.objects.filter(shipment=shipment):
             try:
-                message = Message.objects.filter(async_job=async_job, type=MessageType.ETH_TRANSACTION).last()
-                if not message or 'cumulativeGasUsed' not in message.body or message.body['cumulativeGasUsed'] == '0':
+                message = Message.objects.filter(async_job=async_job,
+                                                 type=MessageType.ETH_TRANSACTION).order_by('created_at').last()
+                if message and 'cumulativeGasUsed' in message.body and message.body['cumulativeGasUsed'] == '0':
                     continue
                 logger.info(f'Performing action for shipment: {shipment.id}')
-                AsyncTask(async_job.id).rerun()
-                eth_action = EthAction.objects.filter(async_job=async_job).last()
-                if eth_action:
+                for eth_action in EthAction.objects.filter(async_job=async_job):
                     logger.info(f'Deleting Eth Action: {eth_action.transaction_hash}')
                     eth_action.delete()
-                if shipment.id not in self.successful_shipments:
-                    self.successful_shipments.append(shipment.id)
+                AsyncTask(async_job.id).rerun()
+                self.successful_shipments.add(shipment.id)
                 self.async_job = async_job
 
             # pylint:disable=broad-except
             except Exception as exc:
                 logger.info(f'Error replicating shipment transactions: {shipment.id}')
-                if shipment.id in self.successful_shipments:
-                    self.successful_shipments.remove(shipment.id)
-                self.unsuccessful_shipments.append(shipment.id)
+                self.successful_shipments.discard(shipment.id)
+                self.unsuccessful_shipments.add(shipment.id)
                 logger.error(exc)
 
     def _unsubscribe(self):
-        cache.set('REPLICATE_SHIPMENTS_LOCK', True, None)
         self.rpc_client = EventRPCClient()
         try:
             self.rpc_client.unsubscribe("LOAD", settings.LOAD_VERSION)
@@ -67,16 +64,15 @@ class Command(BaseCommand):
                 raise exc
 
     def _resubscribe(self):
-        cache.expire('REPLICATE_SHIPMENTS_LOCK', timeout=1)
         if not self.async_job:
             logger.warning('Unable to find last blockheight to subscribe to. '
                            'Need to manually subscribe to latest blockheight')
             return
 
-        message = Message.objects.filter(async_job=self.async_job).last()
+        message = Message.objects.filter(async_job=self.async_job).order_by('created_at').last()
         if "blockNumber" not in message.body:
             time.sleep(15)
-            message = Message.objects.filter(async_job=self.async_job).last()
+            message = Message.objects.filter(async_job=self.async_job).order_by('created_at').last()
         if "blockNumber" in message.body:
             self.rpc_client.subscribe("LOAD", settings.LOAD_VERSION, last_block=message.body["blockNumber"])
         else:
@@ -84,6 +80,7 @@ class Command(BaseCommand):
                            'Need to manually subscribe to latest blockheight')
 
     def handle(self, *args, **options):
+        cache.set('REPLICATE_SHIPMENTS_LOCK', True, None)
         self._unsubscribe()
         if options['shipment_id']:
             shipment = Shipment.objects.filter(id=options['shipment_id']).first()
@@ -104,4 +101,6 @@ class Command(BaseCommand):
 
         logger.warning(f'Unsuccessful shipments count: {len(self.unsuccessful_shipments)}')
         logger.warning(f'Unsuccessful shipments: {self.unsuccessful_shipments}')
+
+        cache.delete_pattern('REPLICATE_SHIPMENTS_LOCK')
         self._resubscribe()

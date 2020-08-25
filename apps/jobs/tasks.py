@@ -145,7 +145,7 @@ def async_job_fire(self):
             task = None
             try:
                 task = AsyncTask(async_job_id)
-                while cache.ttl("REPLICATE_SHIPMENTS_LOCK") is None:
+                while cache.get("REPLICATE_SHIPMENTS_LOCK", None):
                     LOG.info("Lock for Replicating Shipments currently in use.")
                     time.sleep(15)
                 task.run()

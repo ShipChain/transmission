@@ -15,4 +15,9 @@ COMPOUND_COMPOSE=""
 if [ "$ROLE" != "int" ]; then
     COMPOUND_COMPOSE="-f compose/base-services.yml"
 fi
-docker-compose -p $COMPOSE_PROJECT $COMPOUND_COMPOSE -f compose/$ROLE.yml "$@"
+
+UP_FORCED_ARGUMENTS=""
+if [ "$1" == "up" ]; then
+    UP_FORCED_ARGUMENTS="--force-recreate"
+fi
+docker-compose -p $COMPOSE_PROJECT $COMPOUND_COMPOSE -f compose/$ROLE.yml "$@" $UP_FORCED_ARGUMENTS
