@@ -35,8 +35,9 @@ class Command(BaseCommand):
 
     def _replicate_shipment(self, shipment):
         async_jobs = AsyncJob.objects.filter(
-                shipment=shipment, message__type=MessageType.ETH_TRANSACTION,
-                message__body__has_key='cumulativeGasUsed').exclude(message__body__cumulativeGasUsed='0')
+            shipment=shipment, message__type=MessageType.ETH_TRANSACTION,
+            message__body__has_key='cumulativeGasUsed'
+        ).exclude(message__body__cumulativeGasUsed='0')
         logger.info(f'Total async jobs to check for shipment {shipment.id}: {async_jobs.count()}')
         count = 0
         for async_job in async_jobs:
@@ -84,7 +85,7 @@ class Command(BaseCommand):
                            'Need to manually subscribe to latest blockheight')
 
     def handle(self, *args, **options):
-        logger.info(f'Obtaining REPLICATE_SHIPMENTS_LOCK lock')
+        logger.info('Obtaining REPLICATE_SHIPMENTS_LOCK lock')
         cache.set('REPLICATE_SHIPMENTS_LOCK', True, None)
         self._unsubscribe()
         if options['shipment_id']:
@@ -107,6 +108,6 @@ class Command(BaseCommand):
         logger.warning(f'Unsuccessful shipments count: {len(self.unsuccessful_shipments)}')
         logger.warning(f'Unsuccessful shipments: {self.unsuccessful_shipments}')
 
-        logger.info(f'Deleting REPLICATE_SHIPMENTS_LOCK lock')
+        logger.info('Deleting REPLICATE_SHIPMENTS_LOCK lock')
         cache.delete('REPLICATE_SHIPMENTS_LOCK')
         self._resubscribe()
