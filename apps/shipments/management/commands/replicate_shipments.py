@@ -54,7 +54,7 @@ class Command(BaseCommand):
 
             # pylint:disable=broad-except
             except Exception as exc:
-                logger.info(f'Error on shipment  {shipment.id} replicating async_job {async_job.id}')
+                logger.info(f'Error on shipment {shipment.id} replicating async_job {async_job.id}')
                 self.successful_shipments.discard(shipment.id)
                 self.unsuccessful_shipments.add(shipment.id)
                 logger.error(exc)
@@ -70,19 +70,23 @@ class Command(BaseCommand):
 
     def _resubscribe(self):
         if not self.async_job:
-            logger.warning('Unable to find last blockheight to subscribe to. '
-                           'Need to manually subscribe to latest blockheight')
+            logger.warning(
+                'Unable to find last blockheight to subscribe to. Need to manually subscribe to latest blockheight.'
+            )
             return
 
         message = Message.objects.filter(async_job=self.async_job).order_by('created_at').last()
-        if "blockNumber" not in message.body:
+        if "blockNumber" not in message.body or message.body["blockNumber"] != 0:
             time.sleep(15)
             message = Message.objects.filter(async_job=self.async_job).order_by('created_at').last()
         if "blockNumber" in message.body:
+            logger.info(f'Resubscribing with last_block at: {message.body["blockNumber"]}, '
+                        f'using async_job {self.async_job.id} and message {message.id}')
             self.rpc_client.subscribe("LOAD", settings.LOAD_VERSION, last_block=message.body["blockNumber"])
         else:
-            logger.warning('Unable to find last blockheight to subscribe to. '
-                           'Need to manually subscribe to latest blockheight')
+            logger.warning(
+                'Unable to find last blockheight to subscribe to. Need to manually subscribe to latest blockheight.'
+            )
 
     def handle(self, *args, **options):
         logger.info('Obtaining REPLICATE_SHIPMENTS_LOCK lock')
