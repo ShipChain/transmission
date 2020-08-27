@@ -43,6 +43,7 @@ S3_RESOURCE = boto3.resource(
     region_name='us-east-1'
 )
 
+CACHES['default'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 CACHES['page'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
 CHANNEL_LAYERS = {
