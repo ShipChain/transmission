@@ -102,9 +102,12 @@ class Command(BaseCommand):
 
         else:
             shipments = Shipment.objects.all()
+            count = 0
             logger.info(f'Total shipments: {shipments.count()}')
             for shipment in shipments:
+                count += 1
                 self._replicate_shipment(shipment)
+                logger.info(f'{count} of {shipments.count()} shipment(s) replicated/skipped')
 
         logger.info(f'Successful shipments count: {len(self.successful_shipments)}')
         logger.debug(f'Successful shipments: {self.successful_shipments}')
