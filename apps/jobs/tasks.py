@@ -3,6 +3,7 @@ import importlib
 import logging
 import random
 from datetime import datetime
+import time
 
 import pytz
 from celery import shared_task
@@ -29,6 +30,18 @@ class AsyncTask:
         module_name, rpc_class_name = self.async_job.parameters['rpc_class'].rsplit('.', 1)
         module = importlib.import_module(module_name)
         self.rpc_client = getattr(module, rpc_class_name)()
+
+    def rerun(self):
+        from .models import JobState
+
+        self.async_job.state = JobState.PENDING
+        self.async_job.save()
+        while self.async_job.state == JobState.PENDING:
+            try:
+                self.run()
+            except WalletInUseException:
+                LOG.debug('Wallet still currently in use')
+                time.sleep(15)
 
     def run(self):
         log_metric('transmission.info', tags={'method': 'async_task.run', 'module': __name__})
@@ -119,7 +132,7 @@ class AsyncTask:
             self.async_job.save()
 
 
-@shared_task(bind=True, autoretry_for=(RPCError,), retry_backoff=True, retry_backoff_max=3600, max_retries=None)
+@shared_task(bind=True, autoretry_for=(RPCError,), retry_backoff=True, retry_backoff_max=3600, max_retries=None)   # noqa: MC0001
 def async_job_fire(self):
     # Lock on Task ID to protect against tasks that are queued multiple times
     task_lock = cache.lock(self.request.id, timeout=600)
@@ -132,6 +145,9 @@ def async_job_fire(self):
             task = None
             try:
                 task = AsyncTask(async_job_id)
+                while cache.get("REPLICATE_SHIPMENTS_LOCK", None):
+                    LOG.info("Lock for Replicating Shipments currently in use.")
+                    time.sleep(15)
                 task.run()
             except (WalletInUseException, TransactionCollisionException) as exc:
                 LOG.info(f"AsyncJob can't be processed yet ({async_job_id}): {exc}")
