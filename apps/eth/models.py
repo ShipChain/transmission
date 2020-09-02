@@ -98,6 +98,7 @@ class TransactionReceipt(models.Model):
     eth_action = models.OneToOneField(EthAction, db_column="transaction_hash",
                                       primary_key=True, on_delete=models.CASCADE)
     transaction_index = models.IntegerField(null=True)
+    evm_hash = HashField(null=True)
 
     @staticmethod
     def convert_receipt(receipt):
@@ -114,6 +115,7 @@ class TransactionReceipt(models.Model):
             'to_address': receipt['to'] if 'to' in receipt else None,
             'eth_action_id': receipt['transactionHash'] if 'transactionHash' in receipt else receipt['hash'],
             'transaction_index': receipt['transactionIndex'] if 'transactionIndex' in receipt else None,
+            'evm_hash': receipt['evmHash'] if 'evmHash' in receipt else None,
         }
 
     @staticmethod
@@ -131,6 +133,7 @@ class TransactionReceipt(models.Model):
             to_address=receipt['to'] if 'to' in receipt else None,
             eth_action_id=receipt['transactionHash'] if 'transactionHash' in receipt else receipt['hash'],
             transaction_index=receipt['transactionIndex'] if 'transactionIndex' in receipt else None,
+            evm_hash=receipt['evmHash'] if 'evmHash' in receipt else None,
         )
 
 

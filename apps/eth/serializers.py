@@ -129,6 +129,7 @@ class EthActionSerializer(serializers.ModelSerializer):
     transaction = serializers.ResourceRelatedField(queryset=Transaction.objects.all())
     transaction_receipt = serializers.ResourceRelatedField(source='transactionreceipt',
                                                            queryset=TransactionReceipt.objects.all())
+    explorer_hash = serializers.SerializerMethodField()
 
     class Meta:
         model = EthAction
@@ -143,3 +144,8 @@ class EthActionSerializer(serializers.ModelSerializer):
 
     class JSONAPIMeta:
         included_resources = ['transaction', 'transaction_receipt', 'async_job']
+
+    def get_explorer_hash(self, obj):
+        if hasattr(obj, 'transactionreceipt'):
+            return obj.transactionreceipt.evm_hash or obj.transaction_hash
+        return None
