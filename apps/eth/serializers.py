@@ -146,6 +146,6 @@ class EthActionSerializer(serializers.ModelSerializer):
         included_resources = ['transaction', 'transaction_receipt', 'async_job']
 
     def get_explorer_hash(self, obj):
-        if hasattr(obj, 'transactionreceipt') and obj.transactionreceipt.evm_hash:
-            return obj.transactionreceipt.evm_hash
-        return obj.transaction_hash
+        if hasattr(obj, 'transactionreceipt'):
+            return obj.transactionreceipt.evm_hash or obj.transaction_hash
+        return None
