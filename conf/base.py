@@ -245,6 +245,8 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [os.environ.get('REDIS_URL', default='redis://:redis_pass@redis_db:6379/1')],
+            "capacity": 1500,
+            "expiry": 10,
         },
     },
 }
