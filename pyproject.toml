@@ -42,6 +42,7 @@ django-fsm = "~2.7.0"
 django-fullurl= "==0.5"
 django-influxdb-tagged-metrics = '==1.3.3'
 django-redis = "==4.12.1"
+django-rest-serializer-field-permissions = {git = "git://github.com/ajhodges/django-rest-serializer-field-permissions.git", rev = "faced3f0d12dea5ac1829ae27f6f58d4ef40b131"}
 django-simple-history = "~2.8.0"
 djangorestframework = "==3.10.3"  # 3.11.0 breaks UniqueTogetherValidator, fix should be in 3.12.0
 djangorestframework-gis = "==0.15"
@@ -70,6 +71,8 @@ asynctest = "~0.13"
 bandit = "~1.6"
 coverage = "==4.5.1"
 django-mock-queries = "~2.1"
+django-pycharm-breakpoint = "~0.2.0"
+fakeredis = "~1.4.3"
 fpdf = "==1.7.2"
 freezegun = "~0.3"
 httpretty = "~=0.9"

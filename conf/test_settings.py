@@ -43,8 +43,8 @@ S3_RESOURCE = boto3.resource(
     region_name='us-east-1'
 )
 
-CACHES['default'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
-CACHES['page'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
+CACHES['default']['OPTIONS'] = {'REDIS_CLIENT_CLASS': 'fakeredis.FakeStrictRedis'}
+CACHES['page']['OPTIONS'] = {'REDIS_CLIENT_CLASS': 'fakeredis.FakeStrictRedis'}
 
 CHANNEL_LAYERS = {
     "default": {

@@ -6,6 +6,8 @@ from django.db.models.aggregates import Avg, Max, Min
 from django.db.models.functions import TruncMinute, TruncHour, TruncDay
 
 from rest_framework import exceptions
+from rest_framework_json_api.serializers import ResourceRelatedField
+from rest_framework_serializer_field_permissions.fields import RelatedFieldPermissionMixin
 from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.exceptions import Custom500Error
 
@@ -108,3 +110,7 @@ def retrieve_profiles_wallet_ids(request):
         raise Custom500Error(detail='Invalid response from profiles', status_code=response.status_code)
 
     return [data['id'] for data in response.json()['data']]
+
+
+class PermissionResourceRelatedField(RelatedFieldPermissionMixin, ResourceRelatedField):
+    pass

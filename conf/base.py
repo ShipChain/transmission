@@ -127,6 +127,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework',
     'rest_framework_gis',
+    'rest_framework_serializer_field_permissions',
     'influxdb_metrics',
     'corsheaders',
     'apps.jobs',
@@ -140,6 +141,8 @@ INSTALLED_APPS = [
     'simple_history',
     'rangefilter',
 ]
+if DEBUG:
+    INSTALLED_APPS += ['django_pycharm_breakpoint']
 
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10,

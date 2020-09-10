@@ -27,11 +27,13 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
+from rest_framework_serializer_field_permissions.serializers import FieldPermissionSerializerMixin
 from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
+from apps.utils import PermissionResourceRelatedField
 from ..models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
-    ExceptionType, TransitState, GTXValidation, ShipmentTag
+    ExceptionType, TransitState, GTXValidation, ShipmentTag, AccessRequest, Endpoints, PermissionLevel
 from .tags import ShipmentTagSerializer
 
 
@@ -117,7 +119,7 @@ class FKShipmentSerializer(serializers.ModelSerializer):
         fields = ('id',)
 
 
-class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
+class ShipmentSerializer(FieldPermissionSerializerMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
     """
     Serializer for a shipment object
     """
@@ -128,7 +130,9 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
     exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
     gtx_validation = UpperEnumField(GTXValidation, lenient=True, ints_as_names=True, required=False)
-    tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags')
+    tags = PermissionResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags',
+                                          permission_classes=(AccessRequest.related_field_permission(
+                                              Endpoints.tags, PermissionLevel.READ_ONLY)(),))
 
     included_serializers = {
         'ship_from_location': LocationSerializer,
@@ -359,7 +363,10 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     state = UpperEnumField(TransitState, ints_as_names=True)
     exception = UpperEnumField(ExceptionType, ints_as_names=True)
 
-    tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags')
+    # tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags')
+    tags = PermissionResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags',
+                                          permission_classes=(AccessRequest.related_field_permission(
+                                              Endpoints.tags, PermissionLevel.READ_ONLY)(),))
 
     included_serializers = {
         'ship_from_location': LocationSerializer,

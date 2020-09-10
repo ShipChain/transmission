@@ -21,9 +21,28 @@ from shipchain_common import mixins
 from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
 
-from apps.permissions import ShipmentExists, IsNestedOwnerShipperCarrierModerator
-from ..models import ShipmentNote
+from apps.permissions import ShipmentExists, IsNestedOwnerShipperCarrierModerator, ORRequestResult
+from ..models import ShipmentNote, AccessRequest, Endpoints, PermissionLevel
 from ..serializers import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
+
+
+UPDATE_PERMISSION_CLASSES = (
+    (permissions.IsAuthenticated,
+     ShipmentExists,
+     HasViewSetActionPermissions,
+     ORRequestResult(IsNestedOwnerShipperCarrierModerator,
+                     AccessRequest.permission(Endpoints.notes, PermissionLevel.READ_WRITE), )
+     ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
+)
+
+RETRIEVE_PERMISSION_CLASSES = (
+    (permissions.IsAuthenticated,
+     ShipmentExists,
+     HasViewSetActionPermissions,
+     ORRequestResult(IsNestedOwnerShipperCarrierModerator,
+                     AccessRequest.permission(Endpoints.notes, PermissionLevel.READ_ONLY), )
+     ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
+)
 
 
 class ShipmentNoteViewSet(mixins.ConfigurableCreateModelMixin,
@@ -35,13 +54,7 @@ class ShipmentNoteViewSet(mixins.ConfigurableCreateModelMixin,
 
     serializer_class = ShipmentNoteSerializer
 
-    permission_classes = (
-        (permissions.IsAuthenticated,
-         ShipmentExists,
-         HasViewSetActionPermissions,
-         IsNestedOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED else
-        (permissions.AllowAny, ShipmentExists, )
-    )
+    permission_classes = RETRIEVE_PERMISSION_CLASSES
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
     filterset_fields = ('user_id', )
@@ -51,7 +64,8 @@ class ShipmentNoteViewSet(mixins.ConfigurableCreateModelMixin,
     configuration = {
         'create': ActionConfiguration(
             request_serializer=ShipmentNoteCreateSerializer,
-            response_serializer=ShipmentNoteSerializer
+            response_serializer=ShipmentNoteSerializer,
+            permission_classes=UPDATE_PERMISSION_CLASSES
         ),
         'list': ActionConfiguration(response_serializer=ShipmentNoteSerializer)
     }
