@@ -134,6 +134,8 @@ class ShipmentSerializer(FieldPermissionSerializerMixin, EnumSupportSerializerMi
                                           permission_classes=(AccessRequest.related_field_permission(
                                               Endpoints.tags, PermissionLevel.READ_ONLY)(),))
 
+    permission_derivation = serializers.SerializerMethodField()
+
     included_serializers = {
         'ship_from_location': LocationSerializer,
         'ship_to_location': LocationSerializer,
@@ -149,6 +151,7 @@ class ShipmentSerializer(FieldPermissionSerializerMixin, EnumSupportSerializerMi
         exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
         read_only_fields = ('owner_id', 'contract_version', 'arrival_est', 'carrier_abbv') \
             if settings.PROFILES_ENABLED else ('contract_version', 'arrival_est', 'carrier_abbv')
+        meta_fields = ('permission_derivation',)
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
@@ -169,6 +172,13 @@ class ShipmentSerializer(FieldPermissionSerializerMixin, EnumSupportSerializerMi
 
         # Deduplicate list
         return list(set(geofences))
+
+    def get_permission_derivation(self, obj):
+        is_access_request = 'request' in self.context and 'AccessRequestPermission' in (
+            getattr(self.context['request'], 'authorizing_permission_class', None),
+            getattr(self.context['request'], 'authorizing_object_permission_class', None)
+        )
+        return 'AccessRequest' if is_access_request else 'OwnerOrPartyOrPermissionLink'
 
 
 class ShipmentCreateSerializer(ShipmentSerializer):
@@ -368,6 +378,8 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
                                           permission_classes=(AccessRequest.related_field_permission(
                                               Endpoints.tags, PermissionLevel.READ_ONLY)(),))
 
+    permission_derivation = serializers.SerializerMethodField()
+
     included_serializers = {
         'ship_from_location': LocationSerializer,
         'ship_to_location': LocationSerializer,
@@ -378,11 +390,18 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
         'tags': ShipmentTagSerializer,
     }
 
+    def get_permission_derivation(self, obj):
+        is_access_request = 'request' in self.context and 'AccessRequestPermission' in (
+            getattr(self.context['request'], 'authorizing_permission_class', None),
+            getattr(self.context['request'], 'authorizing_object_permission_class', None)
+        )
+        return 'AccessRequest' if is_access_request else 'OwnerOrPartyOrPermissionLink'
+
     class Meta:
         model = Shipment
         exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id',
                    'gtx_validation', 'gtx_validation_timestamp')
-        meta_fields = ('async_job_id',)
+        meta_fields = ('async_job_id', 'permission_derivation')
         if settings.PROFILES_ENABLED:
             read_only_fields = ('owner_id',)
 

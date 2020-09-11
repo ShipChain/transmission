@@ -77,6 +77,7 @@ class AccessRequest(models.Model):
                 if nested:
                     filters = {
                         'id': nested,
+                        'accessrequest__requester_id': request.user.id,
                         f'accessrequest__{endpoint.name}_permission__gte': self.required_permission_level,
                         'accessrequest__approved': True,
                     }
@@ -86,6 +87,7 @@ class AccessRequest(models.Model):
             def has_object_permission(self, request, view, obj):
                 shipment = obj.shipment if hasattr(obj, 'shipment') else obj
                 filters = {
+                    'requester_id': request.user.id,
                     f'{endpoint.name}_permission__gte': self.required_permission_level,
                     'approved': True,
                 }
@@ -102,6 +104,7 @@ class AccessRequest(models.Model):
                 if 'AccessRequestPermission' in (getattr(request, 'authorizing_permission_class', None),
                                                  getattr(request, 'authorizing_object_permission_class', None)):
                     filters = {
+                        'requester_id': request.user.id,
                         f'{endpoint.name}_permission__gte': self.required_permission_level,
                         'approved': True,
                     }

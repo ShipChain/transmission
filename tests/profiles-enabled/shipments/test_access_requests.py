@@ -29,14 +29,24 @@ def access_request_rw_attributes():
 
 
 @fixture
-def new_access_request_bob(shipment_alice, user_bob_id, access_request_ro_attributes):
-    return AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob_id, **access_request_ro_attributes)
+def new_access_request_bob(shipment_alice, user_bob, access_request_ro_attributes):
+    return AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob.id, **access_request_ro_attributes)
 
 @fixture
 def approved_access_request_bob(new_access_request_bob):
     new_access_request_bob.approved = True
     new_access_request_bob.save()
     return new_access_request_bob
+
+@fixture
+def new_access_request_lionel(shipment_alice, user_lionel, access_request_ro_attributes):
+    return AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_lionel.id, **access_request_ro_attributes)
+
+@fixture
+def approved_access_request_lionel(new_access_request_lionel):
+    new_access_request_lionel.approved = True
+    new_access_request_lionel.save()
+    return new_access_request_lionel
 
 @fixture
 def entity_ref_access_request(new_access_request_bob, user_bob_id, entity_ref_shipment_alice):
@@ -281,10 +291,15 @@ class TestAccessRequestPermissions:
             assert response.status_code == 200
             assert response.json() == []
         else:
-            for endpoint in self.endpoint_urls:
+            for endpoint in ('documents', 'notes', 'tracking', 'shipment'):
                 response = client.get(self.endpoint_urls[endpoint])
-                AssertionHelper.HTTP_403(response,
-                                         vnd=endpoint != 'telemetry')  # Telemetry endpoint is not JSON API format
+                AssertionHelper.HTTP_403(response)
+            # Tags are a special case, do not have list/retrieve, only visible via shipment model.
+            # No way to view tags if shipment access is denied.
+
+            # Telemetry endpoint is not JSON API format
+            response = client.get(self.endpoint_urls['telemetry'])
+            assert response.status_code == 403
 
     def assert_write_access(self, client, assert_granted=True):
         shipment_data = {'carriers_scac': 'h4x3d'}
@@ -363,18 +378,59 @@ class TestAccessRequestPermissions:
     # Test that an accessrequest with RW for Shipment but no access for Tags does not return Tags on Shipment update
 
     # A second, unapproved request should not grant Bob any more permissions to Alice's shipment
+    def test_unapproved_request_doesnt_grant_additional_permissions(self, shipment_alice, client_bob, user_bob_id, approved_access_request_bob, access_request_rw_attributes):
+        AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob_id, **access_request_rw_attributes)
+        self.assert_read_access(client_bob, True)
+        self.assert_write_access(client_bob, False)
 
     # If Bob has two+ approved requests, he should be granted permissions corresponding to the union of all approved permissions
+    def test_two_approved_requests(self, shipment_alice, client_bob, user_bob_id, approved_access_request_bob, access_request_rw_attributes):
+        AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob_id, **access_request_rw_attributes, approved=True)
+        self.assert_read_access(client_bob, True)
+        self.assert_write_access(client_bob, True)
+        # TODO: add more complex permutations of different permissions
 
     # Requesters should no longer have access to shipment details after revocation
+    def test_revocation(self, shipment_alice, client_bob, approved_access_request_bob):
+        self.assert_read_access(client_bob, True)
+        approved_access_request_bob.approved = False
+        approved_access_request_bob.save()
+        approved_access_request_bob.refresh_from_db()
+        self.assert_read_access(client_bob, False)
 
     # For each endpoint permission, test that the permission levels are respected (NONE/READ_ONLY,READ_WRITE)
 
     # Permission links grant full RO permission, but should combine with AccessRequests for RW
-    pass
+
+    # Test existence of other approved accessrequests for other users on the shipment should not grant access..
+    def test_others_approved_access(self, shipment_alice, client_bob, approved_access_request_lionel):
+        self.assert_read_access(client_bob, False)
+        self.assert_write_access(client_bob, False)
 
 class TestAccessRequestShipmentViews:
+    @fixture(autouse=True)
+    def setup_urls(self, shipment_alice, mock_non_wallet_owner_calls):
+        self.shipment_list = reverse('shipment-list', kwargs={'version': 'v1'})
+        self.shipment_overview = reverse('shipment-overview', kwargs={'version': 'v1'})
+        self.shipment_detail = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_alice.id})
+
     # A shipment should include access info for the authenticated user in the 'meta' section of the JSON API response
+    def test_meta_field_presence(self, shipment_alice, client_bob, approved_access_request_bob):
+        response = client_bob.get(self.shipment_detail)
+        AssertionHelper.HTTP_200(response, entity_refs=AssertionHelper.EntityRef(resource='Shipment',
+                                                                                 pk=shipment_alice.id,
+                                                                                 meta={'permission_derivation': 'AccessRequest'}))
 
     # Shipments that have been granted access via access request should show up in Shipment list & overview (delineated by meta flag)
-    pass
+    # TODO: this is a WIP
+    # def test_meta_field_list_and_overview(self, shipment_alice, client_bob, approved_access_request_bob, shipment_bob):
+    #     response = client_bob.get(self.shipment_list)
+    #     AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[
+    #         AssertionHelper.EntityRef(resource='Shipment',
+    #                                   pk=shipment_alice.id,
+    #                                   meta={'permission_derivation': 'AccessRequest'}),
+    #         AssertionHelper.EntityRef(resource='Shipment',
+    #                                   pk=shipment_bob.id,
+    #                                   meta={'permission_derivation': 'OwnerOrPartyOrPermissionLink'})
+    #     ])
+        # TODO: overview, need devices
