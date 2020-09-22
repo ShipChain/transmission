@@ -15,10 +15,13 @@ limitations under the License.
 """
 from asgiref import sync
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.core.cache import cache
 
 from rest_framework.exceptions import APIException
 from rest_framework_simplejwt.tokens import TokenError
-from shipchain_common.authentication import InternalRequest, passive_credentials_auth
+from shipchain_common.authentication import InternalRequest, passive_credentials_auth, PermissionedTokenUser
+
+from apps.shipments.models import AccessRequest
 
 
 class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
@@ -92,3 +95,19 @@ class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
 
 class DocsLambdaRequest(InternalRequest):
     SERVICE_NAME = 'document-management-s3-hook'
+
+
+class TransmissionTokenUser(PermissionedTokenUser):
+    @property
+    def access_request_shipments(self):
+        cache_key = f'access_request_shipments_{self.id}'
+        shipment_ids = cache.get(cache_key)
+
+        if not shipment_ids:
+            shipment_ids = AccessRequest.objects.filter(
+                requester_id=self.id, approved=True
+            ).values_list('shipment_id', flat=True)
+
+            cache.set(cache_key, shipment_ids)
+
+        return shipment_ids

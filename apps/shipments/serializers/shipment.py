@@ -174,11 +174,10 @@ class ShipmentSerializer(FieldPermissionSerializerMixin, EnumSupportSerializerMi
         return list(set(geofences))
 
     def get_permission_derivation(self, obj):
-        is_access_request = 'request' in self.context and 'AccessRequestPermission' in (
-            getattr(self.context['request'], 'authorizing_permission_class', None),
-            getattr(self.context['request'], 'authorizing_object_permission_class', None)
-        )
-        return 'AccessRequest' if is_access_request else 'OwnerOrPartyOrPermissionLink'
+        if ('request' in self.context and
+                obj.id in getattr(self.context['request'].user, 'access_request_shipments', [])):
+            return 'AccessRequest'
+        return 'OwnerOrPartyOrPermissionLink'
 
 
 class ShipmentCreateSerializer(ShipmentSerializer):
@@ -391,11 +390,10 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
     }
 
     def get_permission_derivation(self, obj):
-        is_access_request = 'request' in self.context and 'AccessRequestPermission' in (
-            getattr(self.context['request'], 'authorizing_permission_class', None),
-            getattr(self.context['request'], 'authorizing_object_permission_class', None)
-        )
-        return 'AccessRequest' if is_access_request else 'OwnerOrPartyOrPermissionLink'
+        if ('request' in self.context and
+                obj.id in getattr(self.context['request'].user, 'access_request_shipments', [])):
+            return 'AccessRequest'
+        return 'OwnerOrPartyOrPermissionLink'
 
     class Meta:
         model = Shipment

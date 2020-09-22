@@ -395,7 +395,6 @@ class TestAccessRequestPermissions:
         self.assert_read_access(client_bob, True)
         approved_access_request_bob.approved = False
         approved_access_request_bob.save()
-        approved_access_request_bob.refresh_from_db()
         self.assert_read_access(client_bob, False)
 
     # For each endpoint permission, test that the permission levels are respected (NONE/READ_ONLY,READ_WRITE)

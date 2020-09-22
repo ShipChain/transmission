@@ -1,4 +1,5 @@
 from cryptography.hazmat.primitives.asymmetric import rsa
+from django_redis.pool import ConnectionFactory
 from moto.iam.models import ACCOUNT_ID
 
 from conf import *
@@ -43,6 +44,12 @@ S3_RESOURCE = boto3.resource(
     region_name='us-east-1'
 )
 
+# Stolen from https://github.com/jamesls/fakeredis/issues/234#issuecomment-465131855
+class FakeConnectionFactory(ConnectionFactory):
+    def get_connection(self, params):
+        return self.redis_client_cls(**self.redis_client_cls_kwargs)
+
+DJANGO_REDIS_CONNECTION_FACTORY = "conf.test_settings.FakeConnectionFactory"
 CACHES['default']['OPTIONS'] = {'REDIS_CLIENT_CLASS': 'fakeredis.FakeStrictRedis'}
 CACHES['page']['OPTIONS'] = {'REDIS_CLIENT_CLASS': 'fakeredis.FakeStrictRedis'}
 

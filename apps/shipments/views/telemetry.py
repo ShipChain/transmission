@@ -25,7 +25,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
-from apps.permissions import ShipmentExists, ORRequestResult
+from apps.permissions import ShipmentExists
 from apps.routes.models import RouteTelemetryData
 from apps.routes.serializers import RouteTelemetryResponseSerializer, RouteTelemetryResponseAggregateSerializer
 from apps.shipments.filters import TelemetryFilter, RouteTelemetryFilter
@@ -39,9 +39,7 @@ class TelemetryViewSet(mixins.ListModelMixin,
                        viewsets.GenericViewSet):
 
     permission_classes = (
-        (ShipmentExists, ORRequestResult(
-            IsOwnerOrShared,
-            AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_ONLY))
+        (ShipmentExists, IsOwnerOrShared | AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_ONLY),
          ) if settings.PROFILES_ENABLED
         else (permissions.AllowAny, ShipmentExists, )
     )

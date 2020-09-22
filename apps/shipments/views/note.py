@@ -21,7 +21,7 @@ from shipchain_common import mixins
 from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
 
-from apps.permissions import ShipmentExists, IsNestedOwnerShipperCarrierModerator, ORRequestResult
+from apps.permissions import ShipmentExists, IsNestedOwnerShipperCarrierModerator
 from ..models import ShipmentNote, AccessRequest, Endpoints, PermissionLevel
 from ..serializers import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
 
@@ -30,8 +30,7 @@ UPDATE_PERMISSION_CLASSES = (
     (permissions.IsAuthenticated,
      ShipmentExists,
      HasViewSetActionPermissions,
-     ORRequestResult(IsNestedOwnerShipperCarrierModerator,
-                     AccessRequest.permission(Endpoints.notes, PermissionLevel.READ_WRITE), )
+     IsNestedOwnerShipperCarrierModerator | AccessRequest.permission(Endpoints.notes, PermissionLevel.READ_WRITE),
      ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
 )
 
@@ -39,8 +38,7 @@ RETRIEVE_PERMISSION_CLASSES = (
     (permissions.IsAuthenticated,
      ShipmentExists,
      HasViewSetActionPermissions,
-     ORRequestResult(IsNestedOwnerShipperCarrierModerator,
-                     AccessRequest.permission(Endpoints.notes, PermissionLevel.READ_ONLY), )
+     IsNestedOwnerShipperCarrierModerator | AccessRequest.permission(Endpoints.notes, PermissionLevel.READ_ONLY),
      ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
 )
 

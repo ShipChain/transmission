@@ -101,8 +101,7 @@ class AccessRequest(models.Model):
             required_permission_level = permission_level
 
             def has_object_permission(self, request, obj):
-                if 'AccessRequestPermission' in (getattr(request, 'authorizing_permission_class', None),
-                                                 getattr(request, 'authorizing_object_permission_class', None)):
+                if obj.id in getattr(request.user, 'access_request_shipments', []):
                     filters = {
                         'requester_id': request.user.id,
                         f'{endpoint.name}_permission__gte': self.required_permission_level,

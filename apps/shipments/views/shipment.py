@@ -32,7 +32,7 @@ from shipchain_common.utils import parse_value
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableModelViewSet
 
 from apps.jobs.models import JobState
-from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists, ORRequestResult
+from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 from ..geojson import render_filtered_point_features
 from ..models import Shipment, TrackingData, PermissionLink, TransitState, PermissionLevel, AccessRequest, Endpoints
@@ -47,15 +47,13 @@ LOG = logging.getLogger('transmission')
 UPDATE_PERMISSION_CLASSES = (
     (HasViewSetActionPermissions,
      ShipmentExists,
-     ORRequestResult(IsOwnerShipperCarrierModerator,
-                     AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_WRITE))
+     IsOwnerShipperCarrierModerator | AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_WRITE),
      ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
 )
 
 RETRIEVE_PERMISSION_CLASSES = (
     (ShipmentExists,
-     ORRequestResult(IsOwnerOrShared,
-                     AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_ONLY)),
+     IsOwnerOrShared | AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_ONLY),
      ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
 )
 
@@ -172,7 +170,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
 
     @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
     @action(detail=True, methods=['get'], permission_classes=(
-            ORRequestResult(IsOwnerOrShared, AccessRequest.permission(Endpoints.tracking, PermissionLevel.READ_ONLY)),))
+            IsOwnerOrShared | AccessRequest.permission(Endpoints.tracking, PermissionLevel.READ_ONLY),),)
     def tracking(self, request, version, pk):
         """
         Retrieve tracking data from db
