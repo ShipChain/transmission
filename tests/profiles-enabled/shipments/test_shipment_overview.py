@@ -46,7 +46,7 @@ def devices():
 
 
 @pytest.fixture
-def shipments_with_device(user_alice, user_bob, devices, mocked_engine_rpc, mocked_iot_api, profiles_ids):
+def shipments_with_device(user_alice, user_bob, devices, mocked_engine_rpc, mocked_iot_api, profiles_ids, modified_http_pretty):
     list_shipment = []
     owner_id = user_alice.token.payload['organization_id']
     third_owner_id = user_bob.token.payload['organization_id']
@@ -74,6 +74,8 @@ def shipments_with_device(user_alice, user_bob, devices, mocked_engine_rpc, mock
 
     for shipment in list_shipment:
         shipment.save()
+
+    modified_http_pretty.reset()  # Clear any calls made from shipment creation, i.e. location geocoding
 
     return list_shipment
 

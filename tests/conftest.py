@@ -26,9 +26,19 @@ from apps.shipments.models import Shipment, Device
 USER_ID = random_id()
 SHIPPER_ID = random_id()
 VAULT_ID = random_id()
-TRANSACTION_HASH = 'txHash'
 DEVICE_ID = random_id()
 
+TRANSACTION_HASH = 'txHash'
+FROM_ADDRESS = "0x13b1eebb31a1aa2ecaa2ad9e7455df2f717f2143"
+TO_ADDRESS = "0x25ff5dc79a7c4e34254ff0f4a19d69e491201dd3"
+BLOCK_HASH = "0x38823cb26b528867c8dbea4146292908f55e1ee7f293685db1df0851d1b93b24"
+BLOCK_NUMBER = 14
+CUMULATIVE_GAS_USED = 270710
+GAS_USED = 270710
+LOGS = [{"address": "0x25Ff5dc79A7c4e34254ff0f4a19d69E491201DD3"}]
+LOGS_BLOOM = "0x0000000000000000000000000000000...00000000000000000000"
+STATUS = True
+TRANSACTION_INDEX = 0
 
 @pytest.fixture(scope='session')
 def api_client():
@@ -69,18 +79,18 @@ def mocked_engine_rpc(mocker):
     mocked_uvht = mocker.patch('apps.shipments.rpc.Load110RPCClient.set_vault_hash_tx', return_value={})
     mocked_uvht.__qualname__ = 'ShipmentRPCClient.set_vault_hash_tx'
     mocker.patch('apps.shipments.rpc.Load110RPCClient.send_transaction', return_value={
-        "blockHash": "0xccb595947a121e37df8bf689c3f88c6d9c7fb56070c9afda38551540f9e231f7",
-        "blockNumber": 15,
+        "blockHash": BLOCK_HASH,
+        "blockNumber": BLOCK_NUMBER,
         "contractAddress": None,
-        "cumulativeGasUsed": 138090,
-        "from": "0x13b1eebb31a1aa2ecaa2ad9e7455df2f717f2143",
-        "gasUsed": 138090,
-        "logs": [],
-        "logsBloom": "0x0000000000",
-        "status": True,
-        "to": "0x25ff5dc79a7c4e34254ff0f4a19d69e491201dd3",
+        "cumulativeGasUsed": CUMULATIVE_GAS_USED,
+        "from": FROM_ADDRESS,
+        "gasUsed": GAS_USED,
+        "logs": LOGS,
+        "logsBloom": LOGS_BLOOM,
+        "status": STATUS,
+        "to": TO_ADDRESS,
         "transactionHash": TRANSACTION_HASH,
-        "transactionIndex": 0
+        "transactionIndex": TRANSACTION_INDEX
     })
 
 

@@ -23,11 +23,13 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.request import ForcedAuthentication
 from rest_framework.test import APIClient
-from shipchain_common.test_utils import get_jwt, AssertionHelper, modified_http_pretty
+from shipchain_common.test_utils import get_jwt, AssertionHelper
 from shipchain_common.utils import random_id
 
 from apps.authentication import passive_credentials_auth
 from apps.shipments.models import Shipment, Device, PermissionLink
+
+from tests.conftest import FROM_ADDRESS
 
 
 def fake_get_raw_token(self, header):
@@ -82,6 +84,25 @@ def client_alice(user_alice):
     api_client.force_authenticate(user_alice)
     return api_client
 
+@pytest.fixture
+def user_alice_throttled(user_alice_id):
+    return passive_credentials_auth(
+        get_jwt(
+            username='alice@shipchain.io',
+            sub=user_alice_id,
+            organization_id=ORGANIZATION_ALICE_ID,
+            organization_name=ORGANIZATION_NAME,
+            permissions=BASE_PERMISSIONS,
+            monthly_rate_limit=1
+        ))
+
+
+@pytest.fixture
+def client_alice_throttled(user_alice_throttled):
+    api_client = APIClient()
+    api_client.force_authenticate(user_alice_throttled)
+    return api_client
+
 
 # Carol is in Alice's organization
 # --------------------------------
@@ -110,6 +131,25 @@ def client_carol(user_carol):
     api_client.force_authenticate(user_carol)
     return api_client
 
+@pytest.fixture
+def user_carol_throttled(user_carol_id):
+    return passive_credentials_auth(
+        get_jwt(
+            username='carol@shipchain.io',
+            sub=user_carol_id,
+            organization_id=ORGANIZATION_ALICE_ID,
+            organization_name=ORGANIZATION_NAME,
+            permissions=BASE_PERMISSIONS,
+            background_data_hash_interval=25,
+            manual_update_hash_interval=30,
+            monthly_rate_limit=1
+        ))
+
+@pytest.fixture
+def client_carol_throttled(user_carol_throttled):
+    api_client = APIClient()
+    api_client.force_authenticate(user_carol_throttled)
+    return api_client
 
 # Bob has an organization; There are no other members
 # ---------------------------------------------------
@@ -318,7 +358,7 @@ def mock_successful_wallet_owner_calls(modified_http_pretty, profiles_ids):
 def mocked_profiles(modified_http_pretty, profiles_ids):
     modified_http_pretty.register_uri(modified_http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['shipper_wallet_id']}/",
-                             body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)
+                             body=json.dumps({'data': {'attributes': {'address':  FROM_ADDRESS}}}), status=status.HTTP_200_OK)
     modified_http_pretty.register_uri(modified_http_pretty.GET,
                              f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['carrier_wallet_id']}/",
                              body=json.dumps({'good': 'good'}), status=status.HTTP_200_OK)

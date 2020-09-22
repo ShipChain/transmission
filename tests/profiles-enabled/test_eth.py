@@ -1,47 +1,20 @@
 import datetime
-import json
 from unittest import mock
 
-import httpretty
 from django.conf import settings as test_settings
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.test import APITestCase, APIClient, force_authenticate
-from shipchain_common.test_utils import get_jwt
-
-from apps.authentication import passive_credentials_auth
+from rest_framework.test import APIClient
 from apps.eth.models import TransactionReceipt, EthAction
 from apps.jobs.models import AsyncJob
-from apps.shipments.models import Shipment, PermissionLink
-
-BLOCK_HASH = "0x38823cb26b528867c8dbea4146292908f55e1ee7f293685db1df0851d1b93b24"
-BLOCK_NUMBER = 14
-CUMULATIVE_GAS_USED = 270710
-FROM_ADDRESS = "0x13b1eebb31a1aa2ecaa2ad9e7455df2f717f2143"
-FROM_ADDRESS_2 = "0xd8A3ba60e1a5a742781C055C63796ffCa3a43e85"
-GAS_USED = 270710
-LOGS = [{"address": "0x25Ff5dc79A7c4e34254ff0f4a19d69E491201DD3"}]
-LOGS_BLOOM = "0x0000000000000000000000000000000...00000000000000000000"
-STATUS = True
-TO_ADDRESS = "0x25ff5dc79a7c4e34254ff0f4a19d69e491201dd3"
-TRANSACTION_HASH = "0x7ff1a69326d64507a306a836128aa67503972cb38e22fa6db217ec553c560d76"
-TRANSACTION_HASH_2 = "0x7ff1a69326d64507a306a836128aa67503972cb38e22fa6db217ec553c560d77"
-TRANSACTION_INDEX = 0
-WALLET_ID = "1243d23b-e2fc-475a-8290-0e4f53479553"
-USER_ID = '00000000-0000-0000-0000-000000000000'
+from apps.shipments.models import PermissionLink
 
 
-class TransactionReceiptTestCase(APITestCase):
+from tests.conftest import BLOCK_HASH, TRANSACTION_HASH, CUMULATIVE_GAS_USED, BLOCK_NUMBER, FROM_ADDRESS, GAS_USED, LOGS, LOGS_BLOOM, STATUS, TO_ADDRESS
+FROM_ADDRESS_2 = FROM_ADDRESS[-1] + 'f'
 
-    def setUp(self):
-        self.client = APIClient()
 
-        self.token = get_jwt(username='user1@shipchain.io')
-        self.user_1 = passive_credentials_auth(self.token)
-
-    def set_user(self, user, token=None):
-        self.client.force_authenticate(user=user, token=token)
-
+class TestTransactionReceipts:
     def createAsyncJobs(self, shipment):
         self.asyncJobs = []
         self.asyncJobs.append(AsyncJob.objects.create(shipment=shipment))
@@ -50,7 +23,7 @@ class TransactionReceiptTestCase(APITestCase):
         self.ethActions = []
         self.ethActions.append(EthAction.objects.create(transaction_hash=TRANSACTION_HASH, async_job=self.asyncJobs[0],
                                                         shipment=listener))
-        self.ethActions.append(EthAction.objects.create(transaction_hash=TRANSACTION_HASH_2,
+        self.ethActions.append(EthAction.objects.create(transaction_hash=TRANSACTION_HASH + '2',
                                                         async_job=self.asyncJobs[0], shipment=listener))
 
     def createTransactionReceipts(self):
@@ -76,165 +49,90 @@ class TransactionReceiptTestCase(APITestCase):
                                                                           to_address=TO_ADDRESS,
                                                                           eth_action=self.ethActions[1]))
 
-    def test_transaction_get(self):
-        with mock.patch('apps.shipments.rpc.ShipmentRPCClient.create_vault') as create_vault, \
-                mock.patch('apps.shipments.rpc.ShipmentRPCClient.add_shipment_data') as add_shipment_data, \
-                mock.patch('apps.shipments.rpc.Load110RPCClient.create_shipment_transaction') as create_shipment_transaction, \
-                mock.patch('apps.shipments.rpc.Load110RPCClient.sign_transaction') as sign_transaction, \
-                mock.patch('apps.shipments.rpc.Load110RPCClient.set_vault_hash_tx') as set_vault_hash_tx, \
-                mock.patch('apps.shipments.rpc.Load110RPCClient.send_transaction') as send_transaction:
+    def test_transaction_get(self, client_alice, shipment_alice):
+        self.createAsyncJobs(shipment_alice)
+        self.createEthAction(shipment_alice)
+        self.createTransactionReceipts()
 
-            create_vault.return_value = (WALLET_ID, 's3://bucket/' + WALLET_ID)
-            add_shipment_data.return_value = {'hash': 'txHash'}
-            create_shipment_transaction.return_value = ('version', {})
-            create_shipment_transaction.__qualname__ = 'Load110RPCClient.create_shipment_transaction'
-            sign_transaction.return_value = ({}, 'txHash')
-            set_vault_hash_tx.return_value = ({})
-            set_vault_hash_tx.__qualname__ = 'ShipmentRPCClient.set_vault_hash_tx'
-            send_transaction.return_value = {
-                "blockHash": "0xccb595947a121e37df8bf689c3f88c6d9c7fb56070c9afda38551540f9e231f7",
-                "blockNumber": 15,
-                "contractAddress": None,
-                "cumulativeGasUsed": 138090,
-                "from": "0x13b1eebb31a1aa2ecaa2ad9e7455df2f717f2143",
-                "gasUsed": 138090,
-                "logs": [],
-                "logsBloom": "0x0000000000",
-                "status": True,
-                "to": "0x25ff5dc79a7c4e34254ff0f4a19d69e491201dd3",
-                "transactionHash": TRANSACTION_HASH,
-                "transactionIndex": 0
-            }
+        url = reverse('transaction-detail', kwargs={'pk': TRANSACTION_HASH, 'version': 'v1'})
+        response = client_alice.get(url)
+        response_json = response.json()
 
-            listener = Shipment.objects.create(owner_id=USER_ID, carrier_wallet_id=WALLET_ID,
-                                               shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
-                                               storage_credentials_id=WALLET_ID)
+        assert response.status_code == status.HTTP_200_OK
+        assert response_json['included'][1]['attributes']['from_address'] == FROM_ADDRESS
 
-            self.createAsyncJobs(listener)
-            self.createEthAction(listener)
-            self.createTransactionReceipts()
+    def test_transaction_list(self, client_alice, shipment_alice, profiles_ids, mocked_profiles, modified_http_pretty):
 
-            url = reverse('transaction-detail', kwargs={'pk': TRANSACTION_HASH, 'version': 'v1'})
+        valid_permission_link = PermissionLink.objects.create(
+            expiration_date=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1),
+            shipment=shipment_alice
+        )
 
-            self.set_user(self.user_1)
-            response = self.client.get(url)
-            response_json = response.json()
+        invalid_permission_link = PermissionLink.objects.create(
+            expiration_date=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=-1),
+            shipment=shipment_alice
+        )
 
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.assertEqual(response_json['included'][1]['attributes']['from_address'], FROM_ADDRESS)
+        self.createAsyncJobs(shipment_alice)
+        self.createEthAction(shipment_alice)
+        self.createTransactionReceipts()
 
-    def test_transaction_list(self):
-        with mock.patch('apps.shipments.rpc.ShipmentRPCClient.create_vault') as create_vault, \
-                mock.patch('apps.shipments.rpc.ShipmentRPCClient.add_shipment_data') as add_shipment_data, \
-                mock.patch('apps.shipments.rpc.Load110RPCClient.create_shipment_transaction') as create_shipment_transaction, \
-                mock.patch('apps.shipments.rpc.Load110RPCClient.sign_transaction') as sign_transaction, \
-                mock.patch('apps.shipments.rpc.Load110RPCClient.set_vault_hash_tx') as set_vault_hash_tx, \
-                mock.patch('apps.shipments.rpc.Load110RPCClient.send_transaction') as send_transaction:
+        # Ensure two different transaction receipts were created
+        assert TransactionReceipt.objects.count() == 2
 
-            create_vault.return_value = (WALLET_ID, 's3://bucket/' + WALLET_ID)
-            add_shipment_data.return_value = {'hash': 'txHash'}
-            create_shipment_transaction.return_value = ('version', {})
-            create_shipment_transaction.__qualname__ = 'Load110RPCClient.create_shipment_transaction'
-            sign_transaction.return_value = ({}, 'txHash')
-            set_vault_hash_tx.return_value = ({})
-            set_vault_hash_tx.__qualname__ = 'ShipmentRPCClient.set_vault_hash_tx'
-            send_transaction.return_value = {
-                "blockHash": "0xccb595947a121e37df8bf689c3f88c6d9c7fb56070c9afda38551540f9e231f7",
-                "blockNumber": 15,
-                "contractAddress": None,
-                "cumulativeGasUsed": 138090,
-                "from": "0x13b1eebb31a1aa2ecaa2ad9e7455df2f717f2143",
-                "gasUsed": 138090,
-                "logs": [],
-                "logsBloom": "0x0000000000",
-                "status": True,
-                "to": "0x25ff5dc79a7c4e34254ff0f4a19d69e491201dd3",
-                "transactionHash": TRANSACTION_HASH,
-                "transactionIndex": 0
-            }
+        url = reverse('transaction-list', kwargs={'version': 'v1'})
 
-            listener = Shipment.objects.create(owner_id=USER_ID, carrier_wallet_id=WALLET_ID,
-                                               shipper_wallet_id=WALLET_ID, vault_id=WALLET_ID,
-                                               storage_credentials_id=WALLET_ID)
+        # Request without wallet_address query field should fail
+        response = client_alice.get(url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-            valid_permission_link = PermissionLink.objects.create(
-                expiration_date=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1),
-                shipment=listener
-            )
+        # request for specific eth actions using wallet_address should fail
+        response = client_alice.get(f'{url}?wallet_address={FROM_ADDRESS}')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-            invalid_permission_link = PermissionLink.objects.create(
-                expiration_date=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=-1),
-                shipment=listener
-            )
+        # request for specific eth actions should only return ones with that from_address
+        response = client_alice.get(f'{url}?wallet_id={profiles_ids["shipper_wallet_id"]}')
+        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response_json['data']) == 1
 
-            self.createAsyncJobs(listener)
-            self.createEthAction(listener)
-            self.createTransactionReceipts()
+        modified_http_pretty.register_uri('GET',
+                                          f"{test_settings.PROFILES_URL}/api/v1/wallet/{profiles_ids['shipper_wallet_id']}/",
+                                          status=status.HTTP_401_UNAUTHORIZED)
 
-            self.set_user(self.user_1, token=self.token)
+        # request for specific eth actions should fail if the profiles request fails
+        response = client_alice.get(f'{url}?wallet_id={profiles_ids["shipper_wallet_id"]}')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-            # Ensure two different transaction receipts were created
-            self.assertEqual(TransactionReceipt.objects.count(), 2)
+        # Shipment transactions list
+        nested_url = reverse('shipment-transactions-list', kwargs={'version': 'v1', 'shipment_pk': shipment_alice.id})
+        response = client_alice.get(nested_url)
+        assert response.status_code == status.HTTP_200_OK
 
-            url = reverse('transaction-list', kwargs={'version': 'v1'})
+        # Ordering works as expected
+        response = client_alice.get(f'{nested_url}?ordering=-created_at')
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        assert response_json['data'][0]['attributes']['transaction_hash'] == TRANSACTION_HASH + '2'
 
-            # Request without wallet_address query field should fail
-            response = self.client.get(url)
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # A Transactions list view cannot be accessed by an anonymous user on a nested route
+        anon_client = APIClient()
+        anon_client.force_authenticate(None, None)
 
-            # request for specific eth actions using wallet_address should fail
-            response = self.client.get(f'{url}?wallet_address={FROM_ADDRESS}')
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        with mock.patch('apps.permissions.IsShipperMixin.has_shipper_permission') as mock_carrier, \
+                mock.patch('apps.permissions.IsCarrierMixin.has_carrier_permission') as mock_shipper:
+            mock_carrier.return_value = False
+            mock_shipper.return_value = False
 
-            with httpretty.enabled():
-                httpretty.register_uri(httpretty.GET,
-                                       f"{test_settings.PROFILES_URL}/api/v1/wallet/{WALLET_ID}/",
-                                       body=json.dumps({'data': {'attributes': {'address':  FROM_ADDRESS}}}),
-                                       status=status.HTTP_200_OK)
+            response = anon_client.get(nested_url)
+            assert response.status_code == status.HTTP_403_FORBIDDEN
 
-                # request for specific eth actions should only return ones with that from_address
-                response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
-                force_authenticate(response, user=self.user_1, token=self.token)
-                response_json = response.json()
-                self.assertEqual(response.status_code, status.HTTP_200_OK)
-                self.assertEqual(len(response_json['data']), 1)
+            # An anonymous user shouldn't have access to the shipment's transactions with an expired permission link
+            response = anon_client.get(f'{nested_url}?permission_link={invalid_permission_link.id}')
+            assert response.status_code == status.HTTP_403_FORBIDDEN
 
-                httpretty.register_uri(httpretty.GET,
-                                       f"{test_settings.PROFILES_URL}/api/v1/wallet/{WALLET_ID}/",
-                                       status=status.HTTP_401_UNAUTHORIZED)
-
-                # request for specific eth actions should fail if the profiles request fails
-                response = self.client.get(f'{url}?wallet_id={WALLET_ID}')
-                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-            # Shipment transactions list
-            nested_url = reverse('shipment-transactions-list', kwargs={'version': 'v1', 'shipment_pk': listener.id})
-            response = self.client.get(nested_url)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-            # Ordering works as expected
-            response = self.client.get(f'{nested_url}?ordering=-created_at')
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            response_json = response.json()
-            self.assertEqual(response_json['data'][0]['attributes']['transaction_hash'], TRANSACTION_HASH_2)
-
-            # A Transactions list view cannot be accessed by an anonymous user on a nested route
-            self.set_user(None)
-
-            with mock.patch('apps.permissions.IsShipperMixin.has_shipper_permission') as mock_carrier, \
-                    mock.patch('apps.permissions.IsCarrierMixin.has_carrier_permission') as mock_shipper:
-                mock_carrier.return_value = False
-                mock_shipper.return_value = False
-
-                response = self.client.get(nested_url)
-                self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-                # An anonymous user shouldn't have access to the shipment's transactions with an expired permission link
-                response = self.client.get(f'{nested_url}?permission_link={invalid_permission_link.id}')
-                self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-            # An anonymous user with a valid permission link should have access to the shipment's transactions
-            response = self.client.get(f'{nested_url}?permission_link={valid_permission_link.id}')
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-            data = response.json()['data']
-            self.assertEqual(len(data), 2)
+        # An anonymous user with a valid permission link should have access to the shipment's transactions
+        response = anon_client.get(f'{nested_url}?permission_link={valid_permission_link.id}')
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()['data']
+        assert len(data) == 2
