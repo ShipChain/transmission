@@ -419,10 +419,10 @@ def test_bbox_param(client_alice, shipment_tracking_data, mocked_profiles_wallet
 
 
 @pytest.mark.django_db
-def test_latest_tracking(client_alice, tracking_data, shipment_tracking_data, mocked_profiles_wallet_list,
+def test_latest_tracking(client_alice, overview_tracking_data, shipment_tracking_data, mocked_profiles_wallet_list,
                          profiles_and_mapbox_calls):
     shipment = shipment_tracking_data[0]
-    data_point = TrackingData(**tracking_data[0][0])
+    data_point = TrackingData(**overview_tracking_data[0][0])
     data_point.shipment = shipment
     data_point.device = shipment.device
     data_point.timestamp = datetime.datetime.utcnow() + datetime.timedelta(days=1)

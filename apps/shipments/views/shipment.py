@@ -117,6 +117,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
 
             else:
                 queryset_filter = queryset_filter | shipment_list_wallets_filter(self.request)
+                queryset_filter = queryset_filter | Q(pk__in=self.request.user.access_request_shipments)
 
             queryset = queryset.filter(queryset_filter)
 

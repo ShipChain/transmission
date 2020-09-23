@@ -430,7 +430,15 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 class ShipmentOverviewSerializer(serializers.ModelSerializer):
     state = UpperEnumField(TransitState, ints_as_names=True)
     exception = UpperEnumField(ExceptionType, ints_as_names=True)
+    permission_derivation = serializers.SerializerMethodField()
+
+    def get_permission_derivation(self, obj):
+        if ('request' in self.context and
+                obj.id in getattr(self.context['request'].user, 'access_request_shipments', [])):
+            return 'AccessRequest'
+        return 'OwnerOrPartyOrPermissionLink'
 
     class Meta:
         model = Shipment
         fields = ('state', 'exception', 'delayed', )
+        meta_fields = ('permission_derivation',)

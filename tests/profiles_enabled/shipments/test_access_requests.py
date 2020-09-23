@@ -2,7 +2,7 @@ from django.urls import reverse
 from pytest import fixture
 from shipchain_common.test_utils import AssertionHelper
 
-from apps.shipments.models import AccessRequest, PermissionLevel, Endpoints
+from apps.shipments.models import AccessRequest, PermissionLevel, Endpoints, TrackingData
 
 
 @fixture
@@ -408,7 +408,7 @@ class TestAccessRequestPermissions:
 
 class TestAccessRequestShipmentViews:
     @fixture(autouse=True)
-    def setup_urls(self, shipment_alice, mock_non_wallet_owner_calls):
+    def setup_urls(self, shipment_alice, mock_non_wallet_owner_calls, mocked_profiles_wallet_list):
         self.shipment_list = reverse('shipment-list', kwargs={'version': 'v1'})
         self.shipment_overview = reverse('shipment-overview', kwargs={'version': 'v1'})
         self.shipment_detail = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_alice.id})
@@ -421,15 +421,47 @@ class TestAccessRequestShipmentViews:
                                                                                  meta={'permission_derivation': 'AccessRequest'}))
 
     # Shipments that have been granted access via access request should show up in Shipment list & overview (delineated by meta flag)
-    # TODO: this is a WIP
-    # def test_meta_field_list_and_overview(self, shipment_alice, client_bob, approved_access_request_bob, shipment_bob):
-    #     response = client_bob.get(self.shipment_list)
-    #     AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[
-    #         AssertionHelper.EntityRef(resource='Shipment',
-    #                                   pk=shipment_alice.id,
-    #                                   meta={'permission_derivation': 'AccessRequest'}),
-    #         AssertionHelper.EntityRef(resource='Shipment',
-    #                                   pk=shipment_bob.id,
-    #                                   meta={'permission_derivation': 'OwnerOrPartyOrPermissionLink'})
-    #     ])
-        # TODO: overview, need devices
+    def test_meta_field_list_and_overview(self, shipment_alice, client_bob, approved_access_request_bob, shipment_bob, devices, overview_tracking_data):
+        response = client_bob.get(self.shipment_list)
+        AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[
+            AssertionHelper.EntityRef(resource='Shipment',
+                                      pk=shipment_alice.id,
+                                      meta={'permission_derivation': 'AccessRequest'}),
+            AssertionHelper.EntityRef(resource='Shipment',
+                                      pk=shipment_bob.id,
+                                      meta={'permission_derivation': 'OwnerOrPartyOrPermissionLink'})
+        ])
+
+        # Add devices and tracking to shipments so they show up in the overview
+        shipments = (shipment_alice, shipment_bob)
+        for i in range(len(shipments)):
+            shipments[i].device = devices[i]
+            shipments[i].save()
+            for in_bbox_data in overview_tracking_data[0]:
+                in_bbox_data['device'] = devices[i]
+                in_bbox_data['shipment'] = shipments[i]
+                TrackingData.objects.create(**in_bbox_data)
+
+        response = client_bob.get(self.shipment_overview)
+        AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[
+            AssertionHelper.EntityRef(
+                resource='TrackingData',
+                relationships=[{
+                    'shipment': AssertionHelper.EntityRef(
+                        resource='Shipment',
+                        pk=shipment_alice.id,
+                        meta={'permission_derivation': 'AccessRequest'}
+                    )
+                }]
+            ),
+            AssertionHelper.EntityRef(
+                resource='TrackingData',
+                relationships=[{
+                    'shipment': AssertionHelper.EntityRef(
+                        resource='Shipment',
+                        pk=shipment_bob.id,
+                        meta={'permission_derivation': 'OwnerOrPartyOrPermissionLink'}
+                    )
+                }]
+            )
+        ])
