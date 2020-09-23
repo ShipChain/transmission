@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import json
+import random
 from datetime import datetime
 
 import pytest
@@ -22,7 +23,11 @@ from shipchain_common.test_utils import AssertionHelper
 from shipchain_common.utils import random_id
 
 from apps.routes.models import Route
-from apps.shipments.models import Shipment
+from apps.shipments.models import Shipment, Device
+
+NUM_DEVICES = 7
+BBOX = [-90.90, 30.90, -78.80, 36.80]
+NUM_TRACKING_DATA_BBOX = 3
 
 google_obj = {
     'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
@@ -54,6 +59,39 @@ def tracking_data():
         'timestamp': datetime.utcnow().isoformat()
     }
 
+@pytest.fixture
+def devices():
+    list_device = []
+    for i in range(0, NUM_DEVICES):
+        list_device.append(Device.objects.create(id=random_id()))
+
+    return list_device
+
+@pytest.fixture
+def overview_tracking_data():
+    in_bbox, out_of_bbox = [], []
+    for i in range(0, NUM_TRACKING_DATA_BBOX):
+        in_bbox.append(
+            {
+                'latitude': random.uniform(BBOX[1], BBOX[3]),
+                'longitude': random.uniform(BBOX[0], BBOX[2]),
+                'source': 'GPS',
+                'timestamp': datetime.utcnow(),
+                'version': '1.1.0'
+            }
+        )
+
+        out_of_bbox.append(
+            {
+                'latitude': random.uniform(BBOX[1], BBOX[3]),
+                'longitude': random.uniform(BBOX[1], BBOX[3]),
+                'source': 'GPS',
+                'timestamp': datetime.utcnow(),
+                'version': '1.1.0'
+            }
+        )
+
+    return in_bbox, out_of_bbox
 
 @pytest.fixture
 def alice_organization_shipments(user_alice, mocked_engine_rpc, mocked_iot_api, profiles_ids):

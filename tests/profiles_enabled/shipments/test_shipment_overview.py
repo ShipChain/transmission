@@ -17,33 +17,20 @@ import json
 from copy import deepcopy
 
 import pytest
-import random
 from django.conf import settings
 from rest_framework import status
 from rest_framework.reverse import reverse
 from shipchain_common.test_utils import AssertionHelper
 from shipchain_common.utils import random_id
 
-from apps.shipments.models import Shipment, Device, Location, TrackingData, TransitState
+from apps.shipments.models import Shipment, Location, TrackingData, TransitState
 from apps.shipments.serializers import ActionType
 
-BBOX = [-90.90, 30.90, -78.80, 36.80]
+from tests.profiles_enabled.shipments.conftest import BBOX, NUM_DEVICES
 
-NUM_DEVICES = 7     # should be >= 7
-NUM_TRACKING_DATA_BBOX = 3
 
 OWNER_ID = random_id()
 THIRD_OWNER_ID = random_id()
-
-
-@pytest.fixture
-def devices():
-    list_device = []
-    for i in range(0, NUM_DEVICES):
-        list_device.append(Device.objects.create(id=random_id()))
-
-    return list_device
-
 
 @pytest.fixture
 def shipments_with_device(user_alice, user_bob, devices, mocked_engine_rpc, mocked_iot_api, profiles_ids, modified_http_pretty):
@@ -79,41 +66,13 @@ def shipments_with_device(user_alice, user_bob, devices, mocked_engine_rpc, mock
 
     return list_shipment
 
-
 @pytest.fixture
-def tracking_data():
-    in_bbox, out_of_bbox = [], []
-    for i in range(0, NUM_TRACKING_DATA_BBOX):
-        in_bbox.append(
-            {
-                'latitude': random.uniform(BBOX[1], BBOX[3]),
-                'longitude': random.uniform(BBOX[0], BBOX[2]),
-                'source': 'GPS',
-                'timestamp': datetime.datetime.utcnow(),
-                'version': '1.1.0'
-            }
-        )
-
-        out_of_bbox.append(
-            {
-                'latitude': random.uniform(BBOX[1], BBOX[3]),
-                'longitude': random.uniform(BBOX[1], BBOX[3]),
-                'source': 'GPS',
-                'timestamp': datetime.datetime.utcnow(),
-                'version': '1.1.0'
-            }
-        )
-
-    return in_bbox, out_of_bbox
-
-
-@pytest.fixture
-def shipment_tracking_data(shipments_with_device, tracking_data):
+def shipment_tracking_data(shipments_with_device, overview_tracking_data):
     shipments_with_tracking = []
     for shipment in shipments_with_device:
         device = shipment.device
         if device:
-            for in_bbox_data in tracking_data[0]:
+            for in_bbox_data in overview_tracking_data[0]:
                 in_bbox_data['device'] = device
                 in_bbox_data['shipment'] = shipment
                 TrackingData.objects.create(**in_bbox_data)
@@ -122,7 +81,7 @@ def shipment_tracking_data(shipments_with_device, tracking_data):
     # One shipment with tracking data outside of Bbox
     shipment = shipments_with_device[NUM_DEVICES-1]
     device = shipment.device
-    for out_of_bbox_data in tracking_data[1]:
+    for out_of_bbox_data in overview_tracking_data[1]:
         out_of_bbox_data['timestamp'] = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
         out_of_bbox_data['device'] = device
         out_of_bbox_data['shipment'] = shipment
