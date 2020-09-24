@@ -364,15 +364,13 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         return gtx_required
 
 
-class ShipmentTxSerializer(serializers.ModelSerializer):
+class ShipmentTxSerializer(FieldPermissionSerializerMixin, serializers.ModelSerializer):
     async_job_id = serializers.CharField(max_length=36)
 
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
 
     state = UpperEnumField(TransitState, ints_as_names=True)
     exception = UpperEnumField(ExceptionType, ints_as_names=True)
-
-    # tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags')
     tags = PermissionResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags',
                                           permission_classes=(AccessRequest.related_field_permission(
                                               Endpoints.tags, PermissionLevel.READ_ONLY)(),))

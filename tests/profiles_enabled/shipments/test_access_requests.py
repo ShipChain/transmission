@@ -23,14 +23,18 @@ def access_request_rw_attributes():
         'tags_permission': PermissionLevel.READ_WRITE.name,
         'documents_permission': PermissionLevel.READ_WRITE.name,
         'notes_permission': PermissionLevel.READ_WRITE.name,
-        'tracking_permission': PermissionLevel.READ_WRITE.name,
-        'telemetry_permission': PermissionLevel.READ_WRITE.name,
+        'tracking_permission': PermissionLevel.READ_ONLY.name,
+        'telemetry_permission': PermissionLevel.READ_ONLY.name,
     }
 
 
 @fixture
 def new_access_request_bob(shipment_alice, user_bob, access_request_ro_attributes):
     return AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob.id, **access_request_ro_attributes)
+
+@fixture
+def new_rw_access_request_bob(shipment_alice, user_bob, access_request_rw_attributes):
+    return AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob.id, **access_request_rw_attributes)
 
 @fixture
 def approved_access_request_bob(new_access_request_bob):
@@ -84,7 +88,7 @@ class TestAccessRequestCreation:
     # Should not be able to create an access request for a shipment you own
     def test_cant_request_own(self, client_alice, access_request_ro_attributes):
         response = client_alice.post(self.list_url, access_request_ro_attributes)
-        AssertionHelper.HTTP_403(response)  # TODO assert error message
+        AssertionHelper.HTTP_403(response, 'You do not have permission to perform this action.')
 
     # approved/approved_at/approved_by,requester_id fields are read-only
     def test_ro_fields(self, client_bob, user_alice_id, user_bob_id, access_request_ro_attributes, current_datetime):
@@ -109,11 +113,29 @@ class TestAccessRequestCreation:
             attributes={**{'requester_id': user_bob_id}, **access_request_ro_attributes}
         ))
 
-    # TODO: Multiple shipment access request creation
+    #Multiple shipment access request creation
+    def test_create_multiple_access_requests(self, shipment_alice, client_bob, access_request_ro_attributes, access_request_rw_attributes, user_bob_id):
+        response = client_bob.post(self.list_url, access_request_ro_attributes)
+        AssertionHelper.HTTP_201(response, entity_refs=AssertionHelper.EntityRef(
+            resource='AccessRequest',
+            attributes={**{'requester_id': user_bob_id}, **access_request_ro_attributes}
+        ))
+
+        response = client_bob.post(self.list_url, access_request_rw_attributes)
+        AssertionHelper.HTTP_201(response, entity_refs=AssertionHelper.EntityRef(
+            resource='AccessRequest',
+            attributes={**{'requester_id': user_bob_id}, **access_request_rw_attributes}
+        ))
 
     # TODO: Shipment owner(s?) should be notified of access requests (email, ???)
 
-    # TODO: tracking and telemetry should only be able to be RO
+    # Tracking and telemetry endpoints should not be able to be requested as RW
+    def test_tracking_telemetry_ro(self, shipment_alice, client_bob, access_request_rw_attributes):
+        response = client_bob.post(self.list_url, {**access_request_rw_attributes, **{'tracking_permission': PermissionLevel.READ_WRITE.name}})
+        AssertionHelper.HTTP_400(response, 'Cannot request write access to this field')
+
+        response = client_bob.post(self.list_url, {**access_request_rw_attributes, **{'telemetry_permission': PermissionLevel.READ_WRITE.name}})
+        AssertionHelper.HTTP_400(response, 'Cannot request write access to this field')
 
 class TestAccessRequestUpdate:
     @fixture(autouse=True)
@@ -219,7 +241,13 @@ class TestAccessRequestUpdate:
         response = client_bob.delete(self.detail_url)
         AssertionHelper.HTTP_405(response)
 
-    # TODO: tracking and telemetry should only be able to be RO
+    # Tracking and telemetry endpoints should not be able to be updated as RW
+    def test_tracking_telemetry_ro(self, shipment_alice, client_bob, new_access_request_bob, access_request_rw_attributes):
+        response = client_bob.patch(self.detail_url, {'tracking_permission': PermissionLevel.READ_WRITE.name})
+        AssertionHelper.HTTP_400(response, 'Cannot request write access to this field')
+
+        response = client_bob.patch(self.detail_url, {'telemetry_permission': PermissionLevel.READ_WRITE.name})
+        AssertionHelper.HTTP_400(response, 'Cannot request write access to this field')
 
 
 class TestAccessRequestRetrieval:
@@ -376,6 +404,17 @@ class TestAccessRequestPermissions:
         self.assert_write_access(client_bob, True)
 
     # Test that an accessrequest with RW for Shipment but no access for Tags does not return Tags on Shipment update
+    def test_rw_shipment_no_tags_on_update(self, shipment_alice, client_bob, new_rw_access_request_bob, entity_ref_shipment_alice):
+        new_rw_access_request_bob.tags_permission = PermissionLevel.NONE
+        new_rw_access_request_bob.approved = True
+        new_rw_access_request_bob.save()
+
+        response = client_bob.patch(self.endpoint_urls['shipment'], {'carriers_scac': 'h4x3d'})
+        AssertionHelper.HTTP_202(response, entity_refs=entity_ref_shipment_alice)
+        response_json = response.json()
+        assert 'tags' not in response_json['data']['relationships']
+        for included in response_json['included']:
+            assert included['type'] != 'ShipmentTag'
 
     # A second, unapproved request should not grant Bob any more permissions to Alice's shipment
     def test_unapproved_request_doesnt_grant_additional_permissions(self, shipment_alice, client_bob, user_bob_id, approved_access_request_bob, access_request_rw_attributes):
@@ -413,6 +452,14 @@ class TestAccessRequestShipmentViews:
         self.shipment_overview = reverse('shipment-overview', kwargs={'version': 'v1'})
         self.shipment_detail = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_alice.id})
 
+    def setup_devices_and_tracking(self, shipment, device, tracking_data):
+        shipment.device = device
+        shipment.save()
+        for in_bbox_data in tracking_data:
+            in_bbox_data['device'] = device
+            in_bbox_data['shipment'] = shipment
+            TrackingData.objects.create(**in_bbox_data)
+
     # A shipment should include access info for the authenticated user in the 'meta' section of the JSON API response
     def test_meta_field_presence(self, shipment_alice, client_bob, approved_access_request_bob):
         response = client_bob.get(self.shipment_detail)
@@ -433,14 +480,8 @@ class TestAccessRequestShipmentViews:
         ])
 
         # Add devices and tracking to shipments so they show up in the overview
-        shipments = (shipment_alice, shipment_bob)
-        for i in range(len(shipments)):
-            shipments[i].device = devices[i]
-            shipments[i].save()
-            for in_bbox_data in overview_tracking_data[0]:
-                in_bbox_data['device'] = devices[i]
-                in_bbox_data['shipment'] = shipments[i]
-                TrackingData.objects.create(**in_bbox_data)
+        self.setup_devices_and_tracking(shipment_alice, devices[0], overview_tracking_data[0])
+        self.setup_devices_and_tracking(shipment_bob, devices[1], overview_tracking_data[0])
 
         response = client_bob.get(self.shipment_overview)
         AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[
@@ -465,3 +506,28 @@ class TestAccessRequestShipmentViews:
                 }]
             )
         ])
+
+    # Test that an accessrequest with RW for Shipment but no access for Tags does not return Tags on Shipment overview
+    def test_tags_hidden_from_overview(self, shipment_alice, client_bob, new_rw_access_request_bob, devices, overview_tracking_data):
+        new_rw_access_request_bob.tags_permission = PermissionLevel.NONE
+        new_rw_access_request_bob.approved = True
+        new_rw_access_request_bob.save()
+
+        self.setup_devices_and_tracking(shipment_alice, devices[0], overview_tracking_data[0])
+        response = client_bob.get(self.shipment_list)
+        AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[
+            AssertionHelper.EntityRef(
+                resource='TrackingData',
+                relationships=[{
+                    'shipment': AssertionHelper.EntityRef(
+                        resource='Shipment',
+                        pk=shipment_alice.id
+                    )
+                }]
+            ),
+        ])
+
+        response_json = response.json()
+        for included in response_json['included']:
+            assert included['type'] != 'ShipmentTag'
+

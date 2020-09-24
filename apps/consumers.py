@@ -60,7 +60,7 @@ class AppsConsumer(AsyncJsonAuthConsumer):
     def render_shipment_fields(self, shipment_id):
         shipment = Shipment.objects.get(id=shipment_id)
         async_jobs = shipment.asyncjob_set.filter(state__in=[JobState.PENDING, JobState.RUNNING])
-        response = ShipmentTxSerializer(shipment)
+        response = ShipmentTxSerializer(shipment, context={'request': self.scope['request']})
         response.instance.async_job_id = async_jobs.latest('created_at').id if async_jobs else None
 
         shipment_json = JSONAPIRenderer().render(response.data, renderer_context={'view': ShipmentViewSet()}).decode()

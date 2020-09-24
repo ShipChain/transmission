@@ -27,6 +27,11 @@ PERMISSION_FIELD_LIST = ('shipment_permission', 'tags_permission', 'documents_pe
                          'tracking_permission', 'telemetry_permission')
 
 
+def read_only_validator(value):
+    if value == PermissionLevel.READ_WRITE:
+        raise serializers.ValidationError('Cannot request write access to this field')
+
+
 class AccessRequestPermissionValidator:
     # requires_context = True  TODO: this can be used in DRF 3.12 to remove the set_context call
     def __init__(self):
@@ -57,17 +62,17 @@ class AccessRequestPermissionValidator:
 
 class AccessRequestSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
     shipment_permission = UpperEnumField(PermissionLevel, lenient=True, ints_as_names=True, required=False,
-                                         validators=[AccessRequestPermissionValidator()])
+                                         validators=(AccessRequestPermissionValidator(),))
     tags_permission = UpperEnumField(PermissionLevel, lenient=True, ints_as_names=True, required=False,
-                                     validators=[AccessRequestPermissionValidator()])
+                                     validators=(AccessRequestPermissionValidator(),))
     documents_permission = UpperEnumField(PermissionLevel, lenient=True, ints_as_names=True, required=False,
-                                          validators=[AccessRequestPermissionValidator()])
+                                          validators=(AccessRequestPermissionValidator(),))
     notes_permission = UpperEnumField(PermissionLevel, lenient=True, ints_as_names=True, required=False,
-                                      validators=[AccessRequestPermissionValidator()])
+                                      validators=(AccessRequestPermissionValidator(),))
     tracking_permission = UpperEnumField(PermissionLevel, lenient=True, ints_as_names=True, required=False,
-                                         validators=[AccessRequestPermissionValidator()])
+                                         validators=(AccessRequestPermissionValidator(), read_only_validator))
     telemetry_permission = UpperEnumField(PermissionLevel, lenient=True, ints_as_names=True, required=False,
-                                          validators=[AccessRequestPermissionValidator()])
+                                          validators=(AccessRequestPermissionValidator(), read_only_validator))
 
     class Meta:
         model = AccessRequest

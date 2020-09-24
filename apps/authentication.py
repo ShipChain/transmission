@@ -16,8 +16,10 @@ limitations under the License.
 from asgiref import sync
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.core.cache import cache
+from django.http import HttpRequest
 
 from rest_framework.exceptions import APIException
+from rest_framework.request import Request
 from rest_framework_simplejwt.tokens import TokenError
 from shipchain_common.authentication import InternalRequest, passive_credentials_auth, PermissionedTokenUser
 
@@ -68,6 +70,10 @@ class AsyncJsonAuthConsumer(AsyncJsonWebsocketConsumer):
                                       self.scope['url_route']['kwargs']['user_id'] != self.scope['user'].id):
             await self.close()
             return False
+
+        # Fake 'request' for use in serializers
+        self.scope["request"] = Request(HttpRequest())
+        self.scope["request"].user = self.scope['user']
         return True
 
     async def _get_jwt_from_subprotocols(self):
