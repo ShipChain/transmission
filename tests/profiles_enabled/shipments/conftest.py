@@ -23,7 +23,7 @@ from shipchain_common.test_utils import AssertionHelper
 from shipchain_common.utils import random_id
 
 from apps.routes.models import Route
-from apps.shipments.models import Shipment, Device
+from apps.shipments.models import Shipment, Device, PermissionLink
 
 NUM_DEVICES = 7
 BBOX = [-90.90, 30.90, -78.80, 36.80]
@@ -169,3 +169,8 @@ def mock_device_retrieval_fails(mock_successful_wallet_owner_calls, device, devi
 @pytest.fixture
 def route_with_device_alice(org_id_alice, device):
     return Route.objects.create(owner_id=org_id_alice, device=device)
+
+
+@pytest.fixture
+def permission_link_shipment_alice(shipment_alice):
+    return PermissionLink.objects.create(shipment=shipment_alice, name="Alice Permission Link")

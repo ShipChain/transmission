@@ -39,7 +39,7 @@ class TelemetryViewSet(mixins.ListModelMixin,
                        viewsets.GenericViewSet):
 
     permission_classes = (
-        (ShipmentExists, IsOwnerOrShared | AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_ONLY),
+        (ShipmentExists, IsOwnerOrShared | AccessRequest.permission(Endpoints.telemetry, PermissionLevel.READ_ONLY),
          ) if settings.PROFILES_ENABLED
         else (permissions.AllowAny, ShipmentExists, )
     )

@@ -23,11 +23,6 @@ from apps.shipments.models import PermissionLink
 
 
 @pytest.fixture
-def permission_link_shipment_alice(shipment_alice):
-    return PermissionLink.objects.create(shipment=shipment_alice, name="Alice Permission Link")
-
-
-@pytest.fixture
 def permission_link_expired(shipment_alice):
     return PermissionLink.objects.create(shipment=shipment_alice, name="Alice Permission Link",
                                          expiration_date=datetime.now(timezone.utc) - timedelta(days=1))

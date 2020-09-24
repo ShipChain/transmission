@@ -113,7 +113,7 @@ class TestAccessRequestCreation:
             attributes={**{'requester_id': user_bob_id}, **access_request_ro_attributes}
         ))
 
-    #Multiple shipment access request creation
+    # Multiple shipment access request creation
     def test_create_multiple_access_requests(self, shipment_alice, client_bob, access_request_ro_attributes, access_request_rw_attributes, user_bob_id):
         response = client_bob.post(self.list_url, access_request_ro_attributes)
         AssertionHelper.HTTP_201(response, entity_refs=AssertionHelper.EntityRef(
@@ -301,35 +301,62 @@ class TestAccessRequestPermissions:
 
         self.tag = shipment_alice.shipment_tags.create(owner_id=shipment_alice.owner_id, tag_type='tag_type', tag_value='tag_value')
 
-    def assert_read_access(self, client, assert_granted=True):
-        if assert_granted:
-            for endpoint in ('documents', 'notes', 'tracking', 'shipment'):
-                response = client.get(self.endpoint_urls[endpoint])
-                AssertionHelper.HTTP_200(response, is_list=endpoint not in ('shipment', 'tracking'))
+    def assert_read_access(self, client, shipment_access=None, tags_access=None, documents_access=None, notes_access=None, tracking_access=None, telemetry_access=None, all_access=None):
+        if all_access is not None:
+            shipment_access = all_access
+            tags_access = all_access
+            documents_access = all_access
+            notes_access = all_access
+            tracking_access = all_access
+            telemetry_access = all_access
 
+        if documents_access is not None:
+            response = client.get(self.endpoint_urls['documents'])
+            AssertionHelper.HTTP_200(response, is_list=True) if documents_access else AssertionHelper.HTTP_403(response)
+
+        if notes_access is not None:
+            response = client.get(self.endpoint_urls['notes'])
+            AssertionHelper.HTTP_200(response, is_list=True) if notes_access else AssertionHelper.HTTP_403(response)
+
+        if tracking_access is not None:
+            response = client.get(self.endpoint_urls['tracking'])
+            AssertionHelper.HTTP_200(response) if tracking_access else AssertionHelper.HTTP_403(response)
+
+        if shipment_access is not None:
+            response = client.get(self.endpoint_urls['shipment'])
+            AssertionHelper.HTTP_200(response) if shipment_access else AssertionHelper.HTTP_403(response)
+
+        if tags_access is not None:
             # Tags are a special case, do not have list/retrieve, only visible via shipment model
-            AssertionHelper.HTTP_200(response,
-                                     entity_refs=AssertionHelper.EntityRef(resource='Shipment', relationships={
-                                         'tags': AssertionHelper.EntityRef(resource='ShipmentTag',
-                                                                           pk=self.tag.id)}),
-                                     included=AssertionHelper.EntityRef(resource='ShipmentTag'), )
+            response = client.get(self.endpoint_urls['shipment'])
+            if tags_access:
+                AssertionHelper.HTTP_200(response,
+                                         entity_refs=AssertionHelper.EntityRef(resource='Shipment', relationships={
+                                             'tags': AssertionHelper.EntityRef(resource='ShipmentTag',
+                                                                               pk=self.tag.id)}),
+                                         included=AssertionHelper.EntityRef(resource='ShipmentTag'), )
+            elif response.status_code == 200:
+                # Can only see tags if the user also has shipment access
+                assert 'tags' not in response.json()['data']['relationships']
+                for included in response.json()['included']:
+                    assert included['type'] != 'ShipmentTag'
 
+        if telemetry_access is not None:
             # Telemetry endpoint is not JSON API format
             response = client.get(self.endpoint_urls['telemetry'])
-            assert response.status_code == 200
-            assert response.json() == []
-        else:
-            for endpoint in ('documents', 'notes', 'tracking', 'shipment'):
-                response = client.get(self.endpoint_urls[endpoint])
-                AssertionHelper.HTTP_403(response)
-            # Tags are a special case, do not have list/retrieve, only visible via shipment model.
-            # No way to view tags if shipment access is denied.
+            if telemetry_access:
+                assert response.status_code == 200
+                assert response.json() == []
+            else:
+                assert response.status_code == 403
 
-            # Telemetry endpoint is not JSON API format
-            response = client.get(self.endpoint_urls['telemetry'])
-            assert response.status_code == 403
+    def assert_write_access(self, client, shipment_access=None, tags_access=None, documents_access=None, notes_access=None, all_access=None):
+        if all_access is not None:
+            shipment_access = all_access
+            tags_access = all_access
+            documents_access = all_access
+            notes_access = all_access
 
-    def assert_write_access(self, client, assert_granted=True):
         shipment_data = {'carriers_scac': 'h4x3d'}
         tag_data = {
             'tag_type': 'foo',
@@ -343,65 +370,57 @@ class TestAccessRequestPermissions:
         }
         note_data = {'message': 'hello, world.'}
 
-        if assert_granted:
+        if shipment_access is not None:
             response = client.patch(self.endpoint_urls['shipment'], shipment_data)
-            AssertionHelper.HTTP_202(response)
+            AssertionHelper.HTTP_202(response) if shipment_access else AssertionHelper.HTTP_403(response)
 
+        if tags_access is not None:
             response = client.post(self.endpoint_urls['tags'], tag_data)
-            AssertionHelper.HTTP_201(response)
+            AssertionHelper.HTTP_201(response) if tags_access else AssertionHelper.HTTP_403(response)
 
+        if documents_access is not None:
             response = client.post(self.endpoint_urls['documents'], document_data)
-            AssertionHelper.HTTP_201(response)
+            AssertionHelper.HTTP_201(response) if documents_access else AssertionHelper.HTTP_403(response)
 
+        if notes_access is not None:
             response = client.post(self.endpoint_urls['notes'], note_data)
-            AssertionHelper.HTTP_201(response)
-        else:
-            response = client.patch(self.endpoint_urls['shipment'], shipment_data)
-            AssertionHelper.HTTP_403(response)
+            AssertionHelper.HTTP_201(response) if notes_access else AssertionHelper.HTTP_403(response)
 
-            response = client.post(self.endpoint_urls['tags'], tag_data)
-            AssertionHelper.HTTP_403(response)
-
-            response = client.post(self.endpoint_urls['documents'], document_data)
-            AssertionHelper.HTTP_403(response)
-
-            response = client.post(self.endpoint_urls['notes'], note_data)
-            AssertionHelper.HTTP_403(response)
 
     # Bob (org 2) should not have access to Alice's (org 1) shipment
     def test_no_shipment_access(self, shipment_alice, client_bob):
         # Test R
-        self.assert_read_access(client_bob, False)
+        self.assert_read_access(client_bob, all_access=False)
 
         # Test W
-        self.assert_write_access(client_bob, False)
+        self.assert_write_access(client_bob, all_access=False)
 
     # Bob's unapproved request should not grant him any permissions to Alice's shipment
     def test_no_unapproved_shipment_access(self, shipment_alice, client_bob, new_access_request_bob):
         # Test R
-        self.assert_read_access(client_bob, False)
+        self.assert_read_access(client_bob, all_access=False)
 
         # Test W
-        self.assert_write_access(client_bob, False)
+        self.assert_write_access(client_bob, all_access=False)
 
 
     # Bob's approved request should grant him all of the permissions (at the appropriate level) included in his request
     def test_approved_access(self, shipment_alice, client_bob, approved_access_request_bob, access_request_rw_attributes):
         # Test RO gives R
-        self.assert_read_access(client_bob, True)
+        self.assert_read_access(client_bob, all_access=True)
 
         # Test RO does not give W
-        self.assert_write_access(client_bob, False)
+        self.assert_write_access(client_bob, all_access=False)
 
         # Modify access request to RW
         AccessRequest.objects.filter(id=approved_access_request_bob.id).update(**access_request_rw_attributes)
         approved_access_request_bob.refresh_from_db()
 
         # Test RW gives R
-        self.assert_read_access(client_bob, True)
+        self.assert_read_access(client_bob, all_access=True)
 
         # Test RW gives W
-        self.assert_write_access(client_bob, True)
+        self.assert_write_access(client_bob, all_access=True)
 
     # Test that an accessrequest with RW for Shipment but no access for Tags does not return Tags on Shipment update
     def test_rw_shipment_no_tags_on_update(self, shipment_alice, client_bob, new_rw_access_request_bob, entity_ref_shipment_alice):
@@ -411,23 +430,28 @@ class TestAccessRequestPermissions:
 
         response = client_bob.patch(self.endpoint_urls['shipment'], {'carriers_scac': 'h4x3d'})
         AssertionHelper.HTTP_202(response, entity_refs=entity_ref_shipment_alice)
-        response_json = response.json()
-        assert 'tags' not in response_json['data']['relationships']
-        for included in response_json['included']:
+        assert 'tags' not in response.json()['data']['relationships']
+        for included in response.json()['included']:
             assert included['type'] != 'ShipmentTag'
 
     # A second, unapproved request should not grant Bob any more permissions to Alice's shipment
     def test_unapproved_request_doesnt_grant_additional_permissions(self, shipment_alice, client_bob, user_bob_id, approved_access_request_bob, access_request_rw_attributes):
         AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob_id, **access_request_rw_attributes)
-        self.assert_read_access(client_bob, True)
-        self.assert_write_access(client_bob, False)
+        self.assert_read_access(client_bob, all_access=True)
+        self.assert_write_access(client_bob, all_access=False)
 
     # If Bob has two+ approved requests, he should be granted permissions corresponding to the union of all approved permissions
     def test_two_approved_requests(self, shipment_alice, client_bob, user_bob_id, approved_access_request_bob, access_request_rw_attributes):
-        AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob_id, **access_request_rw_attributes, approved=True)
-        self.assert_read_access(client_bob, True)
-        self.assert_write_access(client_bob, True)
-        # TODO: add more complex permutations of different permissions
+        all_rw = AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob_id, **access_request_rw_attributes, approved=True)
+        self.assert_read_access(client_bob, all_access=True)
+        self.assert_write_access(client_bob, all_access=True)
+        all_rw.delete()
+
+        AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob_id, **{
+            'notes_permission': PermissionLevel.READ_WRITE.name,
+        }, approved=True)
+        self.assert_read_access(client_bob, all_access=True)
+        self.assert_write_access(client_bob, notes_access=True, shipment_access=False, tags_access=False, documents_access=False)
 
     # Requesters should no longer have access to shipment details after revocation
     def test_revocation(self, shipment_alice, client_bob, approved_access_request_bob):
@@ -437,13 +461,76 @@ class TestAccessRequestPermissions:
         self.assert_read_access(client_bob, False)
 
     # For each endpoint permission, test that the permission levels are respected (NONE/READ_ONLY,READ_WRITE)
+    def test_endpoint_permission_levels(self, shipment_alice, client_bob, user_bob_id):
+        for endpoint in Endpoints:
+            permissions = {
+                f'{endpoint.name}_permission': PermissionLevel.NONE.name,
+            }
+            if endpoint == Endpoints.tags:
+                # Can't read tags without Shipment access
+                permissions['shipment_permission'] = PermissionLevel.READ_ONLY.name
+
+            # NONE
+            request = AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob_id, **permissions, approved=True)
+            self.assert_read_access(client_bob, **{f'{endpoint.name}_access': False})
+            if endpoint not in (Endpoints.tracking, Endpoints.telemetry):
+                self.assert_write_access(client_bob, **{f'{endpoint.name}_access': False})
+            request.delete()
+
+            # READ_ONLY
+            permissions[f'{endpoint.name}_permission'] = PermissionLevel.READ_ONLY.name
+            request = AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob_id, **permissions, approved=True)
+            self.assert_read_access(client_bob, **{f'{endpoint.name}_access': True})
+            if endpoint not in (Endpoints.tracking, Endpoints.telemetry):
+                self.assert_write_access(client_bob, **{f'{endpoint.name}_access': False})
+            request.delete()
+
+            # READ_WRITE
+            if endpoint not in (Endpoints.tracking, Endpoints.telemetry):
+                permissions[f'{endpoint.name}_permission'] = PermissionLevel.READ_WRITE.name
+                request = AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob_id, **permissions, approved=True)
+                self.assert_read_access(client_bob, **{f'{endpoint.name}_access': True})
+                self.assert_write_access(client_bob, **{f'{endpoint.name}_access': True})
+                request.delete()
 
     # Permission links grant full RO permission, but should combine with AccessRequests for RW
+    def test_with_permission_links(self, shipment_alice, client_bob, new_rw_access_request_bob, permission_link_shipment_alice):
+        shipment_data = {'carriers_scac': 'h4x3d'}
+        tag_data = {
+            'tag_type': 'foo',
+            'tag_value': 'bar',
+            'owner_id': client_bob.handler._force_user.id,
+        }
+
+        # Documents/notes are not accessible via permission link, tracking/telemetry is RO
+        response = client_bob.get(f'{self.endpoint_urls["shipment"]}?permission_link={permission_link_shipment_alice.id}')
+        AssertionHelper.HTTP_200(response,
+                                 entity_refs=AssertionHelper.EntityRef(resource='Shipment', relationships={
+                                     'tags': AssertionHelper.EntityRef(resource='ShipmentTag',
+                                                                       pk=self.tag.id)}),
+                                 included=AssertionHelper.EntityRef(resource='ShipmentTag'), )
+
+
+        response = client_bob.patch(f'{self.endpoint_urls["shipment"]}?permission_link={permission_link_shipment_alice.id}', shipment_data)
+        AssertionHelper.HTTP_403(response)
+
+        response = client_bob.post(f'{self.endpoint_urls["tags"]}?permission_link={permission_link_shipment_alice.id}', tag_data)
+        AssertionHelper.HTTP_403(response)
+
+        new_rw_access_request_bob.approved = True
+        new_rw_access_request_bob.save()
+
+        response = client_bob.patch(f'{self.endpoint_urls["shipment"]}?permission_link={permission_link_shipment_alice.id}', shipment_data)
+        AssertionHelper.HTTP_202(response)
+
+        response = client_bob.post(f'{self.endpoint_urls["tags"]}?permission_link={permission_link_shipment_alice.id}', tag_data)
+        AssertionHelper.HTTP_201(response)
+
 
     # Test existence of other approved accessrequests for other users on the shipment should not grant access..
     def test_others_approved_access(self, shipment_alice, client_bob, approved_access_request_lionel):
-        self.assert_read_access(client_bob, False)
-        self.assert_write_access(client_bob, False)
+        self.assert_read_access(client_bob, all_access=False)
+        self.assert_write_access(client_bob, all_access=False)
 
 class TestAccessRequestShipmentViews:
     @fixture(autouse=True)
