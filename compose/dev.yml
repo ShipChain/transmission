@@ -10,7 +10,15 @@ services:
     volumes:
       - /data/shipchain/transmission/redis:/data
 
+  remove_psql_pid:
+    image: alpine
+    command: rm /var/lib/postgresql/10/main/postmaster.pid /var/lib/postgresql/10/main/postmaster.opts
+    volumes:
+      - /data/shipchain/transmission/postgresql:/var/lib/postgresql
+
   psql:
+    depends_on:
+      - remove_psql_pid
     volumes:
       - /data/shipchain/transmission/postgresql:/var/lib/postgresql
 
