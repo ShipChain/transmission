@@ -97,6 +97,9 @@ getResource:
         $ref: '#/attributes'
       relationships:
         $ref: '#/relationships'
+      meta:
+        allOf:
+        - $ref: '#/shipment/permissionDerivation'
 
 getResponse:
   allOf:

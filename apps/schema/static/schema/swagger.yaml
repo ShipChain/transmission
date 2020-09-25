@@ -38,6 +38,12 @@ paths:
   /api/v1/shipments/{shipment_id}:
     $ref: components/shipments/shipmentId.yaml
 
+  /api/v1/shipments/{shipment_id}/access_requests:
+    $ref: components/shipmentAccessRequests/accessRequests.yaml
+
+  /api/v1/shipments/{shipment_id}/access_requests/{access_request_id}:
+    $ref: components/shipmentAccessRequests/accessRequestId.yaml
+
   /api/v1/shipments/{shipment_id}/actions:
     $ref: components/shipments/actions.yaml
 
@@ -130,6 +136,7 @@ x-tagGroups:
   - name: Shipment Management
     tags:
       - Shipments
+      - Access Requests
       - Shipment Tags
       - Notes
       - Permission Links
@@ -171,6 +178,9 @@ tags:
 - name: Permission Links
   description: >
     Permission Links are entities that allow for retrieval of shipment data by unauthenticated or non-owner users
+- name: Access Requests
+  description: >
+    Shipment Access Requests allow a user to granularly request access to a shipment owned by another User or Organization.
 - name: Shipment Tags
   description: >
     Shipment Tags are a mechanism to allow for easier filtering of shipments

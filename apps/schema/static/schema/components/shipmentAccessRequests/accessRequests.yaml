@@ -1,0 +1,73 @@
+get:
+  summary: List access requests
+  description: >
+    Get all `AccessRequest`s associated with a `Shipment`.
+  operationId: listAccessRequests
+  parameters:
+    - $ref: '../core/parameters.yaml#/page'
+    - $ref: '../core/parameters.yaml#/page_size'
+    - $ref: './parameters.yaml#/ordering'
+    - $ref: './parameters.yaml#/requesterId'
+    - $ref: './parameters.yaml#/approved'
+    - $ref: './parameters.yaml#/approvedBy'
+    - $ref: '../shipments/parameters.yaml#/path'
+  tags:
+  - Access Requests
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/listResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+
+post:
+  summary: Create access request
+  description: |
+    Create a new `AccessRequest` originating from the current user.
+
+    At least _one_ of the requested `_permission` levels must be higher than `NONE`
+
+  operationId: createAccessRequest
+  parameters:
+    - $ref: '../shipments/parameters.yaml#/path'
+  tags:
+    - Access Requests
+  responses:
+    '201':
+      description: "Created"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/createResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+    '429':
+      description: "Too Many Requests"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/429'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: 'requestBody.yaml#/createRequest'
+      application/json:
+        schema:
+          allOf:
+            - $ref: 'requestBody.yaml#/createAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+            - $ref: 'requestBody.yaml#/createAttributes'

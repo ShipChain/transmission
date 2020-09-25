@@ -1,0 +1,53 @@
+createResource:
+  allOf:
+    - $ref: 'schema.yaml#/resource'
+    - properties:
+        attributes:
+          $ref: '#/createAttributes'
+
+patchResource:
+  allOf:
+    - $ref: 'schema.yaml#/resource'
+    - properties:
+        attributes:
+          $ref: '#/patchAttributes'
+
+
+createAttributes:
+  allOf:
+    - $ref: '#/accessRequest/shipmentPermission'
+    - $ref: '#/accessRequest/tagsPermission'
+    - $ref: '#/accessRequest/documentsPermission'
+    - $ref: '#/accessRequest/notesPermission'
+    - $ref: '#/accessRequest/trackingPermission'
+    - $ref: '#/accessRequest/telemetryPermission'
+
+patchAttributes:
+  allOf:
+    - $ref: '#/accessRequest/shipmentPermission'
+    - $ref: '#/accessRequest/tagsPermission'
+    - $ref: '#/accessRequest/documentsPermission'
+    - $ref: '#/accessRequest/notesPermission'
+    - $ref: '#/accessRequest/trackingPermission'
+    - $ref: '#/accessRequest/telemetryPermission'
+    - $ref: '#/accessRequest/approved'
+
+createRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/createResource'
+
+patchRequest:
+  allOf:
+    - $ref: '#/jsonApi/createData'
+    - properties:
+        data:
+          $ref: '#/patchResource'
+
+accessRequest:
+  $ref: dataTypes.yaml
+
+jsonApi:
+  $ref: ../jsonApi/requestBody.yaml

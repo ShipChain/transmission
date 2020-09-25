@@ -1,0 +1,87 @@
+uuid: &uuid
+  $ref: '../core/dataTypes.yaml#/uuid'
+
+requesterId:
+  properties:
+    requester_id:
+      <<: *uuid
+      title: requester_id
+      description: User UUID of the requester
+
+approvedBy:
+  properties:
+    approved_by:
+      <<: *uuid
+      title: approved_by
+      description: User UUID of the approver
+
+approved:
+  properties:
+    approved:
+      title: approved
+      description: Whether the access request is approved, denied, or pending (null)
+      type: boolean
+      example: true
+
+approvedAt:
+  properties:
+    approved_at:
+      title: approved_at
+      description: Date/time of request approval
+      type: string
+      format: date-time
+      example: '2018-06-18T14:54:56.652732Z'
+
+shipmentPermission:
+  properties:
+    shipment_permission:
+      title: shipment_permission
+      description: Permission level for shipment endpoint access
+      type: string
+      enum: [ NONE, READ_ONLY, READ_WRITE ]
+      example: READ_ONLY
+
+tagsPermission:
+  properties:
+    tags_permission:
+      title: tags_permission
+      description: Permission level for tags access within shipment endpoint
+      type: string
+      enum: [ NONE, READ_ONLY, READ_WRITE ]
+      example: READ_ONLY
+
+documentsPermission:
+  properties:
+    documents_permission:
+      title: documents_permission
+      description: Permission level for documents endpoint access
+      type: string
+      enum: [ NONE, READ_ONLY, READ_WRITE ]
+      example: READ_ONLY
+
+notesPermission:
+  properties:
+    notes_permission:
+      title: notes_permission
+      description: Permission level for notes endpoint access
+      type: string
+      enum: [ NONE, READ_ONLY, READ_WRITE ]
+      example: READ_ONLY
+
+trackingPermission:
+  properties:
+    tracking_permission:
+      title: tracking_permission
+      description: Permission level for tracking endpoint access
+      type: string
+      enum: [ NONE, READ_ONLY ]
+      example: READ_ONLY
+
+telemetryPermission:
+  properties:
+    telemetry_permission:
+      title: telemetry_permission
+      description: Permission level for telemetry endpoint access
+      type: string
+      enum: [ NONE, READ_ONLY ]
+      example: READ_ONLY
