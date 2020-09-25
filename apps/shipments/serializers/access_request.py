@@ -95,6 +95,11 @@ class AccessRequestSerializer(EnumSupportSerializerMixin, serializers.ModelSeria
                                for perm in PERMISSION_FIELD_LIST}
         updated_permissions = {**current_permissions,
                                **{field: attrs[field] for field in attrs if field.endswith('_permission')}}
+
+        if (updated_permissions['tags_permission'] > PermissionLevel.NONE and
+                updated_permissions['shipment_permission'] == PermissionLevel.NONE):
+            raise serializers.ValidationError('Cannot request to view tags without shipment read access')
+
         for field in updated_permissions:
             if updated_permissions[field] != PermissionLevel.NONE:
                 return attrs

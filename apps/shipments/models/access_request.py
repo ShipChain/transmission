@@ -34,6 +34,11 @@ class PermissionLevel(Enum):
         READ_ONLY = 'READ_ONLY'
         READ_WRITE = 'READ_WRITE'
 
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
+
 
 class Endpoints(PyEnum):
     shipment = auto()

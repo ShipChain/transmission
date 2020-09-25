@@ -137,6 +137,16 @@ class TestAccessRequestCreation:
         response = client_bob.post(self.list_url, {**access_request_rw_attributes, **{'telemetry_permission': PermissionLevel.READ_WRITE.name}})
         AssertionHelper.HTTP_400(response, 'Cannot request write access to this field')
 
+    # No shipment details should be included in the access request creation response
+    def test_shipment_not_included(self, shipment_alice, client_bob, access_request_ro_attributes):
+        response = client_bob.post(self.list_url, {**access_request_ro_attributes})
+        AssertionHelper.HTTP_201(response)
+        assert 'included' not in response.json()
+
+    def test_tags_without_shipment(self, shipment_alice, client_bob):
+        response = client_bob.post(self.list_url, {'tags_permission': PermissionLevel.READ_ONLY.name})
+        AssertionHelper.HTTP_400(response, 'Cannot request to view tags without shipment read access')
+
 class TestAccessRequestUpdate:
     @fixture(autouse=True)
     def setup_urls(self, shipment_alice, new_access_request_bob):
@@ -248,6 +258,13 @@ class TestAccessRequestUpdate:
 
         response = client_bob.patch(self.detail_url, {'telemetry_permission': PermissionLevel.READ_WRITE.name})
         AssertionHelper.HTTP_400(response, 'Cannot request write access to this field')
+
+    def test_tags_without_shipment(self, shipment_alice, client_bob):
+        response = client_bob.patch(self.detail_url, {
+            'shipment_permission': PermissionLevel.NONE.name,
+            'tags_permission': PermissionLevel.READ_WRITE.name
+        })
+        AssertionHelper.HTTP_400(response, 'Cannot request to view tags without shipment read access')
 
 
 class TestAccessRequestRetrieval:
