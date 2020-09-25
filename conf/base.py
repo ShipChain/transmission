@@ -141,7 +141,7 @@ INSTALLED_APPS = [
     'simple_history',
     'rangefilter',
 ]
-if DEBUG:
+if DEBUG and ENV in ('LOCAL', 'TEST',) and not MANAGE_PY_COMMAND:
     INSTALLED_APPS += ['django_pycharm_breakpoint']
 
 REST_FRAMEWORK = {
