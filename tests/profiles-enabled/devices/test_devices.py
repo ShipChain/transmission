@@ -75,7 +75,7 @@ class TestSensorsWithShipmentList:
         AssertionHelper.HTTP_200(response, is_list=True)
         mocked_sensors_success.assert_calls([{
                 'path': f'/api/v1/device/{self.device.id}/sensor',
-                'body': None,
+                'body': '',
                 'host': settings.PROFILES_URL.replace('http://', ''),
             }])
 
@@ -85,7 +85,7 @@ class TestSensorsWithShipmentList:
         AssertionHelper.HTTP_200(response, is_list=True)
         successful_wallet_owner_calls_assertions.append({
                 'path': f'/api/v1/device/{self.device.id}/sensor',
-                'body': None,
+                'body': '',
                 'host': settings.PROFILES_URL.replace('http://', ''),
             })
         mocked_sensors_success.assert_calls(successful_wallet_owner_calls_assertions)
@@ -105,7 +105,7 @@ class TestSensorsWithShipmentList:
         AssertionHelper.HTTP_200(response, is_list=True)
         mocked_sensors_success.assert_calls([{
                 'path': f'/api/v1/device/{self.device.id}/sensor',
-                'body': None,
+                'body': '',
                 'host': settings.PROFILES_URL.replace('http://', ''),
             }])
 
@@ -114,7 +114,7 @@ class TestSensorsWithShipmentList:
         AssertionHelper.HTTP_404(response, error='404 error')
         mocked_sensors_fail.assert_calls([{
                 'path': f'/api/v1/device/{self.device.id}/sensor',
-                'body': None,
+                'body': '',
                 'host': settings.PROFILES_URL.replace('http://', ''),
             }])
 
@@ -123,7 +123,7 @@ class TestSensorsWithShipmentList:
         AssertionHelper.HTTP_200(response, is_list=True)
         mocked_sensors_success.assert_calls([{
                 'path': f'/api/v1/device/{self.device.id}/sensor',
-                'body': None,
+                'body': '',
                 'host': settings.PROFILES_URL.replace('http://', ''),
                 'query': {'search': 'field'}
             }])
@@ -135,7 +135,7 @@ class TestSensorsWithShipmentList:
         assert response.json()['detail'] == 'Invalid response returned from profiles.'
         mocked_sensors_non_json.assert_calls([{
                 'path': f'/api/v1/device/{self.device.id}/sensor',
-                'body': None,
+                'body': '',
                 'host': settings.PROFILES_URL.replace('http://', ''),
             }])
 

@@ -16,7 +16,6 @@ limitations under the License.
 import logging
 from json.decoder import JSONDecodeError
 
-import requests
 from django.conf import settings
 from influxdb_metrics.loader import log_metric
 from rest_framework import viewsets, permissions, status
@@ -157,7 +156,7 @@ class SensorViewset(APIView):
             raise MethodNotAllowed('sensors', detail='Unable to list sensors when not profiles is not enabled.')
 
         try:
-            response = requests.get(
+            response = settings.REQUESTS_SESSION.get(
                 f'{settings.PROFILES_URL}/api/v1/device/{pk}/sensor',
                 params=request.query_params.dict()
             )
