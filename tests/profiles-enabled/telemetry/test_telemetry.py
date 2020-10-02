@@ -131,9 +131,8 @@ class TestRetrieveTelemetryData:
                                     self.shipment_alice_with_device)
         response = client_alice.get(f'{self.telemetry_url}?hardware_id={self.unsigned_telemetry["hardware_id"]}')
         self.unsigned_telemetry.pop('version')
-        AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry)
+        AssertionHelper.HTTP_200(response, is_list=True, vnd=False, attributes=self.unsigned_telemetry, count=1)
         assert self.unsigned_telemetry['hardware_id'] != unsigned_telemetry_different_hardware['hardware_id']
-        assert len(response.json()) == 1
 
     def test_timestamp(self, client_alice, unsigned_telemetry_different_hardware, current_datetime):
         telemetry_copy = deepcopy(self.unsigned_telemetry)

@@ -14,6 +14,7 @@
 
 import datetime
 import json
+from copy import deepcopy
 
 import pytest
 import random
@@ -128,9 +129,22 @@ def shipment_tracking_data(shipments_with_device, tracking_data):
     return shipments_with_tracking
 
 
+@pytest.fixture
+def profiles_and_mapbox_calls(profiles_wallet_list_assertions):
+    copied_list = deepcopy(profiles_wallet_list_assertions)
+    copied_list.insert(
+        0,
+        {
+            'path': '/geocoding/v5/mapbox.places/,%20Greenville.json',
+            'query': {'access_token': 'MAPBOX_ACCESS_TOKEN'},
+            'host': 'api.mapbox.com'}
+    )
+    return copied_list
+
+
 @pytest.mark.django_db
 def test_owner_shipment_device_location(client_alice, api_client, shipment_tracking_data, mocked_profiles_wallet_list,
-                                        profiles_wallet_list_assertions):
+                                        profiles_and_mapbox_calls):
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
 
     # An unauthenticated request should with 403 status code
@@ -143,12 +157,12 @@ def test_owner_shipment_device_location(client_alice, api_client, shipment_track
     response_data = response.json()
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=len(shipment_tracking_data) - 1)
     assert len(response_data['included']) == NUM_DEVICES - 2
-    mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
+    mocked_profiles_wallet_list.assert_calls(profiles_and_mapbox_calls)
 
 
 @pytest.mark.django_db
 def test_wallet_owner_retrieval(client_bob, api_client, shipment_tracking_data, modified_http_pretty, profiles_ids,
-                                profiles_wallet_list_assertions):
+                                profiles_and_mapbox_calls, profiles_wallet_list_assertions):
     modified_http_pretty.register_uri(modified_http_pretty.GET,
                                       f"{settings.PROFILES_URL}/api/v1/wallet",
                                       body=json.dumps({'data': []}), status=status.HTTP_200_OK)
@@ -156,7 +170,7 @@ def test_wallet_owner_retrieval(client_bob, api_client, shipment_tracking_data, 
 
     response = client_bob.get(url)
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True, count=1)
-    modified_http_pretty.assert_calls(profiles_wallet_list_assertions)
+    modified_http_pretty.assert_calls(profiles_and_mapbox_calls)
 
     modified_http_pretty.register_uri(modified_http_pretty.GET,
                                       f"{settings.PROFILES_URL}/api/v1/wallet",
@@ -172,7 +186,7 @@ def test_wallet_owner_retrieval(client_bob, api_client, shipment_tracking_data, 
 
 
 def test_ordering(client_alice, api_client, shipment_tracking_data, mocked_profiles_wallet_list,
-                  profiles_wallet_list_assertions):
+                  profiles_and_mapbox_calls, profiles_wallet_list_assertions):
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
 
     response = client_alice.get(f'{url}?ordering=-created_at')
@@ -218,7 +232,7 @@ def test_ordering(client_alice, api_client, shipment_tracking_data, mocked_profi
                                      )
                                  }]
                              )])
-    mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
+    mocked_profiles_wallet_list.assert_calls(profiles_and_mapbox_calls)
 
     response = client_alice.get(f'{url}?ordering=created_at')
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True, check_ordering=True,
@@ -267,7 +281,7 @@ def test_ordering(client_alice, api_client, shipment_tracking_data, mocked_profi
 
 
 def test_search_custom_fields(client_alice, shipment_tracking_data, mocked_profiles_wallet_list,
-                              profiles_wallet_list_assertions):
+                              profiles_wallet_list_assertions, profiles_and_mapbox_calls):
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
     customer_fields = {
         'number': 8675309,
@@ -290,11 +304,14 @@ def test_search_custom_fields(client_alice, shipment_tracking_data, mocked_profi
                                          )
                                      }]
                                  )])
-        mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
+        if value == customer_fields['number']:
+            mocked_profiles_wallet_list.assert_calls(profiles_and_mapbox_calls)
+        else:
+            mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
 
 
 def test_filter_custom_fields(client_alice, shipment_tracking_data, mocked_profiles_wallet_list,
-                              profiles_wallet_list_assertions):
+                              profiles_wallet_list_assertions, profiles_and_mapbox_calls):
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
     customer_fields = {
         'number': 8675309,
@@ -317,12 +334,16 @@ def test_filter_custom_fields(client_alice, shipment_tracking_data, mocked_profi
                                          )
                                      }]
                                  )])
-        mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
+
+        if value == customer_fields['number']:
+            mocked_profiles_wallet_list.assert_calls(profiles_and_mapbox_calls)
+        else:
+            mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
 
 
 @pytest.mark.django_db
 def test_filter_shipment_device_location(client_alice, shipment_tracking_data, mocked_profiles_wallet_list,
-                                         profiles_wallet_list_assertions):
+                                         profiles_and_mapbox_calls, profiles_wallet_list_assertions):
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
 
     shipment_action_url = reverse('shipment-actions',
@@ -356,7 +377,7 @@ def test_filter_shipment_device_location(client_alice, shipment_tracking_data, m
     response_data = response.json()
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True)
     assert response_data['meta']['pagination']['count'] == NUM_DEVICES - 3
-    mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
+    mocked_profiles_wallet_list.assert_calls(profiles_and_mapbox_calls)
 
     in_transit_url = f'{url}?state={TransitState.IN_TRANSIT.name.lower()}'
 
@@ -414,7 +435,7 @@ def test_filter_shipment_device_location(client_alice, shipment_tracking_data, m
 
 
 @pytest.mark.django_db
-def test_bbox_param(client_alice, shipment_tracking_data, mocked_profiles_wallet_list, profiles_wallet_list_assertions):
+def test_bbox_param(client_alice, shipment_tracking_data, mocked_profiles_wallet_list, profiles_and_mapbox_calls):
     url = reverse('shipment-overview', kwargs={'version': 'v1'})
 
     bbox_reversed = BBOX.copy()
@@ -433,12 +454,12 @@ def test_bbox_param(client_alice, shipment_tracking_data, mocked_profiles_wallet
 
     response = client_alice.get(good_in_bbox_url)
     AssertionHelper.HTTP_200(response, vnd=True, is_list=True)
-    mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
+    mocked_profiles_wallet_list.assert_calls(profiles_and_mapbox_calls)
 
 
 @pytest.mark.django_db
 def test_latest_tracking(client_alice, tracking_data, shipment_tracking_data, mocked_profiles_wallet_list,
-                         profiles_wallet_list_assertions):
+                         profiles_and_mapbox_calls):
     shipment = shipment_tracking_data[0]
     data_point = TrackingData(**tracking_data[0][0])
     data_point.shipment = shipment
@@ -466,4 +487,4 @@ def test_latest_tracking(client_alice, tracking_data, shipment_tracking_data, mo
                                     }
                                  }}
                              ))
-    mocked_profiles_wallet_list.assert_calls(profiles_wallet_list_assertions)
+    mocked_profiles_wallet_list.assert_calls(profiles_and_mapbox_calls)
