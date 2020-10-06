@@ -31,7 +31,7 @@ patch:
 
     The `approved` property for a request can only be modified by a Shipment owner.
 
-  operationId: createAccessRequest
+  operationId: updateAccessRequest
   parameters:
     - $ref: 'parameters.yaml#/path'
     - $ref: '../shipments/parameters.yaml#/path'
