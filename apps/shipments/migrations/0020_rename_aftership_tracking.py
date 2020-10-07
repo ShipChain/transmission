@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.RenameField(
             model_name='historicalshipment',
             old_name='aftership_tracking',
-            new_name='afts_tracking',
+            new_name='quickadd_tracking',
         ),
         migrations.RenameField(
             model_name='shipment',
             old_name='aftership_tracking',
-            new_name='afts_tracking',
+            new_name='quickadd_tracking',
         ),
     ]

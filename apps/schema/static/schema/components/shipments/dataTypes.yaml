@@ -586,10 +586,10 @@ exception:
       enum: [NONE, CUSTOMS_HOLD, DOCUMENTATION_ERROR]
       example: NONE
 
-aftsTracking:
+quickaddTracking:
   properties:
-    afts_tracking:
-      title: afts_tracking
+    quickadd_tracking:
+      title: quickadd_tracking
       description: Tracking number for shipments added and tracked via quickadd
       type: string
       example: '906587618687'

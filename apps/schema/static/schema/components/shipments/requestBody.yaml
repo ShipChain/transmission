@@ -83,7 +83,7 @@ createAttributes:
   - $ref: '#/shipment/assetCustodianId'
   - $ref: '#/shipment/geofences'
   - $ref: '#/shipment/tags'
-  - $ref: '#/shipment/aftsTracking'
+  - $ref: '#/shipment/quickaddTracking'
 
 patchAttributes:
   allOf:

@@ -50,7 +50,7 @@ class TestShipmentAftershipQuickadd:
             'storage_credentials_id': profiles_ids['storage_credentials_id'],
             'shipper_wallet_id': profiles_ids['shipper_wallet_id'],
             'carrier_wallet_id': profiles_ids['carrier_wallet_id'],
-            'afts_tracking': 'afts_tracking'
+            'quickadd_tracking': 'quickadd_tracking'
         }
 
     @pytest.fixture
@@ -96,7 +96,7 @@ class TestShipmentAftershipQuickadd:
         successful_shipment_create_profiles_assertions.append({
                 'host': settings.AFTERSHIP_URL.replace('/v4/', ''),
                 'path': '/v4/couriers/detect',
-                'body': {'tracking': {'tracking_number': self.base_create_attributes['afts_tracking']}}
+                'body': {'tracking': {'tracking_number': self.base_create_attributes['quickadd_tracking']}}
             })
         return successful_shipment_create_profiles_assertions
 
@@ -105,14 +105,14 @@ class TestShipmentAftershipQuickadd:
         assertions_aftership_validation.append({
                 'host': settings.AFTERSHIP_URL.replace('/v4/', ''),
                 'path': '/v4/trackings',
-                'body': {'tracking': {'tracking_number': self.base_create_attributes['afts_tracking']}}
+                'body': {'tracking': {'tracking_number': self.base_create_attributes['quickadd_tracking']}}
             })
         return assertions_aftership_validation
 
     def test_successful_quickadd(self, client_alice, mock_aftership_create_success, assertions_create_tracking):
         response = client_alice.post(self.create_url, self.base_create_attributes)
         self.base_create_attributes['carrier_abbv'] = 'aftership-slug'
-        self.base_create_attributes['shippers_reference'] = 'Quickadd Shipment: afts_tracking'
+        self.base_create_attributes['shippers_reference'] = 'Quickadd Shipment: quickadd_tracking'
         AssertionHelper.HTTP_202(response,
                                  entity_refs=AssertionHelper.EntityRef(
                                      resource='Shipment',
@@ -128,7 +128,7 @@ class TestShipmentAftershipQuickadd:
     def test_quickadd_validation_fail(self, client_alice, mock_aftership_validation_failure,
                                       assertions_aftership_validation):
         response = client_alice.post(self.create_url, self.base_create_attributes)
-        AssertionHelper.HTTP_400(response, error='Invalid afts_tracking value')
+        AssertionHelper.HTTP_400(response, error='Invalid quickadd_tracking value')
         mock_aftership_validation_failure.assert_calls(assertions_aftership_validation)
 
 

@@ -230,7 +230,7 @@ class Shipment(AnonymousHistoricalMixin, models.Model):
 
     customer_fields = JSONField(blank=True, null=True)
 
-    afts_tracking = models.CharField(null=True, max_length=100)
+    quickadd_tracking = models.CharField(null=True, max_length=100)
     carrier_abbv = models.CharField(null=True, max_length=100)
 
     # Model's history tracking definition

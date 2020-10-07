@@ -31,8 +31,8 @@ get:
   - $ref: 'parameters.yaml#/asset_custodian_id'
   - $ref: 'parameters.yaml#/assignee_id'
   - $ref: 'parameters.yaml#/gtxValidation'
-  - $ref: 'parameters.yaml#/aftsTracking'
-  - $ref: 'parameters.yaml#/hasAftsTracking'
+  - $ref: 'parameters.yaml#/quickaddTracking'
+  - $ref: 'parameters.yaml#/hasQuickaddTracking'
   - $ref: 'parameters.yaml#/customer_fields__has_key'
   - $ref: 'parameters.yaml#/customer_fields__{key}'
   tags:
