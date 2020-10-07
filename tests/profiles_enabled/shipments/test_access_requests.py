@@ -641,7 +641,7 @@ class TestAccessRequestShipmentViews:
         new_rw_access_request_bob.save()
 
         self.setup_devices_and_tracking(shipment_alice, devices[0], overview_tracking_data[0])
-        response = client_bob.get(self.shipment_list)
+        response = client_bob.get(self.shipment_overview)
         AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[
             AssertionHelper.EntityRef(
                 resource='TrackingData',
@@ -658,3 +658,21 @@ class TestAccessRequestShipmentViews:
         for included in response_json['included']:
             assert included['type'] != 'ShipmentTag'
 
+    # Test that the deletion of an accessrequest properly clears any relevant caches
+    def test_accessrequest_deletion_cache_invalidation(self, shipment_alice, client_bob, approved_access_request_bob, devices, overview_tracking_data):
+        self.setup_devices_and_tracking(shipment_alice, devices[0], overview_tracking_data[0])
+        tracking_url = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': shipment_alice.id})
+
+        response = client_bob.get(self.shipment_overview)
+        AssertionHelper.HTTP_200(response, is_list=True, count=1)
+        response = client_bob.get(self.shipment_list)
+        AssertionHelper.HTTP_200(response, is_list=True, count=1)
+        response = client_bob.get(tracking_url)
+        AssertionHelper.HTTP_200(response)
+        approved_access_request_bob.delete()
+        response = client_bob.get(self.shipment_overview)
+        AssertionHelper.HTTP_200(response, is_list=True, count=0)
+        response = client_bob.get(self.shipment_list)
+        AssertionHelper.HTTP_200(response, is_list=True, count=0)
+        response = client_bob.get(tracking_url)
+        AssertionHelper.HTTP_403(response)

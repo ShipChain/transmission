@@ -6,7 +6,7 @@ from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from fancy_cache.memory import find_urls
 from fieldsignals import post_save_changed
@@ -125,6 +125,7 @@ def location_pre_save(sender, **kwargs):
 
 
 @receiver(post_save, sender=AccessRequest, dispatch_uid='accessrequest_post_save')
+@receiver(post_delete, sender=AccessRequest, dispatch_uid='accessrequest_post_delete')
 def accessrequest_post_save(sender, **kwargs):
     instance = kwargs["instance"]
     # Clear cached accessrequests for user
