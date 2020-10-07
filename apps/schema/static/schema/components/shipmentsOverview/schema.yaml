@@ -47,6 +47,9 @@ getIncludedResource:
     - properties:
         attributes:
           $ref: '#/includedAttributes'
+        meta:
+          allOf:
+            - $ref: '#/shipment/permissionDerivation'
 
 includedResource:
   title: Shipment

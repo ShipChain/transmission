@@ -51,4 +51,4 @@ class ShipmentActionsView(APIView):
         method.value(shipment, **serializer.validated_data)
         shipment.save()
 
-        return Response(ShipmentSerializer(shipment).data)
+        return Response(ShipmentSerializer(shipment, context={'request': request}).data)

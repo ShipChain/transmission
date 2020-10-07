@@ -633,9 +633,9 @@ class TestRouteAddLeg:
 class TestRouteRemoveLeg:
 
     @fixture(autouse=True)
-    def setup_url(self, new_route, new_route_with_device, new_route_bob, shipment, org2_shipment):
+    def setup_url(self, new_route, new_route_with_device, new_route_bob, shipment, shipment_bob):
         leg = new_route.routeleg_set.create(shipment=shipment)
-        leg_bob = new_route_bob.routeleg_set.create(shipment=org2_shipment)
+        leg_bob = new_route_bob.routeleg_set.create(shipment=shipment_bob)
         self.url_random_route = reverse('route-legs-detail',
                                         kwargs={'version': 'v1', 'route_pk': random_id(), 'pk': leg.pk})
         self.url_route = reverse('route-legs-detail', kwargs={'version': 'v1', 'route_pk': new_route.id, 'pk': leg.pk})

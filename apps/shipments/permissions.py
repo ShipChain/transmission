@@ -133,6 +133,24 @@ class IsListenerOwner(IsOwnerOrShared):
         return self.is_shipment_owner(request, shipment) or self.has_valid_permission_link(request, shipment)
 
 
+class IsNotShipmentOwner(IsShipmentOwnerMixin, permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        # If nested route, we need to call has_object_permission on the Shipment
+        shipment = Shipment.objects.get(id=view.kwargs.get('shipment_pk'))
+        return super().has_permission(request, view) and not self.is_shipment_owner(request, shipment)
+
+
+class IsShipmentOwner(IsShipmentOwnerMixin, permissions.IsAuthenticated):
+    def has_permission(self, request, view):
+        shipment = Shipment.objects.get(id=view.kwargs.get('shipment_pk'))
+        return super().has_permission(request, view) and self.is_shipment_owner(request, shipment)
+
+
+class IsRequester(permissions.IsAuthenticated):
+    def has_object_permission(self, request, view, obj):
+        return obj.requester_id == request.user.id
+
+
 def shipment_list_wallets_filter(request, nested=False):
     wallet_ids = retrieve_profiles_wallet_ids(request)
     queries = Q()

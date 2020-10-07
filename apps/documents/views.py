@@ -30,6 +30,7 @@ from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericVi
 from apps.authentication import DocsLambdaRequest
 from apps.jobs.models import AsyncActionType
 from apps.permissions import get_owner_id, ShipmentExists, IsNestedOwnerShipperCarrierModerator
+from apps.shipments.models import AccessRequest, Endpoints, PermissionLevel
 from apps.utils import UploadStatus
 from .filters import DocumentFilterSet
 from .models import Document
@@ -37,6 +38,22 @@ from .rpc import DocumentRPCClient
 from .serializers import DocumentSerializer, DocumentCreateSerializer
 
 LOG = logging.getLogger('transmission')
+
+WRITE_PERMISSIONS = (
+    (permissions.IsAuthenticated,
+     ShipmentExists,
+     HasViewSetActionPermissions,
+     IsNestedOwnerShipperCarrierModerator | AccessRequest.permission(Endpoints.documents, PermissionLevel.READ_WRITE),
+     ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
+)
+
+READ_PERMISSIONS = (
+    (permissions.IsAuthenticated,
+     ShipmentExists,
+     HasViewSetActionPermissions,
+     IsNestedOwnerShipperCarrierModerator | AccessRequest.permission(Endpoints.documents, PermissionLevel.READ_ONLY),
+     ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
+)
 
 
 class DocumentViewSet(mixins.ConfigurableCreateModelMixin,
@@ -49,13 +66,7 @@ class DocumentViewSet(mixins.ConfigurableCreateModelMixin,
 
     serializer_class = DocumentSerializer
 
-    permission_classes = (
-        (permissions.IsAuthenticated,
-         ShipmentExists,
-         HasViewSetActionPermissions,
-         IsNestedOwnerShipperCarrierModerator, ) if settings.PROFILES_ENABLED
-        else (permissions.AllowAny, ShipmentExists, )
-    )
+    permission_classes = READ_PERMISSIONS
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
     filter_class = DocumentFilterSet
@@ -67,7 +78,11 @@ class DocumentViewSet(mixins.ConfigurableCreateModelMixin,
     configuration = {
         'create': ActionConfiguration(
             request_serializer=DocumentCreateSerializer,
-            response_serializer=DocumentSerializer
+            response_serializer=DocumentSerializer,
+            permission_classes=WRITE_PERMISSIONS
+        ),
+        'update': ActionConfiguration(
+            permission_classes=WRITE_PERMISSIONS
         ),
     }
 

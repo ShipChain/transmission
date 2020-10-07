@@ -27,7 +27,7 @@ from rest_framework.response import Response
 from shipchain_common.exceptions import Custom500Error
 
 from apps.routes.serializers import RouteTrackingDataToDbSerializer, RouteTelemetryDataToDbSerializer
-from apps.shipments.models import Device
+from apps.shipments.models import Device, AccessRequest, PermissionLevel, Endpoints
 from apps.shipments.permissions import IsOwnerOrShared
 from apps.shipments.serializers import SignedDevicePayloadSerializer, UnvalidatedDevicePayloadSerializer, \
     PermissionLinkSerializer, TelemetryDataToDbSerializer, TrackingDataToDbSerializer
@@ -140,7 +140,8 @@ class DeviceViewSet(viewsets.ViewSet):
 
 
 class SensorViewset(APIView):
-    permission_classes = ((IsOwnerOrShared, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
+    permission_classes = ((IsOwnerOrShared | AccessRequest.permission(Endpoints.telemetry, PermissionLevel.READ_ONLY), )
+                          if settings.PROFILES_ENABLED else (permissions.AllowAny, ))
 
     renderer_classes = (JSONRenderer,)
 

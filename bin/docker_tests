@@ -30,6 +30,6 @@ bin/readme_spellcheck
 
 bin/dc exec -T runserver bandit -r apps
 
-bin/dc exec -T runserver pytest -p no:cacheprovider --cov=apps --cov-config=.coveragerc --ds=conf.test_settings --cov-report= tests/profiles-enabled
+bin/dc exec -T runserver pytest -p no:cacheprovider --cov=apps --cov-config=.coveragerc --ds=conf.test_settings --cov-report= tests/profiles_enabled
 
-bin/dc exec -T runserver pytest -p no:cacheprovider --cov=apps --cov-config=.coveragerc --cov-append --ds=conf.test_settings_profiles_disabled tests/profiles-disabled
+bin/dc exec -T runserver pytest -p no:cacheprovider --cov=apps --cov-config=.coveragerc --cov-append --ds=conf.test_settings_profiles_disabled tests/profiles_disabled

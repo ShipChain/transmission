@@ -642,6 +642,14 @@ assetCustodianId:
       title: asset_custodian_id
       description: The User ID of the current asset custodian
 
+permissionDerivation:
+  properties:
+    permission_derivation:
+      title: permission_derivation
+      description: The nature of the user's access to view a shipment
+      type: string
+      enum: [OwnerOrPartyOrPermissionLink, AccessRequest]
+
 tags:
   properties:
     tags:

@@ -27,11 +27,13 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
+from rest_framework_serializer_field_permissions.serializers import FieldPermissionSerializerMixin
 from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
+from apps.utils import PermissionResourceRelatedField
 from ..models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
-    ExceptionType, TransitState, GTXValidation, ShipmentTag
+    ExceptionType, TransitState, GTXValidation, ShipmentTag, AccessRequest, Endpoints, PermissionLevel
 from .tags import ShipmentTagSerializer
 
 
@@ -117,7 +119,7 @@ class FKShipmentSerializer(serializers.ModelSerializer):
         fields = ('id',)
 
 
-class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
+class ShipmentSerializer(FieldPermissionSerializerMixin, EnumSupportSerializerMixin, serializers.ModelSerializer):
     """
     Serializer for a shipment object
     """
@@ -128,7 +130,11 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
     state = UpperEnumField(TransitState, lenient=True, ints_as_names=True, required=False, read_only=True)
     exception = UpperEnumField(ExceptionType, lenient=True, ints_as_names=True, required=False)
     gtx_validation = UpperEnumField(GTXValidation, lenient=True, ints_as_names=True, required=False)
-    tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags')
+    tags = PermissionResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags',
+                                          permission_classes=(AccessRequest.related_field_permission(
+                                              Endpoints.tags, PermissionLevel.READ_ONLY)(),))
+
+    permission_derivation = serializers.SerializerMethodField()
 
     included_serializers = {
         'ship_from_location': LocationSerializer,
@@ -145,6 +151,7 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
         exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
         read_only_fields = ('owner_id', 'contract_version', 'arrival_est', 'carrier_abbv') \
             if settings.PROFILES_ENABLED else ('contract_version', 'arrival_est', 'carrier_abbv')
+        meta_fields = ('permission_derivation',)
 
     class JSONAPIMeta:
         included_resources = ['ship_from_location', 'ship_to_location', 'bill_to_location',
@@ -165,6 +172,12 @@ class ShipmentSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer
 
         # Deduplicate list
         return list(set(geofences))
+
+    def get_permission_derivation(self, obj):
+        if ('request' in self.context and
+                obj.id in getattr(self.context['request'].user, 'access_request_shipments', [])):
+            return 'AccessRequest'
+        return 'OwnerOrPartyOrPermissionLink'
 
 
 class ShipmentCreateSerializer(ShipmentSerializer):
@@ -351,15 +364,18 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
         return gtx_required
 
 
-class ShipmentTxSerializer(serializers.ModelSerializer):
+class ShipmentTxSerializer(FieldPermissionSerializerMixin, serializers.ModelSerializer):
     async_job_id = serializers.CharField(max_length=36)
 
     load_data = LoadShipmentSerializer(source='loadshipment', required=False)
 
     state = UpperEnumField(TransitState, ints_as_names=True)
     exception = UpperEnumField(ExceptionType, ints_as_names=True)
+    tags = PermissionResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags',
+                                          permission_classes=(AccessRequest.related_field_permission(
+                                              Endpoints.tags, PermissionLevel.READ_ONLY)(),))
 
-    tags = serializers.ResourceRelatedField(many=True, required=False, read_only=True, source='shipment_tags')
+    permission_derivation = serializers.SerializerMethodField()
 
     included_serializers = {
         'ship_from_location': LocationSerializer,
@@ -371,11 +387,17 @@ class ShipmentTxSerializer(serializers.ModelSerializer):
         'tags': ShipmentTagSerializer,
     }
 
+    def get_permission_derivation(self, obj):
+        if ('request' in self.context and
+                obj.id in getattr(self.context['request'].user, 'access_request_shipments', [])):
+            return 'AccessRequest'
+        return 'OwnerOrPartyOrPermissionLink'
+
     class Meta:
         model = Shipment
         exclude = ('version', 'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id',
                    'gtx_validation', 'gtx_validation_timestamp')
-        meta_fields = ('async_job_id',)
+        meta_fields = ('async_job_id', 'permission_derivation')
         if settings.PROFILES_ENABLED:
             read_only_fields = ('owner_id',)
 
@@ -406,7 +428,15 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
 class ShipmentOverviewSerializer(serializers.ModelSerializer):
     state = UpperEnumField(TransitState, ints_as_names=True)
     exception = UpperEnumField(ExceptionType, ints_as_names=True)
+    permission_derivation = serializers.SerializerMethodField()
+
+    def get_permission_derivation(self, obj):
+        if ('request' in self.context and
+                obj.id in getattr(self.context['request'].user, 'access_request_shipments', [])):
+            return 'AccessRequest'
+        return 'OwnerOrPartyOrPermissionLink'
 
     class Meta:
         model = Shipment
         fields = ('state', 'exception', 'delayed', )
+        meta_fields = ('permission_derivation',)

@@ -7,3 +7,4 @@ from .shipment_overview import *
 from .tags import *
 from .device import DeviceViewSet, SensorViewset
 from .telemetry import TelemetryViewSet
+from .access_request import *

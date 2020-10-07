@@ -21,8 +21,19 @@ from shipchain_common.permissions import HasViewSetActionPermissions
 from shipchain_common.viewsets import ActionConfiguration, ConfigurableGenericViewSet
 
 from apps.permissions import ShipmentExists, IsNestedOwner
-from ..models import ShipmentTag
+from ..models import ShipmentTag, AccessRequest, PermissionLevel, Endpoints
 from ..serializers import ShipmentTagSerializer, ShipmentTagCreateSerializer, ShipmentTagUpdateSerializer
+
+READ_PERMISSIONS = ((permissions.IsAuthenticated,
+                     ShipmentExists,
+                     HasViewSetActionPermissions,
+                     IsNestedOwner | AccessRequest.permission(Endpoints.tags, PermissionLevel.READ_ONLY),)
+                    if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, ))
+WRITE_PERMISSIONS = ((permissions.IsAuthenticated,
+                     ShipmentExists,
+                     HasViewSetActionPermissions,
+                     IsNestedOwner | AccessRequest.permission(Endpoints.tags, PermissionLevel.READ_WRITE), )
+                     if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, ))
 
 
 class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
@@ -34,19 +45,15 @@ class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
 
     serializer_class = ShipmentTagSerializer
 
-    permission_classes = (
-        (permissions.IsAuthenticated,
-         ShipmentExists,
-         HasViewSetActionPermissions,
-         IsNestedOwner, ) if settings.PROFILES_ENABLED else
-        (permissions.AllowAny, ShipmentExists, )
-    )
+    permission_classes = READ_PERMISSIONS
 
     configuration = {
         'create': ActionConfiguration(
             request_serializer=ShipmentTagCreateSerializer,
+            permission_classes=WRITE_PERMISSIONS
         ),
         'update': ActionConfiguration(
             request_serializer=ShipmentTagUpdateSerializer,
-        ),
+            permission_classes=WRITE_PERMISSIONS
+        )
     }

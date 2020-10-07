@@ -7,3 +7,4 @@ from .tags import ShipmentTag
 from .tracking_data import TrackingData
 from .telemetry_data import TelemetryData
 from .note import ShipmentNote
+from .access_request import *

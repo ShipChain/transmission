@@ -42,6 +42,7 @@ router.register(f'{API_PREFIX[1:]}/transactions', eth.TransactionViewSet, basena
 router.register(f'{API_PREFIX[1:]}/devices', shipments.DeviceViewSet, basename='device')
 router.register(f'{API_PREFIX[1:]}/imports/shipments', imports_app.ShipmentImportsViewSet, basename='import-shipments')
 router.register(f'{API_PREFIX[1:]}/routes', routes.RouteViewSet, basename='route')
+router.register(f'{API_PREFIX[1:]}/access_requests', shipments.AccessRequestListViewSet, basename='access-requests')
 
 # Shipment's nested routes definition
 nested_shipment = OptionalSlashNested(router, f'{API_PREFIX[1:]}/shipments', lookup='shipment')
@@ -52,6 +53,7 @@ nested_shipment.register(r'history', shipments.ShipmentHistoryListView, basename
 nested_shipment.register(r'notes', shipments.ShipmentNoteViewSet, basename='shipment-notes')
 nested_shipment.register(r'tags', shipments.ShipmentTagViewSet, basename='shipment-tags')
 nested_shipment.register(r'telemetry', shipments.TelemetryViewSet, basename='shipment-telemetry')
+nested_shipment.register(r'access_requests', shipments.AccessRequestViewSet, basename='shipment-access-requests')
 
 # Route's nested routes definition
 nested_route = OptionalSlashNested(router, f'{API_PREFIX[1:]}/routes', lookup='route')

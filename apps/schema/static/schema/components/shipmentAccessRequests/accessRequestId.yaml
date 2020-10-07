@@ -1,0 +1,71 @@
+get:
+  summary: Get access request details
+  description: |
+    Get additional info about an `AccessRequest`.
+  operationId: getAccessRequest
+  parameters:
+    - $ref: 'parameters.yaml#/path'
+    - $ref: '../shipments/parameters.yaml#/path'
+  tags:
+    - Access Requests
+  responses:
+    '200':
+      description: "Success"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/getResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+
+patch:
+  summary: Update access request
+  description: |
+    Updates the permissions or approval status for an `AccessRequest`.
+
+    The `_permission` levels for a request can only be modified by the requester, and only for requests that are not approved (pending or denied).
+
+    The `approved` property for a request can only be modified by a Shipment owner.
+
+  operationId: updateAccessRequest
+  parameters:
+    - $ref: 'parameters.yaml#/path'
+    - $ref: '../shipments/parameters.yaml#/path'
+  tags:
+    - Access Requests
+  responses:
+    '200':
+      description: "Updated"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: 'schema.yaml#/createResponse'
+    '401':
+      description: "Unauthorized"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/401'
+    '429':
+      description: "Too Many Requests"
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '../errors/schema.yaml#/429'
+  requestBody:
+    content:
+      application/vnd.api+json:
+        schema:
+          $ref: 'requestBody.yaml#/patchRequest'
+      application/json:
+        schema:
+          allOf:
+            - $ref: 'requestBody.yaml#/patchAttributes'
+      multipart/form-data:
+        schema:
+          allOf:
+            - $ref: 'requestBody.yaml#/patchAttributes'

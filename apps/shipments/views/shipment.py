@@ -35,7 +35,7 @@ from apps.jobs.models import JobState
 from apps.permissions import owner_access_filter, get_owner_id, IsOwner, ShipmentExists
 from ..filters import ShipmentFilter, SHIPMENT_SEARCH_FIELDS, SHIPMENT_ORDERING_FIELDS
 from ..geojson import render_filtered_point_features
-from ..models import Shipment, TrackingData, PermissionLink, TransitState
+from ..models import Shipment, TrackingData, PermissionLink, TransitState, PermissionLevel, AccessRequest, Endpoints
 from ..permissions import IsOwnerOrShared, IsOwnerShipperCarrierModerator, shipment_list_wallets_filter
 from ..serializers import ShipmentSerializer, ShipmentCreateSerializer, ShipmentUpdateSerializer, \
     ShipmentTxSerializer
@@ -44,19 +44,22 @@ from ...routes.models import RouteTrackingData
 LOG = logging.getLogger('transmission')
 
 
-UPDATE_PERMISSION_CLASSES = (
+WRITE_PERMISSIONS = (
     (HasViewSetActionPermissions,
      ShipmentExists,
-     IsOwnerShipperCarrierModerator,) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
+     IsOwnerShipperCarrierModerator | AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_WRITE),
+     ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
 )
 
-RETRIEVE_PERMISSION_CLASSES = (
-    (ShipmentExists, IsOwnerOrShared, ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
+READ_PERMISSIONS = (
+    (ShipmentExists,
+     IsOwnerOrShared | AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_ONLY),
+     ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
 )
 
 
-DELETE_PERMISSION_CLASSES = ((permissions.IsAuthenticated, IsOwner, ) if settings.PROFILES_ENABLED
-                             else (permissions.AllowAny, ))
+DELETE_PERMISSIONS = ((permissions.IsAuthenticated, IsOwner,) if settings.PROFILES_ENABLED
+                      else (permissions.AllowAny, ))
 
 
 class ShipmentViewSet(ConfigurableModelViewSet):
@@ -89,13 +92,13 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         'update': ActionConfiguration(
             request_serializer=ShipmentUpdateSerializer,
             response_serializer=ShipmentTxSerializer,
-            permission_classes=UPDATE_PERMISSION_CLASSES
+            permission_classes=WRITE_PERMISSIONS
         ),
         'retrieve': ActionConfiguration(
-            permission_classes=RETRIEVE_PERMISSION_CLASSES
+            permission_classes=READ_PERMISSIONS
         ),
         'destroy': ActionConfiguration(
-            permission_classes=DELETE_PERMISSION_CLASSES
+            permission_classes=DELETE_PERMISSIONS
         ),
     }
 
@@ -114,6 +117,7 @@ class ShipmentViewSet(ConfigurableModelViewSet):
 
             else:
                 queryset_filter = queryset_filter | shipment_list_wallets_filter(self.request)
+                queryset_filter = queryset_filter | Q(pk__in=self.request.user.access_request_shipments)
 
             queryset = queryset.filter(queryset_filter)
 
@@ -166,7 +170,8 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         return Response(response.data, status=status.HTTP_202_ACCEPTED)
 
     @method_decorator(cache_page(60 * 60, remember_all_urls=True))  # Cache responses for 1 hour
-    @action(detail=True, methods=['get'], permission_classes=(IsOwnerOrShared,))
+    @action(detail=True, methods=['get'], permission_classes=(
+            IsOwnerOrShared | AccessRequest.permission(Endpoints.tracking, PermissionLevel.READ_ONLY),),)
     def tracking(self, request, version, pk):
         """
         Retrieve tracking data from db

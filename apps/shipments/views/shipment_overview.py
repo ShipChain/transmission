@@ -119,9 +119,12 @@ class ShipmentOverviewListView(jsapi_views.PreloadIncludesMixin,
                                    .values('id'))
 
         if settings.PROFILES_ENABLED:
-            # Filter by owner or wallet id
-            queryset = queryset.filter(Q(shipment__owner_id=get_owner_id(self.request)) |
-                                       shipment_list_wallets_filter(self.request, nested=True))
+            # Filter by owner or wallet id or access request
+            queryset_filter = Q(shipment__owner_id=get_owner_id(self.request))
+            queryset_filter = queryset_filter | shipment_list_wallets_filter(self.request, nested=True)
+            queryset_filter = queryset_filter | Q(shipment_id__in=self.request.user.access_request_shipments)
+
+            queryset = queryset.filter(queryset_filter)
 
         queryset = self._parse_customer_fields_queries(queryset)
 
