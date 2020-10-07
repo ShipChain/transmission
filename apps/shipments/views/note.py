@@ -26,7 +26,7 @@ from ..models import ShipmentNote, AccessRequest, Endpoints, PermissionLevel
 from ..serializers import ShipmentNoteSerializer, ShipmentNoteCreateSerializer
 
 
-UPDATE_PERMISSION_CLASSES = (
+WRITE_PERMISSIONS = (
     (permissions.IsAuthenticated,
      ShipmentExists,
      HasViewSetActionPermissions,
@@ -34,7 +34,7 @@ UPDATE_PERMISSION_CLASSES = (
      ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
 )
 
-RETRIEVE_PERMISSION_CLASSES = (
+READ_PERMISSIONS = (
     (permissions.IsAuthenticated,
      ShipmentExists,
      HasViewSetActionPermissions,
@@ -52,7 +52,7 @@ class ShipmentNoteViewSet(mixins.ConfigurableCreateModelMixin,
 
     serializer_class = ShipmentNoteSerializer
 
-    permission_classes = RETRIEVE_PERMISSION_CLASSES
+    permission_classes = READ_PERMISSIONS
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
     filterset_fields = ('user_id', )
@@ -63,7 +63,7 @@ class ShipmentNoteViewSet(mixins.ConfigurableCreateModelMixin,
         'create': ActionConfiguration(
             request_serializer=ShipmentNoteCreateSerializer,
             response_serializer=ShipmentNoteSerializer,
-            permission_classes=UPDATE_PERMISSION_CLASSES
+            permission_classes=WRITE_PERMISSIONS
         ),
         'list': ActionConfiguration(response_serializer=ShipmentNoteSerializer)
     }

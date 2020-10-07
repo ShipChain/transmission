@@ -78,10 +78,17 @@ class AccessRequest(models.Model):
             required_permission_level = permission_level
 
             def has_permission(self, request, view):
-                nested = view.kwargs.get('shipment_pk')
-                if nested:
+                nested_shipment = view.kwargs.get('shipment_pk')
+                nested_device = view.kwargs.get('device_pk')
+
+                if nested_device:
+                    shipment = Shipment.objects.filter(device_id=nested_device).first()
+                    if shipment:
+                        nested_shipment = shipment.id
+
+                if nested_shipment:
                     filters = {
-                        'id': nested,
+                        'id': nested_shipment,
                         'accessrequest__requester_id': request.user.id,
                         f'accessrequest__{endpoint.name}_permission__gte': self.required_permission_level,
                         'accessrequest__approved': True,

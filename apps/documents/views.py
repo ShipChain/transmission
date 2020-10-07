@@ -39,7 +39,7 @@ from .serializers import DocumentSerializer, DocumentCreateSerializer
 
 LOG = logging.getLogger('transmission')
 
-UPDATE_PERMISSION_CLASSES = (
+WRITE_PERMISSIONS = (
     (permissions.IsAuthenticated,
      ShipmentExists,
      HasViewSetActionPermissions,
@@ -47,7 +47,7 @@ UPDATE_PERMISSION_CLASSES = (
      ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
 )
 
-RETRIEVE_PERMISSION_CLASSES = (
+READ_PERMISSIONS = (
     (permissions.IsAuthenticated,
      ShipmentExists,
      HasViewSetActionPermissions,
@@ -66,7 +66,7 @@ class DocumentViewSet(mixins.ConfigurableCreateModelMixin,
 
     serializer_class = DocumentSerializer
 
-    permission_classes = RETRIEVE_PERMISSION_CLASSES
+    permission_classes = READ_PERMISSIONS
 
     filter_backends = (filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend, )
     filter_class = DocumentFilterSet
@@ -79,10 +79,10 @@ class DocumentViewSet(mixins.ConfigurableCreateModelMixin,
         'create': ActionConfiguration(
             request_serializer=DocumentCreateSerializer,
             response_serializer=DocumentSerializer,
-            permission_classes=UPDATE_PERMISSION_CLASSES
+            permission_classes=WRITE_PERMISSIONS
         ),
         'update': ActionConfiguration(
-            permission_classes=UPDATE_PERMISSION_CLASSES
+            permission_classes=WRITE_PERMISSIONS
         ),
     }
 

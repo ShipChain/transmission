@@ -44,22 +44,22 @@ from ...routes.models import RouteTrackingData
 LOG = logging.getLogger('transmission')
 
 
-UPDATE_PERMISSION_CLASSES = (
+WRITE_PERMISSIONS = (
     (HasViewSetActionPermissions,
      ShipmentExists,
      IsOwnerShipperCarrierModerator | AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_WRITE),
      ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists,)
 )
 
-RETRIEVE_PERMISSION_CLASSES = (
+READ_PERMISSIONS = (
     (ShipmentExists,
      IsOwnerOrShared | AccessRequest.permission(Endpoints.shipment, PermissionLevel.READ_ONLY),
      ) if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, )
 )
 
 
-DELETE_PERMISSION_CLASSES = ((permissions.IsAuthenticated, IsOwner, ) if settings.PROFILES_ENABLED
-                             else (permissions.AllowAny, ))
+DELETE_PERMISSIONS = ((permissions.IsAuthenticated, IsOwner,) if settings.PROFILES_ENABLED
+                      else (permissions.AllowAny, ))
 
 
 class ShipmentViewSet(ConfigurableModelViewSet):
@@ -92,13 +92,13 @@ class ShipmentViewSet(ConfigurableModelViewSet):
         'update': ActionConfiguration(
             request_serializer=ShipmentUpdateSerializer,
             response_serializer=ShipmentTxSerializer,
-            permission_classes=UPDATE_PERMISSION_CLASSES
+            permission_classes=WRITE_PERMISSIONS
         ),
         'retrieve': ActionConfiguration(
-            permission_classes=RETRIEVE_PERMISSION_CLASSES
+            permission_classes=READ_PERMISSIONS
         ),
         'destroy': ActionConfiguration(
-            permission_classes=DELETE_PERMISSION_CLASSES
+            permission_classes=DELETE_PERMISSIONS
         ),
     }
 

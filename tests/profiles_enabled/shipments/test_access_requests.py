@@ -1,5 +1,8 @@
+import json
+from django.conf import settings
 from django.urls import reverse
 from pytest import fixture
+from rest_framework import status
 from shipchain_common.test_utils import AssertionHelper
 
 from apps.shipments.models import AccessRequest, PermissionLevel, Endpoints, TrackingData
@@ -53,7 +56,7 @@ def approved_access_request_lionel(new_access_request_lionel):
     return new_access_request_lionel
 
 @fixture
-def entity_ref_access_request(new_access_request_bob, user_bob_id, entity_ref_shipment_alice):
+def entity_ref_access_request_bob(new_access_request_bob, user_bob_id, entity_ref_shipment_alice):
     return AssertionHelper.EntityRef(resource='AccessRequest', pk=new_access_request_bob.id,
                                      attributes={'requester_id': user_bob_id},
                                      relationships=[{'shipment': entity_ref_shipment_alice}])
@@ -274,9 +277,9 @@ class TestAccessRequestRetrieval:
         self.shipment_list_url = reverse('shipment-access-requests-list', kwargs={'version': 'v1', 'shipment_pk': shipment_alice.id})
 
     # Shipment owners should be able to see full list of shipment access requests
-    def test_get_list(self, client_alice, new_access_request_bob, entity_ref_access_request):
+    def test_get_list(self, client_alice, entity_ref_access_request_bob):
         response = client_alice.get(self.shipment_list_url)
-        AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[entity_ref_access_request], count=1)
+        AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[entity_ref_access_request_bob], count=1)
 
     # Access requests should be able to be filtered by approval status
     def test_filtering(self, client_alice, new_access_request_bob):
@@ -284,12 +287,12 @@ class TestAccessRequestRetrieval:
         AssertionHelper.HTTP_200(response, is_list=True, count=0)
 
     # Other authenticated users can only see ones that they've created (but for any shipment, GET /shipments/access_requests)
-    def test_get_requester_list(self, client_bob, new_access_request_bob, client_lionel):
+    def test_get_requester_list(self, client_bob, client_lionel, entity_ref_access_request_bob):
         response = client_bob.get(self.list_url)
-        AssertionHelper.HTTP_200(response, is_list=True, count=1)
+        AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[entity_ref_access_request_bob], count=1)
 
         response = client_bob.get(self.shipment_list_url)
-        AssertionHelper.HTTP_200(response, is_list=True, count=1)
+        AssertionHelper.HTTP_200(response, is_list=True, entity_refs=[entity_ref_access_request_bob], count=1)
 
         response = client_lionel.get(self.list_url)
         AssertionHelper.HTTP_200(response, is_list=True, count=0)
@@ -309,12 +312,25 @@ class TestAccessRequestRetrieval:
 
 class TestAccessRequestPermissions:
     @fixture(autouse=True)
-    def setup_urls(self, shipment_alice, mock_non_wallet_owner_calls):
+    def setup_urls(self, shipment_alice, mock_non_wallet_owner_calls, devices):
         self.list_url = reverse('access-requests-list', kwargs={'version': 'v1'})
         self.endpoint_urls = {endpoint.name: reverse(f'shipment-{endpoint.name}-list', kwargs={'version': 'v1', 'shipment_pk': shipment_alice.id})
                               for endpoint in Endpoints if endpoint.name not in ('shipment', 'tracking')}
         self.endpoint_urls['shipment'] = reverse('shipment-detail', kwargs={'version': 'v1', 'pk': shipment_alice.id})
         self.endpoint_urls['tracking'] = reverse('shipment-tracking', kwargs={'version': 'v1', 'pk': shipment_alice.id})
+
+        shipment_alice.device = devices[0]
+        shipment_alice.save()
+        mock_non_wallet_owner_calls.register_uri(
+            mock_non_wallet_owner_calls.GET,
+            f'{settings.PROFILES_URL}/api/v1/device/{shipment_alice.device.id}/sensor',
+            body=json.dumps({"links": {
+                "first": f"{settings.PROFILES_URL}/api/v1/device/",
+                "last": f"{settings.PROFILES_URL}/api/v1/device/",
+                "next": None,
+            }, "data": [{}]}),
+            status=status.HTTP_200_OK)
+        self.endpoint_urls['sensors'] = reverse('device-sensors', kwargs={'version': 'v1', 'device_pk': shipment_alice.device.id})
 
         self.tag = shipment_alice.shipment_tags.create(owner_id=shipment_alice.owner_id, tag_type='tag_type', tag_value='tag_value')
 
@@ -366,6 +382,13 @@ class TestAccessRequestPermissions:
                 assert response.json() == []
             else:
                 assert response.status_code == 403
+
+            # Should also have access to sensors endpoint
+            response = client.get(self.endpoint_urls['sensors'])
+            if telemetry_access:
+                AssertionHelper.HTTP_200(response, is_list=True)
+            else:
+                AssertionHelper.HTTP_403(response, vnd=False)
 
     def assert_write_access(self, client, shipment_access=None, tags_access=None, documents_access=None, notes_access=None, all_access=None):
         if all_access is not None:

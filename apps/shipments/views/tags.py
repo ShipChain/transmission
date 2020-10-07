@@ -24,10 +24,10 @@ from apps.permissions import ShipmentExists, IsNestedOwner
 from ..models import ShipmentTag, AccessRequest, PermissionLevel, Endpoints
 from ..serializers import ShipmentTagSerializer, ShipmentTagCreateSerializer, ShipmentTagUpdateSerializer
 
-BASE_PERMISSIONS = ((permissions.IsAuthenticated,
-                    ShipmentExists,
-                    HasViewSetActionPermissions,
-                    IsNestedOwner | AccessRequest.permission(Endpoints.tags, PermissionLevel.READ_ONLY), )
+READ_PERMISSIONS = ((permissions.IsAuthenticated,
+                     ShipmentExists,
+                     HasViewSetActionPermissions,
+                     IsNestedOwner | AccessRequest.permission(Endpoints.tags, PermissionLevel.READ_ONLY),)
                     if settings.PROFILES_ENABLED else (permissions.AllowAny, ShipmentExists, ))
 WRITE_PERMISSIONS = ((permissions.IsAuthenticated,
                      ShipmentExists,
@@ -45,7 +45,7 @@ class ShipmentTagViewSet(mixins.ConfigurableCreateModelMixin,
 
     serializer_class = ShipmentTagSerializer
 
-    permission_classes = BASE_PERMISSIONS
+    permission_classes = READ_PERMISSIONS
 
     configuration = {
         'create': ActionConfiguration(
