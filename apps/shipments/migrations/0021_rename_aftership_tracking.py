@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shipments', '0019_carrier_abv'),
+        ('shipments', '0020_accessrequest'),
     ]
 
     operations = [
