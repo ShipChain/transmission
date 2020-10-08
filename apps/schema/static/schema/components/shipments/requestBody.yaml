@@ -84,6 +84,103 @@ createAttributes:
   - $ref: '#/shipment/geofences'
   - $ref: '#/shipment/tags'
   - $ref: '#/shipment/quickaddTracking'
+  - properties:
+      ship_from_location.name: {$ref: '#/location/name/properties/name'}
+  - properties:
+      ship_from_location.address_1: { $ref: '#/location/address_1/properties/address_1' }
+  - properties:
+      ship_from_location.address_2: { $ref: '#/location/address_2/properties/address_2' }
+  - properties:
+      ship_from_location.city: { $ref: '#/location/city/properties/city' }
+  - properties:
+      ship_from_location.state: { $ref: '#/location/state/properties/state' }
+  - properties:
+      ship_from_location.country: { $ref: '#/location/country/properties/country' }
+  - properties:
+      ship_from_location.postal_code: { $ref: '#/location/postalCode/properties/postal_code' }
+  - properties:
+      ship_from_location.phone_number: { $ref: '#/location/phoneNumber/properties/phone_number' }
+  - properties:
+      ship_from_location.fax_number: { $ref: '#/location/faxNumber/properties/fax_number' }
+  - properties:
+      ship_from_location.created_at: { $ref: '#/coreDataTypes/createdAt/properties/created_at' }
+  - properties:
+      ship_from_location.updated_at: { $ref: '#/coreDataTypes/updatedAt/properties/updated_at' }
+  - properties:
+      ship_from_location.geometry: { $ref: '#/location/geometry/properties/geometry' }
+  - properties:
+      ship_to_location.name: { $ref: '#/location/name/properties/name' }
+  - properties:
+      ship_to_location.address_1: { $ref: '#/location/address_1/properties/address_1' }
+  - properties:
+      ship_to_location.address_2: { $ref: '#/location/address_2/properties/address_2' }
+  - properties:
+      ship_to_location.city: { $ref: '#/location/city/properties/city' }
+  - properties:
+      ship_to_location.state: { $ref: '#/location/state/properties/state' }
+  - properties:
+      ship_to_location.country: { $ref: '#/location/country/properties/country' }
+  - properties:
+      ship_to_location.postal_code: { $ref: '#/location/postalCode/properties/postal_code' }
+  - properties:
+      ship_to_location.phone_number: { $ref: '#/location/phoneNumber/properties/phone_number' }
+  - properties:
+      ship_to_location.fax_number: { $ref: '#/location/faxNumber/properties/fax_number' }
+  - properties:
+      ship_to_location.created_at: { $ref: '#/coreDataTypes/createdAt/properties/created_at' }
+  - properties:
+      ship_to_location.updated_at: { $ref: '#/coreDataTypes/updatedAt/properties/updated_at' }
+  - properties:
+      ship_to_location.geometry: { $ref: '#/location/geometry/properties/geometry' }
+  - properties:
+      final_destination_location.name: { $ref: '#/location/name/properties/name' }
+  - properties:
+      final_destination_location.address_1: { $ref: '#/location/address_1/properties/address_1' }
+  - properties:
+      final_destination_location.address_2: { $ref: '#/location/address_2/properties/address_2' }
+  - properties:
+      final_destination_location.city: { $ref: '#/location/city/properties/city' }
+  - properties:
+      final_destination_location.state: { $ref: '#/location/state/properties/state' }
+  - properties:
+      final_destination_location.country: { $ref: '#/location/country/properties/country' }
+  - properties:
+      final_destination_location.postal_code: { $ref: '#/location/postalCode/properties/postal_code' }
+  - properties:
+      final_destination_location.phone_number: { $ref: '#/location/phoneNumber/properties/phone_number' }
+  - properties:
+      final_destination_location.fax_number: { $ref: '#/location/faxNumber/properties/fax_number' }
+  - properties:
+      final_destination_location.created_at: { $ref: '#/coreDataTypes/createdAt/properties/created_at' }
+  - properties:
+      final_destination_location.updated_at: { $ref: '#/coreDataTypes/updatedAt/properties/updated_at' }
+  - properties:
+      final_destination_location.geometry: { $ref: '#/location/geometry/properties/geometry' }
+  - properties:
+      bill_to_location.name: {$ref: '#/location/name/properties/name'}
+  - properties:
+      bill_to_location.address_1: { $ref: '#/location/address_1/properties/address_1' }
+  - properties:
+      bill_to_location.address_2: { $ref: '#/location/address_2/properties/address_2' }
+  - properties:
+      bill_to_location.city: { $ref: '#/location/city/properties/city' }
+  - properties:
+      bill_to_location.state: { $ref: '#/location/state/properties/state' }
+  - properties:
+      bill_to_location.country: { $ref: '#/location/country/properties/country' }
+  - properties:
+      bill_to_location.postal_code: { $ref: '#/location/postalCode/properties/postal_code' }
+  - properties:
+      bill_to_location.phone_number: { $ref: '#/location/phoneNumber/properties/phone_number' }
+  - properties:
+      bill_to_location.fax_number: { $ref: '#/location/faxNumber/properties/fax_number' }
+  - properties:
+      bill_to_location.created_at: { $ref: '#/coreDataTypes/createdAt/properties/created_at' }
+  - properties:
+      bill_to_location.updated_at: { $ref: '#/coreDataTypes/updatedAt/properties/updated_at' }
+  - properties:
+      bill_to_location.geometry: { $ref: '#/location/geometry/properties/geometry' }
+
 
 patchAttributes:
   allOf:
@@ -146,6 +243,102 @@ patchAttributes:
     - $ref: '#/shipment/gtxRequired'
     - $ref: '#/shipment/assetCustodianId'
     - $ref: '#/shipment/geofences'
+    - properties:
+        ship_from_location.name: { $ref: '#/location/name/properties/name' }
+    - properties:
+        ship_from_location.address_1: { $ref: '#/location/address_1/properties/address_1' }
+    - properties:
+        ship_from_location.address_2: { $ref: '#/location/address_2/properties/address_2' }
+    - properties:
+        ship_from_location.city: { $ref: '#/location/city/properties/city' }
+    - properties:
+        ship_from_location.state: { $ref: '#/location/state/properties/state' }
+    - properties:
+        ship_from_location.country: { $ref: '#/location/country/properties/country' }
+    - properties:
+        ship_from_location.postal_code: { $ref: '#/location/postalCode/properties/postal_code' }
+    - properties:
+        ship_from_location.phone_number: { $ref: '#/location/phoneNumber/properties/phone_number' }
+    - properties:
+        ship_from_location.fax_number: { $ref: '#/location/faxNumber/properties/fax_number' }
+    - properties:
+        ship_from_location.created_at: { $ref: '#/coreDataTypes/createdAt/properties/created_at' }
+    - properties:
+        ship_from_location.updated_at: { $ref: '#/coreDataTypes/updatedAt/properties/updated_at' }
+    - properties:
+        ship_from_location.geometry: { $ref: '#/location/geometry/properties/geometry' }
+    - properties:
+        ship_to_location.name: { $ref: '#/location/name/properties/name' }
+    - properties:
+        ship_to_location.address_1: { $ref: '#/location/address_1/properties/address_1' }
+    - properties:
+        ship_to_location.address_2: { $ref: '#/location/address_2/properties/address_2' }
+    - properties:
+        ship_to_location.city: { $ref: '#/location/city/properties/city' }
+    - properties:
+        ship_to_location.state: { $ref: '#/location/state/properties/state' }
+    - properties:
+        ship_to_location.country: { $ref: '#/location/country/properties/country' }
+    - properties:
+        ship_to_location.postal_code: { $ref: '#/location/postalCode/properties/postal_code' }
+    - properties:
+        ship_to_location.phone_number: { $ref: '#/location/phoneNumber/properties/phone_number' }
+    - properties:
+        ship_to_location.fax_number: { $ref: '#/location/faxNumber/properties/fax_number' }
+    - properties:
+        ship_to_location.created_at: { $ref: '#/coreDataTypes/createdAt/properties/created_at' }
+    - properties:
+        ship_to_location.updated_at: { $ref: '#/coreDataTypes/updatedAt/properties/updated_at' }
+    - properties:
+        ship_to_location.geometry: { $ref: '#/location/geometry/properties/geometry' }
+    - properties:
+        final_destination_location.name: { $ref: '#/location/name/properties/name' }
+    - properties:
+        final_destination_location.address_1: { $ref: '#/location/address_1/properties/address_1' }
+    - properties:
+        final_destination_location.address_2: { $ref: '#/location/address_2/properties/address_2' }
+    - properties:
+        final_destination_location.city: { $ref: '#/location/city/properties/city' }
+    - properties:
+        final_destination_location.state: { $ref: '#/location/state/properties/state' }
+    - properties:
+        final_destination_location.country: { $ref: '#/location/country/properties/country' }
+    - properties:
+        final_destination_location.postal_code: { $ref: '#/location/postalCode/properties/postal_code' }
+    - properties:
+        final_destination_location.phone_number: { $ref: '#/location/phoneNumber/properties/phone_number' }
+    - properties:
+        final_destination_location.fax_number: { $ref: '#/location/faxNumber/properties/fax_number' }
+    - properties:
+        final_destination_location.created_at: { $ref: '#/coreDataTypes/createdAt/properties/created_at' }
+    - properties:
+        final_destination_location.updated_at: { $ref: '#/coreDataTypes/updatedAt/properties/updated_at' }
+    - properties:
+        final_destination_location.geometry: { $ref: '#/location/geometry/properties/geometry' }
+    - properties:
+        bill_to_location.name: { $ref: '#/location/name/properties/name' }
+    - properties:
+        bill_to_location.address_1: { $ref: '#/location/address_1/properties/address_1' }
+    - properties:
+        bill_to_location.address_2: { $ref: '#/location/address_2/properties/address_2' }
+    - properties:
+        bill_to_location.city: { $ref: '#/location/city/properties/city' }
+    - properties:
+        bill_to_location.state: { $ref: '#/location/state/properties/state' }
+    - properties:
+        bill_to_location.country: { $ref: '#/location/country/properties/country' }
+    - properties:
+        bill_to_location.postal_code: { $ref: '#/location/postalCode/properties/postal_code' }
+    - properties:
+        bill_to_location.phone_number: { $ref: '#/location/phoneNumber/properties/phone_number' }
+    - properties:
+        bill_to_location.fax_number: { $ref: '#/location/faxNumber/properties/fax_number' }
+    - properties:
+        bill_to_location.created_at: { $ref: '#/coreDataTypes/createdAt/properties/created_at' }
+    - properties:
+        bill_to_location.updated_at: { $ref: '#/coreDataTypes/updatedAt/properties/updated_at' }
+    - properties:
+        bill_to_location.geometry: { $ref: '#/location/geometry/properties/geometry' }
 
 createRequest:
   allOf:
@@ -189,6 +382,12 @@ tracking:
 
 shipment:
   $ref: dataTypes.yaml
+
+location:
+  $ref: ../locations/dataTypes.yaml
+
+coreDataTypes:
+  $ref: ../core/dataTypes.yaml
 
 jsonApi:
   $ref: ../jsonApi/requestBody.yaml

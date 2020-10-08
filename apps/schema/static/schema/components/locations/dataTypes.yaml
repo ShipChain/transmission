@@ -97,3 +97,15 @@ type:
       description: Type of field
       type: string
       example: 'Point'
+
+geometry:
+  properties:
+    geometry:
+      type: object
+      title: geometry
+      description: GeoJSON Geometry Point
+      properties:
+        type:
+          $ref: '#/type/properties/type'
+        coordinates:
+          $ref: '#/coordinates/properties/coordinates'

@@ -29,12 +29,6 @@ NUM_DEVICES = 7
 BBOX = [-90.90, 30.90, -78.80, 36.80]
 NUM_TRACKING_DATA_BBOX = 3
 
-google_obj = {
-    'results': [{'address_components': [{'types': []}], 'geometry': {'location': {'lat': 12, 'lng': 23}}}]}
-mapbox_obj = {'features': [{'place_type': [{'types': []}], 'geometry': {'coordinates': [42, 27]}}]}
-
-mapbox_url = re.compile(r'https://api.mapbox.com/geocoding/v5/mapbox.places/[\w$\-@&+%,]+.json')
-google_url = f'https://maps.googleapis.com/maps/api/geocode/json'
 
 
 def create_organization_shipments(user, profiles_ids):
@@ -127,13 +121,6 @@ def bob_organization_shipment_fixtures(bob_organization_shipments, profiles_ids)
             **profiles_ids
         },
     ) for shipment in bob_organization_shipments]
-
-
-@pytest.fixture
-def mock_location(mock_successful_wallet_owner_calls):
-    mock_successful_wallet_owner_calls.register_uri(mock_successful_wallet_owner_calls.GET, google_url, body=json.dumps(google_obj))
-    mock_successful_wallet_owner_calls.register_uri(mock_successful_wallet_owner_calls.GET, mapbox_url, body=json.dumps(mapbox_obj))
-    return mock_successful_wallet_owner_calls
 
 
 @pytest.fixture

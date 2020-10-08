@@ -111,6 +111,7 @@ else:
     FRONTEND_DOMAIN = 'localhost:3000'
     URL_SHORTENER_HOST = 'fglcol31yk.execute-api.us-east-1.amazonaws.com'
     URL_SHORTENER_URL = f'https://{URL_SHORTENER_HOST}/test'
+    POSTGIS_VERSION = (2, 4, 4)
 
 # Application definition
 

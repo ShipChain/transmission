@@ -15,10 +15,12 @@ import json
 from datetime import datetime, timedelta
 from unittest import mock
 
+import geojson
 import pytest
 from django.conf import settings
 from django.core.cache import cache
 from django.urls import reverse
+from geojson import Point
 from moto import mock_sns
 from shipchain_common.test_utils import AssertionHelper, create_form_content
 from shipchain_common.utils import random_id
@@ -447,12 +449,13 @@ class TestShipmentUpdate:
         response = client_gtx_alice.patch(self.url, data={"gtx_required": True})
         AssertionHelper.HTTP_400(response, error='Cannot modify GTX for a shipment in progress')
 
-    def test_update_with_location_mapbox(self, client_alice, mock_location):
+    def test_update_with_geometry(self, client_alice):
         self.entity_ref.attributes = None
         location_attributes, content_type = create_form_content({
             'ship_from_location.name': "Location Name",
             'ship_from_location.city': "City",
-            'ship_from_location.state': "State"
+            'ship_from_location.state': "State",
+            'ship_from_location.geometry': geojson.dumps(Point((42.0, 27.0)))
         })
 
         response = client_alice.patch(self.url, data=location_attributes, content_type=content_type)
@@ -472,54 +475,19 @@ class TestShipmentUpdate:
                                                     'geometry': {'coordinates': [42.0, 27.0], 'type': 'Point'}
                                                 })]
         )
-        mock_location.assert_calls([{
-            'host': 'https://api.mapbox.com',
-            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
-        }])
 
-    # It is only possible to test location with google OR mapbox due to how the token is gathered by geocoder.
-    # We will default to testing with mapbox as that is what is currently used on ShipChain's Transmission services,
-    # But this is the test necessary to check the google API call.
-    # def test_update_with_location_google(self, client_alice, mock_location):
-    #     self.entity_ref.attributes = None
-    #     location_attributes, content_type = create_form_content({
-    #         'ship_from_location.name': "Location Name",
-    #         'ship_from_location.city': "City",
-    #         'ship_from_location.state': "State"
-    #     })
-    #
-    #     response = client_alice.patch(self.url, data=location_attributes, content_type=content_type)
-    #     self.entity_ref.relationships = [{
-    #         'ship_from_location': AssertionHelper.EntityRef(resource='Location')
-    #     }]
-    #     self.shipment.refresh_from_db(fields=['ship_from_location'])
-    #     AssertionHelper.HTTP_202(
-    #         response,
-    #         entity_refs=self.entity_ref,
-    #         included=[AssertionHelper.EntityRef(resource='Location',
-    #                                             pk=self.shipment.ship_from_location.id,
-    #                                             attributes={
-    #                                                 'name': "Location Name",
-    #                                                 'city': "City",
-    #                                                 'state': "State",
-    #                                                 'geometry': {'coordinates': [23.0, 12.0], 'type': 'Point'}
-    #                                             })]
-    #     )
-    #     mock_location.assert_calls([{
-    #         'host': 'https://maps.googleapis.com',
-    #         'path': '/maps/api/geocode/json',
-    #         'query': {'address': ', City, State'},
-    #     }])
 
-    def test_update_with_multiple_locations(self, client_alice, mock_location):
+    def test_update_with_multiple_locations(self, client_alice):
         self.entity_ref.attributes = None
         location_attributes, content_type = create_form_content({
             'ship_from_location.name': "Location Name",
             'ship_from_location.city': "City",
             'ship_from_location.state': "State",
+            'ship_from_location.geometry': geojson.dumps(Point((42.0, 27.0))),
             'ship_to_location.name': "Location Name",
             'ship_to_location.city': "City",
             'ship_to_location.state': "State",
+            'ship_to_location.geometry': geojson.dumps(Point((42.0, 27.0)))
         })
 
         response = client_alice.patch(self.url, data=location_attributes, content_type=content_type)
@@ -548,13 +516,6 @@ class TestShipmentUpdate:
                                                 })
                       ]
         )
-        mock_location.assert_calls([{
-            'host': 'https://api.mapbox.com',
-            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
-        }, {
-            'host': 'https://api.mapbox.com',
-            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
-        }])
 
     def test_update_customer_fields(self, client_alice):
         response = client_alice.patch(self.url, data={
@@ -772,11 +733,12 @@ class TestShipmentCreate:
         assert "asset_physical_id" not in response.json()['data']
         assert not shipment.asset_physical_id
 
-    def test_create_with_location_mapbox(self, client_alice, mock_location):
+    def test_create_with_location_geometry(self, client_alice, mock_successful_wallet_owner_calls):
         location_attributes, content_type = create_form_content({
             'ship_from_location.name': "Location Name",
             'ship_from_location.city': "City",
             'ship_from_location.state': "State",
+            'ship_from_location.geometry': geojson.dumps(Point((42.0, 27.0))),
             **self.profiles_ids
         })
 
@@ -802,58 +764,18 @@ class TestShipmentCreate:
                                                                      })]
 
                                  )
-        mock_location.assert_calls([*self.assertions, {
-            'host': 'https://api.mapbox.com',
-            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
-        }])
 
-    # It is only possible to test location with google OR mapbox due to how the token is gathered by geocoder.
-    # We will default to testing with mapbox as that is what is currently used on ShipChain's Transmission services,
-    # But this is the test necessary to check the google API call.
-    # def test_create_with_location_google(self, client_alice, mock_location):
-    #     location_attributes, content_type = create_form_content({
-    #         'ship_from_location.name': "Location Name",
-    #         'ship_from_location.city': "City",
-    #         'ship_from_location.state': "State",
-    #         **self.profiles_ids
-    #     })
-    #
-    #     response = client_alice.post(self.url, data=location_attributes, content_type=content_type)
-    #
-    #     shipment = Shipment.objects.get(id=response.json()['data']['id'])
-    #     AssertionHelper.HTTP_202(response,
-    #                              entity_refs=AssertionHelper.EntityRef(
-    #                                  resource='Shipment',
-    #                                  attributes=self.profiles_ids,
-    #                                  relationships=[{
-    #                                      'ship_from_location': AssertionHelper.EntityRef(resource='Location')
-    #                                  }],
-    #                              ),
-    #                              included=[AssertionHelper.EntityRef(resource='Location',
-    #                                                                  pk=shipment.ship_from_location.id,
-    #                                                                  attributes={
-    #                                                                      'name': "Location Name",
-    #                                                                      'city': "City",
-    #                                                                      'state': "State",
-    #                                                                      'geometry': {'coordinates': [23.0, 12.0],
-    #                                                                                   'type': 'Point'}
-    #                                                                  })]
-    #
-    #                              )
-    #     mock_location.assert_calls([*self.assertions, {
-    #         'host': 'https://maps.googleapis.com',
-    #         'path': '/maps/api/geocode/json',
-    #         'query': {'address': ', City, State'},
-    #     }])
 
-    def test_create_with_multiple_locations(self, client_alice, mock_location):
+    def test_create_with_multiple_locations(self, client_alice, mock_successful_wallet_owner_calls):
         location_attributes, content_type = create_form_content({
             'ship_from_location.name': "Location Name",
             'ship_from_location.city': "City",
             'ship_from_location.state': "State",
+            'ship_from_location.geometry': geojson.dumps(Point((42.0, 27.0))),
             'ship_to_location.name': "Location Name",
             'ship_to_location.city': "City",
             'ship_to_location.state': "State",
+            'ship_to_location.geometry': geojson.dumps(Point((42.0, 27.0))),
             **self.profiles_ids
         })
 
@@ -892,14 +814,6 @@ class TestShipmentCreate:
                                                 })
                       ]
         )
-
-        mock_location.assert_calls([*self.assertions, {
-            'host': 'https://api.mapbox.com',
-            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
-        }, {
-            'host': 'https://api.mapbox.com',
-            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
-        }])
 
     def test_create_with_device(self, client_alice, device):
         with mock.patch('apps.shipments.models.Device.get_or_create_with_permission') as mock_device, \

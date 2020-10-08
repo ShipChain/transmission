@@ -21,7 +21,7 @@ from apps.jobs.signals import job_update
 from apps.sns import SNSClient
 from .events import LoadEventHandler
 from .iot_client import DeviceAWSIoTClient
-from .models import Shipment, LoadShipment, Location, TrackingData, TransitState, TelemetryData, AccessRequest
+from .models import Shipment, LoadShipment, TrackingData, TransitState, TelemetryData, AccessRequest
 from .rpc import RPCClientFactory
 from .serializers import ShipmentVaultSerializer
 
@@ -115,13 +115,6 @@ def loadshipment_post_save(sender, **kwargs):
             signing_wallet_id=instance.shipment.shipper_wallet_id,
             shipment=instance.shipment
         )
-
-
-@receiver(pre_save, sender=Location, dispatch_uid='location_pre_save')
-def location_pre_save(sender, **kwargs):
-    instance = kwargs["instance"]
-    # Get point info
-    instance.get_lat_long_from_address()
 
 
 @receiver(post_save, sender=AccessRequest, dispatch_uid='accessrequest_post_save')
