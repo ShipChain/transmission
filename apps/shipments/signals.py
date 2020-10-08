@@ -10,6 +10,7 @@ from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from fancy_cache.memory import find_urls
 from fieldsignals import post_save_changed
+from influxdb_metrics.loader import log_metric
 from rest_framework.exceptions import ValidationError
 from rest_framework.reverse import reverse
 from shipchain_common.exceptions import AWSIoTError
@@ -176,6 +177,10 @@ def shipment_quickadd_tracking_changed(sender, instance, changed_fields, **kwarg
 
         tracking_data = response.json()['data']['tracking']
 
+        log_metric(
+            'transmission.info',
+            tags={'method': 'shipments.quickadd_shipment', 'carrier_abbv': tracking_data['slug'], 'module': __name__}
+        )
         instance.anonymous_historical_change(shippers_reference=f'Quickadd Shipment: {instance.quickadd_tracking}',
                                              carrier_abbv=tracking_data['slug'])
         instance.refresh_from_db(fields=['shippers_reference', 'carrier_abbv'])
