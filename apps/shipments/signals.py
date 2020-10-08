@@ -74,8 +74,8 @@ def shipment_post_save(sender, **kwargs):
 
         instance.anonymous_historical_change(vault_id=vault_id, vault_uri=vault_uri)
 
-        shipment_aftership_tracking_changed(Shipment, instance, {
-            Shipment._meta.get_field('aftership_tracking'): (None, instance.aftership_tracking)
+        shipment_quickadd_tracking_changed(Shipment, instance, {
+            Shipment._meta.get_field('quickadd_tracking'): (None, instance.quickadd_tracking)
         })
 
         shipment_iot_fields_changed(Shipment, instance, {
@@ -171,19 +171,19 @@ def telemetrydata_post_save(sender, **kwargs):
                                             {"type": "telemetry_data.save", "telemetry_data_id": instance.id})
 
 
-@receiver(post_save_changed, sender=Shipment, fields=['aftership_tracking'],
-          dispatch_uid='shipment_aftership_tracking_changed')
-def shipment_aftership_tracking_changed(sender, instance, changed_fields, **kwargs):
-    if instance.aftership_tracking and settings.SNS_CLIENT:
+@receiver(post_save_changed, sender=Shipment, fields=['quickadd_tracking'],
+          dispatch_uid='shipment_quickadd_tracking_changed')
+def shipment_quickadd_tracking_changed(sender, instance, changed_fields, **kwargs):
+    if instance.quickadd_tracking and settings.SNS_CLIENT:
         response = requests.post(f'{settings.AFTERSHIP_URL}trackings',
-                                 json={'tracking': {'tracking_number': instance.aftership_tracking}},
+                                 json={'tracking': {'tracking_number': instance.quickadd_tracking}},
                                  headers={'aftership-api-key': settings.AFTERSHIP_API_KEY})
         if not response.ok:
-            raise ValidationError('Supplied tracking number has already been imported into Aftership')
+            raise ValidationError('Supplied tracking number has already been imported')
 
         tracking_data = response.json()['data']['tracking']
 
-        instance.anonymous_historical_change(shippers_reference=f'Quickadd Shipment: {instance.aftership_tracking}',
+        instance.anonymous_historical_change(shippers_reference=f'Quickadd Shipment: {instance.quickadd_tracking}',
                                              carrier_abbv=tracking_data['slug'])
         instance.refresh_from_db(fields=['shippers_reference', 'carrier_abbv'])
 

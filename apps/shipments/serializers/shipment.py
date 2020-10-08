@@ -266,14 +266,14 @@ class ShipmentCreateSerializer(ShipmentSerializer):
                 raise PermissionDenied('User does not have access to enable GTX for this shipment')
         return gtx_required
 
-    def validate_aftership_tracking(self, aftership_tracking):
+    def validate_quickadd_tracking(self, quickadd_tracking):
         response = requests.post(f'{settings.AFTERSHIP_URL}couriers/detect',
                                  headers={'aftership-api-key': settings.AFTERSHIP_API_KEY},
-                                 json={'tracking': {'tracking_number': aftership_tracking}})
+                                 json={'tracking': {'tracking_number': quickadd_tracking}})
         if not response.ok:
-            raise serializers.ValidationError('Invalid aftership_tracking value')
+            raise serializers.ValidationError('Invalid quickadd_tracking value')
 
-        return aftership_tracking
+        return quickadd_tracking
 
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
@@ -286,10 +286,10 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
 
     class Meta:
         model = Shipment
-        exclude = (('owner_id', 'version', 'aftership_tracking',
+        exclude = (('owner_id', 'version', 'quickadd_tracking',
                     'background_data_hash_interval', 'manual_update_hash_interval', 'asset_physical_id')
                    if settings.PROFILES_ENABLED else ('version', 'background_data_hash_interval',
-                                                      'aftership_tracking', 'manual_update_hash_interval',
+                                                      'quickadd_tracking', 'manual_update_hash_interval',
                                                       'asset_physical_id', 'carrier_abbv'))
         read_only_fields = ('vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id',
                             'storage_credentials_id', 'contract_version', 'state')
@@ -422,7 +422,7 @@ class ShipmentVaultSerializer(NullableFieldsMixin, serializers.ModelSerializer):
                    'vault_id', 'vault_uri', 'shipper_wallet_id', 'carrier_wallet_id', 'manual_update_hash_interval',
                    'contract_version', 'device', 'updated_by', 'state', 'exception', 'delayed', 'expected_delay_hours',
                    'geofences', 'assignee_id', 'gtx_required', 'gtx_validation', 'gtx_validation_timestamp',
-                   'aftership_tracking', 'carrier_abbv', 'arrival_est')
+                   'quickadd_tracking', 'carrier_abbv', 'arrival_est')
 
 
 class ShipmentOverviewSerializer(serializers.ModelSerializer):

@@ -1,7 +1,6 @@
 abbv
 accessrequest
 acl
-aftership
 aggregate
 amz
 appt
@@ -27,6 +26,11 @@ EthAction
 
 FeatureCollection
 
+gasUsed
+GeoJson
+Geolocation
+geofence
+geofences
 gtx
 
 hazmat
@@ -35,12 +39,6 @@ io
 iso
 
 JWS
-
-gasUsed
-GeoJson
-Geolocation
-geofence
-geofences
 
 linestringTimestamps
 LoadShipment
@@ -59,6 +57,8 @@ notSet
 nvocc
 
 online
+
+quickadd
 
 PermissionLink
 presigned

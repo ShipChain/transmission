@@ -82,7 +82,7 @@ attributes:
   - $ref: '#/shipment/assetCustodianId'
   - $ref: '#/shipment/geofences'
   - $ref: '#/shipment/contractVersion'
-  - $ref: '#/shipment/aftershipTracking'
+  - $ref: '#/shipment/quickaddTracking'
   - $ref: '#/shipment/carrierAbbv'
 
 meta:
