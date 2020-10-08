@@ -17,21 +17,13 @@ limitations under the License.
 import logging
 
 from django.contrib.gis.db.models import GeometryField
-from django.contrib.gis.geos import Point
 from django.core.validators import RegexValidator
 from django.db import models
-import geocoder
-from geocoder.keys import mapbox_access_token
-from influxdb_metrics.loader import log_metric
-from rest_framework.exceptions import Throttled
-from rest_framework.status import HTTP_503_SERVICE_UNAVAILABLE
 from shipchain_common.utils import random_id
 
 from apps.simple_history import TxmHistoricalRecords, AnonymousHistoricalMixin
 
 LOG = logging.getLogger('transmission')
-
-# pylint: disable=too-many-branches
 
 
 class Location(AnonymousHistoricalMixin, models.Model):
@@ -66,51 +58,3 @@ class Location(AnonymousHistoricalMixin, models.Model):
 
     # Model's history tracking definition
     history = TxmHistoricalRecords()
-
-    def get_lat_long_from_address(self):
-        LOG.debug(f'Creating lat/long point for location {self.id}')
-        log_metric('transmission.info', tags={'method': 'locations.get_lat_long', 'module': __name__})
-        parsing_address = ''
-
-        if self.address_1:
-            parsing_address = self.address_1
-        if self.address_2:
-            parsing_address += ', ' + self.address_2
-        if self.city:
-            parsing_address += ', ' + self.city
-        if self.state:
-            parsing_address += ', ' + self.state
-        if self.country:
-            parsing_address += ', ' + self.country
-        if self.postal_code:
-            parsing_address += ', ' + self.postal_code
-
-        if parsing_address:
-            if mapbox_access_token:
-                self.geocoder(parsing_address, 'mapbox')
-            else:
-                self.geocoder(parsing_address, 'google')
-
-    def geocoder(self, parsing_address, method):
-        if method == 'mapbox':
-            geocoder_response = geocoder.mapbox(parsing_address)
-        elif method == 'google':
-            geocoder_response = geocoder.google(parsing_address)
-
-        if not geocoder_response.ok:
-            if 'OVER_QUERY_LIMIT' in geocoder_response.error:
-                log_metric('transmission.errors', tags={'method': 'locations.geocoder',
-                                                        'code': 'service_unavailable', 'module': __name__,
-                                                        'detail': f'error calling {method} geocoder'})
-                LOG.debug(f'{method} geocode for address {parsing_address} failed as query limit was reached')
-                raise Throttled(detail=f'Over Query Limit for {method}', code=HTTP_503_SERVICE_UNAVAILABLE)
-
-            if 'No results found' or 'ZERO_RESULTS' in geocoder_response.error:
-                log_metric('transmission.errors', tags={'method': 'locations.geocoder',
-                                                        'code': 'internal_server_error', 'module': __name__,
-                                                        'detail': f'No results returned from {method} geocoder'})
-                LOG.debug(f'{method} geocode for address {parsing_address} failed with zero results returned')
-                LOG.warning(f'Cannot Geolocalize Address for location: {self.id}')
-
-        else:
-            self.geometry = Point(geocoder_response.xy)

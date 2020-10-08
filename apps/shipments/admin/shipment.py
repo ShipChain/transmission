@@ -56,6 +56,7 @@ class AsyncJobInlineTab(ReadOnlyPermissionMixin, admin.TabularInline):
 
 
 NON_SCHEMA_FIELDS = [
+    'accessrequest',
     'asyncjob',
     'ethaction',
     'permissionlink',

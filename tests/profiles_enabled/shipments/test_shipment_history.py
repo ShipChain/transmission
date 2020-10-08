@@ -13,9 +13,11 @@
 #  limitations under the License.
 from datetime import datetime, timedelta
 
+import geojson
 import pytest
 from django.urls import reverse
 from freezegun import freeze_time
+from geojson import Point
 from shipchain_common.test_utils import AssertionHelper, create_form_content
 from shipchain_common.utils import random_id
 
@@ -117,19 +119,16 @@ class TestShipmentHistory:
         assert 'customer_fields.custom_field_1' not in changed_fields
         assert 'customer_fields.custom_field_2' in changed_fields
 
-    def test_shipment_udate_location(self, client_alice, mock_location):
+    def test_shipment_udate_location(self, client_alice):
         location_attributes, content_type = create_form_content({
             'ship_from_location.name': "Location Name",
             'ship_from_location.city': "City",
-            'ship_from_location.state': "State"
+            'ship_from_location.state': "State",
+            'ship_from_location.geometry': geojson.dumps(Point((42.0, 27.0)))
         })
 
         response = client_alice.patch(self.update_url, data=location_attributes, content_type=content_type)
         AssertionHelper.HTTP_202(response)
-        mock_location.assert_calls([{
-            'host': 'https://api.mapbox.com',
-            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
-        }])
 
         response = client_alice.get(self.history_url)
         AssertionHelper.HTTP_200(response, is_list=True, count=3)
@@ -144,10 +143,6 @@ class TestShipmentHistory:
 
         response = client_alice.patch(self.update_url, data=location_attributes, content_type=content_type)
         AssertionHelper.HTTP_202(response)
-        mock_location.assert_calls([{
-            'host': 'https://api.mapbox.com',
-            'path': '/geocoding/v5/mapbox.places/,%20City,%20State.json',
-        }])
 
         response = client_alice.get(self.history_url)
         AssertionHelper.HTTP_200(response, is_list=True, count=4)

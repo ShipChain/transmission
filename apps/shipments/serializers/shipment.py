@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 
 import requests
 from django.conf import settings
+from django.contrib.gis.geos import Point
 from django.db import transaction
 from enumfields.drf.serializers import EnumSupportSerializerMixin
 from rest_framework import status
@@ -72,6 +73,16 @@ class LocationSerializer(NullableFieldsMixin, serializers.ModelSerializer):
     """
     Serializer for a location, used nested in a Shipment
     """
+    def validate_geometry(self, value):
+        if not isinstance(value, Point):
+            raise serializers.ValidationError('Location.geometry must be of type Point')
+        if not value.coords:
+            raise serializers.ValidationError('Location.geometry must include coordinates')
+        if abs(value.coords[0]) > 180:
+            raise serializers.ValidationError('Location.geometry longitude is out of range (-180, 180)')
+        if abs(value.coords[1]) > 90:
+            raise serializers.ValidationError('Location.geometry latitude is out of range (-90, 90)')
+        return value
 
     class Meta:
         model = Location
