@@ -1,7 +1,6 @@
 abbv
 accessrequest
 acl
-afts
 aggregate
 amz
 appt
