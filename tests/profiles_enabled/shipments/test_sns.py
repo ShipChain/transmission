@@ -85,7 +85,7 @@ class TestSNS:
         assert json.loads(shipment_message[0]['Message'])['id'] == shipment.id
         assert json.loads(aftership_message[0]['Message'])['shipmentId'] == shipment.id
         assert json.loads(aftership_message[0]['Message'])['aftershipTrackingId'] == 'id-from-aftership'
-        assert json.loads(aftership_message[0]['Message'])['ownerId'] == shipment.owner_id
+        assert json.loads(aftership_message[0]['Message'])['ownerId'] == shipment.updated_by
 
         messages = sqs_queue.receive_messages(MaxNumberOfMessages=1)
         assert len(messages) == 0  # Queue should be clear

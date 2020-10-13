@@ -185,7 +185,8 @@ def shipment_quickadd_tracking_changed(sender, instance, changed_fields, **kwarg
                                              carrier_abbv=tracking_data['slug'])
         instance.refresh_from_db(fields=['shippers_reference', 'carrier_abbv'])
 
-        SNSClient().aftership_tracking_update(instance, tracking_data['id'])
+        # pylint: disable=protected-access
+        SNSClient().aftership_tracking_update(instance, tracking_data['id'], instance.updated_by)
 
 
 @receiver(post_save_changed, sender=Shipment, fields=['device', 'state', 'geofences'],
