@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from django.conf import settings
 from django.urls import reverse
 from pytest import fixture
@@ -40,8 +41,10 @@ def new_rw_access_request_bob(shipment_alice, user_bob, access_request_rw_attrib
     return AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_bob.id, **access_request_rw_attributes)
 
 @fixture
-def approved_access_request_bob(new_access_request_bob):
+def approved_access_request_bob(new_access_request_bob, user_alice_id):
     new_access_request_bob.approved = True
+    new_access_request_bob.approved_at = datetime.now(timezone.utc)
+    new_access_request_bob.approved_by = user_alice_id
     new_access_request_bob.save()
     return new_access_request_bob
 
@@ -50,8 +53,10 @@ def new_access_request_lionel(shipment_alice, user_lionel, access_request_ro_att
     return AccessRequest.objects.create(shipment=shipment_alice, requester_id=user_lionel.id, **access_request_ro_attributes)
 
 @fixture
-def approved_access_request_lionel(new_access_request_lionel):
+def approved_access_request_lionel(new_access_request_lionel, user_alice_id):
     new_access_request_lionel.approved = True
+    new_access_request_lionel.approved_at = datetime.now(timezone.utc)
+    new_access_request_lionel.approved_by = user_alice_id
     new_access_request_lionel.save()
     return new_access_request_lionel
 
@@ -190,6 +195,19 @@ class TestAccessRequestUpdate:
 
         response = client_alice.patch(self.detail_url, {'approved': True, **access_request_ro_attributes})
         AssertionHelper.HTTP_200(response, attributes={'approved': True})
+
+    # Test that access requests cannot be approved twice (modifying approved_at/approved_by)
+    def test_double_approval(self, client_alice, approved_access_request_bob, access_request_ro_attributes):
+        response = client_alice.patch(self.detail_url, {'approved': True, **access_request_ro_attributes})
+        AssertionHelper.HTTP_400(response, 'This access request has already been approved')
+
+    # Test that approved_at/approved_by capture proper date and ID
+    def test_approval_log(self, client_alice, new_access_request_bob, access_request_ro_attributes, user_alice_id, frozen_time):
+        response = client_alice.patch(self.detail_url, {'approved': True, **access_request_ro_attributes})
+        AssertionHelper.HTTP_200(response, attributes={'approved_by': user_alice_id, 'approved_at': f'{frozen_time().isoformat()}Z'})
+
+        response = client_alice.patch(self.detail_url, {'approved': False})
+        AssertionHelper.HTTP_200(response, attributes={'approved_by': None, 'approved_at': None})
 
     # No one can change already-approved AccessRequest permissions
     def test_approved_permissions_immutability(self, approved_access_request_bob, client_alice, client_bob, access_request_rw_attributes):

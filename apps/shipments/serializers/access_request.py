@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from datetime import datetime, timezone
 
 from django.conf import settings
 
@@ -80,8 +81,16 @@ class AccessRequestSerializer(EnumSupportSerializerMixin, serializers.ModelSeria
 
     def validate_approved(self, approved):
         if settings.PROFILES_ENABLED:
-            if approved and not Shipment.objects.filter(owner_access_filter(self.context['request'])).exists():
-                raise serializers.ValidationError('User does not have access to approve this access request')
+            if approved:
+                if not Shipment.objects.filter(owner_access_filter(self.context['request'])).exists():
+                    raise serializers.ValidationError('User does not have access to approve this access request')
+                if self.instance.approved:
+                    raise serializers.ValidationError('This access request has already been approved')
+                self.instance.approved_at = datetime.now(timezone.utc)
+                self.instance.approved_by = self.context['request'].user.id
+            else:
+                self.instance.approved_at = None
+                self.instance.approved_by = None
 
         return approved
 
