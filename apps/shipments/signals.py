@@ -185,7 +185,6 @@ def shipment_quickadd_tracking_changed(sender, instance, changed_fields, **kwarg
                                              carrier_abbv=tracking_data['slug'])
         instance.refresh_from_db(fields=['shippers_reference', 'carrier_abbv'])
 
-        # pylint: disable=protected-access
         SNSClient().aftership_tracking_update(instance, tracking_data['id'], instance.updated_by)
 
 
