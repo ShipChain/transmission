@@ -19,10 +19,10 @@ class SNSClient:
             }
         )
 
-    def aftership_tracking_update(self, shipment, aftership_id):
+    def aftership_tracking_update(self, shipment, aftership_id, owner_id):
         self._publish(
             SNSClient.MessageType.AFTERSHIP_UPDATE,
-            ownerId=shipment.owner_id,
+            ownerId=owner_id,
             aftershipTrackingId=aftership_id,
             shipmentId=shipment.id
         )
