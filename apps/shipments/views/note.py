@@ -63,7 +63,8 @@ class ShipmentNoteViewSet(mixins.ConfigurableCreateModelMixin,
         'create': ActionConfiguration(
             request_serializer=ShipmentNoteCreateSerializer,
             response_serializer=ShipmentNoteSerializer,
-            permission_classes=WRITE_PERMISSIONS
+            permission_classes=WRITE_PERMISSIONS,
+            required_user_permissions=['shipment.create_notes']
         ),
         'list': ActionConfiguration(response_serializer=ShipmentNoteSerializer)
     }

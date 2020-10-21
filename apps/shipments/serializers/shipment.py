@@ -28,12 +28,13 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.fields import SkipField
 from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
+from rest_framework_serializer_field_permissions.fields import JSONField as PermissionJSONField
 from rest_framework_serializer_field_permissions.serializers import FieldPermissionSerializerMixin
 from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.exceptions import AccountLimitReached
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
-from apps.permissions import get_owner_id
+from apps.permissions import get_owner_id, UserFieldPermission
 from apps.utils import PermissionResourceRelatedField
 from ..models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     ExceptionType, TransitState, GTXValidation, ShipmentTag, AccessRequest, Endpoints, PermissionLevel
@@ -204,6 +205,8 @@ class ShipmentCreateSerializer(ShipmentSerializer):
         child=serializers.DictField(child=serializers.CharField(max_length=50)),
         required=False
     )
+    customer_fields = PermissionJSONField(permission_classes=(UserFieldPermission('shipment.create_customer_fields'),),
+                                          required=False)
 
     def create(self, validated_data):
         if settings.PROFILES_ENABLED:
@@ -303,6 +306,8 @@ class ShipmentUpdateSerializer(ShipmentSerializer):
     bill_to_location = LocationSerializer(required=False)
     final_destination_location = LocationSerializer(required=False)
     device = DeviceSerializer(required=False)
+    customer_fields = PermissionJSONField(permission_classes=(UserFieldPermission('shipment.create_customer_fields'),),
+                                          required=False)
 
     class Meta:
         model = Shipment

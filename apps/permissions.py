@@ -20,6 +20,7 @@ from django.db.models import Q
 from django.conf import settings
 
 from rest_framework import permissions, status
+from rest_framework_serializer_field_permissions.permissions import BaseFieldPermission
 from shipchain_common.authentication import get_jwt_from_request
 from shipchain_common.utils import get_client_ip
 
@@ -202,3 +203,11 @@ class IsNestedOwnerShipperCarrierModerator(IsShipmentOwnerMixin,
             self.has_shipper_permission(jwt, shipment) or \
             self.has_carrier_permission(jwt, shipment) or \
             self.has_moderator_permission(jwt, shipment)
+
+
+class UserFieldPermission(BaseFieldPermission):
+    def __init__(self, perms):
+        self.permissions = perms if isinstance(perms, tuple) else (perms,)
+
+    def has_permission(self, request):
+        return request.user.has_perms(self.permissions)

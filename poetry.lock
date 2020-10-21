@@ -705,7 +705,7 @@ django = ">=2.1"
 djangorestframework = ">=3.0,<4.0"
 
 [package.source]
-reference = "faced3f0d12dea5ac1829ae27f6f58d4ef40b131"
+reference = "8bd6c547db0ac87906204128ff3cc79361fc0393"
 type = "git"
 url = "git://github.com/ajhodges/django-rest-serializer-field-permissions.git"
 [[package]]
@@ -1249,7 +1249,7 @@ description = "Load me later. A lazy plugin management system."
 name = "lml"
 optional = false
 python-versions = "*"
-version = "0.0.9"
+version = "0.1.0"
 
 [[package]]
 category = "main"
@@ -2406,7 +2406,7 @@ test = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
 [metadata]
-content-hash = "770f3e6f5b376c2b41290b1c2695fa9b7346de04ae3cede910fe48a77bc270b7"
+content-hash = "bc7308137f06d25be15b1b08401061e4a863a52863745839ff2366bc997411fd"
 python-versions = "==3.6.9"
 
 [metadata.files]
@@ -2961,8 +2961,8 @@ lazy-object-proxy = [
     {file = "lazy_object_proxy-1.4.3-cp38-cp38-win_amd64.whl", hash = "sha256:59f79fef100b09564bc2df42ea2d8d21a64fdcda64979c0fa3db7bdaabaf6239"},
 ]
 lml = [
-    {file = "lml-0.0.9-py2.py3-none-any.whl", hash = "sha256:b1bef669dc077a1075fa64b99229b6341085b3b3a98d29c66df1853cc14e6c1a"},
-    {file = "lml-0.0.9.tar.gz", hash = "sha256:ea5ba817b4adc9e9f5c21725cd2475f912933b7e2dfdf0792aed80077154f63f"},
+    {file = "lml-0.1.0-py2.py3-none-any.whl", hash = "sha256:ec06e850019942a485639c8c2a26bdb99eae24505bee7492b649df98a0bed101"},
+    {file = "lml-0.1.0.tar.gz", hash = "sha256:57a085a29bb7991d70d41c6c3144c560a8e35b4c1030ffb36d85fa058773bcc5"},
 ]
 logstash-formatter = [
     {file = "logstash_formatter-0.5.17.tar.gz", hash = "sha256:163f5ef62df5459f1d36dcb54e9c3f8f0c90157a324a3361887532b615bf4fb9"},

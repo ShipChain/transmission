@@ -51,6 +51,7 @@ VAULT_ID = random_id()
 ORGANIZATION_NAME = 'ShipChain Test'
 ORGANIZATION2_NAME = 'Test Organization-2'
 BASE_PERMISSIONS = ['user.perm_1', 'user.perm_2', 'user.perm_3']
+BASE_FEATURES = {'shipment': ['create_notes', 'create_customer_fields']}
 GTX_PERMISSIONS = ['user.perm_1', 'gtx.shipment_use', 'user.perm_3']
 
 
@@ -74,7 +75,8 @@ def user_alice(user_alice_id):
             sub=user_alice_id,
             organization_id=ORGANIZATION_ALICE_ID,
             organization_name=ORGANIZATION_NAME,
-            permissions=BASE_PERMISSIONS
+            permissions=BASE_PERMISSIONS,
+            features=BASE_FEATURES
         ))
 
 
@@ -121,6 +123,25 @@ def client_alice_limited(user_alice_limited):
     api_client = APIClient()
     api_client.force_authenticate(user_alice_limited)
     return api_client
+
+
+@pytest.fixture
+def user_alice_no_features(user_alice_id):
+    return passive_credentials_auth(
+        get_jwt(
+            username='alice@shipchain.io',
+            sub=user_alice_id,
+            organization_id=ORGANIZATION_ALICE_ID,
+            organization_name=ORGANIZATION_NAME,
+        ))
+
+
+@pytest.fixture
+def client_alice_no_features(user_alice_no_features):
+    api_client = APIClient()
+    api_client.force_authenticate(user_alice_no_features)
+    return api_client
+
 
 # Carol is in Alice's organization
 # --------------------------------
@@ -182,7 +203,8 @@ def user_bob(user_bob_id):
         get_jwt(username='bob@shipchain.io',
                 sub=user_bob_id,
                 organization_id=ORGANIZATION_BOB_ID,
-                organization_name=ORGANIZATION2_NAME
+                organization_name=ORGANIZATION2_NAME,
+                features=BASE_FEATURES
                 ))
 
 
@@ -242,7 +264,7 @@ def gtx_user(gtx_token):
 
 @pytest.fixture(scope='session')
 def shipper_user():
-    return passive_credentials_auth(get_jwt(username='shipper1@shipchain.io', sub=SHIPPER_ID))
+    return passive_credentials_auth(get_jwt(username='shipper1@shipchain.io', sub=SHIPPER_ID, features=BASE_FEATURES))
 
 
 @pytest.fixture(scope='session')
