@@ -23,6 +23,7 @@ from django.conf import settings
 from enumfields.drf import EnumSupportSerializerMixin
 from rest_framework_json_api import serializers
 from influxdb_metrics.loader import log_metric
+from shipchain_common.exceptions import AccountLimitReached
 from shipchain_common.utils import UpperEnumField
 
 from apps.utils import S3PreSignedMixin
@@ -55,6 +56,18 @@ class DocumentCreateSerializer(BaseDocumentSerializer):
         else:
             exclude = ('shipment', )
         meta_fields = ('presigned_s3', )
+
+    def create(self, validated_data):
+        validated_data['shipment_id'] = self.context['view'].kwargs['shipment_pk']
+
+        # Enforce account limits
+        document_limit = self.context['request'].user.get_limit('shipments', 'documents')
+        if document_limit:
+            shipment_document_count = Document.objects.filter(shipment_id=validated_data['shipment_id']).count()
+            if shipment_document_count + 1 > document_limit:
+                raise AccountLimitReached()
+
+        return super().create(validated_data)
 
 
 class DocumentSerializer(BaseDocumentSerializer):

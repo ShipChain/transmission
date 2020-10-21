@@ -57,7 +57,7 @@ python-jose = "~3.0"
 pyyaml = ">=4.2b4"
 redis = "~3.3"
 requests = "~2.24"
-shipchain-common = "~1.0.29"
+shipchain-common = {git = "git://github.com/shipchain/python-common.git", rev = "c60ff21690d0e25b628fe18b7cc4c11cf18484d7"}
 uwsgi = "~2.0.17"
 watchdog = "~0.9"
 whitenoise = "~4.1"

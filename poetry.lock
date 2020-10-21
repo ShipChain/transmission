@@ -35,7 +35,7 @@ description = "ASGI specs, helper code, and adapters"
 name = "asgiref"
 optional = false
 python-versions = ">=3.5"
-version = "3.2.10"
+version = "3.3.0"
 
 [package.extras]
 tests = ["pytest", "pytest-asyncio"]
@@ -365,7 +365,7 @@ description = "Checks CloudFormation templates for practices and behaviour that 
 name = "cfn-lint"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "0.37.1"
+version = "0.38.0"
 
 [package.dependencies]
 aws-sam-translator = ">=1.25.0"
@@ -446,7 +446,7 @@ marker = "platform_system == \"Windows\" or sys_platform == \"win32\""
 name = "colorama"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-version = "0.4.3"
+version = "0.4.4"
 
 [[package]]
 category = "main"
@@ -628,7 +628,7 @@ description = "Django friendly finite state machine support."
 name = "django-fsm"
 optional = false
 python-versions = "*"
-version = "2.7.0"
+version = "2.7.1"
 
 [[package]]
 category = "main"
@@ -870,7 +870,7 @@ description = "Fake implementation of redis API for testing purposes."
 name = "fakeredis"
 optional = false
 python-versions = ">=3.5"
-version = "1.4.3"
+version = "1.4.4"
 
 [package.dependencies]
 redis = "<3.6.0"
@@ -1080,7 +1080,7 @@ description = "iniconfig: brain-dead simple config-ini parsing"
 name = "iniconfig"
 optional = false
 python-versions = "*"
-version = "1.0.1"
+version = "1.1.1"
 
 [[package]]
 category = "dev"
@@ -1429,7 +1429,7 @@ description = "Python Build Reasonableness"
 name = "pbr"
 optional = false
 python-versions = ">=2.6"
-version = "5.5.0"
+version = "5.5.1"
 
 [[package]]
 category = "dev"
@@ -1599,16 +1599,16 @@ category = "dev"
 description = "A python library to read and write structured data in csv, zipped csvformat and to/from databases"
 name = "pyexcel-io"
 optional = false
-python-versions = "*"
-version = "0.5.20"
+python-versions = ">=3.6"
+version = "0.6.3"
 
 [package.dependencies]
 lml = ">=0.0.4"
 
 [package.extras]
-ods = ["pyexcel-ods3 (>=0.5.0)"]
-xls = ["pyexcel-xls (>=0.5.0)"]
-xlsx = ["pyexcel-xlsx (>=0.5.0)"]
+ods = ["pyexcel-ods3 (>=0.6.0)"]
+xls = ["pyexcel-xls (>=0.6.0)"]
+xlsx = ["pyexcel-xlsx (>=0.6.0)"]
 
 [[package]]
 category = "dev"
@@ -2058,25 +2058,29 @@ YAML = ["pyyaml"]
 
 [[package]]
 category = "main"
-description = "A PyPI package containing shared code for ShipChain's Python/Django projects."
+description = ""
 name = "shipchain-common"
 optional = false
-python-versions = ">=3.6,<3.8"
+python-versions = ">=3.6,<3.8"  # Compatible python versions must be declared here
 version = "1.0.29"
 
 [package.dependencies]
-aws-requests-auth = ">=0.4,<0.5"
-boto3 = ">=1.9,<1.10"
-cryptography = ">=2.5,<2.6"
+aws-requests-auth = "~0.4"
+boto3 = "~1.9"
+cryptography = "~2.5"
 django = ">=2.2"
 django-enumfields = ">=0.10.0"
-django-influxdb-tagged-metrics = ">=1.3.3,<2.0.0"
-djangorestframework = ">=3,<4"
-djangorestframework-jsonapi = ">=3,<4"
-drf-nested-routers = ">=0.91.0,<0.92.0"
-python-dateutil = ">=2.7.5,<2.8.0"
-requests = ">=2.21,<3.0"
+django-influxdb-tagged-metrics = "^1.3.3"
+djangorestframework = "~3"
+djangorestframework-jsonapi = "~3"
+drf-nested-routers = "^0.91.0"
+python-dateutil = "~2.7.5"
+requests = "^2.21"
 
+[package.source]
+reference = "c60ff21690d0e25b628fe18b7cc4c11cf18484d7"
+type = "git"
+url = "git://github.com/shipchain/python-common.git"
 [[package]]
 category = "main"
 description = "Python 2 and 3 compatibility utilities"
@@ -2115,7 +2119,7 @@ description = "A non-validating SQL parser."
 name = "sqlparse"
 optional = false
 python-versions = ">=3.5"
-version = "0.4.0"
+version = "0.4.1"
 
 [[package]]
 category = "dev"
@@ -2240,11 +2244,11 @@ description = "HTTP library with thread-safe connection pooling, file post, and 
 name = "urllib3"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4"
-version = "1.25.10"
+version = "1.25.11"
 
 [package.extras]
 brotli = ["brotlipy (>=0.6.0)"]
-secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "pyOpenSSL (>=0.14)", "ipaddress"]
+secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "ipaddress"]
 socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7,<2.0)"]
 
 [[package]]
@@ -2379,7 +2383,7 @@ marker = "python_version < \"3.7\" and python_version != \"3.4\" or python_versi
 name = "zipp"
 optional = false
 python-versions = ">=3.6"
-version = "3.3.0"
+version = "3.3.1"
 
 [package.extras]
 docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
@@ -2402,7 +2406,7 @@ test = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 
 [metadata]
-content-hash = "d78521d433e29ddaa5a43c277f6ca00650a07ebcca3540837478a9182a45a031"
+content-hash = "770f3e6f5b376c2b41290b1c2695fa9b7346de04ae3cede910fe48a77bc270b7"
 python-versions = "==3.6.9"
 
 [metadata.files]
@@ -2419,8 +2423,8 @@ argh = [
     {file = "argh-0.26.2.tar.gz", hash = "sha256:e9535b8c84dc9571a48999094fda7f33e63c3f1b74f3e5f3ac0105a58405bb65"},
 ]
 asgiref = [
-    {file = "asgiref-3.2.10-py3-none-any.whl", hash = "sha256:9fc6fb5d39b8af147ba40765234fa822b39818b12cc80b35ad9b0cef3a476aed"},
-    {file = "asgiref-3.2.10.tar.gz", hash = "sha256:7e51911ee147dd685c3c8b805c0ad0cb58d360987b56953878f8c06d2d1c6f1a"},
+    {file = "asgiref-3.3.0-py3-none-any.whl", hash = "sha256:a5098bc870b80e7b872bff60bb363c7f2c2c89078759f6c47b53ff8c525a152e"},
+    {file = "asgiref-3.3.0.tar.gz", hash = "sha256:cd88907ecaec59d78e4ac00ea665b03e571cb37e3a0e37b3702af1a9e86c365a"},
 ]
 asn1crypto = [
     {file = "asn1crypto-0.24.0-py2.py3-none-any.whl", hash = "sha256:2f1adbb7546ed199e3c90ef23ec95c5cf3585bac7d11fb7eb562a3fe89c64e87"},
@@ -2546,8 +2550,8 @@ cffi = [
     {file = "cffi-1.14.3.tar.gz", hash = "sha256:f92f789e4f9241cd262ad7a555ca2c648a98178a953af117ef7fad46aa1d5591"},
 ]
 cfn-lint = [
-    {file = "cfn-lint-0.37.1.tar.gz", hash = "sha256:2b47c74df569ffedd747dfc0535ce40db120d91584f02073a7bd6ab89b24fc97"},
-    {file = "cfn_lint-0.37.1-py3-none-any.whl", hash = "sha256:38973fb861986270b9ecaa72aa65b26f21bf8c14c075a3dd8b584b2b3a164dad"},
+    {file = "cfn-lint-0.38.0.tar.gz", hash = "sha256:51d810bf63ee244a1b347e88d7ea53fa60308b4d36503bb86844c6ea280a6ff2"},
+    {file = "cfn_lint-0.38.0-py3-none-any.whl", hash = "sha256:c89b70933fc2e7066acfd293c86cbd7f507fe4d764347fe23c3f8f17c54b4b2c"},
 ]
 channels = [
     {file = "channels-2.4.0-py2.py3-none-any.whl", hash = "sha256:80a5ad1962ae039a3dcc0a5cb5212413e66e2f11ad9e9db8004834436daf3400"},
@@ -2566,8 +2570,8 @@ click = [
     {file = "click-7.1.2.tar.gz", hash = "sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a"},
 ]
 colorama = [
-    {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
-    {file = "colorama-0.4.3.tar.gz", hash = "sha256:e96da0d330793e2cb9485e9ddfd918d456036c7149416295932478192f4436a1"},
+    {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
+    {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 constantly = [
     {file = "constantly-15.1.0-py2.py3-none-any.whl", hash = "sha256:dd2fa9d6b1a51a83f0d7dd76293d734046aa176e384bf6e33b7e44880eb37c5d"},
@@ -2690,8 +2694,8 @@ django-filter = [
     {file = "django_filter-2.4.0-py3-none-any.whl", hash = "sha256:e00d32cebdb3d54273c48f4f878f898dced8d5dfaad009438fe61ebdf535ace1"},
 ]
 django-fsm = [
-    {file = "django-fsm-2.7.0.tar.gz", hash = "sha256:9f42111814a273cdfd79cdf839f3596bc48b9cfe5fe5102293f07ade5b0048d5"},
-    {file = "django_fsm-2.7.0-py2.py3-none-any.whl", hash = "sha256:d5b0ca13965261f4fffad350fadd388dcfd9b6712399a84021073a40b161fbd7"},
+    {file = "django-fsm-2.7.1.tar.gz", hash = "sha256:219b204777a932720d8583cb1f34713bd08b4713e1beb39ab2e674810e21d5e9"},
+    {file = "django_fsm-2.7.1-py2.py3-none-any.whl", hash = "sha256:c96a844853de0f5dc67791b64beb367b5d56f992dff7c00f9b88c483e09f15ec"},
 ]
 django-fullurl = [
     {file = "django_fullurl-0.5-py2.py3-none-any.whl", hash = "sha256:f700aadbd8d4c20df5976c1962a21e7eed3697c05394358e51cd26fb4cefb11d"},
@@ -2756,8 +2760,8 @@ et-xmlfile = [
     {file = "et_xmlfile-1.0.1.tar.gz", hash = "sha256:614d9722d572f6246302c4491846d2c393c199cfa4edc9af593437691683335b"},
 ]
 fakeredis = [
-    {file = "fakeredis-1.4.3-py3-none-any.whl", hash = "sha256:aad8836ffe0319ffbba66dcf872ac6e7e32d1f19790e31296ba58445efb0a5c7"},
-    {file = "fakeredis-1.4.3.tar.gz", hash = "sha256:7ea0866ba5edb40fe2e9b1722535df0c7e6b91d518aa5f50d96c2fff3ea7f4c2"},
+    {file = "fakeredis-1.4.4-py3-none-any.whl", hash = "sha256:f8c8ea764d7b6fd801e7f5486e3edd32ca991d506186f1923a01fc072e33c271"},
+    {file = "fakeredis-1.4.4.tar.gz", hash = "sha256:8070b7fce16f828beaef2c757a4354af91698685d5232404f1aeeb233529c7a5"},
 ]
 flake8 = [
     {file = "flake8-3.8.4-py2.py3-none-any.whl", hash = "sha256:749dbbd6bfd0cf1318af27bf97a14e28e5ff548ef8e5b1566ccfb25a11e7c839"},
@@ -2888,8 +2892,8 @@ influxdb = [
     {file = "influxdb-5.0.0.tar.gz", hash = "sha256:6adba2ddfd5781a06b5204339e679d66645bf6cc2b7f493eb9d7c8986d714e80"},
 ]
 iniconfig = [
-    {file = "iniconfig-1.0.1-py3-none-any.whl", hash = "sha256:80cf40c597eb564e86346103f609d74efce0f6b4d4f30ec8ce9e2c26411ba437"},
-    {file = "iniconfig-1.0.1.tar.gz", hash = "sha256:e5f92f89355a67de0595932a6c6c02ab4afddc6fcdc0bfc5becd0d60884d3f69"},
+    {file = "iniconfig-1.1.1-py2.py3-none-any.whl", hash = "sha256:011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3"},
+    {file = "iniconfig-1.1.1.tar.gz", hash = "sha256:bc3af051d7d14b2ee5ef9969666def0cd1a000e121eaea580d4a313df4b37f32"},
 ]
 isort = [
     {file = "isort-4.3.21-py2.py3-none-any.whl", hash = "sha256:6e811fcb295968434526407adb8796944f1988c5b65e8139058f2014cbe100fd"},
@@ -2988,6 +2992,8 @@ lupa = [
     {file = "lupa-1.9-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:2551ae82ea0f90383fb153ecd29a1a166e2552e10b7a712ff047cad88062ad37"},
     {file = "lupa-1.9-cp38-cp38-win32.whl", hash = "sha256:162f6793b2ad40d25710b9998bce2eeb3938efbb4dbad49fb8c5082d214237b3"},
     {file = "lupa-1.9-cp38-cp38-win_amd64.whl", hash = "sha256:09d6c45eb3b9407588c5a168e3371b629e75c5822050e9feff393601709bd0d7"},
+    {file = "lupa-1.9-cp39-cp39-manylinux1_i686.whl", hash = "sha256:5e08a97a4ae46592f1fd04f2f97d9fdeb6a34dbcdc0a049e1ca5929e6902c558"},
+    {file = "lupa-1.9-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:7df1f565b92f124e45093dde8d262489a67f40eddd7a65035e6bc3b982be234f"},
     {file = "lupa-1.9.tar.gz", hash = "sha256:a3e11d806ca02cf72e490ec1974f8b96a14a1091895c9dccebe0b8d52dd82e8e"},
 ]
 markupsafe = [
@@ -3085,8 +3091,8 @@ pathtools = [
     {file = "pathtools-0.1.2.tar.gz", hash = "sha256:7c35c5421a39bb82e58018febd90e3b6e5db34c5443aaaf742b3f33d4655f1c0"},
 ]
 pbr = [
-    {file = "pbr-5.5.0-py2.py3-none-any.whl", hash = "sha256:5adc0f9fc64319d8df5ca1e4e06eea674c26b80e6f00c530b18ce6a6592ead15"},
-    {file = "pbr-5.5.0.tar.gz", hash = "sha256:14bfd98f51c78a3dd22a1ef45cf194ad79eee4a19e8e1a0d5c7f8e81ffe182ea"},
+    {file = "pbr-5.5.1-py2.py3-none-any.whl", hash = "sha256:b236cde0ac9a6aedd5e3c34517b423cd4fd97ef723849da6b0d2231142d89c00"},
+    {file = "pbr-5.5.1.tar.gz", hash = "sha256:5fad80b613c402d5b7df7bd84812548b2a61e9977387a80a5fc5c396492b13c9"},
 ]
 pep8-naming = [
     {file = "pep8-naming-0.10.0.tar.gz", hash = "sha256:f3b4a5f9dd72b991bf7d8e2a341d2e1aa3a884a769b5aaac4f56825c1763bf3a"},
@@ -3206,8 +3212,8 @@ pyexcel = [
     {file = "pyexcel-0.5.15.tar.gz", hash = "sha256:f0a7797f3a0de9e6f81151c9581fa90c4e1afce207dc47d2f0ba728dd2e24467"},
 ]
 pyexcel-io = [
-    {file = "pyexcel-io-0.5.20.tar.gz", hash = "sha256:08dfe39553b996359b143de3d9ec43e196f1138d47cabb73af04a16821b84d79"},
-    {file = "pyexcel_io-0.5.20-py2.py3-none-any.whl", hash = "sha256:2cba956814e72b66072d97b00ede4a084ad881ce72129088eb0dc3c7f3d670cd"},
+    {file = "pyexcel-io-0.6.3.tar.gz", hash = "sha256:8fb7a201eb3e5763bb8f9d6e096ceed9e5f1baecd784c9fadbe0fb3d59174c0e"},
+    {file = "pyexcel_io-0.6.3-py2.py3-none-any.whl", hash = "sha256:671acac91b4db8020b0b338f69990ba19312e3c5bc68ea6b1b045cf58135582b"},
 ]
 pyexcel-xls = [
     {file = "pyexcel-xls-0.5.9.tar.gz", hash = "sha256:d56cadea0a660684456976d98052554d3bbe2a78afc5f9a91c8691f626608555"},
@@ -3359,10 +3365,7 @@ service-identity = [
 setoptconf = [
     {file = "setoptconf-0.2.0.tar.gz", hash = "sha256:5b0b5d8e0077713f5d5152d4f63be6f048d9a1bb66be15d089a11c898c3cf49c"},
 ]
-shipchain-common = [
-    {file = "shipchain-common-1.0.29.tar.gz", hash = "sha256:a37fdf7f740d91ffcb8dd81450d91eec831b430369df2979c94514afee808624"},
-    {file = "shipchain_common-1.0.29-py3-none-any.whl", hash = "sha256:05a341b8a2a5a91b07fb7165d0fcb783b80d9462dc7c9e0b8acad1432a28e74c"},
-]
+shipchain-common = []
 six = [
     {file = "six-1.15.0-py2.py3-none-any.whl", hash = "sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced"},
     {file = "six-1.15.0.tar.gz", hash = "sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259"},
@@ -3380,8 +3383,8 @@ sortedcontainers = [
     {file = "sortedcontainers-2.2.2.tar.gz", hash = "sha256:4e73a757831fc3ca4de2859c422564239a31d8213d09a2a666e375807034d2ba"},
 ]
 sqlparse = [
-    {file = "sqlparse-0.4.0-py3-none-any.whl", hash = "sha256:0523026398aea9c8b5f7a4a6d5c0829c285b4fbd960c17b5967a369342e21e01"},
-    {file = "sqlparse-0.4.0.tar.gz", hash = "sha256:d59e473424ae7470778fa4dd0dd7bb666ff324f0a6106c29deb5946ea5367f04"},
+    {file = "sqlparse-0.4.1-py3-none-any.whl", hash = "sha256:017cde379adbd6a1f15a61873f43e8274179378e95ef3fede90b5aa64d304ed0"},
+    {file = "sqlparse-0.4.1.tar.gz", hash = "sha256:0f91fd2e829c44362cbcfab3e9ae12e22badaa8a29ad5ff599f9ec109f0454e8"},
 ]
 sshpubkeys = [
     {file = "sshpubkeys-3.1.0-py2.py3-none-any.whl", hash = "sha256:9f73d51c2ef1e68cd7bde0825df29b3c6ec89f4ce24ebca3bf9eaa4a23a284db"},
@@ -3460,8 +3463,8 @@ typed-ast = [
     {file = "typed_ast-1.4.1.tar.gz", hash = "sha256:8c8aaad94455178e3187ab22c8b01a3837f8ee50e09cf31f1ba129eb293ec30b"},
 ]
 urllib3 = [
-    {file = "urllib3-1.25.10-py2.py3-none-any.whl", hash = "sha256:e7983572181f5e1522d9c98453462384ee92a0be7fac5f1413a1e35c56cc0461"},
-    {file = "urllib3-1.25.10.tar.gz", hash = "sha256:91056c15fa70756691db97756772bb1eb9678fa585d9184f24534b100dc60f4a"},
+    {file = "urllib3-1.25.11-py2.py3-none-any.whl", hash = "sha256:f5321fbe4bf3fefa0efd0bfe7fb14e90909eb62a48ccda331726b4319897dd5e"},
+    {file = "urllib3-1.25.11.tar.gz", hash = "sha256:8d7eaa5a82a1cac232164990f04874c594c9453ec55eef02eab885aa02fc17a2"},
 ]
 urwid = [
     {file = "urwid-2.1.2.tar.gz", hash = "sha256:588bee9c1cb208d0906a9f73c613d2bd32c3ed3702012f51efe318a3f2127eae"},
@@ -3512,8 +3515,8 @@ xmltodict = [
     {file = "xmltodict-0.12.0.tar.gz", hash = "sha256:50d8c638ed7ecb88d90561beedbf720c9b4e851a9fa6c47ebd64e99d166d8a21"},
 ]
 zipp = [
-    {file = "zipp-3.3.0-py3-none-any.whl", hash = "sha256:eed8ec0b8d1416b2ca33516a37a08892442f3954dee131e92cfd92d8fe3e7066"},
-    {file = "zipp-3.3.0.tar.gz", hash = "sha256:64ad89efee774d1897a58607895d80789c59778ea02185dd846ac38394a8642b"},
+    {file = "zipp-3.3.1-py3-none-any.whl", hash = "sha256:16522f69653f0d67be90e8baa4a46d66389145b734345d68a257da53df670903"},
+    {file = "zipp-3.3.1.tar.gz", hash = "sha256:c1532a8030c32fd52ff6a288d855fe7adef5823ba1d26a29a68fd6314aa72baa"},
 ]
 "zope.interface" = [
     {file = "zope.interface-5.1.2-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:f718675fd071bcce4f7cbf9250cbaaf64e2e91ef1b0b32a1af596e7412647556"},

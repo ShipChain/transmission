@@ -103,6 +103,24 @@ def client_alice_throttled(user_alice_throttled):
     api_client.force_authenticate(user_alice_throttled)
     return api_client
 
+@pytest.fixture
+def user_alice_limited(user_alice_id):
+    return passive_credentials_auth(
+        get_jwt(
+            username='alice@shipchain.io',
+            sub=user_alice_id,
+            organization_id=ORGANIZATION_ALICE_ID,
+            organization_name=ORGANIZATION_NAME,
+            permissions=BASE_PERMISSIONS,
+            limits={'shipments': {'active': 1, 'documents': 1}}
+        ))
+
+
+@pytest.fixture
+def client_alice_limited(user_alice_limited):
+    api_client = APIClient()
+    api_client.force_authenticate(user_alice_limited)
+    return api_client
 
 # Carol is in Alice's organization
 # --------------------------------

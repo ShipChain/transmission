@@ -30,8 +30,10 @@ from rest_framework.utils import model_meta
 from rest_framework_json_api import serializers
 from rest_framework_serializer_field_permissions.serializers import FieldPermissionSerializerMixin
 from shipchain_common.authentication import get_jwt_from_request
+from shipchain_common.exceptions import AccountLimitReached
 from shipchain_common.utils import UpperEnumField, validate_uuid4
 
+from apps.permissions import get_owner_id
 from apps.utils import PermissionResourceRelatedField
 from ..models import Shipment, Device, Location, LoadShipment, FundingType, EscrowState, ShipmentState, \
     ExceptionType, TransitState, GTXValidation, ShipmentTag, AccessRequest, Endpoints, PermissionLevel
@@ -204,8 +206,14 @@ class ShipmentCreateSerializer(ShipmentSerializer):
     )
 
     def create(self, validated_data):
-        extra_args = {}
+        # Enforce account limits
+        shipment_limit = self.context['request'].user.get_limit('shipments', 'active')
+        if shipment_limit:
+            org_shipment_count = Shipment.objects.filter(owner_id=get_owner_id(self.context['request'])).count()
+            if org_shipment_count + 1 > shipment_limit:
+                raise AccountLimitReached()
 
+        extra_args = {}
         with transaction.atomic():
             for location_field in ['ship_from_location', 'ship_to_location', 'bill_to_location']:
                 if location_field in validated_data:
