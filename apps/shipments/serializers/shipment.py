@@ -206,12 +206,13 @@ class ShipmentCreateSerializer(ShipmentSerializer):
     )
 
     def create(self, validated_data):
-        # Enforce account limits
-        shipment_limit = self.context['request'].user.get_limit('shipments', 'active')
-        if shipment_limit:
-            org_shipment_count = Shipment.objects.filter(owner_id=get_owner_id(self.context['request'])).count()
-            if org_shipment_count + 1 > shipment_limit:
-                raise AccountLimitReached()
+        if settings.PROFILES_ENABLED:
+            # Enforce account limits
+            shipment_limit = self.context['request'].user.get_limit('shipments', 'active')
+            if shipment_limit:
+                org_shipment_count = Shipment.objects.filter(owner_id=get_owner_id(self.context['request'])).count()
+                if org_shipment_count + 1 > shipment_limit:
+                    raise AccountLimitReached()
 
         extra_args = {}
         with transaction.atomic():

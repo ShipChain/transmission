@@ -60,12 +60,13 @@ class DocumentCreateSerializer(BaseDocumentSerializer):
     def create(self, validated_data):
         validated_data['shipment_id'] = self.context['view'].kwargs['shipment_pk']
 
-        # Enforce account limits
-        document_limit = self.context['request'].user.get_limit('shipments', 'documents')
-        if document_limit:
-            shipment_document_count = Document.objects.filter(shipment_id=validated_data['shipment_id']).count()
-            if shipment_document_count + 1 > document_limit:
-                raise AccountLimitReached()
+        if settings.PROFILES_ENABLED:
+            # Enforce account limits
+            document_limit = self.context['request'].user.get_limit('shipments', 'documents')
+            if document_limit:
+                shipment_document_count = Document.objects.filter(shipment_id=validated_data['shipment_id']).count()
+                if shipment_document_count + 1 > document_limit:
+                    raise AccountLimitReached()
 
         return super().create(validated_data)
 
