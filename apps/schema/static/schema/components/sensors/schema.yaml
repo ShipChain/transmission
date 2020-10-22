@@ -17,6 +17,23 @@ relationships:
   allOf:
     - $ref: '#/relatedDevice'
 
+meta:
+  type: object
+  description: Meta details for this resource
+  properties:
+    dimensionality:
+      type: string
+      example: "[length] * [mass] / [time] ** 2"
+      description: The basic physical dimension the sensor is reporting data for.  E.G.  length, mass, time, current, temperature, amount of substance.
+    base_units:
+      type: string
+      example: "kilogram * meter / second ** 2"
+      description: The base units reported in the telemetry data
+    type:
+      type: string
+      example: "force"
+      description: The type of data reported by the sensor
+
 relatedDevice:
   title: device
   type: object
@@ -33,6 +50,8 @@ getResource:
         $ref: '#/attributes'
       relationships:
         $ref: '#/relationships'
+      meta:
+        $ref: '#/meta'
 
 getResponse:
   title: Default Sensor retrieval

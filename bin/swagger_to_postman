@@ -7,7 +7,7 @@ echo "Bundling swagger"
 docker run -v "$(pwd)"/apps/schema/static/schema:/schema --user $(id -u):$(id -g) node npx --quiet swagger-cli bundle schema/swagger.yaml -o schema/bundledswagger.yaml -r
 
 echo "Building Postman from swagger"
-docker run -v "$(pwd)"/apps/schema/static/schema:/schema --user $(id -u):$(id -g) node npx --quiet openapi-to-postmanv2 -s schema/bundledswagger.yaml -o schema/postman.json -p
+docker run -v "$(pwd)"/apps/schema/static/schema:/schema --user $(id -u):$(id -g) node npx --quiet openapi-to-postmanv2@1.2.7 -s schema/bundledswagger.yaml -o schema/postman.json -p
 
 echo "Modifying postman file"
 bin/dev-tools/postprocess_postman.py "$(pwd)"/apps/schema/static/schema/postman.json "$(pwd)"/tests/postman.collection.Transmission.json

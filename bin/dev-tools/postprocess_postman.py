@@ -85,6 +85,8 @@ def postprocess_postman(src_path, dest_path):
         }
     ]
 
+    data['auth'] = {"type": "No Auth"}
+
     with open(dest_path, "w") as json_file:
         json.dump(data, json_file)
 
