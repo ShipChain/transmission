@@ -17,6 +17,23 @@ relationships:
   allOf:
     - $ref: '#/relatedDevice'
 
+meta:
+  type: object
+  description: Meta details for this resource
+  properties:
+    dimensionality:
+      type: string
+      example: "[temperature]"
+      description: The dimensions of the sensor
+    base_units:
+      type: string
+      example: "kelvin"
+      description: The base units reported by telemetry
+    type:
+      type: string
+      example: "temperature"
+      description: The base units reported by telemetry
+
 relatedDevice:
   title: device
   type: object
@@ -33,6 +50,8 @@ getResource:
         $ref: '#/attributes'
       relationships:
         $ref: '#/relationships'
+      meta:
+        $ref: '#/meta'
 
 getResponse:
   title: Default Sensor retrieval
