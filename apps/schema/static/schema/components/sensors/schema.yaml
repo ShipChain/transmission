@@ -23,16 +23,16 @@ meta:
   properties:
     dimensionality:
       type: string
-      example: "[temperature]"
-      description: The dimensions of the sensor
+      example: "[length] * [mass] / [time] ** 2"
+      description: The basic physical dimension the sensor is reporting data for.  E.G.  length, mass, time, current, temperature, amount of substance.
     base_units:
       type: string
-      example: "kelvin"
-      description: The base units reported by telemetry
+      example: "kilogram * meter / second ** 2"
+      description: The base units reported in the telemetry data
     type:
       type: string
-      example: "temperature"
-      description: The base units reported by telemetry
+      example: "force"
+      description: The type of data reported by the sensor
 
 relatedDevice:
   title: device

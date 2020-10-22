@@ -14,7 +14,7 @@ name:
       title: name
       description: Name of Telemetry Data, unique per device
       type: string
-      example: Engine Temperature
+      example: Package Force Detector
 
 units:
   properties:
@@ -22,7 +22,7 @@ units:
       title: units
       description: Units being reported by sensor
       type: string
-      example: degF
+      example: N
 
 hardwareId:
   properties:
