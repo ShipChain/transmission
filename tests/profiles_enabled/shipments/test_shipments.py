@@ -73,6 +73,15 @@ class TestShipmentAftershipQuickadd:
         return mock_successful_wallet_owner_calls
 
     @pytest.fixture
+    def mock_aftership_validation_no_couriers(self, mock_successful_wallet_owner_calls):
+        mock_successful_wallet_owner_calls.register_uri(
+            mock_successful_wallet_owner_calls.POST,
+            f'{settings.AFTERSHIP_URL}couriers/detect',
+            body=json.dumps({'data': {'couriers': []}}),
+        )
+        return mock_successful_wallet_owner_calls
+
+    @pytest.fixture
     def mock_aftership_create_success(self, mock_aftership_validation_succeess):
         mock_aftership_validation_succeess.register_uri(
             mock_aftership_validation_succeess.POST,
@@ -134,6 +143,12 @@ class TestShipmentAftershipQuickadd:
         response = client_alice.post(self.create_url, self.base_create_attributes)
         AssertionHelper.HTTP_400(response, error='Invalid quickadd_tracking value')
         mock_aftership_validation_failure.assert_calls(assertions_aftership_validation)
+
+    def test_quickadd_no_couriers(self, client_alice, mock_aftership_validation_no_couriers,
+                                      assertions_aftership_validation):
+        response = client_alice.post(self.create_url, self.base_create_attributes)
+        AssertionHelper.HTTP_400(response, error='Invalid quickadd_tracking value')
+        mock_aftership_validation_no_couriers.assert_calls(assertions_aftership_validation)
 
 
 class TestShipmentsList:

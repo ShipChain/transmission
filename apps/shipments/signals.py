@@ -172,7 +172,7 @@ def shipment_quickadd_tracking_changed(sender, instance, changed_fields, **kwarg
         response = requests.post(f'{settings.AFTERSHIP_URL}couriers/detect',
                                  headers={'aftership-api-key': settings.AFTERSHIP_API_KEY},
                                  json={'tracking': {'tracking_number': instance.quickadd_tracking}})
-        if not response.ok:
+        if not response.ok or not response.json()['data']['couriers']:
             raise ValidationError('Invalid quickadd_tracking value')
 
         slug = response.json()['data']['couriers'][0]['name']
