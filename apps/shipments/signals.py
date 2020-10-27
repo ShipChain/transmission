@@ -169,6 +169,24 @@ def telemetrydata_post_save(sender, **kwargs):
           dispatch_uid='shipment_quickadd_tracking_changed')
 def shipment_quickadd_tracking_changed(sender, instance, changed_fields, **kwargs):
     if instance.quickadd_tracking and settings.SNS_CLIENT:
+        response = requests.post(f'{settings.AFTERSHIP_URL}couriers/detect',
+                                 headers={'aftership-api-key': settings.AFTERSHIP_API_KEY},
+                                 json={'tracking': {'tracking_number': instance.quickadd_tracking}})
+        if not response.ok:
+            raise ValidationError('Invalid quickadd_tracking value')
+
+        slug = response.json()['data']['couriers'][0]['name']
+        log_metric(
+            'transmission.info',
+            tags={'method': 'shipments.quickadd_shipment', 'carrier_abbv': slug, 'module': __name__}
+        )
+
+        instance.anonymous_historical_change(
+            shippers_reference=f'Quickadd Shipment: {instance.quickadd_tracking}',
+            carrier_abbv=slug
+        )
+        instance.refresh_from_db(fields=['shippers_reference', 'carrier_abbv'])
+
         response = requests.post(f'{settings.AFTERSHIP_URL}trackings',
                                  json={'tracking': {'tracking_number': instance.quickadd_tracking}},
                                  headers={'aftership-api-key': settings.AFTERSHIP_API_KEY})
@@ -177,15 +195,11 @@ def shipment_quickadd_tracking_changed(sender, instance, changed_fields, **kwarg
 
         tracking_data = response.json()['data']['tracking']
 
-        log_metric(
-            'transmission.info',
-            tags={'method': 'shipments.quickadd_shipment', 'carrier_abbv': tracking_data['slug'], 'module': __name__}
-        )
         instance.anonymous_historical_change(shippers_reference=f'Quickadd Shipment: {instance.quickadd_tracking}',
                                              carrier_abbv=tracking_data['slug'])
         instance.refresh_from_db(fields=['shippers_reference', 'carrier_abbv'])
 
-        SNSClient().aftership_tracking_update(instance, tracking_data['id'], instance.updated_by)
+        SNSClient().aftership_tracking_update(instance, tracking_data['id'])
 
 
 @receiver(post_save_changed, sender=Shipment, fields=['device', 'state', 'geofences'],

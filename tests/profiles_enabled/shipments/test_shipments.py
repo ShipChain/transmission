@@ -57,9 +57,11 @@ class TestShipmentAftershipQuickadd:
 
     @pytest.fixture
     def mock_aftership_validation_succeess(self, mock_successful_wallet_owner_calls):
-        mock_successful_wallet_owner_calls.register_uri(mock_successful_wallet_owner_calls.POST,
-                                                        f'{settings.AFTERSHIP_URL}couriers/detect',
-                                                        )
+        mock_successful_wallet_owner_calls.register_uri(
+            mock_successful_wallet_owner_calls.POST,
+            f'{settings.AFTERSHIP_URL}couriers/detect',
+            body=json.dumps({'data': {'couriers': [{'name': 'aftership-slug'}]}}),
+        )
         return mock_successful_wallet_owner_calls
 
     @pytest.fixture

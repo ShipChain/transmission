@@ -48,7 +48,11 @@ def sqs_queue(boto_session, mocked_sns, settings):
 
 @pytest.fixture
 def mocked_aftership_api(modified_http_pretty, settings):
-    modified_http_pretty.register_uri(modified_http_pretty.POST, f'{settings.AFTERSHIP_URL}couriers/detect')
+    modified_http_pretty.register_uri(
+        modified_http_pretty.POST,
+        f'{settings.AFTERSHIP_URL}couriers/detect',
+        body=json.dumps({'data': {'couriers': [{'name': 'aftership-slug'}]}})
+    )
     modified_http_pretty.register_uri(modified_http_pretty.POST, f'{settings.AFTERSHIP_URL}trackings',
                                       body=json.dumps({'data': {'tracking': {'id': 'id-from-aftership', 'slug': 'aftership-slug'}}}),)
 
@@ -68,11 +72,18 @@ class TestSNS:
         shipment.quickadd_tracking = 'abc123'
         shipment.save()
 
-        modified_http_pretty.assert_calls([{
+        modified_http_pretty.assert_calls([
+            {
+                'host': settings.AFTERSHIP_URL.replace('/v4/', ''),
+                'path': '/v4/couriers/detect',
+                'body': {'tracking': {'tracking_number': shipment.quickadd_tracking}}
+            },
+            {
                 'host': settings.AFTERSHIP_URL.replace('/v4/', ''),
                 'path': '/v4/trackings',
                 'body': {'tracking': {'tracking_number': shipment.quickadd_tracking}}
-        }])
+            }
+        ])
         messages = sqs_queue.receive_messages(MaxNumberOfMessages=2)
         assert len(messages) == 2
 

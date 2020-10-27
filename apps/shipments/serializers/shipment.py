@@ -18,7 +18,6 @@ import json
 from collections import OrderedDict
 from datetime import datetime, timezone
 
-import requests
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.db import transaction
@@ -276,15 +275,6 @@ class ShipmentCreateSerializer(ShipmentSerializer):
             if gtx_required and not self.user.has_perm('gtx.shipment_use'):
                 raise PermissionDenied('User does not have access to enable GTX for this shipment')
         return gtx_required
-
-    def validate_quickadd_tracking(self, quickadd_tracking):
-        response = requests.post(f'{settings.AFTERSHIP_URL}couriers/detect',
-                                 headers={'aftership-api-key': settings.AFTERSHIP_API_KEY},
-                                 json={'tracking': {'tracking_number': quickadd_tracking}})
-        if not response.ok:
-            raise serializers.ValidationError('Invalid quickadd_tracking value')
-
-        return quickadd_tracking
 
 
 class ShipmentUpdateSerializer(ShipmentSerializer):
