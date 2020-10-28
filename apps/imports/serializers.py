@@ -38,7 +38,7 @@ class ShipmentImportSerializer(S3PreSignedMixin, EnumSupportSerializerMixin, ser
         read_only_fields = ('storage_credentials_id', 'shipper_wallet_id', 'carrier_wallet_id', )
         meta_fields = ('presigned_s3', )
 
-    def get_presigned_s3(self, obj):
+    def get_presigned_s3(self, obj):  # pylint:disable=arguments-differ
         if obj.upload_status != UploadStatus.COMPLETE:
             return super(ShipmentImportSerializer, self).get_presigned_s3(obj)
         return None

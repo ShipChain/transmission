@@ -83,9 +83,13 @@ class DocumentSerializer(BaseDocumentSerializer):
             read_only_fields = ('document_type', 'file_type',)
         meta_fields = ('presigned_s3', 'presigned_s3_thumbnail',)
 
-    def get_presigned_s3(self, obj):
+    def get_presigned_s3(self, obj):  # pylint:disable=arguments-differ
         if obj.upload_status != UploadStatus.COMPLETE:
-            return super().get_presigned_s3(obj)
+            file_size_limit = None
+            if settings.PROFILES_ENABLED:
+                # Enforce account limits
+                file_size_limit = self.context['request'].user.get_limit('documents', 'size_mb')
+            return super().get_presigned_s3(obj, file_size_limit)
 
         try:
             settings.S3_CLIENT.head_object(Bucket=self._s3_bucket, Key=obj.s3_key)

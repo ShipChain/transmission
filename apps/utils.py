@@ -61,7 +61,7 @@ class S3PreSignedMixin:
             raise exceptions.ValidationError(f'Unrecognized file type: {extension}')
         return content_type
 
-    def get_presigned_s3(self, obj):
+    def get_presigned_s3(self, obj, file_size_limit=None):
         content_type = self.get_content_type(obj.file_type.name.lower())
 
         pre_signed_post = settings.S3_CLIENT.generate_presigned_post(
@@ -71,7 +71,7 @@ class S3PreSignedMixin:
             Conditions=[
                 {"acl": "private"},
                 {"Content-Type": content_type},
-                ["content-length-range", 0, settings.S3_MAX_BYTES]
+                ["content-length-range", 0, file_size_limit * 1048576 if file_size_limit else settings.S3_MAX_BYTES]
             ],
             ExpiresIn=settings.S3_URL_LIFE
         )
